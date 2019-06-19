@@ -1,0 +1,475 @@
+.my-account-nav {
+    list-style: none;
+    padding-left: 0px;
+}
+
+.my-account-nav li {
+    float: left;
+    padding-right: 15px;
+    text-align: left;
+}
+
+.my-account-nav li a {
+    padding-right: 10px;
+    color: #9b93a1;
+    font-size: 16px;
+}
+
+.my-account-nav li:last-child a {
+    font-size: 22px;
+    line-height: 17px;
+    color: #000;
+}
+
+.my-account-nav li span {
+    vertical-align: middle;
+}
+
+.first-link {
+    color: #9b93a1;
+    font-size: 18px;
+}
+
+.card-header {
+    position: relative;
+}
+
+.bg-white {
+    background: #fff;
+}
+
+
+/* .my-accont-forms .form-group label{ float:left; width:40%;}
+.my-accont-forms .form-group .input-box { width:60%; float:left;}
+.my-accont-forms .form-group { overflow:hidden;} */
+
+.card-header [class^="icon-"] {
+    display: inline-block;
+    font-size: 20px;
+}
+
+.card-header [ class^="icon-angle-down"] {
+    transform: rotate(180deg);
+    color: #333;
+}
+
+.card-header a.collapsed [ class^="icon-angle-down"] {
+    color: #333;
+    transform: rotate(0deg);
+}
+
+.text-small {
+    font-size: 12px;
+}
+
+.check-b {
+    width: 60%;
+}
+
+.m-check {
+    display: inline-block;
+    float: left;
+    padding-right: 15px;
+}
+
+.m-check span {
+    padding-left: 5px;
+}
+
+.my-accont-forms .form-group .input-box .input-small {
+    padding-right: 15px;
+    width: 25%;
+    display: inline-block;
+    float: left;
+}
+
+.my-accont-forms .form-group .input-box .input-small:last-child {
+    padding-right: 0px;
+}
+
+.custom-accor {
+    list-style: none;
+    padding-left: 0px;
+}
+
+.custom-accor li {
+    border-bottom: 1px solid #f9f9fa;
+    padding: 0;
+    background-color: #fbfbfb;
+}
+
+.custom-accor li .accor-header {
+    background: #fff;
+    padding: 10px;
+    border-left: 2px solid #fff;
+    cursor: pointer;
+}
+
+.custom-accor li .accor-header a {
+    color: #333;
+    cursor: pointer;
+}
+
+.custom-accor li .accor-header[aria-expanded="true"] {
+    padding: 10px;
+    background: #fbfbfb;
+    border-left: 2px solid #efb402;
+    color: #efb402;
+}
+
+.custom-accor li .accor-header[aria-expanded="true"]>a {
+    color: #efb402;
+}
+
+.custom-accor li label {
+    padding-left: 0;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.right-arrow1 {
+    float: right;
+}
+
+.inner-nav {
+    list-style: none;
+    padding: 0;
+}
+
+.inner-nav li {
+    padding: 0;
+}
+
+.custom-accor .inner-nav li a {
+
+    color: #5d5b62;
+    display: block;
+    padding: 8px 0px 8px 50px;
+
+}
+
+.inner-nav li a label {
+    cursor: pointer;
+}
+
+.btn-tupe-2 {
+    color: #fff;
+}
+
+.input-bg {
+    background: #f4f0f7;
+    border: 0px;
+}
+
+.art-works-list ul {
+    list-style: none;
+    overflow: hidden;
+    padding: 0px;
+}
+
+.art-works-list ul li {
+    width: 50%;
+    float: left;
+    padding: 0px;
+    padding: 10px 10px 0px 10px;
+}
+
+.art-works-list ul li .art-work-title {
+    color: #5d5b62;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 3px;
+    margin-top: 3px;
+}
+
+.art-works-list ul li .art-creation-date {
+    font-size: 13px;
+    font-style: italic;
+    text-align: center;
+    color: #a2a6ab;
+}
+
+.store-fronts {
+    background: #efb402;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.store-fronts-list {}
+
+.store-fronts-list a {
+    display: inline-block;
+    padding: 10px 15px;
+    background: #fff;
+    border-radius: 15px;
+    color: #5d5b62;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 4px;
+    margin-bottom: 8px;
+}
+
+.store-fronts-list a span {
+    padding-left: 5px;
+    color: #82a501;
+}
+
+.store-title {
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.add-store {
+    margin-bottom: 0px;
+}
+
+.add-store a {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.add-store a span {
+    color: #82a501;
+    padding-right: 6px;
+    vertical-align: middle;
+}
+
+.background-blue {
+    background: #362865;
+}
+
+
+/* carousel */
+
+#Add-Products.owl-carousel .owl-nav.disabled {
+    display: block;
+}
+
+#Add-Products.owl-carousel .owl-nav.disabled .owl-prev {
+    position: absolute;
+    top: 50%;
+    left: -20px;
+    font-size: 50px;
+    background-color: #ccc;
+    padding: 0 3px !important;
+    transform: translate(0, -50%);
+}
+
+#Add-Products.owl-carousel .owl-nav.disabled .owl-next {
+    position: absolute;
+    top: 50%;
+    right: -21px;
+    font-size: 50px;
+    background-color: #ccc;
+    padding: 0 3px !important;
+    transform: translate(0, -50%);
+}
+
+.pricing-product-pagination .page-link {
+    margin: 0 4px;
+    border-radius: 50%;
+}
+
+
+/* carousel */
+
+
+/* refine */
+
+.pricing-set a {
+    padding: 7px 60px;
+    background: #428bca;
+    display: inline-block;
+    color: #fff;
+    border-radius: 5px;
+}
+
+
+/* refine */
+
+.custom-accor li [class^="icon-"] {
+    width: 30px;
+    vertical-align: middle;
+    text-align: center;
+    margin-right: 10px;
+    font-size: 16px;
+    display: inline-block;
+}
+.custom-accor li .icon-angle-down {
+	transform: rotate(180deg);
+	transition: all 0.5s;
+	margin-top: 4px;
+}
+.custom-accor li [aria-expanded="true"] .icon-angle-down {
+    transform: rotate(0deg);
+}
+.inner-nav li.active,
+.inner-nav li:hover {
+    background-color: #f5f5f5;
+}
+
+.inner-nav li.active a,
+.inner-nav li:hover a {
+    color: #362865;
+}
+
+.pricing-product-title2 {
+    text-transform: uppercase;
+    border-bottom: 1px solid #362865;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    color: #362865;
+}
+
+.pricing-product-list .pricing-product {
+    position: relative;
+    padding-bottom: 15px;
+    padding-top: 15px;
+}
+
+.pricing-product-list .pricing-product .checkbox-container {
+    padding: 0;
+    /* left: 10px;
+    top: 10px;
+    position: absolute; */
+}
+
+.pricing-product-list .product-title {
+    text-transform: capitalize;
+}
+
+.pricing-product-list .product-information {
+    margin-top: 0.75rem;
+}
+
+.pricing-product-list .item .pricing-product {
+    padding: 0;
+}
+
+.pricing-product-list .pricing-product>h6 {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.pricing-product-pagination .page-link {
+    margin: 0 4px;
+    border-radius: 50%;
+    border: 0;
+    color: #333;
+    text-transform: uppercase;
+}
+
+.pricing-product-pagination .page-item.active .page-link {
+    background-color: #333;
+}
+
+.page-item:last-child .page-link,
+.page-item:first-child .page-link {
+    border-radius: 0;
+}
+
+.progressbar {
+    padding: 1rem 0;
+}
+
+.progressbar ul {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    list-style: none;
+    justify-content: space-around;
+    flex-wrap: nowrap;
+}
+
+.progressbar ul li {
+    width: 100%;
+    text-align: center;
+    font-size: 18px;
+    position: relative;
+}
+
+.progressbar ul li h6 {
+    height: 30px;
+    line-height: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.progressbar ul li.active h6 {
+    color: #efb402;
+}
+
+.progressbar ul li.selected h6 {
+    color: #362865;
+}
+
+.progressbar ul li a {
+    display: inline-block;
+}
+
+.progressbar ul li::before,
+.progressbar ul li::after {
+    content: "";
+    width: 50%;
+    height: 2px;
+    background-color: #ccc;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    z-index: -1;
+    margin-top: -15px;
+}
+
+.progressbar ul li::before {
+    left: 0;
+}
+
+.progressbar ul li::after {
+    left: 50%;
+}
+
+.progressbar ul li:first-child::before,
+.progressbar ul li:last-child::after {
+    display: none;
+}
+
+.progressbar ul li span {
+    display: inline-block;
+    width: 45px;
+    height: 45px;
+    background-color: #ccc;
+    border-radius: 50%;
+    line-height: 45px;
+    cursor: pointer;
+    color: #ffffff;
+}
+
+.progressbar ul li.selected span {
+    background-color: #362865;
+    color: #fff;
+}
+
+.progressbar ul li.active span {
+    background-color: #efb402;
+    color: #fff;
+}
+
+.progressbar ul li.selected::after,
+.progressbar ul li.selected::before {
+    background-color: #efb402;
+}
+
+.progressbar ul li.active::before {
+    background-color: #efb402;
+}
+
+.pricing-product-list .pricing-product .checkmark {
+    top: 10px;
+    left: 10px;
+}
+
+.progressbar ul li.disabled span {
+    cursor: no-drop;
+}

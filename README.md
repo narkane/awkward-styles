@@ -1,45 +1,93 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+<a href="https://aimeos.org/">
+    <img src="https://aimeos.org/fileadmin/template/icons/logo.png" alt="Aimeos logo" title="Aimeos" align="right" height="60" />
+</a>
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+# Aimeos shop system
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+[![License](https://poser.pugx.org/aimeos/aimeos/license.svg)](https://packagist.org/packages/aimeos/aimeos)
 
----
+:star: Star us on GitHub — it helps!
 
-## Edit a file
+[Aimeos](https://aimeos.org/Laravel) is THE professional, full-featured and
+high performance e-commerce platform! You can install it within 5 minutes
+and can adapt, extend, overwrite and customize anything to your needs. 
 
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
+[![Aimeos Laravel demo](https://aimeos.org/fileadmin/aimeos.org/images/aimeos-github.png)](http://laravel.demo.aimeos.org/)
 
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
+## Table of content
 
----
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Frontend](#frontend)
+- [Backend](#backend)
+- [Customize](#customize)
+- [License](#license)
+- [Links](#links)
 
-## Create a file
+## Requirements
 
-Next, you’ll add a new file to this repository.
+The Aimeos shop distribution requires:
+- Linus/Unix or WAMP/XAMP environment
+- PHP >= 7.0.4
+- MySQL >= 5.1
+- Web server (Apache, Nginx or integrated PHP web server for testing)
 
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
+If required PHP extensions are missing, `composer` will tell you about the missing
+dependencies.
 
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
+## Installation
 
----
+To install the Aimeos shop application, you need [composer](https://getcomposer.org).
+On the CLI, execute this command for a complete installation including a working setup:
 
-## Clone a repository
+`composer create-project aimeos/aimeos myshop`
 
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
+You will be asked for the parameters of your database and mail server as well as an
+e-mail and password used for creating the administration account.
 
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
+In a local environment, you can use the integrated PHP web server to test your new Aimeos
+installation. Simply execute the following command to start the web server:
 
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+```
+cd myshop
+php artisan serve
+```
+
+## Frontend
+
+After the installation, you can test the Aimeos shop frontend by calling the URL of your
+VHost in your browser. If you use the integrated PHP web server, you should browse
+this URL: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+[![Aimeos frontend](https://aimeos.org/fileadmin/aimeos.org/images/aimeos-frontend.png)](http://laravel.demo.aimeos.org/)
+
+## Backend
+
+The Aimeos administration interface will be available at `/admin` in your VHost. When using
+the integrated PHP web server, call this URL: [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)
+
+[![Aimeos admin backend](https://aimeos.org/fileadmin/aimeos.org/images/aimeos-backend.png)](http://admin.demo.aimeos.org/)
+
+## Customize
+
+Laravel and the Aimeos e-commerce package are extremely flexible and highly customizable.
+A lot of documentation for the [Laravel framework](https://laravel.com) and the
+[Aimeos e-commerce framework](https://aimeos.org/docs/Laravel) exists. If you have questions
+about Aimeos, don't hesitate to ask in our [Aimeos forum](https://aimeos.org/help/).
+
+For more details about Aimeos Laravel integration, please have a look at its
+[repository](https://github.com/aimeos/aimeos-laravel).
+
+## License
+
+The Aimeos shop system is licensed under the terms of the MIT and LGPLv3 license and
+is available for free.
+
+## Links
+
+* [Web site](https://aimeos.org/Laravel)
+* [Documentation](https://aimeos.org/docs/Laravel)
+* [Forum](https://aimeos.org/help/laravel-package-f18/)
+* [Issue tracker](https://github.com/aimeos/aimeos/issues)
+* [Composer packages](https://packagist.org/packages/aimeos/aimeos)
+* [Source code](https://github.com/aimeos/aimeos)
