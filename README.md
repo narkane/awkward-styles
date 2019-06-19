@@ -1,3 +1,19 @@
+/ext and /node_modules added to .gitignore to avoid unnessecary library files on git
+so first run:
+npm i (to get node_modules)
+then
+composer i (to get ext)
+
+then run site from root dir with:
+php artisan serve
+
+------------------------------------
+-----------------------------------
+ [deprecated]
+OLD AIMEOS README - for creating new aimeos project
+-------------------------------------
+-----------------------------------
+
 <a href="https://aimeos.org/">
     <img src="https://aimeos.org/fileadmin/template/icons/logo.png" alt="Aimeos logo" title="Aimeos" align="right" height="60" />
 </a>

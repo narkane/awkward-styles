@@ -253,7 +253,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                             "Authorization":"Bearer "+result.token,
                             "Content-Type":"application/json"
                         }, type: 'GET',
-                         success: function(products){ consoel.log("-0---",products);
+                         success: function(products){ console.log("-0---",products);
                             
                             if(products.operationCode == 200){
 
@@ -319,7 +319,8 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
 @endif
 
     <footer>
-        <img src="{{ asset('images/footer.png') }}" class="img-100" alt="">
+    <script src="{{asset('js/app.js')}}"></script>
+        <!-- <img src="{{ asset('images/footer.png') }}" class="img-100" alt=""> -->
     </footer>
 	<!-- Scripts -->	
 
