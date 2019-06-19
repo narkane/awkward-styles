@@ -1,0 +1,37 @@
+Broken Links:
+	OPEN YOUR STORE - Top-bar
+
+	Nav-bar links:
+		Start Designing:
+			Clothing, Home, Accessories and all subcatagories (needs mockup gen)
+		Shop:
+		Explore:
+
+	Search Icon
+
+	Order Now! - scrolling banner
+
+	Shop by:
+		Custom
+		Premium
+		Mens
+		Womens
+
+	Trending:
+		Outdoor collection
+		Wild collection
+		Fun collection
+		80s collection
+		Friendship collection
+		Inspiration collection
+
+	Featured Artist:
+		Follow button
+
+	International Design Contest - Bottom Banner
+
+	Bottom Nav text links:
+		Many...
+
+Lorem Ipsum Pages:
+	To be populated...
