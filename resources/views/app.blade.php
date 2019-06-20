@@ -318,12 +318,15 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
       
 @endif
 
-    <footer>
-    <script src="{{asset('js/app.js')}}"></script>
-        <!-- <img src="{{ asset('images/footer.png') }}" class="img-100" alt=""> -->
+    <footer  style="width:100vw;">
+        <div id="app" style="width:100vw;">
+            <example  style="width:100vw;" />
+          </div>
+        <img src="{{ asset('images/footer.png') }}" class="img-100" alt="">
     </footer>
 	<!-- Scripts -->	
 
+    <script src="{{asset('js/app.js')}}"></script>
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/popper.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap.min.js') }}"></script>

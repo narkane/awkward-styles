@@ -12,51 +12,51 @@
         <h3 class="category-title">Collections</h3>
         <div class="owl-carousel " id="collections-slider" style="display:block">
             <div class="item">
-                <a href="#"> <img src="{{ asset('images/collections/category/Funny.png') }}" width="100%"></a>
+                <a href="#"> <img src="{{ asset('images/collections/category/Funny.png') }}" width="10%"></a>
                 <h6>Funny</h6>
             </div>
             <div class="item active">
-                <a href="#"><img src="{{ asset('images/collections/category/HomeDecor.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/HomeDecor.png') }}" width="10%"></a>
                 <h6>Home Decor</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/Parties-Events.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/Parties-Events.png') }}" width="10%"></a>
                 <h6>Parties & Events</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/Sports.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/Sports.png') }}" width="10%"></a>
                 <h6>Sports</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/Trending.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/Trending.png') }}" width="10%"></a>
                 <h6>Trending</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/Vintage.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/Vintage.png') }}" width="10%"></a>
                 <h6>Vintage</h6>
             </div>
             <div class="item">
-                <a href="#"> <img src="{{ asset('images/collections/category/Funny.png') }}" width="100%"></a>
+                <a href="#"> <img src="{{ asset('images/collections/category/Funny.png') }}" width="10%"></a>
                 <h6>Funny</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/HomeDecor.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/HomeDecor.png') }}" width="10%"></a>
                 <h6>Home Decor</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/Parties-Events.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/Parties-Events.png') }}" width="10%"></a>
                 <h6>Parties & Events</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/Sports.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/Sports.png') }}" width="10%"></a>
                 <h6>Sports</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/Trending.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/Trending.png') }}" width="10%"></a>
                 <h6>Trending</h6>
             </div>
             <div class="item">
-                <a href="#"><img src="{{ asset('images/collections/category/Vintage.png') }}" width="100%"></a>
+                <a href="#"><img src="{{ asset('images/collections/category/Vintage.png') }}" width="10%"></a>
                 <h6>Vintage</h6>
             </div>
         </div>
