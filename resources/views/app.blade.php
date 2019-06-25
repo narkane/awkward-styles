@@ -44,7 +44,31 @@
                     <div class="col">
                         <ul class="head-middle-list">
 
-                            <li>
+                        <script type = "text/javascript" language = "javascript">
+
+function searchfunc(){
+    var action_src = "search/" + document.getElementsByName("keywords")[0].value;
+    var form = document.getElementById('searcharea');
+    form.action = action_src ;
+}</script>
+
+                        <li>
+							<div class="dropdown">
+                                    <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
+
+                                    <form id="searcharea" onSubmit="searchfunc()" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
+                                        <div class="input-group">
+                                            <input type="text" name="keywords" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
+                                            <div class="input-group-append">
+                                                <input class="btn btn-outline-secondary" type="submit" id="button-addon2" value="Search">
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+
+							</li>
+                            <!-- <li>
 							<div class="dropdown">
                                 <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
                                 <div id="app" class="dropdown-menu">
@@ -53,7 +77,7 @@
                             </div>
 
 
-							</li>
+							</li> -->
 
 
                             <li><a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span>
@@ -234,6 +258,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
   <script type = "text/javascript"  src = "https://code.jquery.com/jquery-3.3.1.min.js">
       </script>
          <script type = "text/javascript" language = "javascript">
+
          $(document).ready(function() {
            
                 $.ajax({url: "{{env('API_URL')}}token", contentType: 'application/json', dataType: 'json', type: 'POST',   data: JSON.stringify({ "privateKey": "password"}) , success: function(result){ 

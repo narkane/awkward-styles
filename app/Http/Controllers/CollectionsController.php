@@ -20,6 +20,8 @@ class CollectionsController extends Controller
         //$this->middleware('auth');
     }
 
+//    @return \Illuminate\Http\Response
+
     public function searchSuggestions(Request $request) {
         $q = $request->id;
         $termIDs = DB::select('select category_id from tbl_categories_m where name like "%'.$q.'%"');
@@ -29,10 +31,13 @@ class CollectionsController extends Controller
             // console.log($termIDs);
             // console.log(DB::select(' select label from tbl_products where FIND_IN_SET('.$id.', categoryId) > 0'));
             if(count($tags)>0) {
-                echo json_encode($tags);
+                $line = json_encode($tags);
+                echo htmlentities($line);
             }
         }
+        return view('search-results', ['request' => json_encode($tags)]);
       }
+
 
     /**
      * Show the application dashboard.

@@ -115,7 +115,7 @@ if( $this->get( 'listProductTotal', 0 ) > 1 )
                         </div>
                         <div class="image-info">
                             <h5>CUSTOM DESIGNS</h5>
-                            <a href="#">Shop Now  ></a>
+                            <a href="/mockupgen">Shop Now  ></a>
                         </div>
                     </div>
 
@@ -124,21 +124,21 @@ if( $this->get( 'listProductTotal', 0 ) > 1 )
                     <div class="image-div">
                         <img src="images/home/shopby-2.png" class="img-100" alt="">
                         <h5>PREMIUM DESIGNS</h5>
-                        <a href="#">Shop Now  ></a>
+                        <a href="/search/premium">Shop Now  ></a>
                     </div>
                 </div>
                 <div class="col-3">
                     <div class="image-div">
                         <img src="images/home/mens-clothing.png" class="img-100" alt="">
                         <h5>MEN'S CLOTHING</h5>
-                        <a href="#">Shop Now  ></a>
+                        <a href="/search/men">Shop Now  ></a>
                     </div>
                 </div>
                 <div class="col-3">
                     <div class="image-div">
                         <img src="images/home/womens-clothing.png" class="img-100" alt="">
                         <h5>WOMEN'S CLOTHING</h5>
-                        <a href="#">Shop Now  ></a>
+                        <a href="/search/women">Shop Now  ></a>
                     </div>
                 </div>
 
@@ -232,7 +232,7 @@ if( $this->get( 'listProductTotal', 0 ) > 1 )
                 <div class="col-sm-4 pr-0">
                     <div class="feat-artist-img">
                         <img src="images/home/feat-artist-block.jpg" class="img-100 img-1" alt="">
-                        <a href="#" class="FOLLOW">FOLLOW</a>
+                        <a href="/artiststorefront/25" class="FOLLOW">FOLLOW</a>
                     </div>
                 </div>
             </div>

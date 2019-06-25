@@ -37,7 +37,23 @@
 </head>
 <body>
     
-<header>      
+<header>
+        <div class="head-top bg-dark">
+            <div class="container">
+                <ul class="head-top-ul">
+                    <li>
+                        <a href="/createstore">Open Your Store</a>
+                    </li>
+                    <li>
+                        <a href="/seller">Sell Anything</a>
+                    </li>
+                    <li>
+                        <a href="/seller">Sell Everywhere</a>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
         <div class="head-middle">
             <div class="container">
                 <div class="row justify-content-between align-items-center">
@@ -49,25 +65,43 @@
                     <div class="col">
                         <ul class="head-middle-list">
 
-                            <li>
-                            <div class="dropdown">
+                        <script type = "text/javascript" language = "javascript">
+
+function searchfunc(){
+    var action_src = "search/" + document.getElementsByName("keywords")[0].value;
+    var form = document.getElementById('searcharea');
+    form.action = action_src ;
+}</script>
+
+                        <li>
+							<div class="dropdown">
                                     <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
 
-                                    <form class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
+                                    <form id="searcharea" onSubmit="searchfunc()" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
                                         <div class="input-group">
-                                            <input type="text" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
+                                            <input type="text" name="keywords" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
                                             <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="button" id="button-addon2">Search</button>
+                                                <input class="btn btn-outline-secondary" type="submit" id="button-addon2" value="Search">
                                             </div>
                                         </div>
                                     </form>
                                 </div>
 
 
-                            </li>
+							</li>
+                            <!-- <li>
+							<div class="dropdown">
+                                <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
+                                <div id="app" class="dropdown-menu">
+                                    <searchbar class="dropdown-item"/>
+                                </div>
+                            </div>
 
 
-                            <li><a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span> 
+							</li> -->
+
+
+                            <li><a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span>
                             </a></li>
 
                          
@@ -86,9 +120,9 @@
                                     </div>
                                 </div>
                             </li>
-                    
-                    @else
-                        <li>
+					
+					@else
+						<li>
                         <div class="dropdown">    
                             <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ Auth::user()->name }} <span class="caret"></span></a>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userdropdown">
@@ -100,9 +134,9 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                             </div>
                         </div>
                         </li>
-                    @endif
+					@endif
 
-                    
+					
                         </ul>
                     </div>
                 </div>
@@ -143,13 +177,13 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
 
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Tank Tops</a>
+                                                        <a href="/mockupgenerator/720" class="nav-l3-title">Tank Tops</a>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <a href="/mockupgenerator/1233" class="nav-l3-title">Hoodies</a>
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">More</a>
+                                                        <a href="/comingsoon" class="nav-l3-title">More</a>
                                                     </div>
 
                                                 </div>
@@ -164,10 +198,10 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                                                 <div class="row">
 
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Mugs</a>
+                                                        <a href="/comingsoon" class="nav-l3-title">Mugs</a>
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Pillows</a>
+                                                        <a href="/comingsoon" class="nav-l3-title">Pillows</a>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <a href="/mockupgenerator/1033" class="nav-l3-title">Canvas</a>
@@ -184,7 +218,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                                             <li>
                                                 <div class="row">
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Tote Bags</a>
+                                                        <a href="/mockupgenerator/550" class="nav-l3-title">Bags</a>
 
                                                     </div>
                                                     <div class="col-md-3">
@@ -203,7 +237,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                             </div>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="/products">
                                     SHOP
                                     <span>Custom design products</span>
                                  </a>
@@ -220,7 +254,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                 </div>
             </div>
         </nav>
-</header>
+    </header>
         <main class="py-4">
             @yield('content')
         </main>
