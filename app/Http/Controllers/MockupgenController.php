@@ -25,13 +25,14 @@ class MockupgenController extends Controller
      */
     public function index($productId)
     {
-        $product = $this->mockupgen->index($productId);
-        $artwork_product = $this->mockupgen->artworkProduct();
-        $artworkCat = $this->mockupgen->artworkCategories();
-        $productImages = $this->mockupgen->getProductsImages($productId);
-        $products = $this->mockupgen->getProductsList();
-        $product_id = ["product_id" => $productId];
-        //  dd($product_id);//[0]->image_url);
-        return view('mockupgen', compact('product_id','product', 'artwork_product', 'artworkCat', 'productImages', 'products'));
+        // $product = $this->mockupgen->index($productId);
+        // $artwork_product = $this->mockupgen->artworkProduct();
+        // $artworkCat = $this->mockupgen->artworkCategories();
+        // $productImages = $this->mockupgen->getProductsImages($productId);
+        // $products = $this->mockupgen->getProductsList();
+        // $product_id = ["product_id" => $productId];
+        // //  dd($product_id);//[0]->image_url);
+        // return view('mockupgen', compact('product_id','product', 'artwork_product', 'artworkCat', 'productImages', 'products'));
+        return view('mockupgen-new');
     }
 }
