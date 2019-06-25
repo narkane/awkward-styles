@@ -986,12 +986,14 @@ window.Vue = __webpack_require__(35);
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
+Vue.component("comingsoon", __webpack_require__(58));
 Vue.component("example", __webpack_require__(39));
+Vue.component("searchbar", __webpack_require__(63));
 
 var app = new Vue({
   el: "#app",
   mounted: function mounted() {
-    console.log("hello world!");
+    // console.log("hello world!");
   }
 });
 
@@ -44567,7 +44569,7 @@ exports = module.exports = __webpack_require__(42)(false);
 
 
 // module
-exports.push([module.i, "\n*[data-v-650f2efa] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-650f2efa] {\n  margin: 0 0 0 0;\n  padding: 0 0 0 0;\n  background-color: #f7bf22;\n  width: 100vw;\n}\n.row[data-v-650f2efa] {\n  width: calc(100vw - 115px);\n}\n.panel-heading[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset grey;\n  font-weight: 500;\n  text-shadow: 0px 0px 1px lightgrey;\n  color: lightgrey;\n  background-color: #444;\n  width: 100vw;\n  height: 115px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.panel-body[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset yellow;\n  background-color: #f7bf22;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: left;\n      -ms-flex-pack: left;\n          justify-content: left;\n  text-shadow: 0px 0px 2px rgba(0, 0, 0, 80%);\n  font-size: 12pt;\n  padding-left: 115px;\n  color: black;\n  font-weight: 650;\n  width: 100vw;\n  height: 300px;\n}\n.panel-body > div[data-v-650f2efa] {\n  /* display: inline-block; */\n  /* position: relative; */\n  /* top: 0px; */\n}\n#col-1[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 16%;\n          flex: 0 16%;\n}\n#col-1-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 30%;\n          flex: 0 30%;\n}\n#col-2[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#col-3[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 19%;\n          flex: 0 19%;\n}\n#col-2-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 13%;\n          flex: 0 13%;\n}\n#col-4[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 31%;\n          flex: 0 31%;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  padding-top: 15px;\n}\n#col-3-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#row-filler[data-v-650f2efa] {\n  -webkit-box-flex: 1;\n      -ms-flex: 1;\n          flex: 1;\n}\n#col-4-bottom[data-v-650f2efa] {\n  position: relative;\n  right: 10px;\n}\n#logo[data-v-650f2efa] {\n  border: 3px outset goldenrod;\n}\nimg[data-v-650f2efa] {\n  border-radius: 10px;\n}\n.vl[data-v-650f2efa] {\n  margin: 0px 75px 0px 75px;\n  border-left: 1px solid grey;\n  height: 75px;\n}\nul[data-v-650f2efa] {\n  padding: 10px 0 0 0;\n}\nli[data-v-650f2efa] {\n  font-weight: 100;\n  font-size: 9pt;\n  padding: 0px 0px 3px 5px;\n}\n", ""]);
+exports.push([module.i, "\n*[data-v-650f2efa] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-650f2efa] {\n  margin: 0 0 0 0;\n  padding: 0 0 0 0;\n  background-color: #f7bf22;\n  width: 100vw;\n}\n.row[data-v-650f2efa] {\n  width: calc(100vw - 115px);\n}\n.panel-heading[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset grey;\n  font-weight: 500;\n  text-shadow: 0px 0px 1px lightgrey;\n  color: lightgrey;\n  background-color: #444;\n  width: 100vw;\n  height: 115px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.panel-body[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset yellow;\n  background-color: #f7bf22;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: left;\n      -ms-flex-pack: left;\n          justify-content: left;\n  text-shadow: 0px 0px 2px rgba(0, 0, 0, 80%);\n  font-size: 12pt;\n  padding-left: 115px;\n  color: black;\n  font-weight: 650;\n  width: 100vw;\n  height: 300px;\n}\n.panel-body > div[data-v-650f2efa] {\n  /* display: inline-block; */\n  /* position: relative; */\n  /* top: 0px; */\n}\n#col-1[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 16%;\n          flex: 0 16%;\n}\n#col-1-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 30%;\n          flex: 0 30%;\n}\n#col-2[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#col-3[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 19%;\n          flex: 0 19%;\n}\n#col-2-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 13%;\n          flex: 0 13%;\n}\n#col-4[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 28%;\n          flex: 0 28%;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  padding-top: 15px;\n}\n#col-3-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#row-filler[data-v-650f2efa] {\n  -webkit-box-flex: 1;\n      -ms-flex: 1;\n          flex: 1;\n}\n#col-4-bottom[data-v-650f2efa] {\n  position: relative;\n  right: 10px;\n}\n#logo[data-v-650f2efa] {\n  border: 3px outset goldenrod;\n}\nimg[data-v-650f2efa] {\n  border-radius: 10px;\n}\n#email[data-v-650f2efa] {\n  font-size: 14pt;\n  width: 375px;\n}\n.vl[data-v-650f2efa] {\n  margin: 0px 75px 0px 75px;\n  border-left: 1px solid grey;\n  height: 75px;\n}\nul[data-v-650f2efa] {\n  padding: 10px 0 0 0;\n}\nli[data-v-650f2efa] {\n  font-weight: 100;\n  font-size: 9pt;\n  padding: 0px 0px 3px 5px;\n}\n", ""]);
 
 // exports
 
@@ -45292,6 +45294,450 @@ if (false) {
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 49 */,
+/* 50 */,
+/* 51 */,
+/* 52 */,
+/* 53 */,
+/* 54 */,
+/* 55 */,
+/* 56 */,
+/* 57 */,
+/* 58 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(59)
+}
+var normalizeComponent = __webpack_require__(45)
+/* script */
+var __vue_script__ = __webpack_require__(61)
+/* template */
+var __vue_template__ = __webpack_require__(62)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = "data-v-1836121a"
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/Comingsoon.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-1836121a", Component.options)
+  } else {
+    hotAPI.reload("data-v-1836121a", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 59 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(60);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(43)("545d66a9", content, false, {});
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-1836121a\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./Comingsoon.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-1836121a\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./Comingsoon.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 60 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(42)(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n*[data-v-1836121a] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-1836121a] {\n  padding-top: 100px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-pack: distribute;\n      justify-content: space-around;\n}\n.pannel[data-v-1836121a] {\n  background-image: url(https://loftcinema.org/files/2015/06/const.jpg);\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.row[data-v-1836121a] {\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n}\n.pannel-heading[data-v-1836121a] {\n  position: relative;\n  top: -30px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  font-weight: 700;\n  height: calc(20pt + 10px);\n  width: 300px;\n  padding-top: 20px;\n  font-size: 20pt;\n  color: white;\n  text-shadow: 0px 0px 10px yellow;\n  background-color: rgba(0, 0, 0, 0.5);\n  border: 2px inset #555;\n  border-bottom: 0px;\n}\n.pannel-body[data-v-1836121a] {\n  text-align: center;\n  position: relative;\n  top: -30px;\n  padding: 0 50px 0 50px;\n  margin-bottom: -20px;\n  border: 2px inset #555;\n  border-top: 0px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  font-size: 12pt;\n  color: white;\n  background-color: rgba(0, 0, 0, 0.5);\n}\n#fineprint[data-v-1836121a] {\n  font-size: 8pt;\n  color: rgba(255, 255, 255, 0.8);\n  text-shadow: 0px 0px 10px yellow;\n  /* text-shadow: none; */\n}\n#logo[data-v-1836121a] {\n  border: 3px outset goldenrod;\n  position: relative;\n  left: -20px;\n}\nimg[data-v-1836121a] {\n  border-radius: 10px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 61 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {};
+  }
+});
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "container" }, [
+    _c("link", {
+      attrs: {
+        type: "text/css",
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css?family=Roboto:400,300"
+      }
+    }),
+    _vm._v(" "),
+    _c("div", { staticClass: "col-md-8 col-md-offset-2" }, [
+      _c("div", { staticClass: "pannel panel-default" }, [
+        _vm._m(0),
+        _vm._v(" "),
+        _vm._m(1),
+        _vm._v(" "),
+        _c(
+          "div",
+          { staticClass: "pannel-body" },
+          [
+            _c("br"),
+            _vm._v(
+              "THIS PAGE IS CURRENTLY\n        UNDER CONSTRUCTION\n        AND WILL BE BACK UP AND OPERATIONAL\n        AS SOON AS POSSIBLE!\n        "
+            ),
+            _c("br"),
+            _vm._v(" "),
+            _c("br"),
+            _vm._v(" "),
+            _c("SMALL", [
+              _c("div", { attrs: { id: "fineprint" } }, [
+                _c("i", [
+                  _vm._v(
+                    "ANY TECHNICAL QUESTIONS REGARDING THIS PAGE MAY BE DIRECTED TO john@thummel.site"
+                  )
+                ]),
+                _vm._v(" - - - - - AGR-US\n          ")
+              ])
+            ])
+          ],
+          1
+        )
+      ])
+    ])
+  ])
+}
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "row" }, [
+      _c("div", { staticClass: "spacer" }),
+      _vm._v(" "),
+      _c("div", [
+        _c("img", { attrs: { id: "logo", src: "/../images/logo.png" } })
+      ])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c(
+      "div",
+      { staticClass: "pannel-heading", staticStyle: { zIndex: "1" } },
+      [_c("div", [_vm._v("Coming Soon!")])]
+    )
+  }
+]
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-1836121a", module.exports)
+  }
+}
+
+/***/ }),
+/* 63 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(64)
+}
+var normalizeComponent = __webpack_require__(45)
+/* script */
+var __vue_script__ = __webpack_require__(66)
+/* template */
+var __vue_template__ = __webpack_require__(67)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = "data-v-7cdae69f"
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/Search.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-7cdae69f", Component.options)
+  } else {
+    hotAPI.reload("data-v-7cdae69f", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 64 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(65);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(43)("0772c475", content, false, {});
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-7cdae69f\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./Search.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-7cdae69f\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./Search.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(42)(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n*[data-v-7cdae69f] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-7cdae69f] {\n  padding-top: 100px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-pack: distribute;\n      justify-content: space-around;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 66 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_axios__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      category: ""
+    };
+  },
+  methods: {
+    search: function search() {
+      console.log(this.category);
+      return __WEBPACK_IMPORTED_MODULE_0_axios___default.a.get('/search/' + this.category).then(function (resp) {
+        console.log(resp.data);
+      });
+    },
+    print: function print() {
+      // console.log(this.search());
+    }
+  }
+});
+
+/***/ }),
+/* 67 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { staticClass: "container" }, [
+    _c("link", {
+      attrs: {
+        type: "text/css",
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css?family=Roboto:400,300"
+      }
+    }),
+    _vm._v(" "),
+    _c("div", { staticClass: "input-group" }, [
+      _c("input", {
+        directives: [
+          {
+            name: "model",
+            rawName: "v-model",
+            value: _vm.category,
+            expression: "category"
+          }
+        ],
+        staticClass: "form-control input-bg",
+        attrs: {
+          type: "text",
+          id: "search-suggestions",
+          placeholder: "Search..",
+          "aria-label": "Search",
+          "aria-describedby": "button-addon2"
+        },
+        domProps: { value: _vm.category },
+        on: {
+          input: function($event) {
+            if ($event.target.composing) {
+              return
+            }
+            _vm.category = $event.target.value
+          }
+        }
+      }),
+      _vm._v(" "),
+      _c("div", { staticClass: "input-group-append" }, [
+        _c(
+          "button",
+          {
+            staticClass: "btn btn-outline-secondary",
+            attrs: { type: "button", id: "button-addon2" },
+            on: { click: _vm.search }
+          },
+          [_vm._v("Search")]
+        )
+      ])
+    ])
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-7cdae69f", module.exports)
+  }
+}
 
 /***/ })
 /******/ ]);

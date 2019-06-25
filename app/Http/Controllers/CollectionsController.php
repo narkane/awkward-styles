@@ -20,6 +20,20 @@ class CollectionsController extends Controller
         //$this->middleware('auth');
     }
 
+    public function searchSuggestions(Request $request) {
+        $q = $request->id;
+        $termIDs = DB::select('select category_id from tbl_categories_m where name like "%'.$q.'%"');
+        foreach($termIDs as &$id) {
+            // echo json_encode($id->category_id);
+            $tags = DB::select(' select * from tbl_products where FIND_IN_SET("'.$id->category_id.'", categoryId) > 0'); 
+            // console.log($termIDs);
+            // console.log(DB::select(' select label from tbl_products where FIND_IN_SET('.$id.', categoryId) > 0'));
+            if(count($tags)>0) {
+                echo json_encode($tags);
+            }
+        }
+      }
+
     /**
      * Show the application dashboard.
      *

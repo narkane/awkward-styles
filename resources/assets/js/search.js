@@ -14,12 +14,10 @@ window.Vue = require("vue");
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
-Vue.component("comingsoon", require("./components/Comingsoon.vue"));
-Vue.component("example", require("./components/Example.vue"));
 Vue.component("searchbar", require("./components/Search.vue"));
 
-const app = new Vue({
-  el: "#app",
+const search = new Vue({
+  el: "#search",
   mounted() {
     // console.log("hello world!");
   }

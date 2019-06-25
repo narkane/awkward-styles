@@ -944,8 +944,15 @@ section {
   background-color: #e9c761;
 }
 
+#collections-slider {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 #collections-slider .item {
   text-align: center;
+  width: 175px;
 }
 
 #collections-slider .item h6 {
@@ -956,12 +963,13 @@ section {
   border: 2px solid #ccc;
   border-radius: 50%;
   padding: 4px;
-  display: block;
+  display: grid;
   overflow: hidden;
 }
 
-#collections-slider .item.active a {
-  border: 2px solid #82a501;
+#collections-slider .item:hover a {
+  /* box-shadow: 2px solid #82a501; */
+  filter: drop-shadow(1px 1px 4px #82b901);
 }
 
 #collections-slider .item.active h6 {

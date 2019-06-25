@@ -170,7 +170,7 @@ export default {
   flex: 0 13%;
 }
 #col-4 {
-  flex: 0 31%;
+  flex: 0 28%;
   flex-direction: column;
   padding-top: 15px;
 }
@@ -189,6 +189,11 @@ export default {
 }
 img {
   border-radius: 10px;
+}
+
+#email {
+  font-size: 14pt;
+  width: 375px;
 }
 
 .vl {
