@@ -135,7 +135,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item nav-home">
                             <a href="/list" class="nav-link">
-                                <span class="icon-home"></span>
+                                <span class="icon-home" style="borderRadius:20px;"></span>
 
                             </a>
                         </li>
