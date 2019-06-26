@@ -18,6 +18,10 @@ Route::get('/', function () {
 Auth::routes();
 
 
+###jthummel
+Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
+Route::get('/search/{id}', 'CollectionsController@searchSuggestions')->name('search-results');
+###them
 Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 Route::get('/account', 'DashboardController@myAccount')->name('account');
 Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->name('artiststorefront');

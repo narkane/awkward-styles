@@ -1,0 +1,8 @@
+/node_modules
+/ext
+
+storage/*
+/nbproject
+libreadline.7.dylib
+/nbproject/private/
+public/images/

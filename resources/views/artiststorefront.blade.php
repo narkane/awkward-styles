@@ -31,15 +31,15 @@
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="#">Home</a></li>
                 <li class="breadcrumb-item"><a href="#">Artist</a></li>
-                <li class="breadcrumb-item active" aria-current="page">@if(count($owner_data)>0){{ $owner_data[0]->name }} @else Marc Summers @endif</li>
+                <li class="breadcrumb-item active" aria-current="page">@if(count($owner_data)>0){{ $owner_data[0]->name }} @else John Thummel @endif</li>
             </ol>
         </nav>
         <div class="row">
             <div class="col-xl-9 col-lg-9">
                 <div class="media mb-4">
-                    <img src="{{ url('images/artist-defult.png') }}" class="img-fluid rounded-circle mr-3" alt="Generic placeholder image">
+                    <img src="{{ url('images/artist-defult.png') }}" style="width:200px" class="img-fluid rounded-circle mr-3" alt="Generic placeholder image">
                     <div class="media-body">
-                        <h4 class="mt-0">About @if(count($owner_data)>0){{ $owner_data[0]->name }} @else Marc Summers @endif</h4>
+                        <h4 class="mt-0">About @if(count($owner_data)>0){{ $owner_data[0]->name }} @else John Thummel @endif</h4>
                         Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
                     </div>
                 </div>

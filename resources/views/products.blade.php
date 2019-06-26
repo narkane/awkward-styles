@@ -84,6 +84,7 @@ $token = $tokenGen['token'];
                 if(xhr.status === 401) {
                     $('#art-product-list').html("Invalid access toekn..."); exit;
                 }
+                // console.log(artProduct);
                 if(artProduct.properties.totalPages) {
                     if(artProduct.properties.totalPages > 20){
                         artProduct.properties.totalPages = 20; 

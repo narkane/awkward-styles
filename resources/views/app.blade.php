@@ -10,18 +10,18 @@
 	<link type="text/css" rel="stylesheet" href='https://fonts.googleapis.com/css?family=Roboto:400,300'>
 	  <link href="{{ asset('css/graphic-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/theme.css') }}" rel="stylesheet">
-  
+    <link href="{{ asset('css/theme.css') }}" rel="stylesheet"> 
    
 </head>
 <body>
+
 	
 <header>
         <div class="head-top bg-dark">
             <div class="container">
                 <ul class="head-top-ul">
                     <li>
-                        <a href="#">Open Your Store</a>
+                        <a href="/createstore">Open Your Store</a>
                     </li>
                     <li>
                         <a href="/seller">Sell Anything</a>
@@ -44,15 +44,23 @@
                     <div class="col">
                         <ul class="head-middle-list">
 
-                            <li>
+                        <script type = "text/javascript" language = "javascript">
+
+function searchfunc(){
+    var action_src = "search/" + document.getElementsByName("keywords")[0].value;
+    var form = document.getElementById('searcharea');
+    form.action = action_src ;
+}</script>
+
+                        <li>
 							<div class="dropdown">
                                     <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
 
-                                    <form class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
+                                    <form id="searcharea" onSubmit="searchfunc()" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
                                         <div class="input-group">
-                                            <input type="text" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
+                                            <input type="text" name="keywords" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
                                             <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="button" id="button-addon2">Search</button>
+                                                <input class="btn btn-outline-secondary" type="submit" id="button-addon2" value="Search">
                                             </div>
                                         </div>
                                     </form>
@@ -60,6 +68,16 @@
 
 
 							</li>
+                            <!-- <li>
+							<div class="dropdown">
+                                <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
+                                <div id="app" class="dropdown-menu">
+                                    <searchbar class="dropdown-item"/>
+                                </div>
+                            </div>
+
+
+							</li> -->
 
 
                             <li><a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span>
@@ -117,7 +135,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item nav-home">
                             <a href="/list" class="nav-link">
-                                <span class="icon-home"></span>
+                                <span class="icon-home" style="borderRadius:20px;"></span>
 
                             </a>
                         </li>
@@ -138,13 +156,13 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
 
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Tank Tops</a>
+                                                        <a href="/mockupgenerator/720" class="nav-l3-title">Tank Tops</a>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <a href="/mockupgenerator/1233" class="nav-l3-title">Hoodies</a>
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">More</a>
+                                                        <a href="/comingsoon" class="nav-l3-title">More</a>
                                                     </div>
 
                                                 </div>
@@ -159,10 +177,10 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                                                 <div class="row">
 
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Mugs</a>
+                                                        <a href="/comingsoon" class="nav-l3-title">Mugs</a>
                                                     </div>
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Pillows</a>
+                                                        <a href="/comingsoon" class="nav-l3-title">Pillows</a>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <a href="/mockupgenerator/1033" class="nav-l3-title">Canvas</a>
@@ -179,7 +197,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                                             <li>
                                                 <div class="row">
                                                     <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Tote Bags</a>
+                                                        <a href="/mockupgenerator/550" class="nav-l3-title">Bags</a>
 
                                                     </div>
                                                     <div class="col-md-3">
@@ -198,7 +216,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                             </div>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="/products">
                                     SHOP
                                     <span>Custom design products</span>
                                  </a>
@@ -240,6 +258,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
   <script type = "text/javascript"  src = "https://code.jquery.com/jquery-3.3.1.min.js">
       </script>
          <script type = "text/javascript" language = "javascript">
+
          $(document).ready(function() {
            
                 $.ajax({url: "{{env('API_URL')}}token", contentType: 'application/json', dataType: 'json', type: 'POST',   data: JSON.stringify({ "privateKey": "password"}) , success: function(result){ 
@@ -253,7 +272,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                             "Authorization":"Bearer "+result.token,
                             "Content-Type":"application/json"
                         }, type: 'GET',
-                         success: function(products){ consoel.log("-0---",products);
+                         success: function(products){ console.log("-0---",products);
                             
                             if(products.operationCode == 200){
 
@@ -318,11 +337,18 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
       
 @endif
 
-    <footer>
-        <img src="{{ asset('images/footer.png') }}" class="img-100" alt="">
+    <footer  style="width:100vw;">
+        <div id="app" style="width:100vw;">
+            <example  style="width:100vw;" />
+          </div>
+        <!-- <img src="{{ asset('images/footer.png') }}" class="img-100" alt=""> -->
     </footer>
-	<!-- Scripts -->	
+    <!-- Scripts -->	
+    
 
+
+    <script src="{{asset('js/app.js')}}"></script>
+    <script src="{{asset('js/search.js')}}"></script>
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/popper.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap.min.js') }}"></script>

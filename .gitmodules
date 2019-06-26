@@ -1,0 +1,6 @@
+[submodule "mockupgen"]
+	path = mockupgen
+	url = https://narkane@bitbucket.org/agrwebdev/mockupgen.git
+[submodule "public/mockupgen"]
+	path = public/mockupgen
+	url = https://narkane@bitbucket.org/agrwebdev/mockupgen.git
