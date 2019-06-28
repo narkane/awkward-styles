@@ -30,9 +30,12 @@
 
 
                 <div class="row products-row" id="art-product-list">
-                <script type="text/javascript">
-                echo ('{{$request}}')
-                </script>                    
+                <!-- <script type="text/javascript" language="javascript"> -->
+                    <!-- print('{{$request}}'); -->
+                <!-- </script>                     -->
+                
+                
+                <?php echo html_entity_decode($request) ?>
                     
                 </div>
                 <nav aria-label="Page navigation example">

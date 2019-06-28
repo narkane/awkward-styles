@@ -1151,7 +1151,7 @@ section {
   margin: 0;
   border-radius: 0;
   border: 0;
-  padding: 1rem;
+  /* padding: 1rem; */
 }
 
 .product-heading {

@@ -7794,3 +7794,56 @@ a.text-orange:hover, a.text-orange:focus {
     border-color: #dee2e6; } }
 
 /*# sourceMappingURL=bootstrap.css.map */
+
+.pannel{
+  height:500px;
+  padding:0px;
+}
+.pannel .color{
+  width:100vw;
+  margin:0px;
+  background-color: orange;
+  background-image: url( "../images/clothingbackdrop.jpg");
+  /* opacity: 0.5; */
+  background-blend-mode: multiply;
+}
+.pannel .color button{
+  position: absolute;
+  left: 100px;
+  top: 450px;
+  height: 50px;
+  width: 300px;
+  background-color: rgba(255, 200, 32, 0.5);
+  border: 1px solid grey;
+  box-shadow: 0px 0px 5px #ffbb33;
+}
+.pannel .color input{
+  text-align: center;
+  color: black;
+  font-size: 12pt;
+  background-color: rgba(255, 200, 32, 0.85);
+  /* float: left; */
+  box-shadow: 0px 0px 5px #ffbb33;
+  border: 1px solid grey;
+  position: absolute;
+  left: 100px;
+  top: 400px;
+  height: 50px;
+  width: 300px;
+}
+.pannel .color .bigtext{
+  font-weight: 700;
+  text-shadow: 2px 2px 5px darkgrey;
+  font-size: 12pt;
+  color: #eee;
+}
+.pannel .color .bigtext p b{
+  font-size: 16pt;
+  color: white;
+}
+.pannel .color .bigtext h1 {
+  color: white;
+  font-weight: 1000;
+  font-size: 42pt;
+  font-family: Arial, Helvetica, sans-serif;
+}

@@ -14,8 +14,6 @@
    
 </head>
 <body>
-
-	
 <header>
         <div class="head-top bg-dark">
             <div class="container">
@@ -44,15 +42,9 @@
                     <div class="col">
                         <ul class="head-middle-list">
 
-                        <script type = "text/javascript" language = "javascript">
 
-function searchfunc(){
-    var action_src = "search/" + document.getElementsByName("keywords")[0].value;
-    var form = document.getElementById('searcharea');
-    form.action = action_src ;
-}</script>
 
-                        <li>
+          <li>
 							<div class="dropdown">
                                     <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
 
@@ -67,25 +59,12 @@ function searchfunc(){
                                 </div>
 
 
-							</li>
-                            <!-- <li>
-							<div class="dropdown">
-                                <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
-                                <div id="app" class="dropdown-menu">
-                                    <searchbar class="dropdown-item"/>
-                                </div>
-                            </div>
+					</li>
+          <li>
+              <a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span></a>
+          </li>
 
-
-							</li> -->
-
-
-                            <li><a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span>
-                            </a></li>
-
-                         
-
-                            @if (Auth::guest())
+                    @if (Auth::guest())
 
                                <li>
                             <div class="dropdown">
@@ -98,17 +77,13 @@ function searchfunc(){
                                         <a class="dropdown-item" href="#">Logout</a> -->
                                     </div>
                                 </div>
-                            </li>
-					
-					@else
-						<li>
+                        </li>
+              			@else
+					            	<li>
                         <div class="dropdown">    
                             <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ Auth::user()->name }} <span class="caret"></span></a>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userdropdown">
                                 <a class="dropdown-item" href="/dashboard" title="My account">My Dashboard</a>
-                                <!-- <li><a href="{{
-route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default'),'locale'=>Route::current()->parameter('locale','en'),'currency'=>Route::current()->parameter('currency','DOL')])
-}}" title="My account">My account</a></li> -->
                                 <form id="logout" action="/logout" method="POST">{{csrf_field()}}</form><a  class="dropdown-item" href="javascript: document.getElementById('logout').submit();">Logout</a>
                             </div>
                         </div>
@@ -231,121 +206,44 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                     </ul>
 
                 </div>
+                <!-- <div style="width:100px;height:10px;" /> -->
             </div>
         </nav>
     </header>
 
-   
-   
-@yield('aimeos_body')
-
-
-	
-@if (Request::path() == 'list')
-
-
-
-<section class="product-section" style="display:none">
-       
-
-        <div class="container">
-            <h3 class="section-title color-purple">New Arrivals</h3>
-            <div class="row products-row" id="products-data-ajax">                    
-               
-            </div>
-        </div>
-  <script type = "text/javascript"  src = "https://code.jquery.com/jquery-3.3.1.min.js">
-      </script>
-         <script type = "text/javascript" language = "javascript">
-
-         $(document).ready(function() {
-           
-                $.ajax({url: "{{env('API_URL')}}token", contentType: 'application/json', dataType: 'json', type: 'POST',   data: JSON.stringify({ "privateKey": "password"}) , success: function(result){ 
-
-
-                        if(result.token){
-
-                            var productsHtml = '';
-
-                      $.ajax({url: "{{env('API_URL')}}api/product/getProductList", contentType: 'application/json', dataType: 'json', headers: {
-                            "Authorization":"Bearer "+result.token,
-                            "Content-Type":"application/json"
-                        }, type: 'GET',
-                         success: function(products){ console.log("-0---",products);
-                            
-                            if(products.operationCode == 200){
-
-
-                                var productsHtml = '';
-
-                               for (var i = 3; i <= products.properties.length; i++) {
-
-
-                               if(i==11) 
-                               break;                             
-
-                                var image = products.properties[i].image.split(',');
-                                 
-                             $.ajax({url: "{{env('API_URL')}}api/media/getById/"+image[0], contentType: 'application/json', dataType: 'json', headers: {
-                            "Authorization":"Bearer "+result.token,
-                            "Content-Type":"application/json"
-                        }, type: 'GET', success: function(imagedata){ 
-                            
-                            if(imagedata.operationCode == 200){
-                                        console.log(imagedata.properties);
-                                productsHtml += '<div class="col-3 item product " data-reqstock="1"> <div class="product-grid"> <div><a href="/product-details/'+products.properties[i].id+'"><img class="media-item" src="'+imagedata.properties.full_url+'" width="258" height="266"> </a> <span class="product-new-label">Sale</span>                            <span class="product-discount-label">20%</span> </div>                        <div class="product-content">                        <a href="/product-details/'+products.properties[i].id+'">                            <h3 class="title">'+products.properties[i].label+'</h3> </a>                            <div class="price">                                <div class="articleitem price price-actual" data-prodid="119" data-prodcode="103"><meta itemprop="price" content="25.00"><div class="price-item default" itemprop="priceSpecification" itemscope="" itemtype="http://schema.org/PriceSpecification"><meta itemprop="valueAddedTaxIncluded" content="true"><meta itemprop="priceCurrency" content="USD"><meta itemprop="price" content="25.00"><span class="quantity" ><meta itemprop="minValue" content="1"> </span><span class="value"> $ '+products.properties[i].price+'</span><span class="taxrate">Incl. 0.01% VAT</span></div></div></div></div><div class="offer" ><div class="stock-list"><div class="articleitem stock-actual" data-prodid="119" data-prodcode="103"></div></div><div class="price-list"></div></div></div></div>';
-
-                                $("#products-data-ajax").html(productsHtml);
-                            }
-                            } 
-
-                            });   
-
-
-                               
-                                }
-
-                                
-
-                            }
-
-                    }
-
-
-                });
-
-                     }
-
-
-                }});
-          });       
-             </script>
-        
-    </section>
-  
-   <div class="container">
-        <section class="pt-4">
-            <div class="row">
-                <div class="col-12">
-                    <img  src="{{ asset('images/home/contest.jpg') }}" class="img-100" alt="">
-                </div>
-            </div>
-        </section>
+<!-- ------------------------------------------------------ -->
+<div class="pannel">
+<div class="color">
+    <!-- <img src="{{ asset('images/affiliate.png') }}" style="position:relative;left:50px;height:25%;width:25%;"> -->
+    <img src="{{ asset('images/dollarshirt.png') }}" style="height:600px;width:600px;position:relative;left:-300px;" class="img-100" alt="">
+  <input placeholder="email@host.com">
+  <button>JOIN US!</button>
+    <div class="bigtext" style="position:relative;left:450px;top:-450px;"><h1>AWKWARD STYLES'<br>PARTNER PROGRAM</h1>
+    <p style="position:relative;left:25px;">
+      Awkward Styles' Partner Program enables you to<br>
+      engage your fans and make money through merchandise.<br><br>
+      <b style="position:relative;left:-20px;top:-15px;">Your fans love you, now let them show it off!</b>
+    </p>
     </div>
+  </div>
+</div>
+<!-- ------------------------------------------------------ -->
 
-      
-@endif
-
-    <footer  style="width:100vw;">
-        <div id="app" style="width:100vw;">
-            <example  style="width:100vw;" />
-          </div>
-        <!-- <img src="{{ asset('images/footer.png') }}" class="img-100" alt=""> -->
+    <footer>
+        <div id="app">
+            <example />
+        </div>
     </footer>
-    <!-- Scripts -->	
-    
 
 
+    <!-- Scripts ------------------------------------------ -->	
+    <script type = "text/javascript" language = "javascript">
+        function searchfunc(){
+            var action_src = "search/" + document.getElementsByName("keywords")[0].value;
+            var form = document.getElementById('searcharea');
+            form.action = action_src ;
+        }
+    </script>
     <script src="{{asset('js/app.js')}}"></script>
     <script src="{{asset('js/search.js')}}"></script>
     <script src="{{ asset('js/jquery.min.js') }}"></script>

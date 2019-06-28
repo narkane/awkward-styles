@@ -19,6 +19,7 @@ Auth::routes();
 
 
 ###jthummel
+Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
 Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
 Route::get('/search/{id}', 'CollectionsController@searchSuggestions')->name('search-results');
 ###them
