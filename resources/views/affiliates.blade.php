@@ -11,6 +11,7 @@
 	  <link href="{{ asset('css/graphic-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
     <link href="{{ asset('css/theme.css') }}" rel="stylesheet"> 
+    <link href="{{ asset('css/affiliates.css') }}" rel="stylesheet"> 
    
 </head>
 <body>

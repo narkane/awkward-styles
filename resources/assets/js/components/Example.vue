@@ -22,7 +22,9 @@
               <div id="col-1">
                 USEFUL LINKS
                 <ul style="list-style: none;">
-                  <li>STORE LOCATION</li>
+                  <li>
+                    <a href="/affiliates">BECOME AN AFFILIATE</a>
+                  </li>
                   <li>MY ACCOUNT</li>
                   <li>SIZE GUIDE</li>
                   <li>TERMS & CONDITIONS</li>

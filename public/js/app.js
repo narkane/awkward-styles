@@ -45350,6 +45350,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
@@ -45405,7 +45407,11 @@ var staticRenderFns = [
                 _c("div", { attrs: { id: "col-1" } }, [
                   _vm._v("\n              USEFUL LINKS\n              "),
                   _c("ul", { staticStyle: { "list-style": "none" } }, [
-                    _c("li", [_vm._v("STORE LOCATION")]),
+                    _c("li", [
+                      _c("a", { attrs: { href: "/affiliates" } }, [
+                        _vm._v("BECOME AN AFFILIATE")
+                      ])
+                    ]),
                     _vm._v(" "),
                     _c("li", [_vm._v("MY ACCOUNT")]),
                     _vm._v(" "),
