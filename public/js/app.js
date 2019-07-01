@@ -45246,7 +45246,7 @@ exports = module.exports = __webpack_require__(3)(false);
 
 
 // module
-exports.push([module.i, "\n*[data-v-650f2efa] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-650f2efa] {\n  margin: 0 0 0 0;\n  padding: 0 0 0 0;\n  background-color: #f7bf22;\n  width: 100vw;\n}\n.row[data-v-650f2efa] {\n  width: calc(100vw - 115px);\n}\n.panel-heading[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset grey;\n  font-weight: 500;\n  text-shadow: 0px 0px 1px lightgrey;\n  color: lightgrey;\n  background-color: #444;\n  width: 100vw;\n  height: 115px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.panel-body[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset yellow;\n  background-color: #f7bf22;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: left;\n      -ms-flex-pack: left;\n          justify-content: left;\n  text-shadow: 0px 0px 2px rgba(0, 0, 0, 80%);\n  font-size: 12pt;\n  padding-left: 115px;\n  color: black;\n  font-weight: 650;\n  width: 100vw;\n  height: 300px;\n}\n.panel-body > div[data-v-650f2efa] {\n  /* display: inline-block; */\n  /* position: relative; */\n  /* top: 0px; */\n}\n#col-1[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 16%;\n          flex: 0 16%;\n}\n#col-1-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 30%;\n          flex: 0 30%;\n}\n#col-2[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#col-3[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 19%;\n          flex: 0 19%;\n}\n#col-2-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 13%;\n          flex: 0 13%;\n}\n#col-4[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 28%;\n          flex: 0 28%;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  padding-top: 15px;\n}\n#col-3-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#row-filler[data-v-650f2efa] {\n  -webkit-box-flex: 1;\n      -ms-flex: 1;\n          flex: 1;\n}\n#col-4-bottom[data-v-650f2efa] {\n  position: relative;\n  right: 10px;\n}\n#logo[data-v-650f2efa] {\n  border: 3px outset goldenrod;\n}\nimg[data-v-650f2efa] {\n  border-radius: 10px;\n}\n#email[data-v-650f2efa] {\n  font-size: 14pt;\n  width: 375px;\n}\n.vl[data-v-650f2efa] {\n  margin: 0px 75px 0px 75px;\n  border-left: 1px solid grey;\n  height: 75px;\n}\nul[data-v-650f2efa] {\n  padding: 10px 0 0 0;\n}\nli[data-v-650f2efa] {\n  font-weight: 100;\n  font-size: 9pt;\n  padding: 0px 0px 3px 5px;\n}\n", ""]);
+exports.push([module.i, "\n*[data-v-650f2efa] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-650f2efa] {\n  margin: 0 0 0 0;\n  padding: 0 0 0 0;\n  background-color: #f7bf22;\n  width: 100vw;\n}\n.row[data-v-650f2efa] {\n  width: calc(100vw - 115px);\n}\n.panel-heading[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset grey;\n  font-weight: 500;\n  text-shadow: 0px 0px 1px lightgrey;\n  color: lightgrey;\n  background-color: #444;\n  width: 100vw;\n  height: 115px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.panel-body[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset yellow;\n  background-color: #f7bf22;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: left;\n      -ms-flex-pack: left;\n          justify-content: left;\n  text-shadow: 0px 0px 2px rgba(0, 0, 0, 80%);\n  font-size: 12pt;\n  padding-left: 115px;\n  color: black;\n  font-weight: 650;\n  width: 100vw;\n  height: 300px;\n}\n.panel-body > div[data-v-650f2efa] {\n  /* display: inline-block; */\n  /* position: relative; */\n  /* top: 0px; */\n}\n#col-1[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 16%;\n          flex: 0 16%;\n}\n#col-1-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 30%;\n          flex: 0 30%;\n}\n#col-2[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#col-3[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 19%;\n          flex: 0 19%;\n}\n#col-2-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 13%;\n          flex: 0 13%;\n}\n#col-4[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 28%;\n          flex: 0 28%;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  padding-top: 15px;\n}\n#col-3-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#row-filler[data-v-650f2efa] {\n  -webkit-box-flex: 1;\n      -ms-flex: 1;\n          flex: 1;\n}\n#col-4-bottom[data-v-650f2efa] {\n  position: relative;\n  right: 10px;\n}\n#logo[data-v-650f2efa] {\n  border: 3px outset goldenrod;\n}\nimg[data-v-650f2efa] {\n  border-radius: 10px;\n}\n#email[data-v-650f2efa] {\n  font-size: 14pt;\n  width: 375px;\n}\n.vl[data-v-650f2efa] {\n  margin: 0px 75px 0px 75px;\n  border-left: 1px solid grey;\n  height: 75px;\n}\nul[data-v-650f2efa] {\n  padding: 10px 0 0 0;\n}\nli[data-v-650f2efa] {\n  font-weight: 100;\n  font-size: 9pt;\n  padding: 0px 0px 3px 5px;\n}\nnotset[data-v-650f2efa] {\n  -webkit-text-decoration-line: line-through;\n          text-decoration-line: line-through;\n}\nli a[data-v-650f2efa] {\n  color: black;\n  -webkit-text-decoration-line: none;\n          text-decoration-line: none;\n}\n", ""]);
 
 // exports
 
@@ -45257,6 +45257,12 @@ exports.push([module.i, "\n*[data-v-650f2efa] {\n  --font-family-sans-serif: -ap
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -45367,146 +45373,183 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _c("div", { staticClass: "container" }, [
+    _c("link", {
+      attrs: {
+        type: "text/css",
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css?family=Roboto:400,300"
+      }
+    }),
+    _vm._v(" "),
+    _c("div", { staticClass: "row" }, [
+      _c("div", { staticClass: "col-md-8 col-md-offset-2" }, [
+        _c("div", { staticClass: "panel panel-default" }, [
+          _vm._m(0),
+          _vm._v(" "),
+          _c("div", { staticClass: "panel-body" }, [
+            _c("br"),
+            _vm._v(" "),
+            _c("br"),
+            _vm._v(" "),
+            _c("div", { staticClass: "row" }, [
+              _c("div", { attrs: { id: "col-1" } }, [
+                _vm._v("\n              USEFUL LINKS\n              "),
+                _c(
+                  "ul",
+                  { staticStyle: { "list-style": "none" } },
+                  [
+                    _vm._m(1),
+                    _vm._v(" "),
+                    _c("notset", [
+                      _c("li", [_vm._v("MY ACCOUNT")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("SIZE GUIDE")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("TERMS & CONDITIONS")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("RETURN & EXCHANGES")])
+                    ])
+                  ],
+                  1
+                )
+              ]),
+              _vm._v(" "),
+              _c("div", { attrs: { id: "col-2" } }, [
+                _vm._v("\n              STORE\n              "),
+                _c(
+                  "ul",
+                  { staticStyle: { "list-style": "none" } },
+                  [
+                    _c("notset", [
+                      _c("li", [_vm._v("WOMEN")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("MEN")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("KIDS")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("WHOLESALE")])
+                    ])
+                  ],
+                  1
+                )
+              ]),
+              _vm._v(" "),
+              _c("div", { attrs: { id: "col-3" } }, [
+                _vm._v("\n              HELP\n              "),
+                _c(
+                  "ul",
+                  { staticStyle: { "list-style": "none" } },
+                  [
+                    _c("notset", [
+                      _c("li", [_vm._v("CONTACT")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("TRACK ORDERS")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("FAQS")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("SHIPPING & DELIVERY")]),
+                      _vm._v(" "),
+                      _c("li", [_vm._v("PRIVACY POLICY")])
+                    ])
+                  ],
+                  1
+                )
+              ]),
+              _vm._v(" "),
+              _vm._m(2),
+              _vm._v(" "),
+              _c("div", { attrs: { id: "row-filler" } })
+            ]),
+            _vm._v(" "),
+            _c("br"),
+            _vm._v(" "),
+            _vm._m(3)
+          ])
+        ])
+      ])
+    ])
+  ])
 }
 var staticRenderFns = [
   function() {
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "container" }, [
-      _c("link", {
-        attrs: {
-          type: "text/css",
-          rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css?family=Roboto:400,300"
-        }
-      }),
+    return _c("div", { staticClass: "panel-heading" }, [
+      _c("div", [_vm._v("Free Sign up")]),
       _vm._v(" "),
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-md-8 col-md-offset-2" }, [
-          _c("div", { staticClass: "panel panel-default" }, [
-            _c("div", { staticClass: "panel-heading" }, [
-              _c("div", [_vm._v("Free Sign up")]),
-              _vm._v(" "),
-              _c("div", { staticClass: "vl" }),
-              _vm._v(" "),
-              _c("div", [_vm._v("Custom branding")]),
-              _vm._v(" "),
-              _c("div", { staticClass: "vl" }),
-              _vm._v(" "),
-              _c("div", [_vm._v("Low shipping rates")])
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "panel-body" }, [
-              _c("br"),
-              _vm._v(" "),
-              _c("br"),
-              _vm._v(" "),
-              _c("div", { staticClass: "row" }, [
-                _c("div", { attrs: { id: "col-1" } }, [
-                  _vm._v("\n              USEFUL LINKS\n              "),
-                  _c("ul", { staticStyle: { "list-style": "none" } }, [
-                    _c("li", [
-                      _c("a", { attrs: { href: "/affiliates" } }, [
-                        _vm._v("BECOME AN AFFILIATE")
-                      ])
-                    ]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("MY ACCOUNT")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("SIZE GUIDE")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("TERMS & CONDITIONS")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("RETURN & EXCHANGES")])
-                  ])
-                ]),
-                _vm._v(" "),
-                _c("div", { attrs: { id: "col-2" } }, [
-                  _vm._v("\n              STORE\n              "),
-                  _c("ul", { staticStyle: { "list-style": "none" } }, [
-                    _c("li", [_vm._v("WOMEN")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("MEN")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("KIDS")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("WHOLESALE")])
-                  ])
-                ]),
-                _vm._v(" "),
-                _c("div", { attrs: { id: "col-3" } }, [
-                  _vm._v("\n              HELP\n              "),
-                  _c("ul", { staticStyle: { "list-style": "none" } }, [
-                    _c("li", [_vm._v("CONTACT")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("TRACK ORDERS")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("FAQS")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("SHIPPING & DELIVERY")]),
-                    _vm._v(" "),
-                    _c("li", [_vm._v("PRIVACY POLICY")])
-                  ])
-                ]),
-                _vm._v(" "),
-                _c("div", { attrs: { id: "col-4" } }, [
-                  _vm._v("\n              JOIN OUR NEWSLETTER\n              "),
-                  _c("ul", [
-                    _c("li", { staticStyle: { "list-style": "none" } }, [
-                      _vm._v(
-                        "\n                  Subscribe to our newsletter to get tlatest new info about our newest products and promotional campaigns.\n                  "
-                      ),
-                      _c("br"),
-                      _vm._v(" "),
-                      _c("br"),
-                      _vm._v(" "),
-                      _c("input", {
-                        staticStyle: {
-                          border: "0px solid black",
-                          "border-bottom": "1px solid black",
-                          background: "#F7BF22"
-                        },
-                        attrs: { id: "email", placeholder: " EMAIL" }
-                      })
-                    ])
-                  ])
-                ]),
-                _vm._v(" "),
-                _c("div", { attrs: { id: "row-filler" } })
-              ]),
-              _vm._v(" "),
-              _c("br"),
-              _vm._v(" "),
-              _c("div", { staticClass: "row" }, [
-                _c("div", { attrs: { id: "col-1-bottom" } }, [
-                  _vm._v("\n              OUR PAYMENT METHODS\n              "),
-                  _c("br"),
-                  _vm._v(" "),
-                  _c("img", { attrs: { src: "/../images/payments.png" } })
-                ]),
-                _vm._v(" "),
-                _c("div", { attrs: { id: "col-2-bottom" } }),
-                _vm._v(" "),
-                _c("div", { attrs: { id: "col-3-bottom" } }, [
-                  _vm._v("\n              GET IN TOUCH\n              "),
-                  _c("br"),
-                  _vm._v(" "),
-                  _c("img", { attrs: { src: "/../images/getintouch.png" } })
-                ]),
-                _vm._v(" "),
-                _c("div", { attrs: { id: "row-filler" } }),
-                _vm._v(" "),
-                _c("div", { attrs: { id: "col-4-bottom" } }, [
-                  _c("img", {
-                    attrs: { id: "logo", src: "/../images/logo.png" }
-                  })
-                ])
-              ])
-            ])
-          ])
+      _c("div", { staticClass: "vl" }),
+      _vm._v(" "),
+      _c("div", [_vm._v("Custom branding")]),
+      _vm._v(" "),
+      _c("div", { staticClass: "vl" }),
+      _vm._v(" "),
+      _c("div", [_vm._v("Low shipping rates")])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("li", [
+      _c("a", { attrs: { href: "/affiliates" } }, [
+        _vm._v("BECOME AN AFFILIATE")
+      ])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { attrs: { id: "col-4" } }, [
+      _vm._v("\n              JOIN OUR NEWSLETTER\n              "),
+      _c("ul", [
+        _c("li", { staticStyle: { "list-style": "none" } }, [
+          _vm._v(
+            "\n                  Subscribe to our newsletter to get tlatest new info about our newest products and promotional campaigns.\n                  "
+          ),
+          _c("br"),
+          _vm._v(" "),
+          _c("br"),
+          _vm._v(" "),
+          _c("input", {
+            staticStyle: {
+              border: "0px solid black",
+              "border-bottom": "1px solid black",
+              background: "#F7BF22"
+            },
+            attrs: { id: "email", placeholder: " EMAIL" }
+          })
         ])
+      ])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "row" }, [
+      _c("div", { attrs: { id: "col-1-bottom" } }, [
+        _vm._v("\n              OUR PAYMENT METHODS\n              "),
+        _c("br"),
+        _vm._v(" "),
+        _c("img", { attrs: { src: "/../images/payments.png" } })
+      ]),
+      _vm._v(" "),
+      _c("div", { attrs: { id: "col-2-bottom" } }),
+      _vm._v(" "),
+      _c("div", { attrs: { id: "col-3-bottom" } }, [
+        _vm._v("\n              GET IN TOUCH\n              "),
+        _c("br"),
+        _vm._v(" "),
+        _c("img", { attrs: { src: "/../images/getintouch.png" } })
+      ]),
+      _vm._v(" "),
+      _c("div", { attrs: { id: "row-filler" } }),
+      _vm._v(" "),
+      _c("div", { attrs: { id: "col-4-bottom" } }, [
+        _c("img", { attrs: { id: "logo", src: "/../images/logo.png" } })
       ])
     ])
   }

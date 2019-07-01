@@ -104,6 +104,15 @@ footer {
   width: 100%;
 }
 
+img {
+  border-radius: 10px;
+  border: 1px solid black;
+}
+
+.rounded {
+  border-radius: 50%;
+}
+
 .pannel {
   padding: 1.25rem;
   background-color: #ffffff;
@@ -170,7 +179,13 @@ footer {
 }
 
 .head-middle {
-  padding: 1rem 0;
+  background-color: #efefef;
+  padding: 0 5rem;
+  padding-left: 0;
+}
+.head-middle .container .row .col a img {
+  border-radius: 20px;
+  border: 2px inset #efefef;
 }
 
 .head-middle-list {
@@ -1266,10 +1281,15 @@ section {
 }
 
 .navbar-expand-lg .navbar-nav .nav-item.nav-home .nav-link {
-  padding: 1.2rem 1rem;
+  padding: 30px 1.3rem;
+  border-radius: 50%;
   display: block;
-  height: 100%;
+  position: relative;
+  top: -12px;
+  z-index: 10;
+  height: 90px;
   background-color: #82a501;
+  border: 2px outset darkgray;
 }
 
 .navbar-expand-lg .navbar-nav .nav-item.nav-home .nav-link > span {

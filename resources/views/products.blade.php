@@ -127,7 +127,7 @@ $token = $tokenGen['token'];
                                 console.log(images);
                                 console.log(images.properties.full_url);
                             }
-                        });                                
+                        });          
                     }                            
                 } else {
                     $('#art-product-list').html(`No Art Products to Display`);
