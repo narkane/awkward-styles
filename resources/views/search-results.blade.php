@@ -33,9 +33,16 @@
             <script type="text/javascript" language="javascript">
                 var sData = <?php echo $request ?>;
 
+                console.log(sData);
+
+                    if(sData.length == 0){
+                        console.log("NADA DAWG!");
+                        document.write('<meta http-equiv="Refresh" content="0; url=/products">');
+                    }
+                
                 for(let i = 0; i < sData.length; i++) {
-                    for(let j = 0; j < sData[0].length; j++) {
-                $.ajax({
+                    for(let j = 0; j < sData[i].length; j++) {
+                    $.ajax({
                         url: "{{env('API_URL')}}api/media/getById/" +
                         sData[i][j].image.split(",")[0],
                         contentType: 'application/json',
@@ -66,13 +73,13 @@
                             console.log(images);
                             console.log(images.properties.full_url);
                         }
-                });
-                console.log((i+1)+" * "+(j+1)+" = "+(i+1)*(j+1))}};
+                    });
+                console.log((i+1)+" * "+(j+1)+" = "+(i+1)*(j+1));
                 console.log('====================');
 
                 console.log('areas: '+sData.length);
                 console.log('results per area: '+sData[0].length);
-                console.log('total results: '+sData.length*sData[0].length);
+                console.log('total results: '+sData.length*sData[0].length)}};
             </script>
 
                 </div>

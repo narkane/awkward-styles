@@ -1291,6 +1291,7 @@ section {
   background-image: url("../images/home.png");
   background-size: 72px 90px;
   background-color: #82a501;
+  opacity: 0.85;
   border: 2px outset darkgray;
 }
 .nav-home .nav-link:hover {

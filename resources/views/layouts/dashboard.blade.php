@@ -179,7 +179,7 @@
                         <script type = "text/javascript" language = "javascript">
 
 function searchfunc(){
-    var action_src = "search/" + document.getElementsByName("keywords")[0].value;
+    var action_src = "/search/" + document.getElementsByName("keywords")[0].value;
     var form = document.getElementById('searcharea');
     form.action = action_src ;
 }</script>

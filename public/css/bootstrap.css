@@ -3182,8 +3182,17 @@ input[type="button"].btn-block {
 .tab-content > .active {
   display: block; }
 
+.head-top{
+  position: fixed;
+  z-index: 9;
+  width: 100vw;
+}
+
 .navbar {
-  position: relative;
+  position: fixed;
+  top: 34px;
+  z-index: 9;
+  opacity: 0.9;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

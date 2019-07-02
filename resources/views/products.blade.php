@@ -134,7 +134,7 @@ $token = $tokenGen['token'];
                 }                        
             },
             error: function(xhr,status,error) {
-                $('#art-product-list').html("Something went wrong...");
+                $('#art-product-list').html("<br><br>Something went wrong...<br>");
             }
         });
     });

@@ -162,7 +162,7 @@
                         <script type = "text/javascript" language = "javascript">
 
 function searchfunc(){
-    var action_src = "search/" + document.getElementsByName("keywords")[0].value;
+    var action_src = "/search/" + document.getElementsByName("keywords")[0].value;
     var form = document.getElementById('searcharea');
     form.action = action_src ;
 }</script>
@@ -270,7 +270,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
     <!-- Scripts ------------------------------------------ -->	
     <script type = "text/javascript" language = "javascript">
         function searchfunc(){
-            var action_src = "search/" + document.getElementsByName("keywords")[0].value;
+            var action_src = "/search/" + document.getElementsByName("keywords")[0].value;
             var form = document.getElementById('searcharea');
             form.action = action_src ;
         }
