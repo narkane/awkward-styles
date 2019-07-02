@@ -255,7 +255,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
 
 @endif
 
-    <footer  style="width:100vw;">
+    <footer>
     </footer>
 
 

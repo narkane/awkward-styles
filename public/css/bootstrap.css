@@ -3185,7 +3185,8 @@ input[type="button"].btn-block {
 .head-top{
   position: fixed;
   z-index: 9;
-  width: 100vw;
+  border-radius: 20px 0 0 20px;
+  opacity: 0.7;
 }
 
 .navbar {

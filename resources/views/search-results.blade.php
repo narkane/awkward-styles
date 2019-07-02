@@ -27,6 +27,7 @@
                         </div>
                     </div>
                 </div>
+                
 
 
                 <div class="row products-row" id="art-product-list">

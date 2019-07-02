@@ -87,7 +87,10 @@ body {
 }
 
 header {
-  background-color: #ffffff;
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 100px;
+  /* filter: drop-shadow(10px 3px 4px #227722); */
 }
 
 footer {
@@ -102,6 +105,7 @@ footer {
 
 .img-100 {
   width: 100%;
+  box-shadow: 1px 1px 5px 2px darkgray;
 }
 
 img {
@@ -115,7 +119,10 @@ img {
 
 .pannel {
   padding: 1.25rem;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.8);
+  background-image: url("../images/panelbg.jpg");
+  background-size: 15%;
+  background-blend-mode: screen;
   box-shadow: 0 0rem 0.25rem rgba(0, 0, 0, 0.95) !important;
   border-radius: 0.25rem;
 }
@@ -576,6 +583,49 @@ section {
   padding: 15px 0;
 }
 
+@-webkit-keyframes pulse {
+  25% {
+    -webkit-transform: scale(1.025);
+    transform: scale(1.025);
+  }
+  75% {
+    -webkit-transform: scale(0.975);
+    transform: scale(0.975);
+  }
+}
+
+@keyframes pulse {
+  25% {
+    -webkit-transform: scale(1.025);
+    -ms-transform: scale(1.025);
+    transform: scale(1.025);
+  }
+  75% {
+    -webkit-transform: scale(0.975);
+    -ms-transform: scale(0.975);
+    transform: scale(0.975);
+  }
+}
+
+.pulse {
+  display: inline-block;
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0);
+}
+
+.pulse:hover {
+  -webkit-animation-name: pulse;
+  animation-name: pulse;
+  -webkit-animation-duration: 1.5s;
+  animation-duration: 1.5s;
+  -webkit-animation-timing-function: ease-in-out;
+  animation-timing-function: ease-in-out;
+  -webkit-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+}
+
 .image-div h5,
 .image-div h4 {
   margin-top: 1rem;
@@ -727,7 +777,12 @@ section {
   padding: 0 0 0 15px;
 }
 
+.categories-banner {
+}
+
 .categories-banner img {
+  position: absolute;
+  z-index: -1;
   width: 100%;
   height: auto;
 }
@@ -925,7 +980,12 @@ section {
 }
 
 .FeaturedArtist {
-  background-color: #022119;
+  border: 3px outset gray;
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
+  background-image: url("../images/monthlyartistbackdrop.jpg");
+  background-size: cover;
+  background-blend-mode: screen;
   text-align: center;
 }
 
@@ -959,6 +1019,20 @@ section {
   background-color: #e9c761;
 }
 
+.collections-section {
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.25);
+  background-image: url("../images/artbanner.jpg");
+  background-blend-mode: screen;
+  border: 4px outset rgba(64, 64, 64, 0.65);
+  border-bottom-width: 10px;
+  box-shadow: 4px 4px 4px darkgray;
+  /* box-shadow: 0px 0px 25px 25px rgba(55, 54, 51, 0.5); */
+  width: 100vw;
+  height: auto;
+  margin-bottom: 25px;
+}
+
 #collections-slider {
   display: flex;
   justify-content: center;
@@ -967,15 +1041,22 @@ section {
 
 #collections-slider .item {
   text-align: center;
-  width: 175px;
+  width: 180px;
 }
 
 #collections-slider .item h6 {
+  margin-left: 40px;
   margin-top: 1rem;
+  color: white;
+  text-shadow: 0 0 7px black;
+  font-weight: 700;
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 100px;
+  border-radius: 5px;
 }
 
 #collections-slider .item a {
-  border: 2px solid #ccc;
+  border: 2px solid #333;
   border-radius: 50%;
   padding: 4px;
   display: grid;
@@ -984,11 +1065,12 @@ section {
 
 #collections-slider .item:hover a {
   /* box-shadow: 2px solid #82a501; */
-  filter: drop-shadow(1px 1px 4px #82b901);
+  filter: drop-shadow(0px 0px 15px #ffffff);
 }
 
 #collections-slider .item.active h6 {
   font-family: "OpenSans-Semibold";
+  font-size: 16pt;
 }
 
 #collections-slider .owl-nav button.owl-next,
@@ -1027,6 +1109,10 @@ section {
 .category-title {
   margin: 1rem 0;
   font-family: "OpenSans-Semibold";
+  font-weight: 700;
+  text-shadow: 0 0 8px white;
+  position: relative;
+  left: -50px;
 }
 
 #btnSort {
@@ -1215,6 +1301,13 @@ section {
   position: relative;
 }
 
+.navbar-expand-lg .navbar-nav .nav-item > .nav-link:hover {
+  text-shadow: 0 0 3px lightcoral;
+}
+.navbar-expand-lg .navbar-nav .nav-item > .nav-link span {
+  text-shadow: none;
+}
+
 .mega-menu-dropdown .dropdown-item {
   padding-left: 1rem;
 }
@@ -1305,3 +1398,7 @@ section {
 }
 
 /* navbar css end */
+.glowhover:hover {
+  box-shadow: 0 0 25px 20px rgba(255, 255, 255, 0.9);
+  transition: box-shadow 1s ease-in-out;
+}

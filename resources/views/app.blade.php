@@ -343,11 +343,10 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
       
 @endif
 
-    <footer  style="width:100vw;">
-        <div id="app" style="width:100vw;">
-            <example  style="width:100vw;" />
+    <footer>
+        <div id="app">
+            <example />
           </div>
-        <!-- <img src="{{ asset('images/footer.png') }}" class="img-100" alt=""> -->
     </footer>
     <!-- Scripts -->	
     

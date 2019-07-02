@@ -498,8 +498,14 @@
 }
 
 #mockupgen {
-  overflow-y: hidden;
-  border-width: 0px;
+  border-radius: 20px;
+  width: 100%;
+}
+
+iframe {
+  border: 2px inset lightgray;
   height: 850px;
   width: 100%;
+  border-radius: 20px;
+  overflow-y: hidden;
 }

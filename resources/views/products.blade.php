@@ -24,7 +24,7 @@ $token = $tokenGen['token'];
                             </button>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btnSort">
                                 <a class="dropdown-item" href="#">Top Selling</a>
-                                <a class="dropdown-item" href="#">Top Selling</a>
+                                <a class="dropdown-item" href="#">Lowest Price</a>
                             </div>
                         </div>
                     </div>

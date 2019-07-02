@@ -115,28 +115,28 @@ if( $this->get( 'listProductTotal', 0 ) > 1 )
                         </div>
                         <div class="image-info">
                             <h5>CUSTOM DESIGNS</h5>
-                            <a href="/mockupgen">Shop Now  ></a>
+                            <a href="/mockupgenerator/0">Shop Now  ></a>
                         </div>
                     </div>
 
                 </div>
                 <div class="col-3">
                     <div class="image-div">
-                        <img src="images/home/shopby-2.png" class="img-100" alt="">
+                        <img src="images/home/shopby-2.png" class="img-100 glowhover" alt="">
                         <h5>PREMIUM DESIGNS</h5>
                         <a href="/search/premium">Shop Now  ></a>
                     </div>
                 </div>
                 <div class="col-3">
                     <div class="image-div">
-                        <img src="images/home/mens-clothing.png" class="img-100" alt="">
+                        <img src="images/home/mens-clothing.png" class="img-100 glowhover" alt="">
                         <h5>MEN'S CLOTHING</h5>
                         <a href="/search/men">Shop Now  ></a>
                     </div>
                 </div>
                 <div class="col-3">
                     <div class="image-div">
-                        <img src="images/home/womens-clothing.png" class="img-100" alt="">
+                        <img src="images/home/womens-clothing.png" class="img-100 glowhover" alt="">
                         <h5>WOMEN'S CLOTHING</h5>
                         <a href="/search/women">Shop Now  ></a>
                     </div>
@@ -151,15 +151,15 @@ if( $this->get( 'listProductTotal', 0 ) > 1 )
             <div class="row">
                 <div class="col-4">
                     <div class="image-div">
-                        <a href="/collections"><img src="images/home/Trending-01.png" class="img-100" alt=""></a>
-                        <a href="/collections"><h4>OUTDOOR COLLECTION</h4></a>
+                        <a href="/collections"><img src="images/home/Trending-01.png" class="img-100 pulse" alt=""></a>
+                        <a href="/collections"><h4>SUNGLASSES COLLECTION</h4></a>
                         <span>Starts at $ 15.00</span>
                     </div>
 
                 </div>
                 <div class="col-4">
                     <div class="image-div">
-                        <a href="/collections"><img src="images/home/Trending-02.png" class="img-100" alt=""></a>
+                        <a href="/collections"><img src="images/home/Trending-02.png" class="img-100 pulse" alt=""></a>
                         <a href="/collections"><h4>WILD COLLECTION</h4></a>
                         <span>Starts at $ 18.00</span>
                     </div>
@@ -167,7 +167,7 @@ if( $this->get( 'listProductTotal', 0 ) > 1 )
                 </div>
                 <div class="col-4">
                     <div class="image-div">
-                        <a href="/collections"><img src="images/home/Trending-03.png" class="img-100" alt=""></a>
+                        <a href="/collections"><img src="images/home/Trending-03.png" class="img-100 pulse" alt=""></a>
                         <a href="/collections"><h4>FUN COLLECTION</h4></a>
                         <span>Starts at $ 14.00</span>
                     </div>
@@ -175,24 +175,24 @@ if( $this->get( 'listProductTotal', 0 ) > 1 )
                 </div>
                 <div class="col-4">
                     <div class="image-div">
-                        <img src="images/home/Trending-04.png" class="img-100" alt="">
-                        <h4>EIGHTEES COLLECTION</h4>
+                        <a href="/collections"><img src="images/home/Trending-04.png" class="img-100 pulse" alt=""></a>
+                        <a href="/collections"><h4>EIGHTEES COLLECTION</h4></a>
                         <span>Starts at $ 15.00</span>
                     </div>
 
                 </div>
                 <div class="col-4">
                     <div class="image-div">
-                        <img src="images/home/Trending-05.png" class="img-100" alt="">
-                        <h4>FRIENDSHIP COLLECTION</h4>
+                        <a href="/collections"><img src="images/home/Trending-05.png" class="img-100 pulse" alt=""></a>
+                        <a href="/collections"><h4>FRIENDSHIP COLLECTION</h4></a>
                         <span>Starts at $ 15.00</span>
                     </div>
 
                 </div>
                 <div class="col-4">
                     <div class="image-div">
-                        <img src="images/home/Trending-06.png" class="img-100" alt="">
-                        <h4>INSPIRATION COLLECTION</h4>
+                        <a href="/collections"><img src="images/home/Trending-06.png" class="img-100 pulse" alt=""></a>
+                        <a href="/collections"><h4>INSPIRATION COLLECTION</h4></a>
                         <span>Starts at $ 15.00</span>
                     </div>
 

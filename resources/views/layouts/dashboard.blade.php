@@ -263,10 +263,13 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
         </main>
     </div>
      <footer>
-        <img src="{{ asset('images/footer.png') }}" class="img-100" alt="">
-        @yield('footer_scripts')
-    </footer>
-    <!-- Scripts -->    
+         <div id="app">
+             <example />
+            </div>
+            @yield('footer_scripts')
+        </footer>
+        <!-- Scripts -->    
+        <script src="{{asset('js/app.js')}}"></script>        
 
    
 </body>
