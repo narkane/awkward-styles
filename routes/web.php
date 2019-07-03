@@ -19,6 +19,7 @@ Auth::routes();
 
 
 ###jthummel
+Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
 Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
 Route::get('/search/{id}', 'CollectionsController@searchSuggestions')->name('search-results');
 ###them
@@ -26,6 +27,7 @@ Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 Route::get('/account', 'DashboardController@myAccount')->name('account');
 Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->name('artiststorefront');
 Route::get('/mockupgenerator/{productId}', 'MockupgenController@index')->name('mockupgenerator');
+Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/createstore', 'MyStoresController@createStore')->name('createstore');
 Route::post('/savestore', 'MyStoresController@saveStore')->name('savestore');

@@ -2,14 +2,14 @@
 
 @section('content')
 <!-- slider -->
-<div class="categories-banner">
-    <img src="{{ asset('images/categories-defult-banner.jpg') }}" alt="">
-</div>
+<!-- <div class="categories-banner"> -->
+    <!-- <img src="{{ asset('images/artbanner.jpg') }}" alt=""> -->
+
 
 <div class="collections-section">
 
     <div class="container">
-        <h3 class="category-title">Collections</h3>
+        <h1 class="category-title"><i>ART COLLECTIONS</i></h1>
         <div class="owl-carousel " id="collections-slider">
             <div class="item">
                 <a href="#"> <img src="{{ asset('images/collections/category/Funny.png') }}" width="100%"></a>
@@ -38,6 +38,7 @@
         </div>
     </div>
 </div>
+<!-- </div> -->
 <!-- slider End -->
 <div class="container">
 
@@ -247,39 +248,35 @@
             </div>
         </div>
     </div>
-    @endsection
-    @section('footer_scripts')
+    <!-- @endsection
+    @section('footer_scripts') -->
     <script type="text/javascript">
     $(document).ready(function() {
-        $("#collections-slider").owlCarousel({
-            margin: 10,
-            nav: true,
-            slideSpeed: 800,
-            paginationSpeed: 800,
-            singleItem: true,
-            pagination: true,
-            autoPlay: true,
-            stopOnHover: true,
-            items: 8,
-            responsive: {
-                0: {
-                    items: 2
-                },
-                600: {
-                    items: 4
-                },
-                1000: {
-                    items: 8
-                }
-            }
-        });
+        // $("#collections-slider").owlCarousel({
+        //     margin: 10,
+        //     nav: true,
+        //     slideSpeed: 800,
+        //     paginationSpeed: 800,
+        //     singleItem: true,
+        //     pagination: true,
+        //     autoPlay: true,
+        //     stopOnHover: true,
+        //     items: 8,
+        //     responsive: {
+        //         0: {
+        //             items: 2
+        //         },
+        //         600: {
+        //             items: 4
+        //         },
+        //         1000: {
+        //             items: 8
+        //         }
+        //     }
+        // });
 
         $.ajax({
-<<<<<<< HEAD
-        url: "http://ec2-13-56-132-2.us-west-1.compute.amazonaws.com:8080/token",
-=======
         url: "{{env('API_URL')}}token",
->>>>>>> dev
         contentType: 'application/json',
         dataType: 'json',
         type: 'POST',
@@ -289,11 +286,7 @@
         success: (result) => {
             if (result.token) {
                 $.ajax({
-<<<<<<< HEAD
-                    url: "http://ec2-13-56-132-2.us-west-1.compute.amazonaws.com:8080/api/artworkProduct/getAllArtProducts",
-=======
                     url: "{{env('API_URL')}}api/artworkProduct/getAllArtProducts",
->>>>>>> dev
                     contentType: 'application/json',
                     dataType: 'json',
                     headers: {
@@ -306,11 +299,7 @@
                         if(artProduct.properties.length) {
                             for(let i = 0; i < artProduct.properties.length; i++) {
                                 $.ajax({
-<<<<<<< HEAD
-                                    url: "http://ec2-13-56-132-2.us-west-1.compute.amazonaws.com:8080/api/media/getById/" +
-=======
                                     url: "{{env('API_URL')}}api/media/getById/" +
->>>>>>> dev
                                     artProduct.properties[i].artworkProduct.designedImage.split(",")[0],
                                     contentType: 'application/json',
                                     dataType: 'json',

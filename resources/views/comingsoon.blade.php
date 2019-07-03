@@ -11,11 +11,11 @@
 	  <link href="{{ asset('css/graphic-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
     <link href="{{ asset('css/theme.css') }}" rel="stylesheet">
+    <link href="{{asset('css/Custom.css')}}" rel="stylesheet">
   
    
 </head>
 <body>
-	
 <header>
         <div class="head-top bg-dark">
             <div class="container">
@@ -36,23 +36,146 @@
         <div class="head-middle">
             <div class="container">
                 <div class="row justify-content-between align-items-center">
-                    <div class="col">
+                    
+                </div>
+
+            </div>
+
+        </div>
+
+        <nav class="navbar navbar-expand-lg navbar-light shadow-sm  bg-light ">
+            <div class="container">
+
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mega-menu" aria-controls="mega-menu" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                      </button>
+
+                <div class="collapse navbar-collapse" id="mega-menu">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item nav-home">
+                            <a href="/list" class="nav-link">
+                                <span class="icon-home" style="borderRadius:20px;"></span>
+
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                                START DESIGNING
+                            <span>Create your own style</span>
+                            </a>
+                            <div class="dropdown-menu mega-menu-dropdown">
+                                <ul class="multi-level">
+                                    <li class="dropdown-submenu dropdown-submenu-toggle active">
+                                        <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Clothing</a>
+                                        <ul class="dropdown-menu" style="display: block;">
+                                            <li>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <a href="/mockupgenerator/1354" class="nav-l3-title">T-Shirts</a>
+
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <a href="/mockupgenerator/720" class="nav-l3-title">Tank Tops</a>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <a href="/mockupgenerator/1233" class="nav-l3-title">Hoodies</a>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <a href="/comingsoon" class="nav-l3-title">More</a>
+                                                    </div>
+
+                                                </div>
+                                            </li>
+
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu dropdown-submenu-toggle">
+                                        <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Home</a>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <div class="row">
+
+                                                    <div class="col-md-3">
+                                                        <a href="/comingsoon" class="nav-l3-title">Mugs</a>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <a href="/comingsoon" class="nav-l3-title">Pillows</a>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <a href="/mockupgenerator/1033" class="nav-l3-title">Canvas</a>
+                                                    </div>
+
+                                                </div>
+                                            </li>
+
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu dropdown-submenu-toggle">
+                                        <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Accessories</a>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <a href="/mockupgenerator/550" class="nav-l3-title">Bags</a>
+
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <a href="/mockupgenerator/1222" class="nav-l3-title">Hats</a>
+                                                    </div>
+
+
+                                                </div>
+                                            </li>
+
+                                        </ul>
+                                    </li>
+
+
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/products">
+                                    SHOP
+                                    <span>Custom design products</span>
+                                 </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                    EXPLORE
+                                    <span>Artists and more</span>
+                            </a>
+                        </li>
+                        <li class="nav-logo">
+
+
+<div class="col">
                         <a href="/list">
                             <img src="{{ asset('images/logo.png') }}" alt="">
                         </a>
                     </div>
+                    </li>
+                    <li class="nav-login">
                     <div class="col">
                         <ul class="head-middle-list">
 
-                            <li>
+                        <script type = "text/javascript" language = "javascript">
+
+function searchfunc(){
+    var action_src = "/search/" + document.getElementsByName("keywords")[0].value;
+    var form = document.getElementById('searcharea');
+    form.action = action_src ;
+}</script>
+
+                        <li>
 							<div class="dropdown">
                                     <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
 
-                                    <form class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
+                                    <form id="searcharea" onSubmit="searchfunc()" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
                                         <div class="input-group">
-                                            <input type="text" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
+                                            <input type="text" name="keywords" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
                                             <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="button" id="button-addon2">Search</button>
+                                                <input class="btn btn-outline-secondary" type="submit" id="button-addon2" value="Search">
                                             </div>
                                         </div>
                                     </form>
@@ -60,6 +183,16 @@
 
 
 							</li>
+                            <!-- <li>
+							<div class="dropdown">
+                                <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
+                                <div id="app" class="dropdown-menu">
+                                    <searchbar class="dropdown-item"/>
+                                </div>
+                            </div>
+
+
+							</li> -->
 
 
                             <li><a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span>
@@ -96,121 +229,13 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                         </div>
                         </li>
 					@endif
+
 					
-                    </ul>
+                        </ul>
                     </div>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <nav class="navbar navbar-expand-lg navbar-light shadow-sm  bg-light ">
-            <div class="container">
-
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mega-menu" aria-controls="mega-menu" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                      </button>
-
-                <div class="collapse navbar-collapse" id="mega-menu">
-                    <ul class="navbar-nav mr-auto">
-                        <li class="nav-item nav-home">
-                            <a href="/list" class="nav-link">
-                                <span class="icon-home"></span>
-
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/mockupgenerator/1406" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                                START DESIGNING
-                            <span>Create your own style</span>
-                            </a>
-                            <div class="dropdown-menu mega-menu-dropdown">
-                                <ul class="multi-level">
-                                    <li class="dropdown-submenu dropdown-submenu-toggle active">
-                                        <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Clothing</a>
-                                        <ul class="dropdown-menu" style="display: block;">
-                                            <li>
-                                                <div class="row">
-                                                    <div class="col-md-3">
-                                                        <a href="/mockupgenerator/1354" class="nav-l3-title">T-Shirts</a>
-
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Tank Tops</a>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <a href="/mockupgenerator/1233" class="nav-l3-title">Hoodies</a>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <a href="/comingsoon" class="nav-l3-title">More</a>
-                                                    </div>
-
-                                                </div>
-                                            </li>
-
-                                        </ul>
-                                    </li>
-                                    <li class="dropdown-submenu dropdown-submenu-toggle">
-                                        <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Home</a>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <div class="row">
-
-                                                    <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Mugs</a>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Pillows</a>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <a href="/mockupgenerator/1033" class="nav-l3-title">Canvas</a>
-                                                    </div>
-
-                                                </div>
-                                            </li>
-
-                                        </ul>
-                                    </li>
-                                    <li class="dropdown-submenu dropdown-submenu-toggle">
-                                        <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Accessories</a>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <div class="row">
-                                                    <div class="col-md-3">
-                                                        <a href="#" class="nav-l3-title">Tote Bags</a>
-
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <a href="/mockupgenerator/1222" class="nav-l3-title">Hats</a>
-                                                    </div>
-
-
-                                                </div>
-                                            </li>
-
-                                        </ul>
-                                    </li>
-
-
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/products">
-                                    SHOP
-                                    <span>Custom design products</span>
-                                 </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                    EXPLORE
-                                    <span>Artists and more</span>
-                            </a>
-                        </li>
-
+                    </li>
                     </ul>
+
 
                 </div>
             </div>
@@ -230,7 +255,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
 
 @endif
 
-    <footer  style="width:100vw;">
+    <footer>
     </footer>
 
 

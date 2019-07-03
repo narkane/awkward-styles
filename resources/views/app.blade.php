@@ -5,13 +5,13 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 @yield('aimeos_header')
-	<title>ACKWARD STYLES</title>
+	<title>AWKWARD STYLES</title>
 @yield('aimeos_styles')
 	<link type="text/css" rel="stylesheet" href='https://fonts.googleapis.com/css?family=Roboto:400,300'>
 	  <link href="{{ asset('css/graphic-icons.css') }}" rel="stylesheet">
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
     <link href="{{ asset('css/theme.css') }}" rel="stylesheet"> 
-   
+    <link href="{{ asset('css/Custom.css') }}" rel="stylesheet"> 
 </head>
 <body>
 
@@ -36,88 +36,7 @@
         <div class="head-middle">
             <div class="container">
                 <div class="row justify-content-between align-items-center">
-                    <div class="col">
-                        <a href="/list">
-                            <img src="{{ asset('images/logo.png') }}" alt="">
-                        </a>
-                    </div>
-                    <div class="col">
-                        <ul class="head-middle-list">
-
-                        <script type = "text/javascript" language = "javascript">
-
-function searchfunc(){
-    var action_src = "search/" + document.getElementsByName("keywords")[0].value;
-    var form = document.getElementById('searcharea');
-    form.action = action_src ;
-}</script>
-
-                        <li>
-							<div class="dropdown">
-                                    <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
-
-                                    <form id="searcharea" onSubmit="searchfunc()" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
-                                        <div class="input-group">
-                                            <input type="text" name="keywords" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
-                                            <div class="input-group-append">
-                                                <input class="btn btn-outline-secondary" type="submit" id="button-addon2" value="Search">
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-
-
-							</li>
-                            <!-- <li>
-							<div class="dropdown">
-                                <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
-                                <div id="app" class="dropdown-menu">
-                                    <searchbar class="dropdown-item"/>
-                                </div>
-                            </div>
-
-
-							</li> -->
-
-
-                            <li><a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span>
-                            </a></li>
-
-                         
-
-                            @if (Auth::guest())
-
-                               <li>
-                            <div class="dropdown">
-                                    <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-user-circle"></span></a>
-                                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userdropdown">
-                                        <a class="dropdown-item" href="/login#">Login</a>
-                                        <a class="dropdown-item" href="/register#">Register</a>
-
-                                        <!-- <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item" href="#">Logout</a> -->
-                                    </div>
-                                </div>
-                            </li>
-					
-					@else
-						<li>
-                        <div class="dropdown">    
-                            <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ Auth::user()->name }} <span class="caret"></span></a>
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userdropdown">
-                                <a class="dropdown-item" href="/dashboard" title="My account">My Dashboard</a>
-                                <!-- <li><a href="{{
-route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default'),'locale'=>Route::current()->parameter('locale','en'),'currency'=>Route::current()->parameter('currency','DOL')])
-}}" title="My account">My account</a></li> -->
-                                <form id="logout" action="/logout" method="POST">{{csrf_field()}}</form><a  class="dropdown-item" href="javascript: document.getElementById('logout').submit();">Logout</a>
-                            </div>
-                        </div>
-                        </li>
-					@endif
-
-					
-                        </ul>
-                    </div>
+                    
                 </div>
 
             </div>
@@ -227,8 +146,96 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                                     <span>Artists and more</span>
                             </a>
                         </li>
+                        <li class="nav-logo">
 
+
+<div class="col">
+                        <a href="/list">
+                            <img src="{{ asset('images/logo.png') }}" alt="">
+                        </a>
+                    </div>
+                    </li>
+                    <li class="nav-login">
+                    <div class="col">
+                        <ul class="head-middle-list">
+
+                        <script type = "text/javascript" language = "javascript">
+
+function searchfunc(){
+    var action_src = "/search/" + document.getElementsByName("keywords")[0].value;
+    var form = document.getElementById('searcharea');
+    form.action = action_src ;
+}</script>
+
+                        <li>
+							<div class="dropdown">
+                                    <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
+
+                                    <form id="searcharea" onSubmit="searchfunc()" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
+                                        <div class="input-group">
+                                            <input type="text" name="keywords" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
+                                            <div class="input-group-append">
+                                                <input class="btn btn-outline-secondary" type="submit" id="button-addon2" value="Search">
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+
+							</li>
+                            <!-- <li>
+							<div class="dropdown">
+                                <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
+                                <div id="app" class="dropdown-menu">
+                                    <searchbar class="dropdown-item"/>
+                                </div>
+                            </div>
+
+
+							</li> -->
+
+
+                            <li><a href="/basket#" class="iconlinks"><span class="icon-shopping-cart"></span>
+                            </a></li>
+
+                         
+
+                            @if (Auth::guest())
+
+                               <li>
+                            <div class="dropdown">
+                                    <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-user-circle"></span></a>
+                                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userdropdown">
+                                        <a class="dropdown-item" href="/login#">Login</a>
+                                        <a class="dropdown-item" href="/register#">Register</a>
+
+                                        <!-- <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Logout</a> -->
+                                    </div>
+                                </div>
+                            </li>
+					
+					@else
+						<li>
+                        <div class="dropdown">    
+                            <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ Auth::user()->name }} <span class="caret"></span></a>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userdropdown">
+                                <a class="dropdown-item" href="/dashboard" title="My account">My Dashboard</a>
+                                <!-- <li><a href="{{
+route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default'),'locale'=>Route::current()->parameter('locale','en'),'currency'=>Route::current()->parameter('currency','DOL')])
+}}" title="My account">My account</a></li> -->
+                                <form id="logout" action="/logout" method="POST">{{csrf_field()}}</form><a  class="dropdown-item" href="javascript: document.getElementById('logout').submit();">Logout</a>
+                            </div>
+                        </div>
+                        </li>
+					@endif
+
+					
+                        </ul>
+                    </div>
+                    </li>
                     </ul>
+
 
                 </div>
             </div>
@@ -238,7 +245,6 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
    
    
 @yield('aimeos_body')
-
 
 
 	
@@ -328,7 +334,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
         <section class="pt-4">
             <div class="row">
                 <div class="col-12">
-                    <img  src="{{ asset('images/home/contest.jpg') }}" class="img-100" alt="">
+                    <img src="{{ asset('images/home/contest.jpg') }}" class="img-100 rounded" alt="">
                 </div>
             </div>
         </section>
@@ -337,11 +343,10 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
       
 @endif
 
-    <footer  style="width:100vw;">
-        <div id="app" style="width:100vw;">
-            <example  style="width:100vw;" />
+    <footer>
+        <div id="app">
+            <example />
           </div>
-        <!-- <img src="{{ asset('images/footer.png') }}" class="img-100" alt=""> -->
     </footer>
     <!-- Scripts -->	
     

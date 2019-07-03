@@ -22,30 +22,38 @@
               <div id="col-1">
                 USEFUL LINKS
                 <ul style="list-style: none;">
-                  <li>STORE LOCATION</li>
-                  <li>MY ACCOUNT</li>
-                  <li>SIZE GUIDE</li>
-                  <li>TERMS & CONDITIONS</li>
-                  <li>RETURN & EXCHANGES</li>
+                  <li>
+                    <a href="/affiliates">BECOME AN AFFILIATE</a>
+                  </li>
+                  <notset>
+                    <li>MY ACCOUNT</li>
+                    <li>SIZE GUIDE</li>
+                    <li>TERMS & CONDITIONS</li>
+                    <li>RETURN & EXCHANGES</li>
+                  </notset>
                 </ul>
               </div>
               <div id="col-2">
                 STORE
                 <ul style="list-style: none;">
-                  <li>WOMEN</li>
-                  <li>MEN</li>
-                  <li>KIDS</li>
-                  <li>WHOLESALE</li>
+                  <notset>
+                    <li>WOMEN</li>
+                    <li>MEN</li>
+                    <li>KIDS</li>
+                    <li>WHOLESALE</li>
+                  </notset>
                 </ul>
               </div>
               <div id="col-3">
                 HELP
                 <ul style="list-style: none;">
-                  <li>CONTACT</li>
-                  <li>TRACK ORDERS</li>
-                  <li>FAQS</li>
-                  <li>SHIPPING & DELIVERY</li>
-                  <li>PRIVACY POLICY</li>
+                  <notset>
+                    <li>CONTACT</li>
+                    <li>TRACK ORDERS</li>
+                    <li>FAQS</li>
+                    <li>SHIPPING & DELIVERY</li>
+                    <li>PRIVACY POLICY</li>
+                  </notset>
                 </ul>
               </div>
               <div id="col-4">
@@ -209,5 +217,12 @@ li {
   font-weight: 100;
   font-size: 9pt;
   padding: 0px 0px 3px 5px;
+}
+notset {
+  text-decoration-line: line-through;
+}
+li a {
+  color: black;
+  text-decoration-line: none;
 }
 </style>

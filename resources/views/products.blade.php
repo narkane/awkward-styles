@@ -24,7 +24,7 @@ $token = $tokenGen['token'];
                             </button>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btnSort">
                                 <a class="dropdown-item" href="#">Top Selling</a>
-                                <a class="dropdown-item" href="#">Top Selling</a>
+                                <a class="dropdown-item" href="#">Lowest Price</a>
                             </div>
                         </div>
                     </div>
@@ -127,14 +127,14 @@ $token = $tokenGen['token'];
                                 console.log(images);
                                 console.log(images.properties.full_url);
                             }
-                        });                                
+                        });          
                     }                            
                 } else {
                     $('#art-product-list').html(`No Art Products to Display`);
                 }                        
             },
             error: function(xhr,status,error) {
-                $('#art-product-list').html("Something went wrong...");
+                $('#art-product-list').html("<br><br>Something went wrong...<br>");
             }
         });
     });
