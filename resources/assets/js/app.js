@@ -7,6 +7,12 @@
 require("./bootstrap");
 
 window.Vue = require("vue");
+import Vue from "vue";
+import App from "./App.vue";
+import Vuetify from "vuetify";
+import "vuetify/dist/vuetify.min.css";
+
+Vue.use(Vuetify);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -17,6 +23,7 @@ window.Vue = require("vue");
 Vue.component("comingsoon", require("./components/Comingsoon.vue"));
 Vue.component("example", require("./components/Example.vue"));
 Vue.component("searchbar", require("./components/Search.vue"));
+Vue.component("thetool", require("./App.vue"));
 
 const app = new Vue({
   el: "#app",

@@ -15,7 +15,7 @@
   
    
 </head>
-<body>
+<body style="background:white;">
 <header>
         <div class="head-top bg-dark">
             <div class="container">
@@ -246,20 +246,66 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
    
 @yield('aimeos_body')
 
+
+<div class="row products-row" style="float:left;border:3px inset lightblue;height:100%;">
+<div  id="art-product-list">
 <div id="app">
-<comingsoon />
+    <thetool prodid="{{$product_id}}"/> 
 </div>
-	
-@if (Request::path() == 'list')
-
-
-@endif
-
-    <footer>
-    </footer>
-
-
+</div>
 	<!-- Scripts -->	
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript">
+    var sData = <?php echo $request ?>;
+
+
+                console.log(sData[0]);
+
+                    if(sData.length == 0){
+                        console.log("NADA DAWG!");
+                        document.write('<meta http-equiv="Refresh" content="0; url=/products">');
+                    }
+                    $.ajax({
+                        url: "{{env('API_URL')}}api/media/getById/" +
+                        sData[0].image.split(",")[0],
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        headers: {
+                            "Authorization": "Bearer " + '{{$token}}',
+                            "Content-Type": "application/json"
+                        },
+                        type: 'GET',
+                        success: function(images) {
+                          alert("WORKINGGG!~");
+                            $('#art-product-list').append(`
+<div  style="position:absolute;z-index:-20;padding:0px 150px;">
+                                        <div class="product-image">
+                                            <a href="{{url('/')}}/product-details/${sData[0].id}">
+                                                <img src="${images.properties.full_url}" style="border:1px solid black;><br/>'{{$product_id}}'
+                                            </a>
+                                        </div>
+                                        <div class="product-content">
+                                            <h5 class="title">${sData[0].label}</h5>
+                                            <div class="price">
+                                                $${sData[0].salePrice}
+                                            </div>
+                                     </div>
+                                     </div>
+                            `);
+                            console.log(images);
+                            console.log(images.properties.full_url);
+                        },
+                        error: function(jqxhr, status, exception) {
+                            alert('Exception:', exception);
+                            console.log("ERROR AJAX CALL TO API BROKEDED!~")
+                        }
+                    });
+                console.log('====================');
+
+                console.log('areas: '+sData.length);
+</script>
+</div>
+
     <script src="{{asset('js/app.js')}}"></script>
 	</body>
 </html>

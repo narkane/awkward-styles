@@ -22,6 +22,7 @@ Auth::routes();
 Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
 Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
 Route::get('/search/{id}', 'CollectionsController@searchSuggestions')->name('search-results');
+Route::get('/thetool/{productId}', 'ToolController@index')->name('thetool');
 ###them
 Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 Route::get('/account', 'DashboardController@myAccount')->name('account');
