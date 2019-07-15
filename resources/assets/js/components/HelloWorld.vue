@@ -204,7 +204,8 @@ export default {
         x: this.drawArea.x,
         y: this.drawArea.y,
         w: this.drawArea.width,
-        h: this.drawArea.height
+        h: this.drawArea.height,
+        DPI: this.ratio
       };
       alert(JSON.stringify(templateObj));
     },
@@ -232,6 +233,16 @@ export default {
         a.click();
         a.remove();
       }, "image/png");
+
+      var printObj = {
+        x: this.testSprite.x / this.drawArea.width,
+        y: this.testSprite.y / this.drawArea.height,
+        w: this.testSprite.width,
+        h: this.testSprite.height,
+        DPI: this.ratio
+      };
+
+      alert(JSON.stringify(printObj));
     }
   },
   created() {
