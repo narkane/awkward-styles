@@ -122,41 +122,23 @@ class CollectionsController extends Controller
                * @var Builder $query
                */
          $query = DB::table('tbl_products')
-            ->join('tbl_media_library', 'tbl_products.image', '=', 'tbl_media_library.id')
-            ->whereRaw('label LIKE "%?%"', [$id])
-            ->orWhereRaw('shortDescription LIKE "%?%"', [$id]);
+            ->join('tbl_media_library', function($join) use($id) {
+                $join->on('tbl_products.image', '=', 'tbl_media_library.id')
+                    ->whereRaw('label LIKE "%?%"', [$id])
+                    ->orWhereRaw('shortDescription LIKE "%?%"', [$id]);
+                    })->paginate(25);
 
-      $tags = $query->paginate(25);
-
-      echo ($query->toSql());
-
-        foreach($tags as $tag){
-            print_r($tag);
-        }
-
-        die();
-
-        // $tags =[];
-         /*
-         foreach($termIDs as &$id) {
-             // echo json_encode($id->category_id);
-             $query = null;
-             $query = DB::select(' select * from tbl_products where FIND_IN_SET("'.$id->category_id.'", categoryId) > 0');
-             // console.log($termIDs);
-             // console.log(DB::select(' select label from tbl_products where FIND_IN_SET('.$id.', categoryId) > 0'));
-             if(count($query) > 0) {
-                 array_push($tags, $query); 
-                 //echo json_encode($tags);
-             }
+        $tags =[];
+         foreach($query as $objs) {
+             $tags[] = $objs;
          }
-         */
 
          if(isset($tags)){
              return view('search-results', [
                  'request' => json_encode($tags),
                  'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
          }
-         return view('search-results', ['request' => null,'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
+         return view('search-results', ['pagination_link' => $query->links(), 'request' => null,'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
          ////////////////////////////////
 
           } else {

@@ -32,7 +32,10 @@ class ImageTemplateController extends Controller
 
     }
 
-    public function insertTemplate(Request $request){
+    public function insertTemplate(Request $json){
+
+        // JSON REQUEST
+        $request = $json->json();
 
         // Create Query For Insert
         $id = DB::table('templates')->insertGetId([
