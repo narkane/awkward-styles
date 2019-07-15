@@ -48,7 +48,8 @@ class ImageTemplateController extends Controller
             'x' => ($request->has('x')) ? $request->input('x') : 0,
             'y' => ($request->has('y')) ? $request->input('y') : 0,
             'width' => ($request->has('width')) ? $request->input('width') : 0,
-            'height' => ($request->has('height')) ? $request->input('height') : 0
+            'height' => ($request->has('height')) ? $request->input('height') : 0,
+            'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0
         ]);
 
         $id = DB::table('templates')
@@ -58,7 +59,8 @@ class ImageTemplateController extends Controller
                 'x' => ($request->has('x')) ? $request->input('x') : 0,
                 'y' => ($request->has('y')) ? $request->input('y') : 0,
                 'width' => ($request->has('width')) ? $request->input('width') : 0,
-                'height' => ($request->has('height')) ? $request->input('height') : 0
+                'height' => ($request->has('height')) ? $request->input('height') : 0,
+                'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0
             ])->first();
 
         return response()->json(['id' => ($id) ? $id->id : 0]);

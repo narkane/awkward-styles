@@ -34,7 +34,7 @@ class CollectionsController extends Controller
         if(isset($artwork_name)) { $artwork_name = $request->artwork_name; } 
         $artworks = Artwork::all();
         //$artworks = Artwork::where('parentid', $user_id)->get();
-        return view('addproducts',['menu'=>'stores','menuitem'=>'addproducts','artwork_id'=>$artwork_id,'artwork_name'=>$artwork_name,'artworks'=>$artworks]);*/
+        return view('addproducts',['menu'=>'stores','menuitem'=>'addproducts','artwork_id'=>$artwork_id,'artwork_name'=>$artwork_name,'artworks'=>$artworks]);
         $data = array("privateKey" => "password");                                                                    
           $data_string = json_encode($data);                                                                                   
                                                                                                                        
