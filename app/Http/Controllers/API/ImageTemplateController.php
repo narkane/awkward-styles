@@ -13,9 +13,9 @@ use stdClass;
 class ImageTemplateController extends Controller
 {
 
-    public function getTemplate(){
+    public function getTemplate($id){
         $response = DB::table('templates')
-            ->whereRaw('id = ?', [$id])->first();
+            ->whereRaw('pid = ?', [$id])->first();
 
         if(!$response) {
             $response = new stdClass();
@@ -32,7 +32,10 @@ class ImageTemplateController extends Controller
 
     }
 
-    public function insertTemplate(Request $request){
+    public function insertTemplate(Request $json){
+
+        // JSON REQUEST
+        $request = $json->json();
 
         // Create Query For Insert
         $id = DB::table('templates')->insertGetId([
