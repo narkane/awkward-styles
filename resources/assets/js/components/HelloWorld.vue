@@ -198,25 +198,29 @@ export default {
         }
       }
     },
-    getTemplate: function(){
+    getTemplateAxios: function(){
+      var that = this;
+
       axios.get('/api/template/'+this.prodID)
         .then(function (response) {
         console.log(response);
+        if(response.data.pid===0){
+          that.mode = true;
+        }
       })
       .catch(function (error) {
         console.log(error);
       });
       },
-  //   axios.post('/user', {
-  //   firstName: 'Fred',
-  //   lastName: 'Flintstone'
-  // })
-  // .then(function (response) {
-  //   console.log(response);
-  // })
-  // .catch(function (error) {
-  //   console.log(error);
-  // });
+      saveTemplateAxios: function(template){
+          axios.post('/api/template', template)
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+      },
     changeDraw: function() {
       console.log("CHANGE!");
       this.app.renderer.clear();
@@ -235,7 +239,8 @@ export default {
         h: this.drawArea.height,
         DPI: this.ratio
       };
-      alert(JSON.stringify(templateObj));
+      this.saveTemplateAxios(templateObj);
+      // alert(JSON.stringify(templateObj));
     },
     savePrint: function() {
       let that = this;
@@ -274,10 +279,9 @@ export default {
     }
   },
   created() {
-    if(this.getTemplate()==0){
-      //set to "template mode"
-      this.mode = true;
-    }
+    //set to "template mode" if no template
+    this.getTemplateAxios();
+
     this.init();
   },
   computed: {

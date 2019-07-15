@@ -13,9 +13,9 @@ use stdClass;
 class ImageTemplateController extends Controller
 {
 
-    public function getTemplate(){
+    public function getTemplate($id){
         $response = DB::table('templates')
-            ->whereRaw('id = ?', [$id])->first();
+            ->whereRaw('pid = ?', [$id])->first();
 
         if(!$response) {
             $response = new stdClass();
