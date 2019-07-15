@@ -81960,6 +81960,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_pixi_js__ = __webpack_require__(79);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__assets_blob_png__ = __webpack_require__(104);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__assets_blob_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__assets_blob_png__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_axios__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_axios__);
 //
 //
 //
@@ -82052,6 +82054,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+
 
 
 
@@ -82067,6 +82077,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         backgroundColor: 0x1099bb,
         transparent: 1
       }),
+      mode: false,
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
       testSprite: __WEBPACK_IMPORTED_MODULE_0_pixi_js__["d" /* Sprite */].from(__WEBPACK_IMPORTED_MODULE_1__assets_blob_png___default.a),
@@ -82146,6 +82157,23 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         }
       }
     },
+    getTemplate: function getTemplate() {
+      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.get('/api/template/' + this.prodID).then(function (response) {
+        console.log(response);
+      }).catch(function (error) {
+        console.log(error);
+      });
+    },
+    //   axios.post('/user', {
+    //   firstName: 'Fred',
+    //   lastName: 'Flintstone'
+    // })
+    // .then(function (response) {
+    //   console.log(response);
+    // })
+    // .catch(function (error) {
+    //   console.log(error);
+    // });
     changeDraw: function changeDraw() {
       console.log("CHANGE!");
       this.app.renderer.clear();
@@ -82203,6 +82231,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     }
   },
   created: function created() {
+    if (this.getTemplate() == 0) {
+      //set to "template mode"
+      this.mode = true;
+    }
     this.init();
   },
 
@@ -90058,6 +90090,57 @@ var render = function() {
                 "v-layout",
                 { attrs: { row: "" } },
                 [
+                  _c("v-flex", { attrs: { xs4: "" } }, [
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.mode,
+                          expression: "mode"
+                        }
+                      ],
+                      attrs: { type: "checkbox", name: "mode" },
+                      domProps: {
+                        checked: Array.isArray(_vm.mode)
+                          ? _vm._i(_vm.mode, null) > -1
+                          : _vm.mode
+                      },
+                      on: {
+                        change: function($event) {
+                          var $$a = _vm.mode,
+                            $$el = $event.target,
+                            $$c = $$el.checked ? true : false
+                          if (Array.isArray($$a)) {
+                            var $$v = null,
+                              $$i = _vm._i($$a, $$v)
+                            if ($$el.checked) {
+                              $$i < 0 && (_vm.mode = $$a.concat([$$v]))
+                            } else {
+                              $$i > -1 &&
+                                (_vm.mode = $$a
+                                  .slice(0, $$i)
+                                  .concat($$a.slice($$i + 1)))
+                            }
+                          } else {
+                            _vm.mode = $$c
+                          }
+                        }
+                      }
+                    }),
+                    _vm._v(" "),
+                    _c("label", { attrs: { for: "mode" } }, [
+                      _vm._v(": Template Mode")
+                    ])
+                  ])
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "v-layout",
+                { attrs: { row: "" } },
+                [
                   _c(
                     "v-flex",
                     { attrs: { xs1: "" } },
@@ -90142,7 +90225,7 @@ var render = function() {
                     { attrs: { xs1: "" } },
                     [
                       _c("v-text-field", {
-                        attrs: { label: "ratio", required: "" },
+                        attrs: { label: "ratio", disabled: !_vm.mode },
                         model: {
                           value: _vm.ratio,
                           callback: function($$v) {
@@ -90271,7 +90354,7 @@ var render = function() {
                     { attrs: { xs1: "" } },
                     [
                       _c("v-text-field", {
-                        attrs: { label: "X", required: "" },
+                        attrs: { label: "X", disabled: !_vm.mode },
                         on: { change: _vm.changeDraw },
                         model: {
                           value: _vm.drawArea.x,
@@ -90290,7 +90373,7 @@ var render = function() {
                     { attrs: { xs1: "" } },
                     [
                       _c("v-text-field", {
-                        attrs: { label: "Y", required: "" },
+                        attrs: { label: "Y", disabled: !_vm.mode },
                         on: { change: _vm.changeDraw },
                         model: {
                           value: _vm.drawArea.y,
@@ -90309,7 +90392,7 @@ var render = function() {
                     { attrs: { xs1: "" } },
                     [
                       _c("v-text-field", {
-                        attrs: { label: "width", required: "" },
+                        attrs: { label: "width", disabled: !_vm.mode },
                         on: { change: _vm.changeDraw },
                         model: {
                           value: _vm.drawArea.width,
@@ -90328,7 +90411,7 @@ var render = function() {
                     { attrs: { xs1: "" } },
                     [
                       _c("v-text-field", {
-                        attrs: { label: "height", required: "" },
+                        attrs: { label: "height", disabled: !_vm.mode },
                         on: { change: _vm.changeDraw },
                         model: {
                           value: _vm.drawArea.height,
@@ -90354,7 +90437,7 @@ var render = function() {
                     { attrs: { xs1: "" } },
                     [
                       _c("v-text-field", {
-                        attrs: { label: "ratio", required: "" },
+                        attrs: { label: "ratio", disabled: !_vm.mode },
                         model: {
                           value: _vm.ratio,
                           callback: function($$v) {
@@ -90474,7 +90557,10 @@ var render = function() {
           _vm._v(" "),
           _c(
             "v-btn",
-            { attrs: { color: "orange" }, on: { click: _vm.saveTemplate } },
+            {
+              attrs: { color: "orange", hidden: !_vm.mode },
+              on: { click: _vm.saveTemplate }
+            },
             [_vm._v("Template")]
           ),
           _vm._v(" "),

@@ -3,6 +3,13 @@
     <v-form ref="form">
       <v-container fluid>
         <v-layout row>
+          <v-flex xs4>
+            <input type="checkbox" name="mode" v-model="mode">
+              <label for="mode">: Template Mode</label>
+            </input>
+          </v-flex>
+        </v-layout>
+        <v-layout row>
           <v-flex xs1>
             <v-text-field v-model="testSprite.x" label="X" required></v-text-field>
           </v-flex>
@@ -19,7 +26,7 @@
             <v-text-field disabled />
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="ratio" label="ratio" required />
+            <v-text-field v-model="ratio" label="ratio"  :disabled="!mode" />
           </v-flex>
         </v-layout>
         <v-layout row>
@@ -44,22 +51,22 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="drawArea.x" label="X" @change="changeDraw" required></v-text-field>
+            <v-text-field v-model="drawArea.x" label="X" @change="changeDraw" :disabled="!mode"></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="drawArea.y" label="Y" @change="changeDraw" required></v-text-field>
+            <v-text-field v-model="drawArea.y" label="Y" @change="changeDraw"  :disabled="!mode"></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="drawArea.width" label="width" @change="changeDraw" required></v-text-field>
+            <v-text-field v-model="drawArea.width" label="width" @change="changeDraw"  :disabled="!mode"></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="drawArea.height" label="height" @change="changeDraw" required></v-text-field>
+            <v-text-field v-model="drawArea.height" label="height" @change="changeDraw"  :disabled="!mode"></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="ratio" label="ratio" required />
+            <v-text-field v-model="ratio" label="ratio"  :disabled="!mode" />
           </v-flex>
         </v-layout>
         <v-layout row>
@@ -84,7 +91,7 @@
         </v-layout>
       </v-container>
       <v-btn color="green" @click="savePrint">Save</v-btn>
-      <v-btn color="orange" @click="saveTemplate">Template</v-btn>
+      <v-btn color="orange" :hidden="!mode" @click="saveTemplate">Template</v-btn>
       <v-btn color="red">Cancel</v-btn>
     </v-form>
   </div>
@@ -93,6 +100,7 @@
 <script>
 import * as PIXI from "pixi.js";
 import blob from "../assets/blob.png";
+import axios from "axios";
 
 export default {
   name: "HelloWorld",
@@ -105,6 +113,7 @@ export default {
         backgroundColor: 0x1099bb,
         transparent: 1
       }),
+      mode: false,
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
       testSprite: PIXI.Sprite.from(blob),
@@ -189,6 +198,25 @@ export default {
         }
       }
     },
+    getTemplate: function(){
+      axios.get('/api/template/'+this.prodID)
+        .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+      },
+  //   axios.post('/user', {
+  //   firstName: 'Fred',
+  //   lastName: 'Flintstone'
+  // })
+  // .then(function (response) {
+  //   console.log(response);
+  // })
+  // .catch(function (error) {
+  //   console.log(error);
+  // });
     changeDraw: function() {
       console.log("CHANGE!");
       this.app.renderer.clear();
@@ -246,6 +274,10 @@ export default {
     }
   },
   created() {
+    if(this.getTemplate()==0){
+      //set to "template mode"
+      this.mode = true;
+    }
     this.init();
   },
   computed: {
