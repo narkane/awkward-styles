@@ -32,18 +32,15 @@ class ImageTemplateController extends Controller
 
     }
 
-    public function insertTemplate(Request $json){
-
-        // JSON REQUEST
-        $request = $json->json();
+    public function insertTemplate(Request $request){
 
         // Create Query For Insert
         $id = DB::table('templates')->insertGetId([
-            'x' => ($request->has('x')) ? $request->get('x') : 0,
-            'y' => ($request->has('y')) ? $request->get('y') : 0,
-            'width' => ($request->has('width')) ? $request->get('width') : 0,
-            'height' => ($request->has('height')) ? $request->get('height') : 0,
-            'pid' => ($request->has('pid')) ? $request->get('pid') : 0
+            'x' => ($request->has('x')) ? $request->input('x') : 0,
+            'y' => ($request->has('y')) ? $request->input('y') : 0,
+            'width' => ($request->has('width')) ? $request->input('width') : 0,
+            'height' => ($request->has('height')) ? $request->input('height') : 0,
+            'pid' => ($request->has('pid')) ? $request->input('pid') : 0
         ]);
 
         return response()->json(['id' => ($id) ? $id : 0]);
