@@ -3,10 +3,21 @@
     <v-form ref="form">
       <v-container fluid>
         <v-layout row>
-          <v-flex xs4>
-            <input type="checkbox" name="mode" v-model="mode">
-              <label for="mode">: Template Mode</label>
-            </input>
+          <v-flex xs1>
+            <select v-model="size" style="border:2px inset darkgrey">
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="XXXL">XXXL</option>
+              <option value="XXXXL">XXXXL</option>
+            </select>
+          </v-flex>
+          <v-flex xs7>
+            <input type="checkbox" name="mode" v-model="mode" />
+            <label for="mode">: Template Mode</label>
           </v-flex>
         </v-layout>
         <v-layout row>
@@ -26,7 +37,7 @@
             <v-text-field disabled />
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="ratio" label="ratio"  :disabled="!mode" />
+            <v-text-field v-model="ratio" label="ratio" :disabled="!mode" />
           </v-flex>
         </v-layout>
         <v-layout row>
@@ -54,19 +65,29 @@
             <v-text-field v-model="drawArea.x" label="X" @change="changeDraw" :disabled="!mode"></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="drawArea.y" label="Y" @change="changeDraw"  :disabled="!mode"></v-text-field>
+            <v-text-field v-model="drawArea.y" label="Y" @change="changeDraw" :disabled="!mode"></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="drawArea.width" label="width" @change="changeDraw"  :disabled="!mode"></v-text-field>
+            <v-text-field
+              v-model="drawArea.width"
+              label="width"
+              @change="changeDraw"
+              :disabled="!mode"
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="drawArea.height" label="height" @change="changeDraw"  :disabled="!mode"></v-text-field>
+            <v-text-field
+              v-model="drawArea.height"
+              label="height"
+              @change="changeDraw"
+              :disabled="!mode"
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="ratio" label="ratio"  :disabled="!mode" />
+            <v-text-field v-model="ratio" label="ratio" :disabled="!mode" />
           </v-flex>
         </v-layout>
         <v-layout row>
@@ -114,6 +135,7 @@ export default {
         transparent: 1
       }),
       mode: false,
+      size: "XS",
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
       testSprite: PIXI.Sprite.from(blob),
@@ -198,31 +220,39 @@ export default {
         }
       }
     },
-    getTemplateAxios: function(){
+    getTemplateAxios: function() {
       var that = this;
 
-      axios.get('/api/template/'+this.prodID)
-        .then(function (response) {
-        console.log(response);
-        if(response.data.pid===0){
-          that.mode = true;
-        }
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-      },
-      saveTemplateAxios: function(template){
-          axios.post('/api/template', template)
-        .then(function (response) {
+      axios
+        .get("/api/template/" + this.prodID)
+        .then(function(response) {
           console.log(response);
+          if (response.data.pid === 0) {
+            that.mode = true;
+          } else {
+            that.drawArea.x = response.data.x;
+            that.drawArea.y = response.data.y;
+            that.drawArea.width = response.data.width;
+            that.drawArea.height = response.data.height;
+            that.changeDraw();
+          }
         })
-        .catch(function (error) {
+        .catch(function(error) {
           console.log(error);
         });
-      },
+    },
+    saveTemplateAxios: function(template) {
+      axios
+        .post("/api/template", template)
+        .then(function(response) {
+          console.log(response);
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    },
     changeDraw: function() {
-      console.log("CHANGE!");
+      // console.log("CHANGE!");
       this.app.renderer.clear();
       // that.app.renderer.screen
       // this.drawArea.width = value;
@@ -232,12 +262,12 @@ export default {
     },
     saveTemplate: function() {
       var templateObj = {
-        productID: this.prodID,
         x: this.drawArea.x,
         y: this.drawArea.y,
-        w: this.drawArea.width,
-        h: this.drawArea.height,
-        DPI: this.ratio
+        width: this.drawArea.width,
+        height: this.drawArea.height,
+        dpi: this.ratio,
+        pid: this.prodID
       };
       this.saveTemplateAxios(templateObj);
       // alert(JSON.stringify(templateObj));

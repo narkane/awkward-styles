@@ -81795,7 +81795,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n#app {\n  width: 100vw;\n  position: absolute;\n  top: 50px;\n  left: 0px;\n  font-family: \"Avenir\", Helvetica, Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n  text-align: center;\n  color: #2c3e50;\n  margin-top: 60px;\n}\n", ""]);
+exports.push([module.i, "\n#app {\n  width: 100vw;\n  position: absolute;\n  top: 0px;\n  float: right;\n  font-family: \"Avenir\", Helvetica, Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n  text-align: center;\n  color: #2c3e50;\n  margin-top: 60px;\n}\n", ""]);
 
 // exports
 
@@ -82061,6 +82061,27 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -82078,6 +82099,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         transparent: 1
       }),
       mode: false,
+      size: "XS",
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
       testSprite: __WEBPACK_IMPORTED_MODULE_0_pixi_js__["d" /* Sprite */].from(__WEBPACK_IMPORTED_MODULE_1__assets_blob_png___default.a),
@@ -82160,24 +82182,30 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     getTemplateAxios: function getTemplateAxios() {
       var that = this;
 
-      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.get('/api/template/' + this.prodID).then(function (response) {
+      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.get("/api/template/" + this.prodID).then(function (response) {
         console.log(response);
         if (response.data.pid === 0) {
           that.mode = true;
+        } else {
+          that.drawArea.x = response.data.x;
+          that.drawArea.y = response.data.y;
+          that.drawArea.width = response.data.width;
+          that.drawArea.height = response.data.height;
+          that.changeDraw();
         }
       }).catch(function (error) {
         console.log(error);
       });
     },
     saveTemplateAxios: function saveTemplateAxios(template) {
-      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post('/api/template', template).then(function (response) {
+      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post("/api/template", template).then(function (response) {
         console.log(response);
       }).catch(function (error) {
         console.log(error);
       });
     },
     changeDraw: function changeDraw() {
-      console.log("CHANGE!");
+      // console.log("CHANGE!");
       this.app.renderer.clear();
       // that.app.renderer.screen
       // this.drawArea.width = value;
@@ -82187,12 +82215,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     saveTemplate: function saveTemplate() {
       var templateObj = {
-        productID: this.prodID,
         x: this.drawArea.x,
         y: this.drawArea.y,
-        w: this.drawArea.width,
-        h: this.drawArea.height,
-        DPI: this.ratio
+        width: this.drawArea.width,
+        height: this.drawArea.height,
+        dpi: this.ratio,
+        pid: this.prodID
       };
       this.saveTemplateAxios(templateObj);
       // alert(JSON.stringify(templateObj));
@@ -90092,7 +90120,66 @@ var render = function() {
                 "v-layout",
                 { attrs: { row: "" } },
                 [
-                  _c("v-flex", { attrs: { xs4: "" } }, [
+                  _c("v-flex", { attrs: { xs1: "" } }, [
+                    _c(
+                      "select",
+                      {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.size,
+                            expression: "size"
+                          }
+                        ],
+                        staticStyle: { border: "2px inset darkgrey" },
+                        on: {
+                          change: function($event) {
+                            var $$selectedVal = Array.prototype.filter
+                              .call($event.target.options, function(o) {
+                                return o.selected
+                              })
+                              .map(function(o) {
+                                var val = "_value" in o ? o._value : o.value
+                                return val
+                              })
+                            _vm.size = $event.target.multiple
+                              ? $$selectedVal
+                              : $$selectedVal[0]
+                          }
+                        }
+                      },
+                      [
+                        _c("option", { attrs: { value: "XS" } }, [
+                          _vm._v("XS")
+                        ]),
+                        _vm._v(" "),
+                        _c("option", { attrs: { value: "S" } }, [_vm._v("S")]),
+                        _vm._v(" "),
+                        _c("option", { attrs: { value: "M" } }, [_vm._v("M")]),
+                        _vm._v(" "),
+                        _c("option", { attrs: { value: "L" } }, [_vm._v("L")]),
+                        _vm._v(" "),
+                        _c("option", { attrs: { value: "XL" } }, [
+                          _vm._v("XL")
+                        ]),
+                        _vm._v(" "),
+                        _c("option", { attrs: { value: "XXL" } }, [
+                          _vm._v("XXL")
+                        ]),
+                        _vm._v(" "),
+                        _c("option", { attrs: { value: "XXXL" } }, [
+                          _vm._v("XXXL")
+                        ]),
+                        _vm._v(" "),
+                        _c("option", { attrs: { value: "XXXXL" } }, [
+                          _vm._v("XXXXL")
+                        ])
+                      ]
+                    )
+                  ]),
+                  _vm._v(" "),
+                  _c("v-flex", { attrs: { xs7: "" } }, [
                     _c("input", {
                       directives: [
                         {
