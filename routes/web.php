@@ -59,7 +59,7 @@ Route::group(['prefix' => 'api/'], function($app){
      *
      * RETURN DATA OR DEFAULT DATA
      */
-    $app->get('template/{id}', 'API\ImageTemplateController@getTemplate')->name('gettemplate');
+    $app->get('template/{id}/{size}', 'API\ImageTemplateController@getTemplate')->name('gettemplate');
 
     /**
      * INSERT NEW TEMPLATE INTO THE TEMPLATE DATABASE
@@ -67,5 +67,7 @@ Route::group(['prefix' => 'api/'], function($app){
      * RETURNS ID IF SUCCESSFUL
      */
     $app->post('template', 'API\ImageTemplateController@insertTemplate')->name('insertTemplate');
+
+
 
 });

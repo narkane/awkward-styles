@@ -13,9 +13,11 @@ use stdClass;
 class ImageTemplateController extends Controller
 {
 
-    public function getTemplate($id){
+    public function getTemplate($id, $size){
         $response = DB::table('templates')
-            ->whereRaw('pid = ?', [$id])->first();
+            ->whereRaw('pid = ?', [$id])
+            ->whereRaw('size = ?', [$size])
+            ->first();
 
         if(!$response) {
             $response = new stdClass();
@@ -26,6 +28,7 @@ class ImageTemplateController extends Controller
             $response->height = 0;
             $response->dpi = 0;
             $response->pid = 0;
+            $response->size = 0;
         }
 
         return response()->json($response);
@@ -34,16 +37,31 @@ class ImageTemplateController extends Controller
 
     public function insertTemplate(Request $request){
 
+        if(!$request->has('pid') || !$request->has('size')){
+            return response()->json(['id' => 0]);
+        }
+
         // Create Query For Insert
-        $id = DB::table('templates')->insertGetId([
+        DB::table('templates')->updateOrInsert([
+            'pid' => $request->input('pid'),
+            'size' => $request->input('size')],[
             'x' => ($request->has('x')) ? $request->input('x') : 0,
             'y' => ($request->has('y')) ? $request->input('y') : 0,
             'width' => ($request->has('width')) ? $request->input('width') : 0,
-            'height' => ($request->has('height')) ? $request->input('height') : 0,
-            'pid' => ($request->has('pid')) ? $request->input('pid') : 0
+            'height' => ($request->has('height')) ? $request->input('height') : 0
         ]);
 
-        return response()->json(['id' => ($id) ? $id : 0]);
+        $id = DB::table('templates')
+            ->where([
+                'pid' => $request->input('pid'),
+                'size' => $request->input('size'),
+                'x' => ($request->has('x')) ? $request->input('x') : 0,
+                'y' => ($request->has('y')) ? $request->input('y') : 0,
+                'width' => ($request->has('width')) ? $request->input('width') : 0,
+                'height' => ($request->has('height')) ? $request->input('height') : 0
+            ])->first();
+
+        return response()->json(['id' => ($id) ? $id->id : 0]);
 
     }
 
