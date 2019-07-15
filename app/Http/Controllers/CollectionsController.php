@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Doctrine\DBAL\Query\QueryBuilder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Auth;
 use Illuminate\Support\Facades\Input;
 use App\Artwork;
@@ -22,7 +25,7 @@ class CollectionsController extends Controller
 
 //    @return \Illuminate\Http\Response
 
-    public function searchSuggestions(Request $request) {
+    public function searchSuggestions(Request $request, $id) {
         
         $user_id = Auth::user()->id;
         /*$artwork_id = '';
@@ -111,9 +114,30 @@ class CollectionsController extends Controller
          //return view('addproducts',['menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
 
          /////////////////////////////
-         $q = $request->id;
-         $termIDs = DB::select('select category_id from tbl_categories_m where name like "%'.$q.'%"');
-         $tags =[];
+         //$q = $request->id;
+
+         //$termIDs = DB::select('select category_id from tbl_categories_m where name like "%'.$q.'%"');
+
+              /**
+               * @var Builder $query
+               */
+         $query = DB::table('tbl_products')
+            ->join('tbl_media_library', 'tbl_products.image', '=', 'tbl_media_library.id')
+            ->whereRaw('label LIKE "%?%"', [$id])
+            ->orWhereRaw('shortDescription LIKE "%?%"', [$id]);
+
+      $tags = $query->paginate(25);
+
+      echo ($query->toSql());
+
+        foreach($tags as $tag){
+            print_r($tag);
+        }
+
+        die();
+
+        // $tags =[];
+         /*
          foreach($termIDs as &$id) {
              // echo json_encode($id->category_id);
              $query = null;
@@ -125,8 +149,12 @@ class CollectionsController extends Controller
                  //echo json_encode($tags);
              }
          }
+         */
+
          if(isset($tags)){
-             return view('search-results', ['request' => json_encode($tags),'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
+             return view('search-results', [
+                 'request' => json_encode($tags),
+                 'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
          }
          return view('search-results', ['request' => null,'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
          ////////////////////////////////

@@ -48,3 +48,24 @@ Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
 Route::get('/products', 'ProductDetailsController@products')->name('collections');
+
+/**
+ * API CALLS NEEDED
+ */
+Route::group(['prefix' => 'api/'], function($app){
+
+    /**
+     * COLLECT TEMPLATE INFORMATION FROM THE DATABASE
+     *
+     * RETURN DATA OR DEFAULT DATA
+     */
+    $app->get('template/{id}', 'API\ImageTemplateController@getTemplate')->name('gettemplate');
+
+    /**
+     * INSERT NEW TEMPLATE INTO THE TEMPLATE DATABASE
+     *
+     * RETURNS ID IF SUCCESSFUL
+     */
+    $app->post('template', 'API\ImageTemplateController@insertTemplate')->name('insertTemplate');
+
+});
