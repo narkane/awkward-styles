@@ -51,14 +51,19 @@ html {
   overflow: scroll;
   overflow-x: hidden;
 }
+
+/**
+  REMOVING CSS TO RESTORE SCROLLBAR IN CHROME
+
 ::-webkit-scrollbar {
-  width: 0px;  /* Remove scrollbar space */
-  background: transparent;  /* Optional: just make scrollbar invisible */
+  width: 0px;  // Remove scrollbar space
+  background: transparent;  // Optional: just make scrollbar invisible
 }
-/* Optional: show position indicator in red */
+// Optional: show position indicator in red
 ::-webkit-scrollbar-thumb {
   background: #FF0000;
 }
+*/
 
 article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
   display: block; }

@@ -31,8 +31,31 @@
 
 
                 <div class="row products-row" id="art-product-list">
-            <script type="text/javascript" language="javascript">
-                var sData = <?php echo $request ?>;
+
+                    @isset($request)
+                        @foreach(json_decode($request) as $req)
+                            <div class="col-3 item">
+                                <div class="product-grid">
+                                    <div class="product-image">
+                                        <a href="{{url('/')}}/product-details/{{$req->id}}">
+                                            <img src="{{$req->full_url}}">
+                                        </a>
+                                    </div>
+                                    <div class="product-content">
+                                        <h5 class="title">{{$req->label}}</h5>
+                                        <div class="price">
+                                            {{$req->salePrice}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endisset
+
+
+
+                        <script type="text/javascript" language="javascript">
+                var sData = {{ $request }};
 
                 console.log(sData);
 
