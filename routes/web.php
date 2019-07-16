@@ -68,6 +68,34 @@ Route::group(['prefix' => 'api/'], function($app){
      */
     $app->post('template', 'API\ImageTemplateController@insertTemplate')->name('insertTemplate');
 
+    /**
+     * FETCH ALL LIBRARIES OF A GIVEN USER
+     */
+    $app->get('designs/all', 'API\DesignLibraryController@fetchLibrary')->name('allDesigns');
 
+    /**
+     * FETCH A SINGLE LIBRARY FOR THE USER
+     */
+    $app->get('designs/{id}', 'API\DesignLibraryController@fetchLibrary')->name('singleDesign');
+
+    /**
+     * DELETE A SINGLE LIBRARY
+     */
+    $app->get('designs/remove/{id}', 'API\DesignLibraryController@removeLibrary')->name('deleteLibrary');
+
+    /**
+     * FETCH A LIBRARY PRINT BY ID
+     */
+    $app->get('designs/print/{id}', 'API\DesignPrintsController@fetchPrintById')->name('fetchPrintById');
+
+    /**
+     * FETCH A LIBRARY PRINT BY LIBRARY ID AND SIZE
+     */
+    $app->post('designs/print/', 'API\DesignPrintsController@fetchPrintByLibraryAndSize')->name('fetchPrintByLibAndSize');
+
+    /**
+     * DELETE A LIBRARY PRINT BY ID
+     */
+    $app->get('designs/print/remove/{id}', 'API\DesignPrintscontroller@remove')->name('deletePrint');
 
 });
