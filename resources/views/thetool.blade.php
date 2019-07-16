@@ -276,7 +276,6 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
                         },
                         type: 'GET',
                         success: function(images) {
-                          alert("WORKINGGG!~");
                             $('#art-product-list').append(`
 <div  style="position:absolute;z-index:-20;padding:0px 150px;">
                                         <div class="product-image">

@@ -3190,7 +3190,7 @@ input[type="button"].btn-block {
 .head-top{
   position: fixed;
   z-index: 9;
-  border-radius: 20px 0 0 20px;
+  border-radius: 0 0 0x` 0;
   opacity: 0.7;
 }
 

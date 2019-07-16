@@ -200,11 +200,10 @@ footer {
   font-size: 16px;
 }
 
-.head-top-ul {
+.head-top {
   display: flex;
   list-style: none;
-  padding: 4px 0px !important;
-  justify-content: flex-end;
+  padding: 4px 0px;
   margin: 0;
 }
 
@@ -1122,9 +1121,11 @@ section {
 }
 
 /*New */
-
+.container,
 #mega-menu .container {
   position: relative;
+  padding: none !important;
+  float: right;
 }
 
 .mega-menu-dropdown {

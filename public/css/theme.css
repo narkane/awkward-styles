@@ -122,6 +122,7 @@ img {
   background-color: rgba(255, 255, 255, 0.8);
   background-image: url("../images/panelbg.jpg");
   background-size: 15%;
+  background-repeat: repeat;
   background-blend-mode: screen;
   box-shadow: 0 0rem 0.25rem rgba(0, 0, 0, 0.95) !important;
   border-radius: 0.25rem;
@@ -226,7 +227,6 @@ img {
   display: flex;
   list-style: none;
   padding: 4px 0;
-  justify-content: flex-end;
   margin: 0;
 }
 

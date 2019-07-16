@@ -3,16 +3,22 @@
     <v-form ref="form">
       <v-container fluid>
         <v-layout row>
+          <v-flex xs3>
+            <input type="file" id="files" name="files[]" multiple />
+          </v-flex>
+          <v-flex xs5 />
+        </v-layout>
+        <v-layout row>
           <v-flex xs1>
-            <select v-model="size" style="border:2px inset darkgrey">
+            <select v-model="size" @change="getTemplateAxios" style="border:2px inset darkgrey">
               <option value="XS">XS</option>
               <option value="S">S</option>
               <option value="M">M</option>
               <option value="L">L</option>
               <option value="XL">XL</option>
-              <option value="XXL">XXL</option>
-              <option value="XXXL">XXXL</option>
-              <option value="XXXXL">XXXXL</option>
+              <option value="2XL">2XL</option>
+              <option value="3XL">3XL</option>
+              <option value="4XL">4XL</option>
             </select>
           </v-flex>
           <v-flex xs7>
@@ -22,16 +28,16 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="testSprite.x" label="X" required></v-text-field>
+            <v-text-field v-model="Xart" label="X: Art" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="testSprite.y" label="Y" required></v-text-field>
+            <v-text-field v-model="Yart" label="Y: Art" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="testSprite.width" label="width" required></v-text-field>
+            <v-text-field v-model="testSprite.width" label="Width" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="testSprite.height" label="height" required></v-text-field>
+            <v-text-field v-model="testSprite.height" label="Height" required></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -48,10 +54,10 @@
             <v-text-field v-model="testSprite.y / ratio" label="Y inches" disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesWart" label="width in."></v-text-field>
+            <v-text-field v-model="inchesWart" label="width in." disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesHart" label="height in."></v-text-field>
+            <v-text-field v-model="inchesHart" label="height in." disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -92,23 +98,37 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="inchesXtemp" label="X inches" disabled></v-text-field>
+            <v-text-field v-model="drawArea.x / ratio" label="X inches" disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesYtemp" label="Y inches" disabled></v-text-field>
+            <v-text-field v-model="drawArea.x / ratio" label="Y inches" disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesWtemp" label="width in."></v-text-field>
+            <v-text-field v-model="inchesWtemp" label="width in." :disabled="!mode"></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesHtemp" label="height in."></v-text-field>
-          </v-flex>
-          <v-flex xs1>
-            <v-text-field disabled />
+            <v-text-field v-model="inchesHtemp" label="height in." :disabled="!mode"></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
           </v-flex>
+          <v-flex xs1>
+            <v-text-field disabled />
+          </v-flex>
+        </v-layout>
+        <v-layout>
+          <v-flex>
+            <carousel id="care">
+              <output id="list"></output>
+            </carousel>
+          </v-flex>
+          <!-- <div class="container">
+              <div class="carousel">
+                <output id="list"></output>
+              </div>
+            </div>
+            <div class="next">Next</div>
+          <div class="prev">Prev</div>-->
         </v-layout>
       </v-container>
       <v-btn color="green" @click="savePrint">Save</v-btn>
@@ -122,9 +142,17 @@
 import * as PIXI from "pixi.js";
 import blob from "../assets/blob.png";
 import axios from "axios";
+import "vuetify/dist/vuetify.css";
+import UploadButton from "vuetify-upload-button";
+import { Carousel, Slide } from "vue-carousel";
 
 export default {
   name: "HelloWorld",
+  components: {
+    "upload-btn": UploadButton,
+    carousel: Carousel,
+    slide: Slide
+  },
   data() {
     return {
       type: "WebGL",
@@ -136,6 +164,9 @@ export default {
       }),
       mode: false,
       size: "XS",
+      libraryNum: 0,
+      libraryCurrent: 0,
+      currdeg: 0,
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
       testSprite: PIXI.Sprite.from(blob),
@@ -220,22 +251,68 @@ export default {
         }
       }
     },
+    handleFileSelect: function(evt) {
+      var that = this;
+      var files = evt.target.files; // FileList object
+      that.libraryNum += files.length;
+
+      // Loop through the FileList and render image files as thumbnails.
+      for (var i = 0, f; (f = files[i]); i++) {
+        // Only process image files.
+        if (!f.type.match("image.*")) {
+          continue;
+        }
+
+        var reader = new FileReader();
+
+        // Closure to capture the file information.
+        reader.onload = (function(theFile) {
+          return function(e) {
+            // Render thumbnail.
+            var span = document.createElement("slide");
+            // span.className = "item";
+            span.id = that.libraryCurrent;
+            // span.style = that.styleCarousel(that.libraryCurrent);
+            span.innerHTML = [
+              '<img class="thumb" src="',
+              e.target.result,
+              '" />',
+              escape(theFile.name)
+            ].join("");
+            document.getElementById("list").insertBefore(span, null);
+            document
+              .getElementById("list")
+              .insertBefore(document.createElement("hr"), null);
+            that.libraryCurrent++;
+          };
+        })(f);
+
+        // Read in the image file as a data URL.
+        reader.readAsDataURL(f);
+      }
+      // for (var i = 0; i < that.libraryNum; i++) {
+      //   var span = document.getElementById(i);
+      //   span.style = that.styleCarousel(i);
+      // }
+    },
     getTemplateAxios: function() {
       var that = this;
 
       axios
-        .get("/api/template/" + this.prodID)
+        .get("/api/template/" + this.prodID + "/" + this.size)
         .then(function(response) {
           console.log(response);
           if (response.data.pid === 0) {
             that.mode = true;
           } else {
-            that.drawArea.x = response.data.x;
-            that.drawArea.y = response.data.y;
-            that.drawArea.width = response.data.width;
-            that.drawArea.height = response.data.height;
-            that.changeDraw();
+            that.mode = false;
           }
+          that.drawArea.x = response.data.x;
+          that.drawArea.y = response.data.y;
+          that.drawArea.width = response.data.width;
+          that.drawArea.height = response.data.height;
+          that.ratio = response.data.dpi;
+          that.changeDraw();
         })
         .catch(function(error) {
           console.log(error);
@@ -267,7 +344,8 @@ export default {
         width: this.drawArea.width,
         height: this.drawArea.height,
         dpi: this.ratio,
-        pid: this.prodID
+        pid: this.prodID,
+        size: this.size
       };
       this.saveTemplateAxios(templateObj);
       // alert(JSON.stringify(templateObj));
@@ -298,37 +376,76 @@ export default {
       }, "image/png");
 
       var printObj = {
-        x: this.testSprite.x / this.drawArea.width,
-        y: this.testSprite.y / this.drawArea.height,
-        w: this.testSprite.width,
-        h: this.testSprite.height,
-        DPI: this.ratio
+        //get %of offset with repect to (top,left)
+        x: (this.testSprite.x + testSprite.width / 2) / this.drawArea.width,
+        y: (this.testSprite.y + testSprite.height / 2) / this.drawArea.height,
+        width: this.testSprite.width,
+        height: this.testSprite.height,
+        dpi: this.ratio,
+        pid: this.prodID,
+        size: this.size
       };
 
-      alert(JSON.stringify(printObj));
+      alert(printObj);
+    },
+    styleCarousel: function(itemNum) {
+      console.log("itemnum / total = " + itemNum + " / " + this.libraryNum);
+      return (
+        "transform: rotateY(" +
+        itemNum * (360 / this.libraryNum) +
+        "deg) translateZ(100px);"
+      );
+    },
+    rotate: function(e) {
+      var carousel = $(".carousel");
+
+      if (e.data.d == "n") {
+        this.currdeg = this.currdeg - 360 / this.libraryNum;
+      }
+      if (e.data.d == "p") {
+        this.currdeg = this.currdeg + 360 / this.libraryNum;
+      }
+      carousel.css({
+        "-webkit-transform": "rotateY(" + this.currdeg + "deg)",
+        "-moz-transform": "rotateY(" + this.currdeg + "deg)",
+        "-o-transform": "rotateY(" + this.currdeg + "deg)",
+        transform: "rotateY(" + this.currdeg + "deg)"
+      });
     }
   },
   created() {
     //set to "template mode" if no template
     this.getTemplateAxios();
-
     this.init();
   },
+  mounted() {
+    var that = this;
+
+    document
+      .getElementById("list")
+      .insertBefore(document.createElement("hr"), null);
+    document
+      .getElementById("files")
+      .addEventListener("change", this.handleFileSelect, false);
+
+    $(".next").on("click", { d: "n" }, that.rotate);
+    $(".prev").on("click", { d: "p" }, that.rotate);
+  },
   computed: {
-    inchesXtemp: {
+    Xart: {
       get() {
-        return this.drawArea.x / this.ratio;
+        return this.testSprite.x - this.testSprite.width / 2;
       },
       set(value) {
-        this.drawArea.x = value * this.ratio;
+        this.testSprite.x = value + this.testSprite.width / 2;
       }
     },
-    inchesYtemp: {
+    Yart: {
       get() {
-        return this.drawArea.y / this.ratio;
+        return this.testSprite.y - this.testSprite.height / 2;
       },
       set(value) {
-        this.drawArea.y = value * this.ratio;
+        this.testSprite.y = value + this.testSprite.height / 2;
       }
     },
     inchesWtemp: {
@@ -384,9 +501,98 @@ canvas {
   position: relative;
   top: 0px;
   margin: 2px 138px;
-  z-index: -10;
+  /* z-index: -10; */
 }
 input {
   text-align: center;
+  color: black;
+}
+#upload {
+  border: 1px solid black;
+  filter: drop-shadow(2px 1px 2px #222244);
+  width: 100%;
+  background: orange;
+}
+.thumb {
+  text-align: left;
+  height: 25px;
+  width: 25px;
+  border: 1px solid #000;
+  margin: 0 5px;
+}
+
+.carousel .container {
+  margin: 0 auto;
+  width: 250px;
+  height: 200px;
+  position: relative;
+  perspective: 1000px;
+}
+
+.carousel {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  transform-style: preserve-3d;
+  transition: transform 1s;
+}
+
+.item {
+  display: block;
+  position: absolute;
+  background: #000;
+  /* width: 50px; */
+  /* height: 50px; */
+  padding: 2px;
+  /* line-height: 200px;
+  font-size: 5em; */
+  text-align: center;
+  color: #fff;
+  opacity: 0.95;
+  border-radius: 10px;
+}
+
+.next,
+.prev {
+  color: #444;
+  position: absolute;
+  top: 100px;
+  padding: 1em 2em;
+  cursor: pointer;
+  background: #ccc;
+  border-radius: 5px;
+  border-top: 1px solid #fff;
+  box-shadow: 0 5px 0 #999;
+  transition: box-shadow 0.1s, top 0.1s;
+}
+.next:hover,
+.prev:hover {
+  color: #000;
+}
+.next:active,
+.prev:active {
+  top: 104px;
+  box-shadow: 0 1px 0 #999;
+}
+.next {
+  right: 5em;
+}
+.prev {
+  left: 5em;
+}
+
+#care {
+  border: 1px solid black;
+  border-radius: 10px;
+  overflow: hidden;
+}
+#list {
+  /* display: flex; */
+  /* flex-wrap: nowrap; */
+  word-wrap: none;
+  overflow: hidden;
+  /* flex-wrap: nowrap; */
+  /* justify-content: flex-start; */
+  text-align: left;
 }
 </style>
