@@ -11,6 +11,13 @@ use Auth;
 use Illuminate\Support\Facades\Input;
 use App\Artwork;
 
+/**
+ * Class CollectionsController
+ * @package App\Http\Controllers
+ *
+ * TODO: ADD PAGINATION
+ */
+
 class CollectionsController extends Controller
 {
     /**
@@ -34,7 +41,7 @@ class CollectionsController extends Controller
         if(isset($artwork_name)) { $artwork_name = $request->artwork_name; } 
         $artworks = Artwork::all();
         //$artworks = Artwork::where('parentid', $user_id)->get();
-        return view('addproducts',['menu'=>'stores','menuitem'=>'addproducts','artwork_id'=>$artwork_id,'artwork_name'=>$artwork_name,'artworks'=>$artworks]);
+        return view('addproducts',['menu'=>'stores','menuitem'=>'addproducts','artwork_id'=>$artwork_id,'artwork_name'=>$artwork_name,'artworks'=>$artworks]);*/
         $data = array("privateKey" => "password");                                                                    
           $data_string = json_encode($data);                                                                                   
                                                                                                                        
@@ -118,27 +125,53 @@ class CollectionsController extends Controller
 
          //$termIDs = DB::select('select category_id from tbl_categories_m where name like "%'.$q.'%"');
 
+              $take = 25;
+
+              $skip = ($request->has('page')) ? ($request->input('page') * $take) : 0;
+
               /**
                * @var Builder $query
-               */
-         $query = DB::table('tbl_products')
-            ->join('tbl_media_library', function($join) use($id) {
-                $join->on('tbl_products.image', '=', 'tbl_media_library.id')
-                    ->whereRaw('label LIKE "%?%"', [$id])
-                    ->orWhereRaw('shortDescription LIKE "%?%"', [$id]);
-                    })->paginate(25);
+               *
+         $tags = DB::table('tbl_products')
+             ->select("tbl_products.*", DB::raw("tbl_media_library.full_url as full_url"))
+            ->join('tbl_media_library', function($join) use ($id) {
+                $join->on('tbl_products.image','=','tbl_media_library.id');
+                //$join->where('label', 'LIKE', '%' . $id . '%');
+                //$join->orWhere('shortDescription', 'LIKE', '%' . $id . '%');
+            })
+             ->where('label', 'LIKE', '%' . $id . '%')
+            ->orWhere('shortDescription', 'LIKE', '%' . $id . '%');
+        */
 
-        $tags =[];
-         foreach($query as $objs) {
-             $tags[] = $objs;
-         }
+              $tags = DB::table(DB::raw("tbl_categories_m AS t1"))
+                  ->select(DB::raw("t2.*"), DB::raw("t3.full_url as full_url"))
+                  ->leftJoin(DB::raw("tbl_products as t2"), function($q)
+                  {
+                      $q->on(DB::raw("FIND_IN_SET(t1.id, t2.categoryId)"), ">", DB::raw("0"));
+                  })
+                  ->leftJoin(DB::raw("tbl_media_library as t3"), function($q){
+                      $q->on(DB::raw("t3.id"), "=", DB::raw("t2.image"));
+                  })
+              ->where('t1.name', '=', $id)
+                  ->orWhere('t1.name', 'LIKE', '%' . $id . '%')
+                  ->orWhere(function($q) use($id){
+                      $q->where('t2.label', '=', $id);
+                      $q->where('t2.label', 'LIKE', '%' . $id . '%');
+                  })
+                  ->orWhere(function($q) use($id){
+                      $q->where('t2.shortDescription', 'LIKE', '%' . $id . '%');
+                  });
+
+         $tags = $tags->skip($skip)
+             ->take($take)
+             ->get();
 
          if(isset($tags)){
              return view('search-results', [
-                 'request' => json_encode($tags),
+                 'request' => $tags,
                  'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
          }
-         return view('search-results', ['pagination_link' => $query->links(), 'request' => null,'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
+         return view('search-results', ['request' => null,'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
          ////////////////////////////////
 
           } else {

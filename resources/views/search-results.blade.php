@@ -33,12 +33,12 @@
                 <div class="row products-row" id="art-product-list">
 
                     @isset($request)
-                        @foreach(json_decode($request) as $req)
+                        @foreach($request as $req)
                             <div class="col-3 item">
                                 <div class="product-grid">
                                     <div class="product-image">
                                         <a href="{{url('/')}}/product-details/{{$req->id}}">
-                                            <img src="{{$req->full_url}}">
+                                            <img src="{{ $req->full_url}}">
                                         </a>
                                     </div>
                                     <div class="product-content">
@@ -53,6 +53,7 @@
                     @endisset
 
 
+                    <!--
 
                         <script type="text/javascript" language="javascript">
                 var sData = {{ $request }};
@@ -105,6 +106,8 @@
                 console.log('results per area: '+sData[0].length);
                 console.log('total results: '+sData.length*sData[0].length)}};
             </script>
+
+            -->
 
                 </div>
                 <nav aria-label="Page navigation example">

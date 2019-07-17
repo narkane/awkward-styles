@@ -116,7 +116,7 @@
             <v-text-field disabled />
           </v-flex>
         </v-layout>
-        <v-layout>
+        <v-layout row fill-height>
           <v-flex>
             <carousel id="care">
               <output id="list"></output>
