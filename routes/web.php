@@ -11,6 +11,8 @@
 |
 */
 
+use App\DesignLibrary;
+
 Route::get('/', function () {
     return redirect('list');
 });
@@ -77,6 +79,11 @@ Route::group(['prefix' => 'api/'], function($app){
      * FETCH A SINGLE LIBRARY FOR THE USER
      */
     $app->get('designs/{id}', 'API\DesignLibraryController@fetchLibrary')->name('singleDesign');
+
+    /**
+     * CREATE A LIBRARY
+     */
+    $app->post('designs/create', DesignLibrary::createOrUpdate());
 
     /**
      * DELETE A SINGLE LIBRARY

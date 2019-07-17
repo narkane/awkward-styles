@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="container">
+<div class="container panel">
 
     <div class="row">
         <div class="col-md-12">
@@ -26,6 +26,25 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-10">
+                        <h5>
+                            <span class="badge badge-pill badge-light rounded-border py-2 px-4 border border-dark">
+                                Page(s):
+                                @for($i = 1; $i <= ceil(($totalFound / $take)); $i++)
+
+                                    @if($i == $currentPage)
+                                        {{$i}}
+                                    @else
+                                        <u>{{$i}}</u>
+                                    @endif
+
+                                @endfor
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="col-md-2 text-right">
+                        <h5><span class="badge badge-pill badge-light rounded-border py-2 px-5 border border-dark">Found <u>{{$totalFound}}</u> results</span></h5>
+                    </div>
                 </div>
                 
 
@@ -34,80 +53,25 @@
 
                     @isset($request)
                         @foreach($request as $req)
-                            <div class="col-3 item">
-                                <div class="product-grid">
-                                    <div class="product-image">
-                                        <a href="{{url('/')}}/product-details/{{$req->id}}">
-                                            <img src="{{ $req->full_url}}">
-                                        </a>
-                                    </div>
-                                    <div class="product-content">
-                                        <h5 class="title">{{$req->label}}</h5>
-                                        <div class="price">
-                                            {{$req->salePrice}}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    @endisset
-
-
-                    <!--
-
-                        <script type="text/javascript" language="javascript">
-                var sData = {{ $request }};
-
-                console.log(sData);
-
-                    if(sData.length == 0){
-                        console.log("NADA DAWG!");
-                        document.write('<meta http-equiv="Refresh" content="0; url=/products">');
-                    }
-                
-                for(let i = 0; i < sData.length; i++) {
-                    for(let j = 0; j < sData[i].length; j++) {
-                    $.ajax({
-                        url: "{{env('API_URL')}}api/media/getById/" +
-                        sData[i][j].image.split(",")[0],
-                        contentType: 'application/json',
-                        dataType: 'json',
-                        headers: {
-                            "Authorization": "Bearer " + '{{$token}}',
-                            "Content-Type": "application/json"
-                        },
-                        type: 'GET',
-                        success: function(images) {
-                            $('#art-product-list').append(`
-                                <div class="col-3 item">
+                            @if(isset($req->id))
+                                <div class="col item">
                                     <div class="product-grid">
                                         <div class="product-image">
-                                            <a href="{{url('/')}}/product-details/${sData[0][0].id}">
-                                                <img src="${images.properties.full_url}">
+                                            <a href="{{url('/')}}/product-details/{{$req->id}}">
+                                                <img src="{{ $req->full_url}}">
                                             </a>
                                         </div>
                                         <div class="product-content">
-                                            <h5 class="title">${sData[0][0].label}</h5>
+                                            <h5 class="title">{{$req->label}}</h5>
                                             <div class="price">
-                                                $${sData[0][0].salePrice}
+                                                {{$req->salePrice}}
                                             </div>
-                                     </div>
+                                        </div>
                                     </div>
-                                </div>                        
-                            `);
-                            console.log(images);
-                            console.log(images.properties.full_url);
-                        }
-                    });
-                console.log((i+1)+" * "+(j+1)+" = "+(i+1)*(j+1));
-                console.log('====================');
-
-                console.log('areas: '+sData.length);
-                console.log('results per area: '+sData[0].length);
-                console.log('total results: '+sData.length*sData[0].length)}};
-            </script>
-
-            -->
+                                </div>
+                            @endif
+                        @endforeach
+                    @endisset
 
                 </div>
                 <nav aria-label="Page navigation example">
