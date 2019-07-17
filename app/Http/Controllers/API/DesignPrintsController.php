@@ -61,8 +61,9 @@ class DesignPrintsController extends Controller
     }
 
     /**
-     * Create a Print fo rthe Library
+     * Create a PRINT for the library. Add library if necessary.
      * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function createPrint(Request $request){
 
