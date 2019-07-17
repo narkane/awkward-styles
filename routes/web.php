@@ -96,6 +96,11 @@ Route::group(['prefix' => 'api/'], function($app){
     /**
      * DELETE A LIBRARY PRINT BY ID
      */
-    $app->get('designs/print/remove/{id}', 'API\DesignPrintscontroller@remove')->name('deletePrint');
+    $app->get('designs/print/remove/{id}', 'API\DesignPrintsController@remove')->name('deletePrint');
+
+    /**
+     * ADD A PRINT/LIBRARY
+     */
+    $app->post('designs/print/create', 'API\DesignPrintsController@createPrint')->name('createPrint');
 
 });
