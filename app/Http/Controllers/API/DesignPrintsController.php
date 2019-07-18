@@ -78,6 +78,9 @@ class DesignPrintsController extends Controller
 
             $lib_id = ($request->input('library_id') == 0) ? DesignLibrary::createOrUpdate($request) : $request->input('library_id');
 
+            // Locate file
+            $imageUrl = "/public/designs/" . $lib_id . "/". $lib_id . ".png";
+
             $identifier = DesignPrints::updateOrCreate([
                 'library_id' => $lib_id,
                 'size' => $request->input('size'),
@@ -85,8 +88,8 @@ class DesignPrintsController extends Controller
             ],[
                 'x' => $request->input('x'),
                 'y' => $request->input('y'),
-                'width' => getimagesize($request->file('design'))[0],
-                'height' => getimagesize($request->file('design'))[1]
+                'width' => getimagesize($imageUrl)[0],
+                'height' => getimagesize($imageUrl)[1]
             ]);
 
             if($identifier){

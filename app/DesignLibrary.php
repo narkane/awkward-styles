@@ -86,9 +86,17 @@ class DesignLibrary extends Model
 
             if($request->input('blob') != null) {
 
-                $image = imagecreatefromstring($request->input('blob'));
+                list($d,$data) = explode(",", $request->input('blob'));
 
-                imagepng($image, "/public/designs/" . $id . "/" . $id . ".png");
+                $path = "/designs/" . $id;
+
+                $image = imagecreatefromstring(base64_decode($data));
+
+                if (!file_exists($path)) {
+                    mkdir($path, 0777, true);
+                }
+
+                imagepng($image, $path . $id . ".png");
 
             } else {
 
