@@ -134,10 +134,6 @@
       <br />
       LibraryCurrent:{{libraryCurrent}}
       <br />
-      APP.stage.x:{{app.stage.x}}
-      <br />
-      APP.stage.y:{{app.stage.y}}
-      <br />
       <v-btn color="green" @click="savePrint">Save</v-btn>
       <v-btn color="orange" :hidden="!mode" @click="saveTemplate">Template</v-btn>
       <v-btn color="red">Cancel</v-btn>
@@ -501,30 +497,6 @@ export default {
             console.log(error);
           });
       }, "image/png");
-    },
-    styleCarousel: function(itemNum) {
-      console.log("itemnum / total = " + itemNum + " / " + this.libraryNum);
-      return (
-        "transform: rotateY(" +
-        itemNum * (360 / this.libraryNum) +
-        "deg) translateZ(100px);"
-      );
-    },
-    rotate: function(e) {
-      var carousel = $(".carousel");
-
-      if (e.data.d == "n") {
-        this.currdeg = this.currdeg - 360 / this.libraryNum;
-      }
-      if (e.data.d == "p") {
-        this.currdeg = this.currdeg + 360 / this.libraryNum;
-      }
-      carousel.css({
-        "-webkit-transform": "rotateY(" + this.currdeg + "deg)",
-        "-moz-transform": "rotateY(" + this.currdeg + "deg)",
-        "-o-transform": "rotateY(" + this.currdeg + "deg)",
-        transform: "rotateY(" + this.currdeg + "deg)"
-      });
     }
   },
   created() {
@@ -544,9 +516,6 @@ export default {
     document
       .getElementById("files")
       .addEventListener("change", this.handleFileSelect, false);
-
-    $(".next").on("click", { d: "n" }, that.rotate);
-    $(".prev").on("click", { d: "p" }, that.rotate);
   },
   computed: {
     Xart: {

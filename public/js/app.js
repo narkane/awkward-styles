@@ -82108,10 +82108,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-//
-//
-//
-//
 
 
 
@@ -82447,26 +82443,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
           console.log(error);
         });
       }, "image/png");
-    },
-    styleCarousel: function styleCarousel(itemNum) {
-      console.log("itemnum / total = " + itemNum + " / " + this.libraryNum);
-      return "transform: rotateY(" + itemNum * (360 / this.libraryNum) + "deg) translateZ(100px);";
-    },
-    rotate: function rotate(e) {
-      var carousel = $(".carousel");
-
-      if (e.data.d == "n") {
-        this.currdeg = this.currdeg - 360 / this.libraryNum;
-      }
-      if (e.data.d == "p") {
-        this.currdeg = this.currdeg + 360 / this.libraryNum;
-      }
-      carousel.css({
-        "-webkit-transform": "rotateY(" + this.currdeg + "deg)",
-        "-moz-transform": "rotateY(" + this.currdeg + "deg)",
-        "-o-transform": "rotateY(" + this.currdeg + "deg)",
-        transform: "rotateY(" + this.currdeg + "deg)"
-      });
     }
   },
   created: function created() {
@@ -82482,9 +82458,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
     document.getElementById("list").insertBefore(document.createElement("hr"), null);
     document.getElementById("files").addEventListener("change", this.handleFileSelect, false);
-
-    $(".next").on("click", { d: "n" }, that.rotate);
-    $(".prev").on("click", { d: "p" }, that.rotate);
   },
 
   computed: {
@@ -91489,10 +91462,6 @@ var render = function() {
           _vm._v(
             "\n    LibraryCurrent:" + _vm._s(_vm.libraryCurrent) + "\n    "
           ),
-          _c("br"),
-          _vm._v("\n    APP.stage.x:" + _vm._s(_vm.app.stage.x) + "\n    "),
-          _c("br"),
-          _vm._v("\n    APP.stage.y:" + _vm._s(_vm.app.stage.y) + "\n    "),
           _c("br"),
           _vm._v(" "),
           _c(
