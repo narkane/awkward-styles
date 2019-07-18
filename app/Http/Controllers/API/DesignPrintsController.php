@@ -74,9 +74,9 @@ class DesignPrintsController extends Controller
             'size' => 'required'
         ]);
 
-        if(!$validate->fails()) {
+        $lib_id = ($request->input('library_id') == 0) ? DesignLibrary::createOrUpdate($request) : $request->input('library_id');
 
-            $lib_id = ($request->input('library_id') == 0) ? DesignLibrary::createOrUpdate($request) : $request->input('library_id');
+        if(!$validate->fails() && !$lib_id == 0) {
 
             // Locate file
             $imageUrl = $path = public_path() . DIRECTORY_SEPARATOR . "designs" . DIRECTORY_SEPARATOR . $lib_id . DIRECTORY_SEPARATOR . "image1.PNG";
@@ -100,9 +100,13 @@ class DesignPrintsController extends Controller
 
             }
 
+            $msg = ['status' => 'failed', 'message' => 'Problem inserting into database'];
+
+        } else {
+            $msg = ['status' => 'failed', 'message' => 'Library Doesnt Exist'];
         }
 
-        return response()->json(['status'=>'failed']);
+        return response()->json($msg);
 
 
     }
