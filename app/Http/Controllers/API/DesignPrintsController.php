@@ -79,7 +79,7 @@ class DesignPrintsController extends Controller
             $lib_id = ($request->input('library_id') == 0) ? DesignLibrary::createOrUpdate($request) : $request->input('library_id');
 
             // Locate file
-            $imageUrl = "/public/designs/" . $lib_id . "/". $lib_id . ".png";
+            $imageUrl = $path = public_path() . DIRECTORY_SEPARATOR . "designs" . DIRECTORY_SEPARATOR . $lib_id . DIRECTORY_SEPARATOR . "image1.PNG";
 
             $identifier = DesignPrints::updateOrCreate([
                 'library_id' => $lib_id,
