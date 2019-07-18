@@ -68,6 +68,15 @@ class DesignLibraryController extends Controller
     }
 
     /**
+     * Create library
+     * @param Request $request
+     * @return mixed
+     */
+    public function createLibrary(Request $request){
+        return response()->json(['id' => DesignLibrary::createOrUpdate($request)]);
+    }
+
+    /**
      * Delete library from database
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse

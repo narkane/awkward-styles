@@ -43,9 +43,7 @@ class DesignPrintsController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function fetchPrintByLibraryAndSize(Request $request){
-        $lib_id = ($request->has('library_id')) ? $request->input('library_id') : null;
-        $size = ($request->has('size')) ? $request->input('size') : null;
+    public function fetchPrintByLibraryAndSize(Request $request, $lib_id, $size){
 
         $print = DesignPrints::where('library_id','=',$lib_id)->where('size','=',strtoupper($size))->first();
 
