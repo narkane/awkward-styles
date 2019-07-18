@@ -451,9 +451,10 @@ export default {
       // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
       // this.createSprite(allG);
 
+      //get %of offset with repect to (center!)
       var printObj = {
         blob: null,
-        //get %of offset with repect to (center!)
+        library_id: 0,
         x: lowX / this.drawArea.width,
         y: lowY / this.drawArea.height,
         width: allG.width,
@@ -462,8 +463,6 @@ export default {
         pid: this.prodID,
         size: this.size
       };
-
-      alert(JSON.stringify(printObj));
 
       // allG.calculateBounds();
       this.app.stage.addChild(allG);
@@ -487,7 +486,10 @@ export default {
         a.href = URL.createObjectURL(b);
         a.click();
         a.remove();
-        printObj.blob = b;
+        var reader = new FileReader();
+        printObj["blob"] = reader.readAsBinaryString(b);
+        alert(JSON.stringify(printObj));
+        alert(JSON.stringify(printObj.blob));
         axios
           .post("/api/designs/print/create", printObj)
           .then(function(response) {

@@ -1729,7 +1729,7 @@ return array(
     'App\\Http\\Controllers\\API\\DesignPrintsController' => $baseDir . '/app/Http/Controllers/API/DesignPrintsController.php',
     'App\\Http\\Controllers\\API\\ImageTemplateController' => $baseDir . '/app/Http/Controllers/API/ImageTemplateController.php',
     'App\\Http\\Controllers\\AffiliatesController' => $baseDir . '/app/Http/Controllers/AffiliatesController.php',
-    'App\\Http\\Controllers\\ArtistStorefrontController' => $baseDir . '/app/Http/Controllers/ArtistStorefrontController.php',
+    'App\\Http\\Controllers\\ArtistStorefrontController' => $baseDir . '/app/Http/Controllers/Old_ArtistStorefrontController.php',
     'App\\Http\\Controllers\\ArtworkManagementController' => $baseDir . '/app/Http/Controllers/ArtworkManagementController.php',
     'App\\Http\\Controllers\\Auth\\ForgotPasswordController' => $baseDir . '/app/Http/Controllers/Auth/ForgotPasswordController.php',
     'App\\Http\\Controllers\\Auth\\LoginController' => $baseDir . '/app/Http/Controllers/Auth/LoginController.php',

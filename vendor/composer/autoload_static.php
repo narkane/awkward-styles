@@ -2158,7 +2158,7 @@ class ComposerStaticInitad4da69498504c5ef17aa3177451234d
         'App\\Http\\Controllers\\API\\DesignPrintsController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/DesignPrintsController.php',
         'App\\Http\\Controllers\\API\\ImageTemplateController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/ImageTemplateController.php',
         'App\\Http\\Controllers\\AffiliatesController' => __DIR__ . '/../..' . '/app/Http/Controllers/AffiliatesController.php',
-        'App\\Http\\Controllers\\ArtistStorefrontController' => __DIR__ . '/../..' . '/app/Http/Controllers/ArtistStorefrontController.php',
+        'App\\Http\\Controllers\\ArtistStorefrontController' => __DIR__ . '/../..' . '/app/Http/Controllers/Old_ArtistStorefrontController.php',
         'App\\Http\\Controllers\\ArtworkManagementController' => __DIR__ . '/../..' . '/app/Http/Controllers/ArtworkManagementController.php',
         'App\\Http\\Controllers\\Auth\\ForgotPasswordController' => __DIR__ . '/../..' . '/app/Http/Controllers/Auth/ForgotPasswordController.php',
         'App\\Http\\Controllers\\Auth\\LoginController' => __DIR__ . '/../..' . '/app/Http/Controllers/Auth/LoginController.php',

@@ -82400,9 +82400,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
       // this.createSprite(allG);
 
+      //get %of offset with repect to (center!)
       var printObj = {
         blob: null,
-        //get %of offset with repect to (center!)
+        library_id: 0,
         x: lowX / this.drawArea.width,
         y: lowY / this.drawArea.height,
         width: allG.width,
@@ -82411,8 +82412,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         pid: this.prodID,
         size: this.size
       };
-
-      alert(JSON.stringify(printObj));
 
       // allG.calculateBounds();
       this.app.stage.addChild(allG);
@@ -82436,7 +82435,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         a.href = URL.createObjectURL(b);
         a.click();
         a.remove();
-        printObj.blob = b;
+        var reader = new FileReader();
+        printObj["blob"] = reader.readAsBinaryString(b);
+        alert(JSON.stringify(printObj));
+        alert(JSON.stringify(printObj.blob));
         __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post("/api/designs/print/create", printObj).then(function (response) {
           console.log(response);
         }).catch(function (error) {
