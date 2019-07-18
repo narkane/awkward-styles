@@ -86,7 +86,9 @@ class DesignLibrary extends Model
 
             if($request->input('blob') != null) {
 
-                imagepng($request->input('blob'), "/public/designs/" . $id . "/" . $id . ".png");
+                $img = imagecreatefromstring($request->input('blob'));
+
+                imagepng($img, "/public/designs/" . $id . "/" . $id . ".png");
 
             } else {
 
