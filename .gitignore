@@ -5,3 +5,5 @@ storage/*
 /nbproject
 libreadline.7.dylib
 /nbproject/private/
+/.idea
+.idea

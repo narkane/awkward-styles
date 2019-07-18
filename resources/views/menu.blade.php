@@ -4,13 +4,13 @@
                     <ul class="custom-accor">
 
                         <li>
-                            <div class="card-link accor-header" data-toggle="collapse" href="#collapseOne" @if(isset($menu)&&$menu == 'account') aria-expanded="true" @endif>
+                            <div class="card-link accor-header" data-toggle="collapse" href="#collapseOne" <?php if(isset($menu)&&$menu == 'account') echo'aria-expanded="true"'; ?>>
                                 <a href="#"> <span class="icon-user-circle"></span><label>My Account</label> <span class="icon-angle-down right-arrow1"></span> </a>
                             </div>
-                            <div id="collapseOne" class="collapse @if(isset($menu)&&$menu == 'account') show @endif" data-parent="#accordion">
+                            <div id="collapseOne" class="collapse <?php if(isset($menu)&&$menu == 'account') echo "show"; ?>" data-parent="#accordion">
                                 <ul class="inner-nav">
                                     <li>
-                                        <a href="{{ url('account') }}" @if(isset($menuitem)&&$menuitem == 'myaccount') style="background-color: #f5f5f5;" @endif> <span class="icon-user-circle"></span><label>Personal Details</label> </a>
+                                        <a href="<?php echo url('account'); ?>" <?php if(isset($menuitem)&&$menuitem == 'myaccount') echo 'style="background-color: #f5f5f5;"'; ?>> <span class="icon-user-circle"></span><label>Personal Details</label> </a>
                                     </li>
 
                                     <li>
@@ -33,21 +33,21 @@
                         </li>
 
                         <li>
-                            <div class="card-link accor-header" data-toggle="collapse" href="#collapseTwo" @if(isset($menu)&&$menu == 'stores') aria-expanded="true" @endif>
+                            <div class="card-link accor-header" data-toggle="collapse" href="#collapseTwo" <?php if(isset($menu)&&$menu == 'stores') echo 'aria-expanded="true"'; ?>>
                                 <span class="icon-store"></span><label>Stores</label> <span class="icon-angle-down right-arrow1"></span>
                             </div>
-                            <div id="collapseTwo" class="collapse @if(isset($menu)&&$menu == 'stores') show @endif"  data-parent="#accordion">
+                            <div id="collapseTwo" class="collapse <?php if(isset($menu)&&$menu == 'stores') echo 'show';?>"  data-parent="#accordion">
                                 <ul class="inner-nav">
                                     <li>
-                                        <a href="{{ url('createstore') }}" @if(isset($menuitem)&&$menuitem == 'createstore') style="background-color: #f5f5f5;" @endif> <span class="icon-store"></span><label>Manage Stores</label> </a>
+                                        <a href="<?php echo  url('createstore') ; ?>" <?php if(isset($menuitem)&&$menuitem == 'createstore') echo'style="background-color: #f5f5f5;"';?>> <span class="icon-store"></span><label>Manage Stores</label> </a>
                                     </li>
 
                                     <li>
-                                        <a href="{{ url('addartwork') }}" @if(isset($menuitem)&&$menuitem == 'artwork') style="background-color: #f5f5f5;" @endif> <span class="icon-store"></span><label>Manage Artworks</label> </a>
+                                        <a href="<?php echo  url('addartwork') ; ?>" <?php if(isset($menuitem)&&$menuitem == 'artwork') echo 'style="background-color: #f5f5f5;"'; ?>> <span class="icon-store"></span><label>Manage Artworks</label> </a>
                                     </li>
 
                                     <li>
-                                        <a href="{{ url('addproducts') }}" @if(isset($menuitem)&&$menuitem == 'products') style="background-color: #f5f5f5;" @endif> <span class="icon-store"></span><label>Manage Products</label> </a>
+                                        <a href="<?php echo  url('addproducts') ; ?>" <?php if(isset($menuitem)&&$menuitem == 'products') echo 'style="background-color: #f5f5f5;"'; ?>> <span class="icon-store"></span><label>Manage Products</label> </a>
                                     </li>
 
 
@@ -86,7 +86,7 @@
 
                         <li>
                             <div class="card-link accor-header">
-                                <a href="{{url('/ordertracking')}}" style="text-decoration: none;"><span class="icon-sun"></span>Orders Tracking</a> <!-- <span class="icon-angle-down right-arrow1"></span> -->
+                                <a href="<?php echo url('/ordertracking'); ?>" style="text-decoration: none;"><span class="icon-sun"></span>Orders Tracking</a> <!-- <span class="icon-angle-down right-arrow1"></span> -->
                             </div>
                             
                         </li>

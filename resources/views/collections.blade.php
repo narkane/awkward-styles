@@ -294,7 +294,7 @@
                         "Content-Type": "application/json"
                     },
                     type: 'GET',
-                    success: function(artProduct) { 
+                    success: function(artProduct) {
                         console.log("----",artProduct);
                         if(artProduct.properties.length) {
                             for(let i = 0; i < artProduct.properties.length; i++) {
@@ -325,16 +325,16 @@
 
                                                     </div>
                                                 </div>
-                                            </div>                        
+                                            </div>
                                         `);
                                         console.log(images);
                                         console.log(images.properties.full_url);
                                     }
-                                });                                
-                            }                            
+                                });
+                            }
                         } else {
                             $('#art-product-list').html(`No Art Products to Display`);
-                        }                        
+                        }
                     }
                 });
             }

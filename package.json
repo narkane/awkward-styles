@@ -17,5 +17,11 @@
         "laravel-mix": "^1.0",
         "lodash": "^4.17.4",
         "vue": "^2.1.10"
+    },
+    "dependencies": {
+        "pixi.js": "^5.0.4",
+        "vue-carousel": "^0.18.0",
+        "vuetify": "^1.5.16",
+        "vuetify-upload-button": "^2.0.2"
     }
 }

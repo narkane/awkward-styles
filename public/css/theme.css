@@ -118,14 +118,38 @@ img {
 }
 
 .pannel {
+  min-width: 400px;
   padding: 1.25rem;
   background-color: rgba(255, 255, 255, 0.8);
   background-image: url("../images/panelbg.jpg");
   background-size: 15%;
+  background-repeat: repeat;
   background-blend-mode: screen;
   box-shadow: 0 0rem 0.25rem rgba(0, 0, 0, 0.95) !important;
   border-radius: 0.25rem;
 }
+
+.panel {
+  padding-left: 100px;
+  padding-right:100px;
+  margin:auto;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+@media (min-width: 576px) {
+  .panel {
+    max-width: 500px;
+    padding: 10px;} }
+@media (min-width: 768px) {
+  .panel {
+    max-width: 720px; } }
+@media (min-width: 992px) {
+  .panel {
+    max-width: 960px; } }
+@media (min-width: 1200px) {
+  .container .panel {
+    max-width: 1140px; } }
 
 .btn-facebook {
   background-color: #3b569a;
@@ -226,7 +250,6 @@ img {
   display: flex;
   list-style: none;
   padding: 4px 0;
-  justify-content: flex-end;
   margin: 0;
 }
 
@@ -267,6 +290,9 @@ section {
 
 .products-row .item {
   padding: 15px;
+  min-width: 300px;
+  max-width: 400px;
+  margin: auto;
 }
 
 .product-grid {

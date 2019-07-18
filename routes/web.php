@@ -11,6 +11,8 @@
 |
 */
 
+use App\DesignLibrary;
+
 Route::get('/', function () {
     return redirect('list');
 });
@@ -22,6 +24,7 @@ Auth::routes();
 Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
 Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
 Route::get('/search/{id}', 'CollectionsController@searchSuggestions')->name('search-results');
+Route::get('/thetool/{productId}', 'ToolController@index')->name('thetool');
 ###them
 Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 Route::get('/account', 'DashboardController@myAccount')->name('account');
@@ -48,3 +51,64 @@ Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
 Route::get('/products', 'ProductDetailsController@products')->name('collections');
+
+/**
+ * API CALLS NEEDED
+ */
+Route::group(['prefix' => 'api/'], function($app){
+
+    /**
+     * COLLECT TEMPLATE INFORMATION FROM THE DATABASE
+     *
+     * RETURN DATA OR DEFAULT DATA
+     */
+    $app->get('template/{id}/{size}', 'API\ImageTemplateController@getTemplate')->name('gettemplate');
+
+    /**
+     * INSERT NEW TEMPLATE INTO THE TEMPLATE DATABASE
+     *
+     * RETURNS ID IF SUCCESSFUL
+     */
+    $app->post('template', 'API\ImageTemplateController@insertTemplate')->name('insertTemplate');
+
+    /**
+     * FETCH ALL LIBRARIES OF A GIVEN USER
+     */
+    $app->get('designs/all', 'API\DesignLibraryController@fetchLibrary')->name('allDesigns');
+
+    /**
+     * FETCH A SINGLE LIBRARY FOR THE USER
+     */
+    $app->get('designs/{id}', 'API\DesignLibraryController@fetchLibrary')->name('singleDesign');
+
+    /**
+     * CREATE A LIBRARY
+     */
+    $app->post('designs/create', 'API\DesignLibraryController@createLibrary')->name('createLibrary');
+
+    /**
+     * DELETE A SINGLE LIBRARY
+     */
+    $app->get('designs/remove/{id}', 'API\DesignLibraryController@removeLibrary')->name('deleteLibrary');
+
+    /**
+     * FETCH A LIBRARY PRINT BY ID
+     */
+    $app->get('designs/print/{id}', 'API\DesignPrintsController@fetchPrintById')->name('fetchPrintById');
+
+    /**
+     * FETCH A LIBRARY PRINT BY LIBRARY ID AND SIZE
+     */
+    $app->post('designs/print/', 'API\DesignPrintsController@fetchPrintByLibraryAndSize')->name('fetchPrintByLibAndSize');
+
+    /**
+     * DELETE A LIBRARY PRINT BY ID
+     */
+    $app->get('designs/print/remove/{id}', 'API\DesignPrintsController@remove')->name('deletePrint');
+
+    /**
+     * ADD A PRINT/LIBRARY
+     */
+    $app->post('designs/print/create', 'API\DesignPrintsController@createPrint')->name('createPrint');
+
+});
