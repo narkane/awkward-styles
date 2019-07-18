@@ -34,73 +34,42 @@ class DesignLibrary extends Model
      */
     public static function createOrUpdate(Request $request)
     {
-        // Verify we have all of the information
 
-        /**
-         * TODO: SET FILE MAX AND MIN IN ADMIN SETTINGS
-         * @var int
-         *
-        $fileMax = 9999;
-        $fileMin = 1000;
+        $check = DesignLibrary::where('id', '=', $request->input('library_id'))
+            ->where('user_id', '=', Auth::user()->getAuthIdentifier());
 
+        if ($check->count() == 0) {
 
-        // HANDLE FILE FIRST
-        $file = $request->file('design');
+            $id = DesignLibrary::insertGetId([
+                'user_id' => Auth::user()->getAuthIdentifier(),
+                'image_url' => "image1.png"
+            ]);
 
-        $inArr = in_array($file->getMimeType(), [
-            'image/bmp',
-            'image/gif',
-            'image/jpeg',
-            'image/svg+xml',
-            'image/png'
-        ]);
-         * */
+                if ($request->input('blob') != null) {
 
-       // if ($inArr && ($file->getSize() > $fileMin && $file->getSize() < $fileMax)) {
+                    list($d, $data) = explode(",", $request->input('blob'));
 
-            // Verifier
-            $verifier = ['user_id' => Auth::user()->getAuthIdentifier()];
+                    $path = public_path() . DIRECTORY_SEPARATOR . "designs" . DIRECTORY_SEPARATOR . $id;
 
-            if($request->has('library_id') && $request->input('library_id') != 0 && is_int($request->input('library_id'))){
-                $verifier['id'] = $request->input('library_id');
-            }
+                    $image = imagecreatefromstring(base64_decode($data));
 
+                    if (!file_exists($path)) {
+                        mkdir($path, 0777, true);
+                    }
 
-            $identifier = DesignLibrary::updateOrCreate(
-                $verifier,
-                [
-                    'image_url' => "image1.png"
-                ]
-            );
+                    imagepng($image, $path . DIRECTORY_SEPARATOR . "image1.PNG");
 
-            $id = $identifier->id;
+                } else {
 
-            /* Send Image To Proper Location
-            /public/designs/{id}/{image_name}
-            */
-            $id = $identifier->id;
+                    return 0;
 
-            /* Send Image To Proper Location
-            /public/designs/{id}/{image_name}
-            */
+                }
 
-            if($request->input('blob') != null) {
+        } else {
+            $id = $request->input('library_id');
+        }
 
-                imagepng($request->input('blob'), "/public/designs/" . $id . "/" . $id . ".png");
-
-            } else {
-
-                return 0;
-
-            }
-
-            //$file->move(url('/') . "/designs/" . $id . "/");
-
-            return $id;
-
-        //}
-
-        //return false;
+        return $id;
     }
 
 }
