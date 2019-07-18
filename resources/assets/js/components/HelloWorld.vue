@@ -34,10 +34,10 @@
             <v-text-field v-model="Yart" label="Y: Art" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="testSprite.width" label="Width" required></v-text-field>
+            <v-text-field v-model="Wart" label="Width" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="testSprite.height" label="Height" required></v-text-field>
+            <v-text-field v-model="Hart" label="Height" required></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -48,10 +48,10 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="testSprite.x / ratio" label="X inches" disabled></v-text-field>
+            <v-text-field v-model="inchesXart" label="X inches" disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="testSprite.y / ratio" label="Y inches" disabled></v-text-field>
+            <v-text-field v-model="inchesYart" label="Y inches" disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field v-model="inchesWart" label="width in." disabled></v-text-field>
@@ -117,20 +117,27 @@
           </v-flex>
         </v-layout>
         <v-layout row fill-height>
-          <v-flex>
-            <carousel id="care">
-              <output id="list"></output>
-            </carousel>
+          <v-flex pa1 shrink id="care">
+            Art Library
+            <br />
+            <!-- <carousel id="care"> -->
+            <output id="list"></output>
+            <!-- </carousel> -->
           </v-flex>
-          <!-- <div class="container">
-              <div class="carousel">
-                <output id="list"></output>
-              </div>
-            </div>
-            <div class="next">Next</div>
-          <div class="prev">Prev</div>-->
         </v-layout>
       </v-container>
+      Sprites.length:{{sprites.length}}
+      <br />
+      LibraryNum:{{libraryNum}}
+      <br />
+      LibrarySelect:{{librarySelect}}
+      <br />
+      LibraryCurrent:{{libraryCurrent}}
+      <br />
+      APP.stage.x:{{app.stage.x}}
+      <br />
+      APP.stage.y:{{app.stage.y}}
+      <br />
       <v-btn color="green" @click="savePrint">Save</v-btn>
       <v-btn color="orange" :hidden="!mode" @click="saveTemplate">Template</v-btn>
       <v-btn color="red">Cancel</v-btn>
@@ -166,10 +173,11 @@ export default {
       size: "XS",
       libraryNum: 0,
       libraryCurrent: 0,
+      librarySelect: 0,
       currdeg: 0,
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
-      testSprite: PIXI.Sprite.from(blob),
+      sprites: [],
       artOriginalAspect: "pending",
       drawArea: new PIXI.Rectangle(0, 0, 200, 300)
     };
@@ -192,19 +200,29 @@ export default {
       document.body.appendChild(that.app.view);
 
       // setup sprites
-      // that.artOriginalAspect = that.testSprite.width / that.testSprite.height;
-      // alert(that.artOriginalAspect);
-      that.testSprite.anchor.set(0.5);
-      that.testSprite.x = that.app.screen.width / 2;
-      that.testSprite.y = that.app.screen.height / 2;
-      // that.testSprite.position.set(
+      // that.createSprite(blob);
+
+      that.app.ticker.add(function(delta) {
+        // that.sprites[that.librarySelect].rotation += 0.1 * delta;
+      });
+    },
+    createSprite: function(art) {
+      // var that = this;
+      console.log("loading into this.sprites[" + this.libraryCurrent + "]");
+      this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
+      this.app.stage.addChild(this.sprites[this.libraryCurrent]);
+
+      this.sprites[this.libraryCurrent].anchor.set(0.5);
+      this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
+      this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
+      // this.sprites[this.libraryCurrent].position.set(
       //   that.app.screen.width / 2,
       //   that.app.screen.height / 2
       // );
-      that.testSprite.interactive = true;
-      that.testSprite.buttonMode = true;
+      this.sprites[this.libraryCurrent].interactive = true;
+      this.sprites[this.libraryCurrent].buttonMode = true;
 
-      that.testSprite
+      this.sprites[this.libraryCurrent]
         .on("mousedown", onDragStart)
         .on("touchstart", onDragStart)
         // events for drag end
@@ -216,14 +234,12 @@ export default {
         .on("mousemove", onDragMove)
         .on("touchmove", onDragMove);
 
-      // that.testSprite.scale.y *= 1.25;
+      // this.sprites[this.libraryCurrent].scale.y *= 1.25;
 
       // that.app.stage.addChild(that.drawArea);
-      that.app.stage.addChild(that.testSprite);
-
-      that.app.ticker.add(function(delta) {
-        // that.testSprite.rotation += 0.1 * delta;
-      });
+      this.app.stage.addChild(this.sprites[this.libraryCurrent]);
+      this.librarySelect = this.libraryCurrent;
+      this.libraryCurrent++;
 
       function onDragStart(event) {
         // store a reference to the data
@@ -233,7 +249,6 @@ export default {
         this.alpha = 0.5;
         this.dragging = true;
       }
-
       function onDragEnd() {
         this.alpha = 1;
 
@@ -242,7 +257,6 @@ export default {
         // set the interaction data to null
         this.data = null;
       }
-
       function onDragMove() {
         if (this.dragging) {
           var newPosition = this.data.getLocalPosition(this.parent);
@@ -270,8 +284,10 @@ export default {
           return function(e) {
             // Render thumbnail.
             var span = document.createElement("slide");
-            // span.className = "item";
             span.id = that.libraryCurrent;
+            span.onclick = () => {
+              that.librarySelect = span.id;
+            };
             // span.style = that.styleCarousel(that.libraryCurrent);
             span.innerHTML = [
               '<img class="thumb" src="',
@@ -283,7 +299,7 @@ export default {
             document
               .getElementById("list")
               .insertBefore(document.createElement("hr"), null);
-            that.libraryCurrent++;
+            that.createSprite(e.target.result);
           };
         })(f);
 
@@ -295,6 +311,13 @@ export default {
       //   span.style = that.styleCarousel(i);
       // }
     },
+    addLibraryArt: function(art) {
+      // axios.post;
+    },
+    // selectLibraryArt: function(artID) {
+    //   this.librarySelect = artID;
+    //   alert(artID);
+    // },
     getTemplateAxios: function() {
       var that = this;
 
@@ -354,17 +377,112 @@ export default {
       let that = this;
 
       //capture entire printable area
-      var graphics = new PIXI.Graphics();
+      // var graphics = new PIXI.Graphics();
 
       // graphics.beginFill(0xffff00);
 
       // set the line style to have a width of 5 and set the color to red
-      graphics.lineStyle(0, 0xff0000);
+      // graphics.lineStyle(0, 0xff0000);
 
       // draw a rectangle
-      graphics.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
+      // graphics.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
+      // PIXI.Rectangle.this.app.stage.addChild(graphics);
 
-      this.app.stage.addChild(graphics);
+      var lowX = this.app.stage.width;
+      var lowY = this.app.stage.height;
+      var totW = 0;
+      var totH = 0;
+      var allG = new PIXI.Container();
+
+      for (var i = 0; i < this.sprites.length; i++) {
+        if (lowX > this.sprites[i].x) {
+          lowX = this.sprites[i].x;
+        }
+        if (lowY > this.sprites[i].y) {
+          lowY = this.sprites[i].y;
+        }
+        // if (this.sprites[i].width > this.drawArea.width) {
+        //   this.sprites[i].filterArea(
+        //     new PIXI.Rectangle(
+        //       0,
+        //       0,
+        //       this.drawArea.width,
+        //       this.sprites[i].height
+        //     )
+        //   );
+        // }
+        // if (this.sprites[i].height > this.drawArea.height) {
+        //   this.sprites[i].filterArea(
+        //     new PIXI.Rectangle(
+        //       0,
+        //       0,
+        //       this.sprites[i].width,
+        //       this.drawArea.height
+        //     )
+        //   );
+        // }
+        allG.addChild(this.sprites[i]);
+        // if (totW < this.sprites[i].width) {
+        //   totW = this.sprites[i].width;
+        // }
+        // if (totH < this.sprites[i].height) {
+        //   totH = this.sprites[i].height;
+        // }
+      }
+      // var texture = new PIXI.BaseTexture(allG);
+      // var texture2 = new PIXI.Texture(
+      //   texture,
+      //   new PIXI.Rectangle(0, 0, this.drawArea.width, this.drawArea.height)
+      // );
+      // var sprite = new PIXI.Sprite(texture2);
+      // this.app.stage.addChild(sprite);
+
+      // if (allG.width > this.drawArea.width) {
+      //   allG.filterArea(
+      //     new PIXI.Rectangle(0, 0, this.drawArea.width, allG.height)
+      //   );
+      // }
+      // if (allG.height > this.drawArea.height) {
+      //   allG.filterArea(
+      //     new PIXI.Rectangle(0, 0, allG.width, this.drawArea.height)
+      //   );
+      // }
+
+      // this.libraryNum++;
+      // this.sprites[this.sprites.length] = allG;
+      // this.librarySelect = this.libraryCurrent;
+      // this.libraryCurrent++;
+      // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
+      // this.createSprite(allG);
+
+      var printObj = {
+        blob: null,
+        //get %of offset with repect to (center!)
+        x: lowX / this.drawArea.width,
+        y: lowY / this.drawArea.height,
+        width: allG.width,
+        height: allG.height,
+        dpi: this.ratio,
+        pid: this.prodID,
+        size: this.size
+      };
+
+      alert(JSON.stringify(printObj));
+
+      // allG.calculateBounds();
+      this.app.stage.addChild(allG);
+
+      // render right now
+      // this.app.renderer.render(allG);
+
+      // capture immediately
+      // var data = this.app.renderer.view.toDataURL("image/png", 1);
+      // alert(data);
+      // var img = document.createElement("img");
+      // img.id = "printfile";
+      // document.body.append(img);
+      // img.setAttribute("src", data);
+      // $("img").attr("src", data);
 
       this.app.renderer.extract.canvas(this.app.stage).toBlob(function(b) {
         var a = document.createElement("a");
@@ -373,20 +491,16 @@ export default {
         a.href = URL.createObjectURL(b);
         a.click();
         a.remove();
+        printObj.blob = b;
+        axios
+          .post("/api/designs/print/create", printObj)
+          .then(function(response) {
+            console.log(response);
+          })
+          .catch(function(error) {
+            console.log(error);
+          });
       }, "image/png");
-
-      var printObj = {
-        //get %of offset with repect to (top,left)
-        x: (this.testSprite.x + testSprite.width / 2) / this.drawArea.width,
-        y: (this.testSprite.y + testSprite.height / 2) / this.drawArea.height,
-        width: this.testSprite.width,
-        height: this.testSprite.height,
-        dpi: this.ratio,
-        pid: this.prodID,
-        size: this.size
-      };
-
-      alert(printObj);
     },
     styleCarousel: function(itemNum) {
       console.log("itemnum / total = " + itemNum + " / " + this.libraryNum);
@@ -414,12 +528,15 @@ export default {
     }
   },
   created() {
+    // this.sprites[0] = PIXI.Sprite.from(blob);
     //set to "template mode" if no template
     this.getTemplateAxios();
     this.init();
   },
   mounted() {
     var that = this;
+
+    // that.sprites[]
 
     document
       .getElementById("list")
@@ -434,18 +551,105 @@ export default {
   computed: {
     Xart: {
       get() {
-        return this.testSprite.x - this.testSprite.width / 2;
+        if (this.libraryCurrent > 0) {
+          console.log("libraryCurrent: " + this.libraryCurrent);
+          console.log("librarySelect: " + this.librarySelect);
+          return this.sprites[this.librarySelect].x;
+        } else {
+          console.log(this.libraryCurrent);
+          return "N/A";
+        }
       },
       set(value) {
-        this.testSprite.x = value + this.testSprite.width / 2;
+        this.sprites[this.librarySelect].x = value;
       }
     },
     Yart: {
       get() {
-        return this.testSprite.y - this.testSprite.height / 2;
+        if (this.libraryCurrent > 0) {
+          return this.sprites[this.librarySelect].y;
+        } else {
+          return "N/A";
+        }
       },
       set(value) {
-        this.testSprite.y = value + this.testSprite.height / 2;
+        this.sprites[this.librarySelect].y = value;
+      }
+    },
+    Wart: {
+      get() {
+        if (this.libraryCurrent > 0) {
+          return this.sprites[this.librarySelect].width;
+        } else {
+          return "N/A";
+        }
+      },
+      set(value) {
+        this.sprites[this.librarySelect].width = value;
+      }
+    },
+    Hart: {
+      get() {
+        if (this.libraryCurrent > 0) {
+          return this.sprites[this.librarySelect].height;
+        } else {
+          return "N/A";
+        }
+      },
+      set(value) {
+        this.sprites[this.librarySelect].height = value;
+      }
+    },
+    inchesXart: {
+      get() {
+        if (this.libraryCurrent > 0) {
+          return this.Xart / this.ratio;
+        } else {
+          return "N/A";
+        }
+      },
+      set(value) {
+        // this.ratio = this.sprites[this.librarySelect].width / value;
+        this.sprites[this.librarySelect].x = this.Xart(value) * this.ratio;
+      }
+    },
+    inchesYart: {
+      get() {
+        if (this.libraryCurrent > 0) {
+          return this.Yart / this.ratio;
+        } else {
+          return "N/A";
+        }
+      },
+      set(value) {
+        // this.ratio = this.sprites[this.librarySelect].width / value;
+        this.sprites[this.librarySelect].y = this.Yart(value) * this.ratio;
+      }
+    },
+    inchesWart: {
+      get() {
+        if (this.libraryCurrent > 0) {
+          return this.sprites[this.librarySelect].width / this.ratio;
+        } else {
+          return "N/A";
+        }
+      },
+      set(value) {
+        // this.ratio = this.sprites[this.librarySelect].width / value;
+        this.sprites[this.librarySelect].width = value * this.ratio;
+      }
+    },
+    inchesHart: {
+      get() {
+        if (this.libraryCurrent > 0) {
+          return this.sprites[this.librarySelect].height / this.ratio;
+        } else {
+          return "N/A";
+        }
+      },
+      set(value) {
+        // this.ratio = this.sprites[this.librarySelect].height / value;
+        this.sprites[this.librarySelect].height = value * this.ratio;
       }
     },
     inchesWtemp: {
@@ -464,24 +668,6 @@ export default {
       set(value) {
         this.ratio = this.drawArea.height / value;
         // this.drawArea.height = value * this.ratio;
-      }
-    },
-    inchesWart: {
-      get() {
-        return this.testSprite.width / this.ratio;
-      },
-      set(value) {
-        // this.ratio = this.testSprite.width / value;
-        this.testSprite.width = value * this.ratio;
-      }
-    },
-    inchesHart: {
-      get() {
-        return this.testSprite.height / this.ratio;
-      },
-      set(value) {
-        // this.ratio = this.testSprite.height / value;
-        this.testSprite.height = value * this.ratio;
       }
     }
   }
@@ -513,6 +699,7 @@ input {
   width: 100%;
   background: orange;
 }
+
 .thumb {
   text-align: left;
   height: 25px;
@@ -521,70 +708,14 @@ input {
   margin: 0 5px;
 }
 
-.carousel .container {
-  margin: 0 auto;
-  width: 250px;
-  height: 200px;
-  position: relative;
-  perspective: 1000px;
-}
-
-.carousel {
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  transform-style: preserve-3d;
-  transition: transform 1s;
-}
-
-.item {
-  display: block;
-  position: absolute;
-  background: #000;
-  /* width: 50px; */
-  /* height: 50px; */
-  padding: 2px;
-  /* line-height: 200px;
-  font-size: 5em; */
-  text-align: center;
-  color: #fff;
-  opacity: 0.95;
-  border-radius: 10px;
-}
-
-.next,
-.prev {
-  color: #444;
-  position: absolute;
-  top: 100px;
-  padding: 1em 2em;
-  cursor: pointer;
-  background: #ccc;
-  border-radius: 5px;
-  border-top: 1px solid #fff;
-  box-shadow: 0 5px 0 #999;
-  transition: box-shadow 0.1s, top 0.1s;
-}
-.next:hover,
-.prev:hover {
-  color: #000;
-}
-.next:active,
-.prev:active {
-  top: 104px;
-  box-shadow: 0 1px 0 #999;
-}
-.next {
-  right: 5em;
-}
-.prev {
-  left: 5em;
-}
-
 #care {
-  border: 1px solid black;
+  border: 2px inset gray;
+  background-color: rgba(150, 200, 255, 0.1);
+  border-width: 0px 3px 0px 3px;
   border-radius: 10px;
   overflow: hidden;
+  padding: 5px;
+  min-width: 50px;
 }
 #list {
   /* display: flex; */
