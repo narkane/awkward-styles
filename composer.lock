@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cac30438d609791b07868f5d9daadd4e",
+    "content-hash": "4e94cc0c6ee19ffe3215acac4d993abc",
     "packages": [
         {
             "name": "aimeos/ai-admin-jqadm",
@@ -5120,7 +5120,9 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.0.4"
+        "php": ">=7.0.4",
+        "ext-gd": "*",
+        "ext-json": "*"
     },
     "platform-dev": []
 }
