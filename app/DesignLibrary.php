@@ -54,7 +54,6 @@ class DesignLibrary extends Model
             'image/svg+xml',
             'image/png'
         ]);
-<<<<<<< HEAD
          * */
 
        // if ($inArr && ($file->getSize() > $fileMin && $file->getSize() < $fileMax)) {
@@ -66,22 +65,11 @@ class DesignLibrary extends Model
                 $verifier['id'] = $request->input('library_id');
             }
 
+
             $identifier = DesignLibrary::updateOrCreate(
                 $verifier,
                 [
                     'image_url' => "image1.png"
-                ]
-            );
-=======
-
-        if ($inArr && ($file->getSize() > $fileMin && $file->getSize() < $fileMax)) {
-
-            $identifier = DesignLibrary::updateOrCreate(
-                [
-                    'id' => ($request->input('id')),
-                    'user_id' => Auth::user()->getAuthIdentifier()],
-                [
-                    'image_url' => $file->getFilename()
                 ]
             );
 
@@ -90,11 +78,8 @@ class DesignLibrary extends Model
             /* Send Image To Proper Location
             /public/designs/{id}/{image_name}
             */
->>>>>>> c70cd1d6707f0fdfb2a962dd49f4c4dfaab47fe2
-
             $id = $identifier->id;
 
-<<<<<<< HEAD
             /* Send Image To Proper Location
             /public/designs/{id}/{image_name}
             */
@@ -106,13 +91,6 @@ class DesignLibrary extends Model
             return $id;
 
         //}
-=======
-            $file->move(url('/') . "/designs/" . $id . "/");
-
-            return $id;
-
-        }
->>>>>>> c70cd1d6707f0fdfb2a962dd49f4c4dfaab47fe2
 
         //return false;
     }
