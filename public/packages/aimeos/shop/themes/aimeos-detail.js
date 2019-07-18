@@ -185,9 +185,4 @@ AimeosCatalogDetail = {
  */
 jQuery(document).ready( function($) {
 	AimeosCatalogDetail.init();
-
-	$('.modal').on('shown.bs.modal', function() {
-								    $(this).find('iframe').attr('src',
-								    	'http://ec2-54-173-246-53.compute-1.amazonaws.com/mockupgen/editor.php?product=2')
-								})
 });

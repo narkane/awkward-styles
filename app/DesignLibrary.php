@@ -84,7 +84,7 @@ class DesignLibrary extends Model
             /public/designs/{id}/{image_name}
             */
 
-            if($request->input('blobl') != null) {
+            if($request->input('blob') != null) {
 
                 imagepng($request->input('blob'), "/public/designs/" . $id . "/" . $id . ".png");
 
