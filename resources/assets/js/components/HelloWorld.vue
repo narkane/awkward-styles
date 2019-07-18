@@ -390,13 +390,15 @@ export default {
       var totH = 0;
       var allG = new PIXI.Container();
 
+      var xTot = 0;
+      var yTot = 0;
       for (var i = 0; i < this.sprites.length; i++) {
-        if (lowX > this.sprites[i].x) {
-          lowX = this.sprites[i].x;
-        }
-        if (lowY > this.sprites[i].y) {
-          lowY = this.sprites[i].y;
-        }
+        // if (lowX > this.sprites[i].x) {
+        //   lowX = this.sprites[i].x;
+        // }
+        // if (lowY > this.sprites[i].y) {
+        //   lowY = this.sprites[i].y;
+        // }
         // if (this.sprites[i].width > this.drawArea.width) {
         //   this.sprites[i].filterArea(
         //     new PIXI.Rectangle(
@@ -417,6 +419,9 @@ export default {
         //     )
         //   );
         // }
+        xTot += this.sprites[i].x;
+        yTot += this.sprites[i].y;
+        // console.log("each x, y: " + xTot + ", " + yTot);
         allG.addChild(this.sprites[i]);
         // if (totW < this.sprites[i].width) {
         //   totW = this.sprites[i].width;
@@ -425,6 +430,9 @@ export default {
         //   totH = this.sprites[i].height;
         // }
       }
+      allG.x = xTot / this.sprites.length;
+      allG.y = yTot / this.sprites.length;
+      // allG.anchor.set(0.5);
       // var texture = new PIXI.BaseTexture(allG);
       // var texture2 = new PIXI.Texture(
       //   texture,
@@ -450,22 +458,38 @@ export default {
       // this.libraryCurrent++;
       // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
       // this.createSprite(allG);
+      // console.log(allG.x + ", " + allG.y);
+      // this.app.stage.addChild(allG);
 
       //get %of offset with repect to (center!)
       var printObj = {
-        blob: null,
+        blob: this.app.renderer.extract.canvas(this.app.stage).toDataURL(),
         library_id: 0,
-        x: lowX / this.drawArea.width,
-        y: lowY / this.drawArea.height,
+        x: allG.x / this.drawArea.width,
+        y: allG.y / this.drawArea.height,
         width: allG.width,
         height: allG.height,
         dpi: this.ratio,
         pid: this.prodID,
         size: this.size
       };
+      console.log(
+        printObj.x +
+          ", " +
+          printObj.y +
+          ", " +
+          printObj.width +
+          ", " +
+          printObj.height +
+          ", " +
+          printObj.dpi +
+          ", " +
+          printObj.pid +
+          ", " +
+          printObj.size
+      );
 
       // allG.calculateBounds();
-      this.app.stage.addChild(allG);
 
       // render right now
       // this.app.renderer.render(allG);
@@ -486,19 +510,17 @@ export default {
         a.href = URL.createObjectURL(b);
         a.click();
         a.remove();
-        var reader = new FileReader();
-        printObj["blob"] = reader.readAsBinaryString(b);
         alert(JSON.stringify(printObj));
-        alert(JSON.stringify(printObj.blob));
-        axios
-          .post("/api/designs/print/create", printObj)
-          .then(function(response) {
-            console.log(response);
-          })
-          .catch(function(error) {
-            console.log(error);
-          });
       }, "image/png");
+
+      axios
+        .post("/api/designs/print/create", printObj)
+        .then(function(response) {
+          console.log(response);
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
     }
   },
   created() {
