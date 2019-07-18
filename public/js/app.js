@@ -82339,13 +82339,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       var totH = 0;
       var allG = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Container */]();
 
+      var xTot = 0;
+      var yTot = 0;
       for (var i = 0; i < this.sprites.length; i++) {
-        if (lowX > this.sprites[i].x) {
-          lowX = this.sprites[i].x;
-        }
-        if (lowY > this.sprites[i].y) {
-          lowY = this.sprites[i].y;
-        }
+        // if (lowX > this.sprites[i].x) {
+        //   lowX = this.sprites[i].x;
+        // }
+        // if (lowY > this.sprites[i].y) {
+        //   lowY = this.sprites[i].y;
+        // }
         // if (this.sprites[i].width > this.drawArea.width) {
         //   this.sprites[i].filterArea(
         //     new PIXI.Rectangle(
@@ -82366,6 +82368,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         //     )
         //   );
         // }
+        xTot += this.sprites[i].x;
+        yTot += this.sprites[i].y;
+        // console.log("each x, y: " + xTot + ", " + yTot);
         allG.addChild(this.sprites[i]);
         // if (totW < this.sprites[i].width) {
         //   totW = this.sprites[i].width;
@@ -82374,6 +82379,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         //   totH = this.sprites[i].height;
         // }
       }
+      allG.x = xTot / this.sprites.length;
+      allG.y = yTot / this.sprites.length;
+      // allG.anchor.set(0.5);
       // var texture = new PIXI.BaseTexture(allG);
       // var texture2 = new PIXI.Texture(
       //   texture,
@@ -82399,22 +82407,24 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       // this.libraryCurrent++;
       // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
       // this.createSprite(allG);
+      // console.log(allG.x + ", " + allG.y);
+      // this.app.stage.addChild(allG);
 
       //get %of offset with repect to (center!)
       var printObj = {
-        blob: null,
+        blob: this.app.renderer.extract.canvas(this.app.stage).toDataURL(),
         library_id: 0,
-        x: lowX / this.drawArea.width,
-        y: lowY / this.drawArea.height,
+        x: allG.x / this.drawArea.width,
+        y: allG.y / this.drawArea.height,
         width: allG.width,
         height: allG.height,
         dpi: this.ratio,
         pid: this.prodID,
         size: this.size
       };
+      console.log(printObj.x + ", " + printObj.y + ", " + printObj.width + ", " + printObj.height + ", " + printObj.dpi + ", " + printObj.pid + ", " + printObj.size);
 
       // allG.calculateBounds();
-      this.app.stage.addChild(allG);
 
       // render right now
       // this.app.renderer.render(allG);
@@ -82435,16 +82445,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         a.href = URL.createObjectURL(b);
         a.click();
         a.remove();
-        var reader = new FileReader();
-        printObj["blob"] = reader.readAsBinaryString(b);
         alert(JSON.stringify(printObj));
-        alert(JSON.stringify(printObj.blob));
-        __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post("/api/designs/print/create", printObj).then(function (response) {
-          console.log(response);
-        }).catch(function (error) {
-          console.log(error);
-        });
       }, "image/png");
+
+      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post("/api/designs/print/create", printObj).then(function (response) {
+        console.log(response);
+      }).catch(function (error) {
+        console.log(error);
+      });
     }
   },
   created: function created() {
