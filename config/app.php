@@ -26,7 +26,7 @@ return [
     |
     */
 
-    'env' => env('APP_ENV', 'production'),
+    'env' => env('APP_ENV', false),
      'api_url' => env('API_URL', 'http://ec2-13-56-132-2.us-west-1.compute.amazonaws.com:8080'),
 
     /*
