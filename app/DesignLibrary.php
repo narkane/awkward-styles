@@ -19,7 +19,8 @@ class DesignLibrary extends Model
         'id', 'user_id', 'image_url'
     ];
 
-    public function designPrints(){
+    public function designPrints()
+    {
         return $this->hasMany(
             'App\DesignPrints',
             'library_id',
@@ -31,14 +32,9 @@ class DesignLibrary extends Model
      * @param Request $request
      * @return mixed
      */
-    public static function createOrUpdate(Request $request){
+    public static function createOrUpdate(Request $request)
+    {
         // Verify we have all of the information
-        $validator = Validator::make($request->all(),
-            ['x' => 'required:numeric',
-                'y' => 'required:numeric',
-                'pid' => 'numeric',
-                'design' => 'required']
-        );
 
         /**
          * TODO: SET FILE MAX AND MIN IN ADMIN SETTINGS
@@ -47,45 +43,40 @@ class DesignLibrary extends Model
         $fileMax = 9999;
         $fileMin = 1000;
 
-        if(!$validator->fails()) {
 
-            // HANDLE FILE FIRST
-            $file = $request->file('design');
+        // HANDLE FILE FIRST
+        $file = $request->file('design');
 
-            $inArr = in_array($file->getMimeType(), [
-                'image/bmp',
-                'image/gif',
-                'image/jpeg',
-                'image/svg+xml',
-                'image/png'
-            ]);
+        $inArr = in_array($file->getMimeType(), [
+            'image/bmp',
+            'image/gif',
+            'image/jpeg',
+            'image/svg+xml',
+            'image/png'
+        ]);
 
-            if($inArr && ($file->getSize() > $fileMin && $file->getSize() < $fileMax)){
+        if ($inArr && ($file->getSize() > $fileMin && $file->getSize() < $fileMax)) {
 
-                $identifier = DesignLibrary::updateOrCreate(
-                    [
-                        'id' => ($request->input('id')),
-                        'user_id' => Auth::user()->getAuthIdentifier()],
-                    [
-                        'image_url' => $file->getFilename()
-                    ]
-                );
+            $identifier = DesignLibrary::updateOrCreate(
+                [
+                    'id' => ($request->input('id')),
+                    'user_id' => Auth::user()->getAuthIdentifier()],
+                [
+                    'image_url' => $file->getFilename()
+                ]
+            );
 
-                $id = $identifier->id;
+            $id = $identifier->id;
 
-                /* Send Image To Proper Location
-                /public/designs/{id}/{image_name}
-                */
+            /* Send Image To Proper Location
+            /public/designs/{id}/{image_name}
+            */
 
 
-                $file->move(url('/') . "/designs/" . $id . "/");
+            $file->move(url('/') . "/designs/" . $id . "/");
 
-                return $id;
+            return $id;
 
-            }
-
-        } else {
-            return $validator->messages();
         }
 
         return false;

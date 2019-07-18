@@ -83,7 +83,7 @@ Route::group(['prefix' => 'api/'], function($app){
     /**
      * CREATE A LIBRARY
      */
-    $app->post('designs/create', DesignLibrary::createOrUpdate());
+    $app->post('designs/create', 'API\DesignLibraryController@createLibrary')->name('createLibrary');
 
     /**
      * DELETE A SINGLE LIBRARY

@@ -36,12 +36,12 @@ class CollectionsController extends Controller
 
         $user_id = Auth::user()->id;
 
-        $take = ($request->has('count')) ? $request->get('count') : 25;
+        $countArray = ['25','50','75','100'];
+
+        $take = ($request->has('count') && in_array($request->get('count'),$countArray)) ? $request->get('count') : 25;
 
         // If page = 1, skip should be 0. Otherwise, calculate based on TAKE which is the count.
         $skip = ($request->has('page')) ? (($request->get('page') != 1) ? ($request->get('page') - 1) * $take : 0) : 0;
-
-        echo "<script>console.log('".$skip."');</script>";
 
         $dbCall = DB::table(DB::raw("tbl_categories_m AS t1"))
             ->select(DB::raw("DISTINCT t2.id, t2.label, t2.salePrice, t2.shortDescription"), DB::raw("t3.full_url as full_url"))
@@ -64,18 +64,53 @@ class CollectionsController extends Controller
         /**
          * Setup Pagination
          */
-        $total = ($dbCall->count() > 0) ? $dbCall->count() : 1;
+        $total = count($dbCall->get());
+
+        $totalPages = ceil($total / $take);
 
         $current = ($request->has('page')) ? $request->get('page') : 1;
 
         $tags = $dbCall->skip($skip)
             ->take($take)->get();
 
-        echo "<script>console.log('COUNT: " . count($dbCall->get()) . "');</script>";
+        // Current Page
+        $url = $request->url() . "?count=" . $take . "&";
+
+        // Pagination..
+        $paginationArr = [];
+        $pageHolders = [];
+        $paginatorArea = 0;
+        $counter = 0;
+
+        for($i = 1; $i <= $totalPages; $i++){
+
+            if($counter == 10){
+                $paginationArr[] = $pageHolders;
+                $pageHolders = [];
+                $counter = 0;
+            }
+
+            if($i == $current){
+                // This is because we should be in the latest iteration
+                $paginatorArea = count($paginationArr);
+            }
+
+            $pageHolders[] = $i;
+
+            if($i == $totalPages) $paginationArr[] = $pageHolders;
+            $counter++;
+        }
 
         if (isset($tags)) {
             return view('search-results', [
-                'request' => $tags, 'user' => $user_id, 'totalFound' => $total, 'currentPage' => $current, 'take' => $take]);
+                'request' => $tags,
+                'user' => $user_id,
+                'totalFound' => $total,
+                'currentPage' => $current,
+                'paginator' => $paginationArr,
+                'paginatorArea' => $paginatorArea,
+                'totalPages' => $totalPages,
+                'url' => $url]);
         }
         return view('search-results', ['request' => null]);
     }
