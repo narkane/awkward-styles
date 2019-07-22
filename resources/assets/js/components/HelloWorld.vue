@@ -37,7 +37,14 @@
             <v-text-field v-model="Wart" class="inputNumber" type="number" label="Width" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="Hart" class="inputNumber" type="number" label="Height" pattern="\d+" required></v-text-field>
+            <v-text-field
+              v-model="Hart"
+              class="inputNumber"
+              type="number"
+              label="Height"
+              pattern="\d+"
+              required
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -48,16 +55,40 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="inchesXart" class="inputNumber" type="number" label="X inches" disabled></v-text-field>
+            <v-text-field
+              v-model="inchesXart"
+              class="inputNumber"
+              type="number"
+              label="X inches"
+              disabled
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesYart" class="inputNumber" type="number" label="Y inches" disabled></v-text-field>
+            <v-text-field
+              v-model="inchesYart"
+              class="inputNumber"
+              type="number"
+              label="Y inches"
+              disabled
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesWart" class="inputNumber" type="number" label="width in." disabled></v-text-field>
+            <v-text-field
+              v-model="inchesWart"
+              class="inputNumber"
+              type="number"
+              label="width in."
+              disabled
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesHart" class="inputNumber" type="number" label="height in." disabled></v-text-field>
+            <v-text-field
+              v-model="inchesHart"
+              class="inputNumber"
+              type="number"
+              label="height in."
+              disabled
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -113,15 +144,35 @@
             <v-text-field disabled />
           </v-flex>
           <v-flex xs1>
+            <v-text-field disabled />
+          </v-flex>
+        </v-layout>
+        <v-layout row>
+          <v-flex xs1>
+            <v-text-field v-model="template3d.x" label="3dX" :disabled="!mode"></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="template3d.y" label="3dY" :disabled="!mode"></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="template3d.width" label="3d width" :disabled="!mode"></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="template3d.height" label="3d height" :disabled="!mode"></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field disabled />
+          </v-flex>
+          <v-flex xs1>
             <v-text-field
-              v-model="rotation"
-              label="rotation"
+              v-model="template3d.rotation"
+              label="3d rotation"
               @change="changeDraw"
               :disabled="!mode"
             ></v-text-field>
           </v-flex>
         </v-layout>
-        <v-layout row fill-height>
+        <v-layout row>
           <v-flex pa1 shrink id="care">
             Art Library
             <br />
@@ -143,7 +194,7 @@
       <v-btn color="orange" :hidden="!mode" @click="saveTemplate">Template</v-btn>
       <v-btn color="red">Cancel</v-btn>
     </v-form>
-    <threedee :rotation="-rotation*3.14/180" />
+    <threedee :template="template3d" />
   </div>
 </template>
 
@@ -178,12 +229,18 @@ export default {
       libraryNum: 0,
       libraryCurrent: 0,
       librarySelect: 0,
-      rotation: 45,
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
       sprites: [],
       artOriginalAspect: "pending",
-      drawArea: new PIXI.Rectangle(0, 0, 200, 300)
+      drawArea: new PIXI.Rectangle(0, 0, 200, 300),
+      template3d: {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        rotation: 0
+      }
     };
   },
   props: {
@@ -197,6 +254,7 @@ export default {
         that.type = "canvas";
       }
       //initial changing of drawing area (renderer.view) to rect deminsions
+      that.app.renderer.view.id = "frontview";
       that.app.renderer.view.style.left = that.drawArea.x + "px";
       that.app.renderer.view.style.top = that.drawArea.y + "px";
       that.app.renderer.resize(that.drawArea.width, that.drawArea.height);
@@ -217,7 +275,6 @@ export default {
       // var that = this;
       console.log("loading into this.sprites[" + this.libraryCurrent + "]");
       this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
-
 
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
 
@@ -696,10 +753,15 @@ canvas {
   /* transform: translateZ(10px); */
   border: 2px dashed lightblue;
   /* background-color: rgba(0, 0, 255, 0.1); */
-  position: relative;
-  top: 0px;
+  position: absolute;
+  top: 120px;
+  left: 380px;
   margin: 2px 138px;
   /* z-index: -10; */
+}
+#frontview {
+  margin: 123px 138px;
+  left: 0px;
 }
 input {
   text-align: center;
@@ -738,8 +800,8 @@ input {
   /* justify-content: flex-start; */
   text-align: left;
 }
-.inputnumber input[type='number'] {
-  -moz-appearance:textfield;
+.inputnumber input[type="number"] {
+  -moz-appearance: textfield;
 }
 .inputNumber input::-webkit-outer-spin-button,
 .inputNumber input::-webkit-inner-spin-button {
