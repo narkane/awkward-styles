@@ -1,7 +1,8 @@
 
 <header>
-    <div class="head-top bg-dark py-2">
+    <div class="head-top bg-dark px-3 rounded-right">
         <ul class="head-top-ul">
+                <li class="pl-5"></li>
                 <li>
                     <a href="/createstore">Open Your Store</a>
                 </li>

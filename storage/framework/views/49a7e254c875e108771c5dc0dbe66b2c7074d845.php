@@ -1,8 +1,8 @@
 
 <header>
-    <div class="head-top bg-dark">
-        <div class="container">
-            <ul class="head-top-ul">
+    <div class="head-top bg-dark px-3 rounded-right">
+        <ul class="head-top-ul">
+                <li class="pl-5"></li>
                 <li>
                     <a href="/createstore">Open Your Store</a>
                 </li>
@@ -13,8 +13,6 @@
                     <a href="/seller">Sell Everywhere</a>
                 </li>
             </ul>
-        </div>
-
     </div>
     <div class="head-middle">
         <div class="container">
