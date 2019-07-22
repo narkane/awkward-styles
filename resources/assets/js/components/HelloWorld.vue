@@ -113,7 +113,12 @@
             <v-text-field disabled />
           </v-flex>
           <v-flex xs1>
-            <v-text-field disabled />
+            <v-text-field
+              v-model="rotation"
+              label="rotation"
+              @change="changeDraw"
+              :disabled="!mode"
+            ></v-text-field>
           </v-flex>
         </v-layout>
         <v-layout row fill-height>
@@ -138,11 +143,13 @@
       <v-btn color="orange" :hidden="!mode" @click="saveTemplate">Template</v-btn>
       <v-btn color="red">Cancel</v-btn>
     </v-form>
+    <threedee :rotation="-rotation*3.14/180" />
   </div>
 </template>
 
 <script>
 import * as PIXI from "pixi.js";
+import threedee from "./threedee.vue";
 import blob from "../assets/blob.png";
 import axios from "axios";
 import "vuetify/dist/vuetify.css";
@@ -152,6 +159,7 @@ import { Carousel, Slide } from "vue-carousel";
 export default {
   name: "HelloWorld",
   components: {
+    threedee: threedee,
     "upload-btn": UploadButton,
     carousel: Carousel,
     slide: Slide
@@ -170,7 +178,7 @@ export default {
       libraryNum: 0,
       libraryCurrent: 0,
       librarySelect: 0,
-      currdeg: 0,
+      rotation: 45,
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
       sprites: [],
@@ -193,10 +201,13 @@ export default {
       that.app.renderer.view.style.top = that.drawArea.y + "px";
       that.app.renderer.resize(that.drawArea.width, that.drawArea.height);
 
-      document.body.appendChild(that.app.view);
-
       // setup sprites
       // that.createSprite(blob);
+      // let pers = document.createElement("div");
+      // pers.setAttribute("id", "perspective");
+      // document.body.appendChild(pers);
+      // pers.appendChild(that.app.view);
+      document.body.appendChild(this.app.view);
 
       that.app.ticker.add(function(delta) {
         // that.sprites[that.librarySelect].rotation += 0.1 * delta;
@@ -532,6 +543,7 @@ export default {
   mounted() {
     var that = this;
 
+    // document.getElementById("perspective").appendChild(that.app.view);
     // that.sprites[]
 
     document
@@ -669,12 +681,17 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
+body {
+  transform: perspective(30px);
+  transform-style: preserve-3d;
+}
 #data {
   float: right;
   width: 800px;
   height: 200px;
 }
 canvas {
+  /* transform: translateZ(10px); */
   border: 2px dashed lightblue;
   background-color: rgba(0, 0, 255, 0.1);
   position: relative;

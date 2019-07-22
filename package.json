@@ -20,6 +20,8 @@
     },
     "dependencies": {
         "pixi.js": "^5.0.4",
+        "three": "^0.106.2",
+        "three.js": "^0.77.1",
         "vue-carousel": "^0.18.0",
         "vuetify": "^1.5.16",
         "vuetify-upload-button": "^2.0.2"

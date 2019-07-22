@@ -250,7 +250,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
 <div class="row products-row" style="float:left;border:3px inset lightblue;height:100%;">
 <div  id="art-product-list">
 <div id="app">
-    <thetool prodid="{{$product_id}}"/> 
+    <thetool prodid="{{$product_id}}" /> 
 </div>
 </div>
 	<!-- Scripts -->	
