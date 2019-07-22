@@ -52,6 +52,8 @@ Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
 Route::get('/products', 'ProductDetailsController@products')->name('collections');
 
+Route::get('/contact', 'ContactController@index')->name('contact us');
+
 /**
  * API CALLS NEEDED
  */

@@ -28,16 +28,16 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="Xart" label="X: Art" required></v-text-field>
+            <v-text-field v-model="Xart" class="inputNumber" type="number" label="X: Art" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="Yart" label="Y: Art" required></v-text-field>
+            <v-text-field v-model="Yart" class="inputNumber" type="number" label="Y: Art" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="Wart" label="Width" required></v-text-field>
+            <v-text-field v-model="Wart" class="inputNumber" type="number" label="Width" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="Hart" label="Height" required></v-text-field>
+            <v-text-field v-model="Hart" class="inputNumber" type="number" label="Height" pattern="\d+" required></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -48,16 +48,16 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="inchesXart" label="X inches" disabled></v-text-field>
+            <v-text-field v-model="inchesXart" class="inputNumber" type="number" label="X inches" disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesYart" label="Y inches" disabled></v-text-field>
+            <v-text-field v-model="inchesYart" class="inputNumber" type="number" label="Y inches" disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesWart" label="width in." disabled></v-text-field>
+            <v-text-field v-model="inchesWart" class="inputNumber" type="number" label="width in." disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesHart" label="height in." disabled></v-text-field>
+            <v-text-field v-model="inchesHart" class="inputNumber" type="number" label="height in." disabled></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -170,7 +170,7 @@ export default {
       app: new PIXI.Application({
         width: 600,
         height: 800,
-        backgroundColor: 0x1099bb,
+        //backgroundColor: 0x1099bb,
         transparent: 1
       }),
       mode: false,
@@ -217,6 +217,8 @@ export default {
       // var that = this;
       console.log("loading into this.sprites[" + this.libraryCurrent + "]");
       this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
+
+
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
 
       this.sprites[this.libraryCurrent].anchor.set(0.5);
@@ -562,7 +564,7 @@ export default {
           return this.sprites[this.librarySelect].x;
         } else {
           console.log(this.libraryCurrent);
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -574,7 +576,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.sprites[this.librarySelect].y;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -586,7 +588,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.sprites[this.librarySelect].width;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -598,7 +600,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.sprites[this.librarySelect].height;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -610,7 +612,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.Xart / this.ratio;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -623,7 +625,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.Yart / this.ratio;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -636,7 +638,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.sprites[this.librarySelect].width / this.ratio;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -649,7 +651,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.sprites[this.librarySelect].height / this.ratio;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -693,7 +695,7 @@ body {
 canvas {
   /* transform: translateZ(10px); */
   border: 2px dashed lightblue;
-  background-color: rgba(0, 0, 255, 0.1);
+  /* background-color: rgba(0, 0, 255, 0.1); */
   position: relative;
   top: 0px;
   margin: 2px 138px;
@@ -735,5 +737,12 @@ input {
   /* flex-wrap: nowrap; */
   /* justify-content: flex-start; */
   text-align: left;
+}
+.inputnumber input[type='number'] {
+  -moz-appearance:textfield;
+}
+.inputNumber input::-webkit-outer-spin-button,
+.inputNumber input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
 }
 </style>

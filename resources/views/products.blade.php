@@ -1,9 +1,6 @@
 @extends('layouts.dashboard')
 
 @section('content')
-@php 
-$token = $tokenGen['token'];
-@endphp
 <div class="container">
 
     <div class="row">
@@ -76,7 +73,7 @@ $token = $tokenGen['token'];
             contentType: 'application/json',
             dataType: 'json',
             headers: {
-                "Authorization": "Bearer " + '{{$token}}',
+                "Authorization": "Bearer " + '{{$tokenGen['token']}}',
                 "Content-Type": "application/json"
             },
             type: 'GET',
@@ -101,7 +98,7 @@ $token = $tokenGen['token'];
                             contentType: 'application/json',
                             dataType: 'json',
                             headers: {
-                                "Authorization": "Bearer " + '{{$token}}',
+                                "Authorization": "Bearer " + '{{$tokenGen['token']}}',
                                 "Content-Type": "application/json"
                             },
                             type: 'GET',
@@ -145,7 +142,7 @@ $token = $tokenGen['token'];
             contentType: 'application/json',
             dataType: 'json',
             headers: {
-                "Authorization": "Bearer " + '{{$token}}',
+                "Authorization": "Bearer " + '{{$tokenGen['token']}}',
                 "Content-Type": "application/json"
             },
             type: 'GET',
@@ -163,7 +160,7 @@ $token = $tokenGen['token'];
                             contentType: 'application/json',
                             dataType: 'json',
                             headers: {
-                                "Authorization": "Bearer " + '{{$token}}',
+                                "Authorization": "Bearer " + '{{$tokenGen['token']}}',
                                 "Content-Type": "application/json"
                             },
                             type: 'GET',
@@ -202,4 +199,5 @@ $token = $tokenGen['token'];
         });
     }
     </script>
+</div>
     @endsection
