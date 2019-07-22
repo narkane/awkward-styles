@@ -46,9 +46,10 @@ class ProductDetailsController extends Controller
     /**
      * List all products.
      *
+     * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function products()
+    public function products(Request $request)
     {
         // $product = $this->mockupgen->index($productId);
         //  dd($product);//[0]->image_url);

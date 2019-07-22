@@ -1428,3 +1428,42 @@ section {
   box-shadow: 0 0 25px 20px rgba(255, 255, 255, 0.9);
   transition: box-shadow 1s ease-in-out;
 }
+
+.contactContainer {
+  width: 100%;
+  width: -moz-available;
+  max-width: 100%;
+}
+
+.big-label, .contact-details,
+.contact-details a,
+.contact-details a:visited {
+  font-size: 20px;
+  color: #ffffff;
+  text-shadow: 1px 1px 5px #000;
+  padding-right: 10px;
+}
+
+.contact-details a:hover,
+.contact-details a:active {
+  color: #ffffff;
+  text-shadow: 1px 1px 5px #000;
+  text-decoration: underline;
+}
+
+.big-label { text-decoration: underline; }
+
+.form-control.contact-input {
+  background-color: #444444;
+  color: unset;
+  color: #fff;
+}
+
+.form-control.contact-input::placeholder {
+  color: #cccccc;
+}
+
+.btn.btn-form {
+  background-color: #444444;
+  color: #ffffff;
+}
