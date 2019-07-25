@@ -1,26 +1,12 @@
-<!DOCTYPE html>
-<html lang="en" class="no-js">
-<head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-@yield('aimeos_header')
-	<title>AWKWARD STYLES</title>
-@yield('aimeos_styles')
-	<link type="text/css" rel="stylesheet" href='https://fonts.googleapis.com/css?family=Roboto:400,300'>
-	  <link href="{{ asset('css/graphic-icons.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/theme.css') }}" rel="stylesheet"> 
-    <link href="{{ asset('css/Custom.css') }}" rel="stylesheet"> 
-</head>
-<body>
-
-@include('layouts.header')
-   
-@yield('aimeos_body')
+@extends('layouts.dashboard')
 
 
-	
+@section('content')
+
+    @yield('aimeos_body')
+
+
+
 @if (Request::path() == 'list')
 
 
@@ -34,8 +20,7 @@
                
             </div>
         </div>
-  <script type = "text/javascript"  src = "https://code.jquery.com/jquery-3.3.1.min.js">
-      </script>
+  <!--<script type = "text/javascript"  src = "https://code.jquery.com/jquery-3.3.1.min.js"></script> -->
          <script type = "text/javascript" language = "javascript">
 
          $(document).ready(function() {
@@ -73,7 +58,34 @@
                             
                             if(imagedata.operationCode == 200){
                                         console.log(imagedata.properties);
-                                productsHtml += '<div class="col-3 item product " data-reqstock="1"> <div class="product-grid"> <div><a href="/product-details/'+products.properties[i].id+'"><img class="media-item" src="'+imagedata.properties.full_url+'" width="258" height="266"> </a> <span class="product-new-label">Sale</span>                            <span class="product-discount-label">20%</span> </div>                        <div class="product-content">                        <a href="/product-details/'+products.properties[i].id+'">                            <h3 class="title">'+products.properties[i].label+'</h3> </a>                            <div class="price">                                <div class="articleitem price price-actual" data-prodid="119" data-prodcode="103"><meta itemprop="price" content="25.00"><div class="price-item default" itemprop="priceSpecification" itemscope="" itemtype="http://schema.org/PriceSpecification"><meta itemprop="valueAddedTaxIncluded" content="true"><meta itemprop="priceCurrency" content="USD"><meta itemprop="price" content="25.00"><span class="quantity" ><meta itemprop="minValue" content="1"> </span><span class="value"> $ '+products.properties[i].price+'</span><span class="taxrate">Incl. 0.01% VAT</span></div></div></div></div><div class="offer" ><div class="stock-list"><div class="articleitem stock-actual" data-prodid="119" data-prodcode="103"></div></div><div class="price-list"></div></div></div></div>';
+                                productsHtml += '<div class="col-3 item product " data-reqstock="1">' +
+                                    '<div class="product-grid"> ' +
+                                    '<div>' +
+                                    '<a href="/product-details/'+products.properties[i].id+'">' +
+                                    '<img class="media-item" src="'+imagedata.properties.full_url+'" width="258" height="266"> ' +
+                                    '</a> ' +
+                                    '<span class="product-new-label">Sale</span>                            ' +
+                                    '<span class="product-discount-label">20%</span> ' +
+                                    '</div>                        ' +
+                                    '<div class="product-content">                        ' +
+                                    '<a href="/product-details/'+products.properties[i].id+'"> ' +
+                                    '<h3 class="title">'+products.properties[i].label+'</h3> </a> ' +
+                                    '<div class="price">                                ' +
+                                    '<div class="articleitem price price-actual" data-prodid="119" data-prodcode="103">' +
+                                    '<meta itemprop="price" content="25.00"><div class="price-item default" itemprop="priceSpecification" itemscope="" itemtype="http://schema.org/PriceSpecification">' +
+                                    '<meta itemprop="valueAddedTaxIncluded" content="true"><meta itemprop="priceCurrency" content="USD">' +
+                                    '<meta itemprop="price" content="25.00">' +
+                                    '<span class="quantity" ><meta itemprop="minValue" content="1"> </span>' +
+                                    '<span class="value"> $ '+products.properties[i].price+'</span>' +
+                                    '<span class="taxrate">Incl. 0.01% VAT</span>' +
+                                    '</div>' +
+                                    '</div>' +
+                                    '</div>' +
+                                    '</div>' +
+                                    '<div class="offer" >' +
+                                    '<div class="stock-list">' +
+                                    '<div class="articleitem stock-actual" data-prodid="119" data-prodcode="103"></div>' +
+                                    '</div><div class="price-list"></div></div></div></div>';
 
                                 $("#products-data-ajax").html(productsHtml);
                             }
@@ -113,23 +125,9 @@
         </section>
     </div>
 
-      
+
 @endif
 
-    <footer>
-        @include('layouts.footer');
-    </footer>
-    <!-- Scripts -->	
-    
-
-
-    <script src="{{asset('js/app.js')}}"></script>
-    <script src="{{asset('js/search.js')}}"></script>
-    <script src="{{ asset('js/jquery.min.js') }}"></script>
-    <script src="{{ asset('js/popper.min.js') }}"></script>
-    <script src="{{ asset('js/bootstrap.min.js') }}"></script>
-   	 <link href="{{ asset('css/owl.carousel.min.css') }}" rel="stylesheet" type="text/css" media="all" />
- <script type="text/javascript" src="{{ asset('js/owl.carousel.min.js') }}"></script>
 	<script type="text/javascript">
         $(document).ready(function() {
             $('.dropdown-submenu-toggle').hover(function() {
@@ -159,10 +157,8 @@
                 margin: 10,
                 nav: false,
                 items: 2,
-
             });
         });
     </script>
 @yield('aimeos_scripts')
-	</body>
-</html>
+        @endsection

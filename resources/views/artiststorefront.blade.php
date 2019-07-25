@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
 @section('content')
 
@@ -31,7 +31,14 @@
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="#">Home</a></li>
                 <li class="breadcrumb-item"><a href="#">Artist</a></li>
-                <li class="breadcrumb-item active" aria-current="page">@if(count($owner_data)>0){{ $owner_data[0]->name }} @else John Thummel @endif</li>
+                <li class="breadcrumb-item active" aria-current="page">
+                        @if(isset($owner_data) && count($owner_data)>0)
+                            {{ $owner_data[0]->name }}
+                        @else
+                            John Thummel
+                        @endif
+
+                </li>
             </ol>
         </nav>
         <div class="row">

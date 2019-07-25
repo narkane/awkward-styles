@@ -16,6 +16,7 @@
     <script src="<?php echo e(asset('js/popper.min.js')); ?>"></script>
     <script src="<?php echo e(asset('js/bootstrap.min.js')); ?>"></script>
     <link href="<?php echo e(asset('css/owl.carousel.min.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link type="text/css" rel="stylesheet" href="<?php echo e(asset('css/app.css')); ?>">
     <script type="text/javascript" src="<?php echo e(asset('js/owl.carousel.min.js')); ?>"></script>
     <script>
         $(document).ready(function() {
@@ -34,7 +35,7 @@
 
 </head>
 <body>
-<?php echo $__env->make('layouts.header', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>;
+<?php echo $__env->make('layouts.header', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>
 
 <?php echo $__env->yieldContent('content'); ?>
 <!--

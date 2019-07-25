@@ -118294,7 +118294,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-//
 
 
 
@@ -118362,17 +118361,15 @@ var render = function() {
         }
       }),
       _vm._v(" "),
-      _c("div", { staticClass: "input-group-append" }, [
-        _c(
-          "button",
-          {
-            staticClass: "btn btn-outline-secondary",
-            attrs: { type: "button", id: "button-addon2" },
-            on: { click: _vm.search }
-          },
-          [_vm._v("Search")]
-        )
-      ])
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-outline-secondary",
+          attrs: { type: "button", id: "button-addon2" },
+          on: { click: _vm.search }
+        },
+        [_vm._v("Search")]
+      )
     ])
   ])
 }

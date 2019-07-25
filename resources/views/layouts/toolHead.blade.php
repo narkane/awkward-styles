@@ -16,6 +16,7 @@
     <script src="{{ asset('js/popper.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap.min.js') }}"></script>
     <link href="{{ asset('css/owl.carousel.min.css') }}" rel="stylesheet" type="text/css" media="all" />
+    <link type="text/css" rel="stylesheet" href="{{ asset('css/app.css') }}">
     <script type="text/javascript" src="{{ asset('js/owl.carousel.min.js') }}"></script>
     <script>
         $(document).ready(function() {
@@ -34,7 +35,7 @@
 
 </head>
 <body>
-@include('layouts.header');
+@include('layouts.header')
 
 @yield('content')
 <!--

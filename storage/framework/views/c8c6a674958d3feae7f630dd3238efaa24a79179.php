@@ -1,5 +1,3 @@
-;
-
 <?php $__env->startSection('content'); ?>
 
 <div class="row products-row" style="float:left;border:3px inset lightblue;height:100%;">

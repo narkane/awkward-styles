@@ -1,8 +1,23 @@
 
 <header>
+
+    <script>
+        $(document).ready(function() {
+            $('.dropdown-submenu-toggle').hover(function() {
+                $('.dropdown-submenu-toggle').find('.dropdown-menu').stop(true, true).delay(200).fadeOut(500);
+                $('.dropdown-submenu-toggle').stop(true, true).removeClass("active");
+                $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeIn(500);
+                $(this).stop(true, true).addClass("active");
+            }, function() {
+
+                $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeIn(500);
+                $(this).stop(true, true).addClass("active");
+            });
+        });
+    </script>
+
     <div class="head-top bg-dark px-3 rounded-right">
-        <ul class="head-top-ul">
-                <li class="pl-5"></li>
+        <ul class="head-top-ul pl-5">
                 <li>
                     <a href="/createstore">Open Your Store</a>
                 </li>
@@ -14,15 +29,7 @@
                 </li>
             </ul>
     </div>
-    <div class="head-middle">
-        <div class="container">
-            <div class="row justify-content-between align-items-center">
 
-            </div>
-
-        </div>
-
-    </div>
 
     <nav class="navbar navbar-expand-lg navbar-light shadow-sm  bg-light ">
         <div class="container">
@@ -129,12 +136,9 @@
                     </li>
                     <li class="nav-logo">
 
-
-                        <div class="col">
-                            <a href="/list">
-                                <img src="{{ asset('images/logo.png') }}" alt="">
-                            </a>
-                        </div>
+                        <a href="/list">
+                            <img src="{{ asset('images/logo.png') }}" alt="">
+                        </a>
                     </li>
                     <li class="nav-login">
                         <div class="col">
@@ -155,10 +159,9 @@
 
                                         <form id="searcharea" onSubmit="event.preventDefault(); searchfunc()" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
                                             <div class="input-group">
-                                                <input type="text" id="searchKeyword" name="keywords" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
-                                                <div class="input-group-append">
-                                                    <input class="btn btn-outline-secondary" type="submit" id="button-addon2" value="Search">
-                                                </div>
+                                                <input type="text" id="searchKeyword" name="keywords" class="form-control d-inline-flex w-75" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
+                                                <input class="btn btn-outline-secondary d-inline-flex w-25" type="submit" id="button-addon2" value="Search">
+
                                             </div>
                                         </form>
                                     </div>

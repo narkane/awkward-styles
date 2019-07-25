@@ -85,9 +85,21 @@
                         </div>
                         <div id="col-2-bottom"></div>
                         <div id="col-3-bottom">
-                            GET IN TOUCH
-                            <br>
-                            <img src="/../images/getintouch.png">
+                            <h3 class="d-inline"">GET IN TOUCH:</h3>
+                            <span class="m-0 p-0">
+                                <a href="http://facebook.com/awkwardstyles" title="Find us on Facebook" class="footImage" target="_blank">
+                                    <i class="fab fa-facebook-f h3"></i>
+                                </a>
+                                <a href="http://twitter.com/" title="Twitter" class="footImage" target="_blank">
+                                    <i class="fab fa-twitter h3"></i>
+                                </a>
+                                <a  href="http://youtube.com" title="YouTube" class="footImage" target="_blank">
+                                    <i class="fab fa-youtube h3"></i>
+                                </a>
+                                <a href="https://instagram.com/awkward__styles" title="Find us on Instagram" class="footImage" target="_blank">
+                                    <i class="fab fa-instagram h3"></i>
+                                </a>
+                            </span>
                         </div>
                         <div id="row-filler"></div>
                         <div id="col-4-bottom">
@@ -117,6 +129,18 @@
     .row .foot {
         width: calc(100vw - 115px);
     }
+    a.footImage, a.footImage:visited {
+        color: #444444;
+        padding-right: 5px;
+    }
+
+    a.footImage:hover {
+        text-decoration: none;
+        color: #f7bf22;
+        text-shadow: 1px 1px 5px #444444;
+        padding-right: 5px;
+    }
+
     .panel-heading-footer {
         box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);
         /* box-shadow: 0px 0px 5px 4px black; */
@@ -145,7 +169,7 @@
         color: black;
         font-weight: 650;
         width: 100vw;
-        height: 300px;
+        max-height: 300px;
     }
     .panel-body .foot > div {
         /* display: inline-block; */

@@ -60,6 +60,11 @@ Route::get('/contact', 'ContactController@index')->name('contact us');
 Route::group(['prefix' => 'api/'], function($app){
 
     /**
+     * PRINT PRODUCTS WITH LIMIT of 6
+     */
+    $app->get('productinformation/{type}/{page}', 'API\ProductInformationController@getProductList')->name('productlistFetcher');
+
+    /**
      * COLLECT TEMPLATE INFORMATION FROM THE DATABASE
      *
      * RETURN DATA OR DEFAULT DATA
