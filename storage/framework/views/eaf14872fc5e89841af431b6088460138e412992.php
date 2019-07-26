@@ -19,7 +19,6 @@
     <script src="<?php echo e(asset('js/app.js')); ?>"></script>
     <script type="text/javascript" src="<?php echo e(asset('js/owl.carousel.min.js')); ?>"></script>
 
-
     <link href="<?php echo e(asset('css/owl.carousel.min.css')); ?>" rel="stylesheet" type="text/css" media="all"/>
     <link type="text/css" rel="stylesheet" href="<?php echo e(asset('css/app.css')); ?>">
 

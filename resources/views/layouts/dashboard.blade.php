@@ -19,7 +19,6 @@
     <script src="{{asset('js/app.js')}}"></script>
     <script type="text/javascript" src="{{ asset('js/owl.carousel.min.js') }}"></script>
 
-
     <link href="{{ asset('css/owl.carousel.min.css') }}" rel="stylesheet" type="text/css" media="all"/>
     <link type="text/css" rel="stylesheet" href="{{ asset('css/app.css') }}">
 
