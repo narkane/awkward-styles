@@ -14,339 +14,79 @@
 
             <div class="product row " data-id="116">
 
-                <div class="col-sm-2 bg-white">
-                    @foreach($media as $img)
-                        <div>
-                            @if(!is_null($img->thumbnail))
-                                <img class="thumbnails" src="{{ $img->thumbnail }}"/>
-                            @else
-                                <img class="thumbnails" src="{{ $img->full_url }}"
-                                     style="max-width:100px; max-height: 100px;"/>
-                            @endif
+                <div class="col-sm-8 bg-white">
+
+                    <div class="row">
+
+                        <div class="col-sm-3">
+                            @foreach($media as $img)
+                                <div>
+                                    @if(!is_null($img->thumbnail))
+                                        <img class="thumbnails" src="{{ $img->thumbnail }}"/>
+                                    @else
+                                        <img class="thumbnails" src="{{ $img->full_url }}"
+                                             style="max-width:100px; max-height: 100px;"/>
+                                    @endif
+                                </div>
+                            @endforeach
                         </div>
-                    @endforeach
-                </div>
-                <div class="col-sm-6 bg-white" id="previewHolder">
-                    <div class="catalog-detail-image pt-5">
-                        <div class="image-single" id="add-images" data-pswp="{bgOpacity: 0.75, shareButtons: false}">
-                            <img id="image-0" src="{{ $media[0]->full_url }}" alt="{{ $product[0]->label }}"/>
+
+                        <div class="col-sm-9 bg-white" id="previewHolder">
+                            <div class="catalog-detail-image pt-5">
+                                <div class="image-single" id="add-images" data-pswp="{bgOpacity: 0.75, shareButtons: false}">
+                                    <img id="image-0" src="{{ $media[0]->full_url }}" alt="{{ $product[0]->label }}"/>
+                                </div>
+                            </div>
+                            <div id="imagePreview"></div>
                         </div>
                     </div>
-                    <div id="imagePreview"></div>
+                    <div class="row">
+                        <div class="col-12">
+
+                            <h4>Product Details</h4>
+                            <p>{{ $product[0]->label }}</p>
+                            <p>
+                                <span class="fa fa-star star_checked" id="one_star"></span>
+                                <span class="fa fa-star star_checked" id="two_star"></span>
+                                <span class="fa fa-star star_checked" id="three_star"></span>
+                                <span class="fa fa-star" id="four_star"></span>
+                                <span class="fa fa-star" id="five_star"></span>
+                                <span class="small" id="review_count">(114)</span>
+                            </p>
+
+                            <p>
+                                {!! $product[0]->shortDescription !!}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-sm-4 bg-white rounded">
-                    <div>
-                        <h1 class="name product_name" itemprop="name">{{ $product[0]->label }}</h1>
-                        <p id="artistNameHere"></p>
-                        <p><span class="name">Article no.: </span><span class="text-peach OpenSans-Bold product_sku"
-                                                                        itemprop="sku">{{ $product[0]->sku }}</span></p>
-                        <p class="short product_shortdesc"
-                           itemprop="description">{!! $product[0]->shortDescription !!}</p>
-                    </div>
 
-
-                    <div class="catalog-detail-basket" data-reqstock="1" itemprop="offers" itemscope=""
-                         itemtype="http://schema.org/Offer">
-
-                        <div class="catalog-detail-service">
-                            <span class="service-intro">+ shipping costs</span>
-
-                            <ul class="service-list" style="display: none;">
-
-
-                                <li class="service-item">
-                                    <span class="service-name">Click &amp; Collect</span>
-
-
-                                    <meta itemprop="price" content="0.00">
-
-
-                                    <div class="price-item default" itemprop="priceSpecification" itemscope=""
-                                         itemtype="http://schema.org/PriceSpecification">
-
-                                        <meta itemprop="valueAddedTaxIncluded" content="true">
-                                        <meta itemprop="priceCurrency" content="USD">
-                                        <meta itemprop="price" content="0.00">
-
-                                        <span class="quantity" itemscope=""
-                                              itemtype="http://schema.org/QuantitativeValue">
-                                                            <meta itemprop="minValue" content="1">
-                                                            from 1</span>
-
-                                        <span class="value">
-                                                            $ 0.00</span>
-
-
-                                        <span class="taxrate">
-                                                            Incl. 0.00% VAT</span>
-                                    </div>
-
-
-                                    <span class="service-short">Local pick-up</span>
-                                </li>
-
-
-                                <li class="service-item">
-                                    <span class="service-name">DHL</span>
-
-
-                                    <meta itemprop="price" content="0.00">
-
-
-                                    <div class="price-item default" itemprop="priceSpecification" itemscope=""
-                                         itemtype="http://schema.org/PriceSpecification">
-
-                                        <meta itemprop="valueAddedTaxIncluded" content="true">
-                                        <meta itemprop="priceCurrency" content="USD">
-                                        <meta itemprop="price" content="0.00">
-
-                                        <span class="quantity" itemscope=""
-                                              itemtype="http://schema.org/QuantitativeValue">
-                                                            <meta itemprop="minValue" content="1">
-                                                            from 1</span>
-
-                                        <span class="value">
-                                                            $ 0.00</span>
-
-
-                                        <span class="costs">
-                                                            $ 7.90</span>
-
-                                        <span class="taxrate">
-                                                            Incl. 10.00% VAT</span>
-                                    </div>
-
-
-                                    <span class="service-short">Delivery within three days</span>
-                                </li>
-
-
-                                <li class="service-item">
-                                    <span class="service-name">DHL Express</span>
-
-
-                                    <meta itemprop="price" content="0.00">
-
-
-                                    <div class="price-item default" itemprop="priceSpecification" itemscope=""
-                                         itemtype="http://schema.org/PriceSpecification">
-
-                                        <meta itemprop="valueAddedTaxIncluded" content="true">
-                                        <meta itemprop="priceCurrency" content="USD">
-                                        <meta itemprop="price" content="0.00">
-
-                                        <span class="quantity" itemscope=""
-                                              itemtype="http://schema.org/QuantitativeValue">
-                                                            <meta itemprop="minValue" content="1">
-                                                            from 1</span>
-
-                                        <span class="value">
-                                                            $ 0.00</span>
-
-
-                                        <span class="costs">
-                                                            $ 15.90</span>
-
-                                        <span class="taxrate">
-                                                            Incl. 10.00% VAT</span>
-                                    </div>
-
-
-                                    <span class="service-short">Delivery on the next day</span>
-                                </li>
-
-
-                                <li class="service-item">
-                                    <span class="service-name">Fedex</span>
-
-
-                                    <meta itemprop="price" content="0.00">
-
-
-                                    <div class="price-item default" itemprop="priceSpecification" itemscope=""
-                                         itemtype="http://schema.org/PriceSpecification">
-
-                                        <meta itemprop="valueAddedTaxIncluded" content="true">
-                                        <meta itemprop="priceCurrency" content="USD">
-                                        <meta itemprop="price" content="0.00">
-
-                                        <span class="quantity" itemscope=""
-                                              itemtype="http://schema.org/QuantitativeValue">
-                                                            <meta itemprop="minValue" content="1">
-                                                            from 1</span>
-
-                                        <span class="value">
-                                                            $ 0.00</span>
-
-
-                                        <span class="costs">
-                                                            $ 8.50</span>
-
-                                        <span class="taxrate">
-                                                            Incl. 10.00% VAT</span>
-                                    </div>
-
-
-                                    <span class="service-short">Delivery within three days</span>
-                                </li>
-
-
-                                <li class="service-item">
-                                    <span class="service-name">TNT</span>
-
-
-                                    <meta itemprop="price" content="0.00">
-
-
-                                    <div class="price-item default" itemprop="priceSpecification" itemscope=""
-                                         itemtype="http://schema.org/PriceSpecification">
-
-                                        <meta itemprop="valueAddedTaxIncluded" content="true">
-                                        <meta itemprop="priceCurrency" content="USD">
-                                        <meta itemprop="price" content="0.00">
-
-                                        <span class="quantity" itemscope=""
-                                              itemtype="http://schema.org/QuantitativeValue">
-                                                            <meta itemprop="minValue" content="1">
-                                                            from 1</span>
-
-                                        <span class="value">
-                                                            $ 0.00</span>
-
-
-                                        <span class="costs">
-                                                            $ 12.90</span>
-
-                                        <span class="taxrate">
-                                                            Incl. 10.00% VAT</span>
-                                    </div>
-
-
-                                    <span class="service-short">Delivery within three days</span>
-                                </li>
-
-
-                            </ul>
-
-                        </div>
-
-
-                        <!-- <button type="button" class="btn btn-sm btn-info btn-lg" data-toggle="modal" data-target="#myModal">Customise</button> -->
-
-
-                        <style type="text/css">
-                            .modal-dialog {
-                                width: 90%;
-                                height: 90%;
-
-                                margin: 0;
-                                top: 50px;
-                                left: 100px;
-                                padding: 0;
-                            }
-
-                            .modal-content {
-                                height: auto;
-                                min-height: 90%;
-                                border-radius: 0;
-                            }
-                        </style>
-
-                        <!-- Modal -->
-                        <div id="myModal" class="modal fade" role="dialog">
-                            <div class="modal-dialog">
-
-                                <!-- Modal content-->
-                                <div class="modal-content">
-
-                                    <iframe align="center" height="550" width="100%" src="">loading...</iframe>
-
-                                </div>
-
-                            </div>
-                        </div>
-
-
-                        <form method="POST" action="/basket">
-                            {{ csrf_field() }}
-
-
-                            <div class="catalog-detail-basket-selection" id="product-color-size">
-                                <ul class="selection"
-                                    data-proddeps="{&quot;117&quot;:[118,130],&quot;119&quot;:[131,100],&quot;120&quot;:[132,99],&quot;126&quot;:[118,99],&quot;127&quot;:[118,100],&quot;128&quot;:[131,130],&quot;129&quot;:[131,99],&quot;130&quot;:[132,130],&quot;131&quot;:[132,100],&quot;118&quot;:[141,130],&quot;147&quot;:[141,99],&quot;148&quot;:[141,100]}"
-                                    data-attrdeps="{&quot;118&quot;:[117,126,127],&quot;130&quot;:[117,128,130,118],&quot;131&quot;:[119,128,129],&quot;100&quot;:[119,127,131,148],&quot;132&quot;:[120,130,131],&quot;99&quot;:[120,126,129,147],&quot;141&quot;:[118,147,148]}">
-
-
-                                    <li class="select-item radio color">
-                                        <div class="select-name">Color</div>
-
-
-                                        <div class="select-value">
-
-                                            <ul class="select-list-color" id="varient-color" data-index="0"
-                                                data-type="color">
-
-                                                @foreach($attributes as $attr)
-
-                                                    @if($attr->attribute_label == 'color')
-
-                                                        <li class="select-entry-color">
-                                                            <input class="select-option" type="radio"
-                                                                   id="option-{{ $attr->code1 }}"
-                                                                   name="{{ $attr->value }}" value="{{ $attr->code1 }}">
-                                                            <label class="select-label" name="{{ $attr->value }}"
-                                                                   for="{{ $attr->code1 }}"
-                                                                   style="background-color:{{ $attr->code1 }}; width:30px;height:30px;"></label>
-
-                                                        </li>
-                                                    @endif
-                                                @endforeach
-                                            </ul>
-
-                                        </div>
-                                    </li>
-
-                                    <li class="select-item select size">
-                                        <div class="select-name">Size</div>
-
-
-                                        <div class="select-value">
-
-
-                                            <select class="form-control select-list" id="varient-size" name="">
-
-                                                @foreach($attributes as $attr)
-                                                    @if($attr->attribute_label == 'size')
-                                                        <option class="select-option" @if($attr->value == 'L') selected
-                                                                @endif value="{{ $attr->code1 }}">
-                                                            {{ $attr->value }}
-                                                        </option>
-                                                        @endif
-                                                        @endforeach
-
-                                                        </option>
-                                            </select>
-
-                                        </div>
-                                    </li>
-                                </ul>
+                    <div class="row">
+                        <div class="col-12">
+                            <div>
+                                <h1 class="name product_name" itemprop="name">{{ $product[0]->label }}</h1>
+                                <p id="artistNameHere"></p>
+                                <p><span class="name">Article no.: </span><span class="text-peach OpenSans-Bold product_sku"
+                                                                                itemprop="sku">{{ $product[0]->sku }}</span></p>
                             </div>
 
-                            <p id="mockgen-url">
-                                <a href="/thetool/{{ $product_id }}" class="Customize text-peach"><span
-                                            class="icon-paint-brush"></span> <span class="OpenSans-Semibold"> Customize
-                                                                                            </span><span
-                                            class="font-italic">Change Artwork or Add Text</span></a>
-                            </p>
 
-                            <div class="product-price">
-                                <h1>
-                                    <div class="price-list">
-                                        <div class="articleitem price price-actual" data-prodid="116"
-                                             data-prodcode="101">
+                            <div class="catalog-detail-basket" data-reqstock="1" itemprop="offers" itemscope=""
+                                 itemtype="http://schema.org/Offer">
 
-                                            <meta itemprop="price" content="10.00">
+                                <div class="catalog-detail-service">
+                                    <span class="service-intro">+ shipping costs</span>
+
+                                    <ul class="service-list" style="display: none;">
+
+
+                                        <li class="service-item">
+                                            <span class="service-name">Click &amp; Collect</span>
+
+
+                                            <meta itemprop="price" content="0.00">
 
 
                                             <div class="price-item default" itemprop="priceSpecification" itemscope=""
@@ -354,27 +94,31 @@
 
                                                 <meta itemprop="valueAddedTaxIncluded" content="true">
                                                 <meta itemprop="priceCurrency" content="USD">
-                                                <meta itemprop="price" content="10.00">
+                                                <meta itemprop="price" content="0.00">
 
                                                 <span class="quantity" itemscope=""
                                                       itemtype="http://schema.org/QuantitativeValue">
-                                                                                                            <meta itemprop="minValue"
-                                                                                                                  content="1">
-                                                                                                            from 1</span>
+                                                                    <meta itemprop="minValue" content="1">
+                                                                    from 1</span>
 
-                                                <h3 class="value product_price">${{ $product[0]->salePrice }}</h3>
+                                                <span class="value">
+                                                                    $ 0.00</span>
 
 
                                                 <span class="taxrate">
-                                                                                                            Incl. 8.25% VAT</span>
+                                                                    Incl. 0.00% VAT</span>
                                             </div>
 
-                                        </div>
+
+                                            <span class="service-short">Local pick-up</span>
+                                        </li>
 
 
-                                        <div class="articleitem price" data-prodid="148" data-prodcode="104_2">
+                                        <li class="service-item">
+                                            <span class="service-name">DHL</span>
 
-                                            <meta itemprop="price" content="27.00">
+
+                                            <meta itemprop="price" content="0.00">
 
 
                                             <div class="price-item default" itemprop="priceSpecification" itemscope=""
@@ -382,98 +126,394 @@
 
                                                 <meta itemprop="valueAddedTaxIncluded" content="true">
                                                 <meta itemprop="priceCurrency" content="USD">
-                                                <meta itemprop="price" content="27.00">
+                                                <meta itemprop="price" content="0.00">
 
                                                 <span class="quantity" itemscope=""
                                                       itemtype="http://schema.org/QuantitativeValue">
-                                                                                                            <meta itemprop="minValue"
-                                                                                                                  content="1">
-                                                                                                            from 1</span>
+                                                                    <meta itemprop="minValue" content="1">
+                                                                    from 1</span>
 
-                                                <span class="value" id="totalPrice">
-                                                                                                            $ 27.00</span>
+                                                <span class="value">
+                                                                    $ 0.00</span>
 
 
-                                                <span class="taxrate" id="included-tax">
-                                                                                                            Incl. 0.01% VAT</span>
+                                                <span class="costs">
+                                                                    $ 7.90</span>
+
+                                                <span class="taxrate">
+                                                                    Incl. 10.00% VAT</span>
                                             </div>
+
+
+                                            <span class="service-short">Delivery within three days</span>
+                                        </li>
+
+
+                                        <li class="service-item">
+                                            <span class="service-name">DHL Express</span>
+
+
+                                            <meta itemprop="price" content="0.00">
+
+
+                                            <div class="price-item default" itemprop="priceSpecification" itemscope=""
+                                                 itemtype="http://schema.org/PriceSpecification">
+
+                                                <meta itemprop="valueAddedTaxIncluded" content="true">
+                                                <meta itemprop="priceCurrency" content="USD">
+                                                <meta itemprop="price" content="0.00">
+
+                                                <span class="quantity" itemscope=""
+                                                      itemtype="http://schema.org/QuantitativeValue">
+                                                                    <meta itemprop="minValue" content="1">
+                                                                    from 1</span>
+
+                                                <span class="value">
+                                                                    $ 0.00</span>
+
+
+                                                <span class="costs">
+                                                                    $ 15.90</span>
+
+                                                <span class="taxrate">
+                                                                    Incl. 10.00% VAT</span>
+                                            </div>
+
+
+                                            <span class="service-short">Delivery on the next day</span>
+                                        </li>
+
+
+                                        <li class="service-item">
+                                            <span class="service-name">Fedex</span>
+
+
+                                            <meta itemprop="price" content="0.00">
+
+
+                                            <div class="price-item default" itemprop="priceSpecification" itemscope=""
+                                                 itemtype="http://schema.org/PriceSpecification">
+
+                                                <meta itemprop="valueAddedTaxIncluded" content="true">
+                                                <meta itemprop="priceCurrency" content="USD">
+                                                <meta itemprop="price" content="0.00">
+
+                                                <span class="quantity" itemscope=""
+                                                      itemtype="http://schema.org/QuantitativeValue">
+                                                                    <meta itemprop="minValue" content="1">
+                                                                    from 1</span>
+
+                                                <span class="value">
+                                                                    $ 0.00</span>
+
+
+                                                <span class="costs">
+                                                                    $ 8.50</span>
+
+                                                <span class="taxrate">
+                                                                    Incl. 10.00% VAT</span>
+                                            </div>
+
+
+                                            <span class="service-short">Delivery within three days</span>
+                                        </li>
+
+
+                                        <li class="service-item">
+                                            <span class="service-name">TNT</span>
+
+
+                                            <meta itemprop="price" content="0.00">
+
+
+                                            <div class="price-item default" itemprop="priceSpecification" itemscope=""
+                                                 itemtype="http://schema.org/PriceSpecification">
+
+                                                <meta itemprop="valueAddedTaxIncluded" content="true">
+                                                <meta itemprop="priceCurrency" content="USD">
+                                                <meta itemprop="price" content="0.00">
+
+                                                <span class="quantity" itemscope=""
+                                                      itemtype="http://schema.org/QuantitativeValue">
+                                                                    <meta itemprop="minValue" content="1">
+                                                                    from 1</span>
+
+                                                <span class="value">
+                                                                    $ 0.00</span>
+
+
+                                                <span class="costs">
+                                                                    $ 12.90</span>
+
+                                                <span class="taxrate">
+                                                                    Incl. 10.00% VAT</span>
+                                            </div>
+
+
+                                            <span class="service-short">Delivery within three days</span>
+                                        </li>
+
+
+                                    </ul>
+
+                                </div>
+
+
+                                <!-- <button type="button" class="btn btn-sm btn-info btn-lg" data-toggle="modal" data-target="#myModal">Customise</button> -->
+
+
+                                <style type="text/css">
+                                    .modal-dialog {
+                                        width: 90%;
+                                        height: 90%;
+
+                                        margin: 0;
+                                        top: 50px;
+                                        left: 100px;
+                                        padding: 0;
+                                    }
+
+                                    .modal-content {
+                                        height: auto;
+                                        min-height: 90%;
+                                        border-radius: 0;
+                                    }
+                                </style>
+
+                                <!-- Modal -->
+                                <div id="myModal" class="modal fade" role="dialog">
+                                    <div class="modal-dialog">
+
+                                        <!-- Modal content-->
+                                        <div class="modal-content">
+
+                                            <iframe align="center" height="550" width="100%" src="">loading...</iframe>
 
                                         </div>
 
                                     </div>
-                                </h1>
+                                </div>
+
+
+                                <form method="POST" action="/basket">
+                                    {{ csrf_field() }}
+
+
+                                    <div class="catalog-detail-basket-selection" id="product-color-size">
+                                        <ul class="selection"
+                                            data-proddeps="{&quot;117&quot;:[118,130],&quot;119&quot;:[131,100],&quot;120&quot;:[132,99],&quot;126&quot;:[118,99],&quot;127&quot;:[118,100],&quot;128&quot;:[131,130],&quot;129&quot;:[131,99],&quot;130&quot;:[132,130],&quot;131&quot;:[132,100],&quot;118&quot;:[141,130],&quot;147&quot;:[141,99],&quot;148&quot;:[141,100]}"
+                                            data-attrdeps="{&quot;118&quot;:[117,126,127],&quot;130&quot;:[117,128,130,118],&quot;131&quot;:[119,128,129],&quot;100&quot;:[119,127,131,148],&quot;132&quot;:[120,130,131],&quot;99&quot;:[120,126,129,147],&quot;141&quot;:[118,147,148]}">
+
+
+                                            <li class="select-item radio color">
+                                                <div class="select-name">Color</div>
+
+
+                                                <div class="select-value">
+
+                                                    <ul class="select-list-color" id="varient-color" data-index="0"
+                                                        data-type="color">
+
+                                                        @foreach($attributes as $attr)
+
+                                                            @if($attr->attribute_label == 'color')
+
+                                                                <li class="select-entry-color">
+                                                                    <input class="select-option" type="radio"
+                                                                           id="option-{{ $attr->code1 }}"
+                                                                           name="{{ $attr->value }}" value="{{ $attr->code1 }}">
+                                                                    <label class="select-label" name="{{ $attr->value }}"
+                                                                           for="{{ $attr->code1 }}"
+                                                                           style="background-color:{{ $attr->code1 }}; width:30px;height:30px;"></label>
+
+                                                                </li>
+                                                            @endif
+                                                        @endforeach
+                                                    </ul>
+
+                                                </div>
+                                            </li>
+
+                                            <li class="select-item select size">
+                                                <div class="select-name">Size</div>
+
+
+                                                <div class="select-value">
+
+
+                                                    <select class="form-control select-list" id="varient-size" name="">
+
+                                                        @foreach($attributes as $attr)
+                                                            @if($attr->attribute_label == 'size')
+                                                                <option class="select-option" @if($attr->value == 'L') selected
+                                                                        @endif value="{{ $attr->code1 }}">
+                                                                    {{ $attr->value }}
+                                                                </option>
+                                                                @endif
+                                                                @endforeach
+
+                                                                </option>
+                                                    </select>
+
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <p id="mockgen-url">
+                                        <a href="/thetool/{{ $product_id }}" class="Customize text-peach"><span
+                                                    class="icon-paint-brush"></span> <span class="OpenSans-Semibold"> Customize
+                                                                                                    </span><span
+                                                    class="font-italic">Change Artwork or Add Text</span></a>
+                                    </p>
+
+                                    <div class="product-price">
+                                        <h1>
+                                            <div class="price-list">
+                                                <div class="articleitem price price-actual" data-prodid="116"
+                                                     data-prodcode="101">
+
+                                                    <meta itemprop="price" content="10.00">
+
+
+                                                    <div class="price-item default" itemprop="priceSpecification" itemscope=""
+                                                         itemtype="http://schema.org/PriceSpecification">
+
+                                                        <meta itemprop="valueAddedTaxIncluded" content="true">
+                                                        <meta itemprop="priceCurrency" content="USD">
+                                                        <meta itemprop="price" content="10.00">
+
+                                                        <span class="quantity" itemscope=""
+                                                              itemtype="http://schema.org/QuantitativeValue">
+                                                                                                                    <meta itemprop="minValue"
+                                                                                                                          content="1">
+                                                                                                                    from 1</span>
+
+                                                        <h3 class="value product_price">${{ $product[0]->salePrice }}</h3>
+
+
+                                                        <span class="taxrate">
+                                                                                                                    Incl. 8.25% VAT</span>
+                                                    </div>
+
+                                                </div>
+
+
+                                                <div class="articleitem price" data-prodid="148" data-prodcode="104_2">
+
+                                                    <meta itemprop="price" content="27.00">
+
+
+                                                    <div class="price-item default" itemprop="priceSpecification" itemscope=""
+                                                         itemtype="http://schema.org/PriceSpecification">
+
+                                                        <meta itemprop="valueAddedTaxIncluded" content="true">
+                                                        <meta itemprop="priceCurrency" content="USD">
+                                                        <meta itemprop="price" content="27.00">
+
+                                                        <span class="quantity" itemscope=""
+                                                              itemtype="http://schema.org/QuantitativeValue">
+                                                                                                                    <meta itemprop="minValue"
+                                                                                                                          content="1">
+                                                                                                                    from 1</span>
+
+                                                        <span class="value" id="totalPrice">
+                                                                                                                    $ 27.00</span>
+
+
+                                                        <span class="taxrate" id="included-tax">
+                                                                                                                    Incl. 0.01% VAT</span>
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+                                        </h1>
+                                    </div>
+                                    <p>Quantity 1</p>
+
+                                    <div class="cart-section">
+                                        <div class="quntity">
+                                            <a class="aplus" href="#" role="button">
+                                                <span class="icon-minus"></span>
+                                            </a>
+                                            <input type="hidden" value="add" name="b_action">
+                                            <input type="hidden" name="b_prod[0][prodid]" value="{{ $product_id }}">
+                                            <input type="number" class="quntity-input" name="b_prod[0][quantity]" min="1"
+                                                   max="2147483647" maxlength="10" step="1" required="required" value="1">
+                                            <a class="aminus" href="#" role="button">
+                                                <span class="icon-plus"></span>
+                                            </a>
+                                        </div>
+                                        <div class="cart-div">
+                                            <button class="btn btn-orange" type="submit" value="">
+                                                <span class="icon-shopping-cart"></span> Add to cart
+                                            </button>
+                                        </div>
+                                        <div class="share-div">
+                                            <a href="#"><span class="icon-heart"></span></a>
+                                            <a href="#"><span class="icon-share-alt"></span></a>
+                                        </div>
+                                    </div>
+
+                                </form>
+
                             </div>
-                            <p>Quantity 1</p>
 
-                            <div class="cart-section">
-                                <div class="quntity">
-                                    <a class="aplus" href="#" role="button">
-                                        <span class="icon-minus"></span>
-                                    </a>
-                                    <input type="hidden" value="add" name="b_action">
-                                    <input type="hidden" name="b_prod[0][prodid]" value="{{ $product_id }}">
-                                    <input type="number" class="quntity-input" name="b_prod[0][quantity]" min="1"
-                                           max="2147483647" maxlength="10" step="1" required="required" value="1">
-                                    <a class="aminus" href="#" role="button">
-                                        <span class="icon-plus"></span>
-                                    </a>
-                                </div>
-                                <div class="cart-div">
-                                    <button class="btn btn-orange" type="submit" value="">
-                                        <span class="icon-shopping-cart"></span> Add to cart
-                                    </button>
-                                </div>
-                                <div class="share-div">
-                                    <a href="#"><span class="icon-heart"></span></a>
-                                    <a href="#"><span class="icon-share-alt"></span></a>
-                                </div>
+
+                            <div class="catalog-actions">
+
+                                <a class="actions-button actions-button-pin"
+                                   href="/detail/pin/add/{{ $product_id }}/{{ $product_id }}/Puma_Crewneck_Tshirt/1"
+                                   title="Pin"></a>
+
+
+                                <a class="actions-button actions-button-watch"
+                                   href="/myaccount/watch/add/{{ $product_id }}/{{ $product_id }}/Puma_Crewneck_Tshirt/1"
+                                   title="watch"></a>
+
+
+                                <a class="actions-button actions-button-favorite"
+                                   href="/myaccount/favorite/add/{{ $product_id }}/{{ $product_id }}/Puma_Crewneck_Tshirt/1"
+                                   title="favorite"></a>
+
                             </div>
 
-                        </form>
 
-                    </div>
+                            <div class="catalog-social">
 
-
-                    <div class="catalog-actions">
-
-                        <a class="actions-button actions-button-pin"
-                           href="/detail/pin/add/{{ $product_id }}/{{ $product_id }}/Puma_Crewneck_Tshirt/1"
-                           title="Pin"></a>
+                                <a class="social-button social-button-facebook"
+                                   href="https://www.facebook.com/sharer.php?u=http%3A%2F%2F127.0.0.1%3A8000%2Fdetail%2F116%2FPuma_Crewneck_Tshirt&amp;t=Puma_Crewneck_Tshirt"
+                                   title="facebook" target="_blank" class="d-inline"></a>
 
 
-                        <a class="actions-button actions-button-watch"
-                           href="/myaccount/watch/add/{{ $product_id }}/{{ $product_id }}/Puma_Crewneck_Tshirt/1"
-                           title="watch"></a>
+                                <a class="social-button social-button-gplus"
+                                   href="https://plus.google.com/share?url=http%3A%2F%2F127.0.0.1%3A8000%2Fdetail%2F116%2FPuma_Crewneck_Tshirt"
+                                   title="gplus" target="_blank" class="d-inline"></a>
 
 
-                        <a class="actions-button actions-button-favorite"
-                           href="/myaccount/favorite/add/{{ $product_id }}/{{ $product_id }}/Puma_Crewneck_Tshirt/1"
-                           title="favorite"></a>
-
-                    </div>
+                                <a class="social-button social-button-twitter"
+                                   href="https://twitter.com/share?url=http%3A%2F%2F127.0.0.1%3A8000%2Fdetail%2F116%2FPuma_Crewneck_Tshirt&amp;text=Puma_Crewneck_Tshirt"
+                                   title="twitter" target="_blank" class="d-inline"></a>
 
 
-                    <div class="catalog-social">
+                                <a class="social-button social-button-pinterest"
+                                   href="https://pinterest.com/pin/create/button/?url=http%3A%2F%2F127.0.0.1%3A8000%2Fdetail%2F116%2FPuma_Crewneck_Tshirt&amp;description=Puma_Crewneck_Tshirt&amp;media=http%3A%2F%2F127.0.0.1%3A8000%2Ffiles%2F2%2F3%2F2350ae78ecc09da88aa85321701f9fd4.jpg"
+                                   title="pinterest" target="_blank" class="d-inline"></a>
 
-                        <a class="social-button social-button-facebook"
-                           href="https://www.facebook.com/sharer.php?u=http%3A%2F%2F127.0.0.1%3A8000%2Fdetail%2F116%2FPuma_Crewneck_Tshirt&amp;t=Puma_Crewneck_Tshirt"
-                           title="facebook" target="_blank"></a>
+                            </div>
+                        </div>
 
+                        <div class="col-12 pt-3">
+                            <div class="border-top">
 
-                        <a class="social-button social-button-gplus"
-                           href="https://plus.google.com/share?url=http%3A%2F%2F127.0.0.1%3A8000%2Fdetail%2F116%2FPuma_Crewneck_Tshirt"
-                           title="gplus" target="_blank"></a>
+                                <h5 class="text-uppercase">Your Affiliate Link</h5>
 
+                                <input type="text" class="form-control-lg w-100 border" placeholder="Affiliate Link"
+                                       value="http://awkwardstyles.com/affiliate/{{ $user_id }}" />
 
-                        <a class="social-button social-button-twitter"
-                           href="https://twitter.com/share?url=http%3A%2F%2F127.0.0.1%3A8000%2Fdetail%2F116%2FPuma_Crewneck_Tshirt&amp;text=Puma_Crewneck_Tshirt"
-                           title="twitter" target="_blank"></a>
-
-
-                        <a class="social-button social-button-pinterest"
-                           href="https://pinterest.com/pin/create/button/?url=http%3A%2F%2F127.0.0.1%3A8000%2Fdetail%2F116%2FPuma_Crewneck_Tshirt&amp;description=Puma_Crewneck_Tshirt&amp;media=http%3A%2F%2F127.0.0.1%3A8000%2Ffiles%2F2%2F3%2F2350ae78ecc09da88aa85321701f9fd4.jpg"
-                           title="pinterest" target="_blank"></a>
-
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -532,40 +572,6 @@
 
                 <div class="col-sm-12 p-0">
                     <div class="catalog-detail-additional">
-                        <div class="additional-box rounded">
-                            <h5 class="header description font-weight-bold">Description / Characteristics</h5>
-                            <div class="content description row m-0 p-0" style="display: none;">
-                                <div class="long item col-sm-6 py-1 px-5" id="longDescription">
-                                </div>
-                                <div class="col-sm-6 py-1 px-5">
-                                    <table class="attributes">
-                                        <tbody>
-                                        <tr class="item">
-                                            <td class="name">Color</td>
-                                            <td class="value">
-                                                <div class="media-list">
-                                                </div>
-                                                <span class="attr-name" id="selected-color"></span>
-                                            </td>
-                                        <tr class="item">
-                                            <td class="name">Size</td>
-                                            <td class="value">
-                                                <div class="media-list">
-                                                </div>
-                                                <span class="attr-name" id="selected-size"></span>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="col-sm-12 p-0">
-                    <div class="catalog-detail-additional">
                         <div class="additional-box rounded" id="artist-details">
 
                             <h5 class="header description font-weight-bold">About the designer</h5>
@@ -573,11 +579,94 @@
                                 <img src="{{ asset('images/designer-image.png') }}" class="mr-3" class="img-fluid"
                                      alt="...">
                                 <div class="media-body">
-                                    <h5 id="artistName"></h5>
+                                    <h5 class="artistName"></h5>
                                     <strong></strong>
                                     <h4 class="mt-2 text-peach" id="artist-sfront"></h4>
                                     <div id="about-artist"></div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="additional-box rounded" id="more-from-designer">
+
+                            <h5 class="header description font-weight-bold">
+                                More Designs By <span class="artistName font-italic">AwkwardStyles</span>
+                            </h5>
+                            <div class="content">
+
+                                @foreach($designerTemplates as $temp)
+                                    <div class="d-inline">
+                                        <img src="{{ $temp->full_url }}" alt="AwkwardStyles" style="max-width:200px;max-height:200px;padding:10px;"/>
+                                    </div>
+                                    @endforeach
+
+                                    <a href="/products/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
+                            </div>
+                        </div>
+
+                        <div class="additional-box rounded" id="simliar-items-content">
+
+                            <h5 class="header description font-weight-bold">
+                               Similiar Items
+                            </h5>
+                            <div class="content">
+
+                                @foreach($designerTemplates as $temp)
+                                    <div class="d-inline">
+                                        <img src="{{ $temp->full_url }}" alt="AwkwardStyles" style="max-width:200px;max-height:200px;padding:10px;"/>
+                                    </div>
+                                @endforeach
+
+                                <a href="/products/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
+                            </div>
+                        </div>
+
+                        <div class="additional-box rounded" id="what-others-like-content">
+
+                            <h5 class="header description font-weight-bold">
+                                What Other Customers Liked
+                            </h5>
+                            <div class="content">
+
+                                @foreach($designerTemplates as $temp)
+                                    <div class="d-inline">
+                                        <img src="{{ $temp->full_url }}" alt="AwkwardStyles" style="max-width:200px;max-height:200px;padding:10px;"/>
+                                    </div>
+                                @endforeach
+
+                                <a href="/products/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
+                            </div>
+                        </div>
+
+                        <div class="additional-box rounded" id="trending-content">
+
+                            <h5 class="header description font-weight-bold">
+                                Trending
+                            </h5>
+                            <div class="content">
+
+                                @foreach($designerTemplates as $temp)
+                                    <div class="d-inline">
+                                        <img src="{{ $temp->full_url }}" alt="AwkwardStyles" style="max-width:200px;max-height:200px;padding:10px;"/>
+                                    </div>
+                                @endforeach
+
+                                <a href="/products/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
+                            </div>
+                        </div>
+
+                        <div class="additional-box rounded" id="trending-content">
+                            <h5 class="header description font-weight-bold">
+                                    More Items
+                            </h5>
+                            <div class="content">
+
+                                <!-- GENERIC TAG CREATION -->
+                                <a type="button" class="btn btn-secondary">Camping</a>
+                                <a type="button" class="btn btn-secondary">Mountains</a>
+                                <a type="button" class="btn btn-secondary">Nature</a>
+                                <a type="button" class="btn btn-secondary">Tent</a>
+
                             </div>
                         </div>
 
@@ -587,48 +676,70 @@
                                 <li class="media">
                                     <img src="{{ asset('images/user-review-image.png') }}" class="mr-3">
                                     <div class="media-body">
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star"></span>
+                                        <span class="fa fa-star"></span>
 
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas dignissim
-                                        ultrices
-                                        arcu a
-                                        tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. Lorem ipsum
-                                        dolor
-                                        sit
-                                        amet, consectetur adipiscing elit. Maecenas dignissim ultrices arcu a
-                                        tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. <a href="#"
-                                                                                                               class="text-peach">More</a>
-                                        <h5 class="mt-1 mb-0 text-peach font-italic">Christopher, Texas</h5>
+                                        <p>
+                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas dignissim
+                                            ultrices
+                                            arcu a
+                                            tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. Lorem ipsum
+                                            dolor
+                                            sit
+                                            amet, consectetur adipiscing elit. Maecenas dignissim ultrices arcu a
+                                            tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. <a href="#"
+                                                                                                                   class="text-peach">More</a>
+                                            <h5 class="mt-1 mb-0 text-peach font-italic">Christopher, Texas</h5>
+                                        </p>
                                     </div>
                                 </li>
                                 <li class="media">
                                     <img src="{{ asset('images/user-review-image.png') }}" class="mr-3" alt="...">
                                     <div class="media-body">
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star"></span>
+                                        <span class="fa fa-star"></span>
 
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas dignissim
-                                        ultrices
-                                        arcu a
-                                        tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. Lorem ipsum
-                                        dolor
-                                        sit
-                                        amet, consectetur adipiscing elit. Maecenas dignissim ultrices arcu a
-                                        tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu.
+                                        <p>
+                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas dignissim
+                                            ultrices
+                                            arcu a
+                                            tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. Lorem ipsum
+                                            dolor
+                                            sit
+                                            amet, consectetur adipiscing elit. Maecenas dignissim ultrices arcu a
+                                            tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. <a href="#"
+                                                                                                                   class="text-peach">More</a>
                                         <h5 class="mt-1 mb-0 text-peach font-italic">Christopher, Texas</h5>
+                                        </p>
                                     </div>
                                 </li>
                                 <li class="media">
                                     <img src="{{ asset('images/user-review-image.png') }}" class="mr-3" alt="...">
                                     <div class="media-body">
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star star_checked"></span>
+                                        <span class="fa fa-star"></span>
+                                        <span class="fa fa-star"></span>
 
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas dignissim
-                                        ultrices
-                                        arcu a
-                                        tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. Lorem ipsum
-                                        dolor
-                                        sit
-                                        amet, consectetur adipiscing elit. Maecenas dignissim ultrices arcu a
-                                        tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. <a href="#"
-                                                                                                               class="text-peach">More</a>
+                                        <p>
+                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas dignissim
+                                            ultrices
+                                            arcu a
+                                            tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. Lorem ipsum
+                                            dolor
+                                            sit
+                                            amet, consectetur adipiscing elit. Maecenas dignissim ultrices arcu a
+                                            tincidunt. Morbi feugiat aliquam urna, et dapibus velit egestas eu. <a href="#"
+                                                                                                                   class="text-peach">More</a>
                                         <h5 class="mt-1 mb-0 text-peach font-italic">Christopher, Texas</h5>
+                                        </p>
                                     </div>
                                 </li>
                             </ul>
@@ -1430,6 +1541,51 @@
 
             imagePreviewer();
 
+            setTimeout(function(){
+                $(".content", $(this).delegateTarget).slideToggle();
+                $(".header", $(this).delegateTarget).toggleClass("toggle-js");
+            }, 1);
+
+            /**
+             * Star Javascript Setup
+             *
+             * maintain existing stars
+             *
+            var ratings = $(".fa-star");
+            var totalStars = [];
+
+            $(".star_checked").each((index, value) =>{
+                totalStars.push($(value).attr('id'));
+            });
+
+            /**
+             * Temp Highlight
+             *
+            ratings.on('mouseover', function(){
+                $(this).addClass("star_checked");
+                // Check all stars below
+                $(this).prevAll().each((key, el) => {
+                    $(el).addClass("star_checked");
+                });
+            });
+
+            /**
+             * Remove Temp Highlight
+             *
+            ratings.on('mouseleave', function(){
+
+                if(!totalStars.includes($(this).attr('id'))){
+                    $(this).removeClass("star_checked");
+                }
+
+                $(this).prevAll().each((ind,val) => {
+                    if(!totalStars.includes($(val).attr('id'))){
+                        $(val).removeClass("star_checked");
+                    }
+                });
+            })
+             */
+
         });
     </script>
     <script type="text/javascript" src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
@@ -1463,6 +1619,7 @@
 
         .catalog-detail-image .image-single {
             background-image: url(none) !important;
+            max-height:400px;
         }
 
         .product.row {
@@ -1543,6 +1700,14 @@
             //border: 1px solid rgba(0, 0, 0, 0.3);
             width: 60px;
             height: 60px;
+        }
+
+        .star_checked {
+            color: orange;
+            -webkit-text-fill-color: orange;
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-strok-color: gray;
+            text-shadow: 2px 3px 3px rgba(0,0,0,0.5);
         }
     </style>
 @endsection

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Services\ProductDetailsService;
 use App\Utility\GenerateTokenUtility;
 use DB;
+use Illuminate\Support\Facades\Auth;
 
 class ProductDetailsController extends Controller
 {
@@ -67,6 +68,18 @@ class ProductDetailsController extends Controller
                     ->where("productId","=",$productId)
                     ->get();
 
+        /**
+         * TODO: Update in database and code to collect designer information.
+         */
+        $designerTemplates = DB::table("tbl_art_work")
+                        ->select(DB::raw("tbl_art_work.*, tbl_media_library.full_url"))
+                        ->leftJoin("tbl_media_library", function($join){
+                            $join->on(DB::raw("tbl_media_library.id"), "=", DB::raw("tbl_art_work.mediaid"));
+                        })
+                        ->where('is_awkwardstyle','=','1')
+                        ->take(5)
+                        ->get();
+
         foreach($attributes as $key => $attr){
             foreach($variants as $vars){
                 if($attr->code1 == $vars->color_code_1 && ($vars->image == null || empty($vars->image))){
@@ -76,12 +89,14 @@ class ProductDetailsController extends Controller
         }
 
         return view('productdetails', [
+            'user_id' => (Auth::check()) ? Auth::user()->getAuthIdentifier() : false,
             'product_id' => $productId,
             'product' => $product,
             'variants' => $variants,
             'details' => $details,
             'media' => $media,
-            'attributes' => $attributes
+            'attributes' => $attributes,
+            'designerTemplates' => $designerTemplates
         ]);
     }
 
