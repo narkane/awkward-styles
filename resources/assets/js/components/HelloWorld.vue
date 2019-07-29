@@ -173,6 +173,31 @@
           </v-flex>
         </v-layout>
         <v-layout row>
+          <v-flex xs1>
+            <v-text-field v-model="art3d.x" label="X 3d" disabled></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="art3d.y" label="Y 3d" disabled></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="art3d.width" label="width 3d" disabled></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="art3d.height" label="height 3d" disabled></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field disabled />
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field
+              v-model="art3d.rotation"
+              label="3d rotation"
+              @change="changeDraw"
+              :disabled="!mode"
+            ></v-text-field>
+          </v-flex>
+        </v-layout>
+        <v-layout row>
           <v-flex pa1 shrink id="care">
             Art Library
             <br />
@@ -194,7 +219,7 @@
       <v-btn color="orange" :hidden="!mode" @click="saveTemplate">Template</v-btn>
       <v-btn color="red">Cancel</v-btn>
     </v-form>
-    <threedee :template="template3d" />
+    <threedee :template="template3d" :art="art3d" ref="threed" />
   </div>
 </template>
 
@@ -240,6 +265,13 @@ export default {
         width: 0,
         height: 0,
         rotation: 0
+      },
+      art3d: {
+        artSrcArr: null,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
       }
     };
   },
@@ -255,6 +287,7 @@ export default {
       }
       //initial changing of drawing area (renderer.view) to rect deminsions
       that.app.renderer.view.id = "frontview";
+      // that.app.stage.anchor.set(0.5);
       that.app.renderer.view.style.left = that.drawArea.x + "px";
       that.app.renderer.view.style.top = that.drawArea.y + "px";
       that.app.renderer.resize(that.drawArea.width, that.drawArea.height);
@@ -272,19 +305,16 @@ export default {
       });
     },
     createSprite: function(art) {
-      // var that = this;
       console.log("loading into this.sprites[" + this.libraryCurrent + "]");
+      var that = this;
+
       this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
 
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
 
       this.sprites[this.libraryCurrent].anchor.set(0.5);
-      this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
-      this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
-      // this.sprites[this.libraryCurrent].position.set(
-      //   that.app.screen.width / 2,
-      //   that.app.screen.height / 2
-      // );
+      // this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
+      // this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
       this.sprites[this.libraryCurrent].interactive = true;
       this.sprites[this.libraryCurrent].buttonMode = true;
 
@@ -300,10 +330,8 @@ export default {
         .on("mousemove", onDragMove)
         .on("touchmove", onDragMove);
 
-      // this.sprites[this.libraryCurrent].scale.y *= 1.25;
-
-      // that.app.stage.addChild(that.drawArea);
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
+
       this.librarySelect = this.libraryCurrent;
       this.libraryCurrent++;
 
@@ -328,6 +356,8 @@ export default {
           var newPosition = this.data.getLocalPosition(this.parent);
           this.x = newPosition.x;
           this.y = newPosition.y;
+          that.art3d.x = this.x / that.drawArea.width;
+          that.art3d.y = this.y / that.drawArea.height;
         }
       }
     },
@@ -354,7 +384,6 @@ export default {
             span.onclick = () => {
               that.librarySelect = span.id;
             };
-            // span.style = that.styleCarousel(that.libraryCurrent);
             span.innerHTML = [
               '<img class="thumb" src="',
               e.target.result,
@@ -366,24 +395,14 @@ export default {
               .getElementById("list")
               .insertBefore(document.createElement("hr"), null);
             that.createSprite(e.target.result);
+            that.art3d.artSrcArr = e.target.result;
+            that.$refs.threed.loadArt();
           };
         })(f);
 
-        // Read in the image file as a data URL.
         reader.readAsDataURL(f);
       }
-      // for (var i = 0; i < that.libraryNum; i++) {
-      //   var span = document.getElementById(i);
-      //   span.style = that.styleCarousel(i);
-      // }
     },
-    addLibraryArt: function(art) {
-      // axios.post;
-    },
-    // selectLibraryArt: function(artID) {
-    //   this.librarySelect = artID;
-    //   alert(artID);
-    // },
     getTemplateAxios: function() {
       var that = this;
 
@@ -418,13 +437,16 @@ export default {
         });
     },
     changeDraw: function() {
-      // console.log("CHANGE!");
       this.app.renderer.clear();
-      // that.app.renderer.screen
-      // this.drawArea.width = value;
       this.app.renderer.view.style.left = this.drawArea.x + "px";
       this.app.renderer.view.style.top = this.drawArea.y + "px";
       this.app.renderer.resize(this.drawArea.width, this.drawArea.height);
+      this.app.stage.pivot.x = -this.drawArea.width / 2;
+      this.app.stage.pivot.y = -this.drawArea.height / 2;
+      // this.template3d.x = this.drawArea.x;
+      // this.template3d.y = this.drawArea.y;
+      this.template3d.width = this.drawArea.width * (104 / 120);
+      this.template3d.height = this.drawArea.height * (232 / 280);
     },
     saveTemplate: function() {
       var templateObj = {
@@ -437,22 +459,9 @@ export default {
         size: this.size
       };
       this.saveTemplateAxios(templateObj);
-      // alert(JSON.stringify(templateObj));
     },
     savePrint: function() {
       let that = this;
-
-      //capture entire printable area
-      // var graphics = new PIXI.Graphics();
-
-      // graphics.beginFill(0xffff00);
-
-      // set the line style to have a width of 5 and set the color to red
-      // graphics.lineStyle(0, 0xff0000);
-
-      // draw a rectangle
-      // graphics.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-      // PIXI.Rectangle.this.app.stage.addChild(graphics);
 
       var lowX = this.app.stage.width;
       var lowY = this.app.stage.height;
@@ -463,75 +472,14 @@ export default {
       var xTot = 0;
       var yTot = 0;
       for (var i = 0; i < this.sprites.length; i++) {
-        // if (lowX > this.sprites[i].x) {
-        //   lowX = this.sprites[i].x;
-        // }
-        // if (lowY > this.sprites[i].y) {
-        //   lowY = this.sprites[i].y;
-        // }
-        // if (this.sprites[i].width > this.drawArea.width) {
-        //   this.sprites[i].filterArea(
-        //     new PIXI.Rectangle(
-        //       0,
-        //       0,
-        //       this.drawArea.width,
-        //       this.sprites[i].height
-        //     )
-        //   );
-        // }
-        // if (this.sprites[i].height > this.drawArea.height) {
-        //   this.sprites[i].filterArea(
-        //     new PIXI.Rectangle(
-        //       0,
-        //       0,
-        //       this.sprites[i].width,
-        //       this.drawArea.height
-        //     )
-        //   );
-        // }
         xTot += this.sprites[i].x;
         yTot += this.sprites[i].y;
-        // console.log("each x, y: " + xTot + ", " + yTot);
+
         allG.addChild(this.sprites[i]);
-        // if (totW < this.sprites[i].width) {
-        //   totW = this.sprites[i].width;
-        // }
-        // if (totH < this.sprites[i].height) {
-        //   totH = this.sprites[i].height;
-        // }
       }
       allG.x = xTot / this.sprites.length;
       allG.y = yTot / this.sprites.length;
-      // allG.anchor.set(0.5);
-      // var texture = new PIXI.BaseTexture(allG);
-      // var texture2 = new PIXI.Texture(
-      //   texture,
-      //   new PIXI.Rectangle(0, 0, this.drawArea.width, this.drawArea.height)
-      // );
-      // var sprite = new PIXI.Sprite(texture2);
-      // this.app.stage.addChild(sprite);
 
-      // if (allG.width > this.drawArea.width) {
-      //   allG.filterArea(
-      //     new PIXI.Rectangle(0, 0, this.drawArea.width, allG.height)
-      //   );
-      // }
-      // if (allG.height > this.drawArea.height) {
-      //   allG.filterArea(
-      //     new PIXI.Rectangle(0, 0, allG.width, this.drawArea.height)
-      //   );
-      // }
-
-      // this.libraryNum++;
-      // this.sprites[this.sprites.length] = allG;
-      // this.librarySelect = this.libraryCurrent;
-      // this.libraryCurrent++;
-      // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
-      // this.createSprite(allG);
-      // console.log(allG.x + ", " + allG.y);
-      // this.app.stage.addChild(allG);
-
-      //get %of offset with repect to (center!)
       var printObj = {
         blob: this.app.renderer.extract.canvas(this.app.stage).toDataURL(),
         library_id: 0,
@@ -559,20 +507,6 @@ export default {
           printObj.size
       );
 
-      // allG.calculateBounds();
-
-      // render right now
-      // this.app.renderer.render(allG);
-
-      // capture immediately
-      // var data = this.app.renderer.view.toDataURL("image/png", 1);
-      // alert(data);
-      // var img = document.createElement("img");
-      // img.id = "printfile";
-      // document.body.append(img);
-      // img.setAttribute("src", data);
-      // $("img").attr("src", data);
-
       this.app.renderer.extract.canvas(this.app.stage).toBlob(function(b) {
         var a = document.createElement("a");
         document.body.append(a);
@@ -594,7 +528,6 @@ export default {
     }
   },
   created() {
-    // this.sprites[0] = PIXI.Sprite.from(blob);
     //set to "template mode" if no template
     this.getTemplateAxios();
     this.init();
@@ -616,16 +549,14 @@ export default {
     Xart: {
       get() {
         if (this.libraryCurrent > 0) {
-          console.log("libraryCurrent: " + this.libraryCurrent);
-          console.log("librarySelect: " + this.librarySelect);
           return this.sprites[this.librarySelect].x;
         } else {
-          console.log(this.libraryCurrent);
           return null;
         }
       },
       set(value) {
         this.sprites[this.librarySelect].x = value;
+        this.art3d.x = value / this.drawArea.width;
       }
     },
     Yart: {
@@ -638,11 +569,15 @@ export default {
       },
       set(value) {
         this.sprites[this.librarySelect].y = value;
+        this.art3d.y = value / this.drawArea.height;
       }
     },
     Wart: {
       get() {
         if (this.libraryCurrent > 0) {
+          console.log("width: " + this.sprites[this.librarySelect].width);
+          this.art3d.width =
+            this.sprites[this.librarySelect].width * (104 / 120);
           return this.sprites[this.librarySelect].width;
         } else {
           return null;
@@ -650,11 +585,15 @@ export default {
       },
       set(value) {
         this.sprites[this.librarySelect].width = value;
+        this.art3d.width = value;
       }
     },
     Hart: {
       get() {
         if (this.libraryCurrent > 0) {
+          console.log("height: " + this.sprites[this.librarySelect].height);
+          this.art3d.height =
+            this.sprites[this.librarySelect].height * (232 / 280);
           return this.sprites[this.librarySelect].height;
         } else {
           return null;
@@ -662,6 +601,7 @@ export default {
       },
       set(value) {
         this.sprites[this.librarySelect].height = value;
+        this.art3d.height = value;
       }
     },
     inchesXart: {
