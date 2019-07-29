@@ -9,9 +9,8 @@
     <!-- <form action="search" method="post" enctype="multipart/form-data" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown"> -->
       <div class="input-group">
         <input type="text" class="form-control input-bg" id="search-suggestions" placeholder="Bag, women, mens..." aria-label="Search" aria-describedby="button-addon2" v-model="category">
-        <div class="input-group-append">
-          <button class="btn btn-outline-secondary" type="button" id="button-addon2" @click="search">Search</button>
-        </div>
+        <button class="btn btn-outline-secondary" type="button" id="button-addon2" @click="search">Search</button>
+
       </div>
     <!-- </form> -->
   </div>

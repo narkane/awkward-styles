@@ -29,7 +29,7 @@ class MyStoresController extends Controller
     {
         $user_id = Auth::user()->id;
         $storefronts = DB::SELECT('select id,name from tbl_store_front where user_id=? order by id DESC LIMIT 4',[$user_id]);
-        return view('createstore',['storefronts'=>$storefronts]);
+        return view('createstore',['storefronts'=>$storefronts,'token'=>$this->getToken()]);
     }
     
     public function createStore()
@@ -39,33 +39,29 @@ class MyStoresController extends Controller
         return view('createstore',['menu'=>'stores','menuitem'=>'createstore','storefronts'=>$storefronts]);
     }
 
+    public function editStore(Request $request, $id){
+        $user_id = Auth::user()->id;
+        $storefronts = DB::SELECT('select * from tbl_store_front where user_id=? AND id=? order by id DESC LIMIT 4',[$user_id,$id]);
+
+        $tags = DB::table("tbl_tag")
+                ->where("user_id","=",$user_id)
+                ->where("tagged_id", "=", $id)
+                ->where('type', '=', '2')
+                ->get();
+
+        return view('createstore',['menu'=>'stores','menuitem'=>'createstore','storefronts'=>$storefronts, 'tags' => $tags]);
+    }
+
     public function addArtWork()
     {
         $user_id = Auth::user()->id;
         $data = array("privateKey" => "password");                                                                    
-        $data_string = json_encode($data);                                                                                   
-                                                                                                                     
-        $ch = curl_init(env('API_URL').'token');                                             
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                                                                     
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);                                                                  
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
-        'Content-Type: application/json',                                                                                
-        'Content-Length: ' . strlen($data_string))                                                                       
-        );                                                                                                                   
-                                                                                                                   
-        $result = curl_exec($ch);
-        $result = json_decode($result,true);
-       //echo var_dump($result);die;
-        if($result['operationCode'] == 200) {
-        $token = $result['token'];
+        $data_string = json_encode($data);
         $categories = DB::SELECT('select id,name from tbl_art_category where type=? and active=?',['templates',1]);
         $artworks = DB::SELECT('select id,artname,artwork,DATE_FORMAT(mtime,"%d-%M-%Y") as date from tbl_art_work where parentid=? order by id DESC LIMIT 8',[$user_id]);
         $royaltyfees = DB::SELECT('select id,value,name from tbl_royalty_fee order by id DESC');
-        return view('myartworks',['menu'=>'stores','menuitem'=>'artwork','categories'=>$categories,'royaltyfees'=>$royaltyfees, 'artworks'=> $artworks, 'token'=>$token, 'user'=>$user_id]);
-        } else {
-             
-        } 
+        return view('myartworks',['menu'=>'stores','menuitem'=>'artwork','categories'=>$categories,'royaltyfees'=>$royaltyfees, 'artworks'=> $artworks, 'token'=>$this->getToken(), 'user'=>$user_id]);
+
     }
 
     public function artworkmanagement() {
@@ -83,12 +79,14 @@ class MyStoresController extends Controller
     public function saveStore(Request $request)
     {
         $user_id = Auth::user()->id;
-        $store_name = !empty(isset($_POST['store_name']))?$_POST['store_name']:'';
-        $store_description = !empty(isset($_POST['store_description']))?$_POST['store_description']:'';
-        $store_url = !empty(isset($_POST['store_url']))?$_POST['store_url']:'';
-        $store_tags = !empty(isset($_POST['store_tags']))?$_POST['store_tags']:'';
-        $store_logo = !empty(isset($_POST['store_logo']))?$_POST['store_logo']:'';
-        $store_banner = !empty(isset($_POST['store_banner']))?$_POST['store_banner']:'';
+        $store_name = ($request->has('store_name')) ? $request->input('store_name') : '';
+        $store_description = ($request->has('store_description')) ? $request->input('store_description') : '';
+        $store_url = ($request->has('store_url')) ? $request->input('store_url') : '';
+        $store_tags = ($request->has('tag-suggestions')) ? $request->input('tag-suggestions') : null;
+        $store_logo = ($request->has('store_logo')) ? $request->file('store_logo') : null;
+        $store_banner = ($request->has('store_banner')) ? $request->file('store_banner') : null;
+        $store_id = ($request->has('store_id')) ? $request->input('store_id') : 0;
+
         $characters = '019A26nPRe3js3W69CrGF8kKXvvmYtT4zNGqicXRjvuAnmmbvPZXu5yRJVWXYZ';
         
         $banner = '/images/images/Sample-img.jpg';
@@ -113,18 +111,85 @@ class MyStoresController extends Controller
            $banner = "/images/products/store_banner_".$randomString.".png";
            
         }
-            
-        $store_saved = DB::INSERT('insert into tbl_store_front(name,description,type,url,logo_path,banner_image_path,user_id,mtime,ctime,editor) values (?,?,?,?,?,?,?,?,?,?)',[$store_name,$store_description,'artwork',$store_url,$logo,$banner,$user_id,now(),now(),$user_id]);
-        
-        //$data = $request->all();
-        //echo json_encode($data);
+
+        // Create Entry
+        $entry = [
+            "name" => $store_name,
+            "description" => $store_description,
+            "type" => 'artwork',
+            "url" => $store_url,
+            'mtime' => now(),
+            'ctime' => now(),
+            'editor' => $user_id
+        ];
+
+        if($store_id == 0) {
+            $entry['logo_path'] = $logo;
+            $entry['banner_image_path'] = $banner;
+        } else {
+            if(!is_null($store_logo)){
+                $entry['logo_path'] = $logo;
+            }
+            if(!is_null($store_banner)){
+                $entry['banner_image_path'] = $banner;
+            }
+        }
+
+        $store_saved = DB::table('tbl_store_front')
+                        ->updateOrInsert(
+                            ['user_id' => $user_id, 'id' => $store_id],
+                            $entry
+        );
+
         if($store_saved) {
             $request->session()->flash('message.level', 'info');
             $request->session()->flash('message.content', 'Store data added successfully...');
+
+            if($store_id == 0){
+                $store_id = $store_saved->id;
+            }
+
+            $allTags = json_decode($store_tags);
+
+            $originalTags = DB::table("tbl_tag")
+                ->where("user_id","=",$user_id)
+                ->where("tagged_id", "=", $store_id)
+                ->where('type', '=', '2')
+                ->get();
+
+            /**
+             * If the tag has been removed, we need to remove it from the databse
+             */
+            foreach($originalTags as $t){
+                $exist = false;
+                foreach($allTags as $s){
+                    if($t->name == $s) $exist = true;
+                }
+                if(!$exist){
+                    DB::table('tbl_tag')
+                        ->where('user_id', '=', $user_id)
+                        ->where('tagged_id', '=', $store_id)
+                        ->where('name', '=', $t->name)
+                        ->where('type', '=', '2')
+                        ->delete();
+                }
+            }
+
+            foreach($allTags as $sTag) {
+                if($sTag != null && !empty($sTag) && !ctype_space($sTag)) {
+                    $tags = DB::table('tbl_tag')
+                        ->updateOrInsert(
+                            ['user_id' => $user_id, 'tagged_id' => $store_id, 'name' => $sTag, 'type' => '2'], [
+                                'editor' => Auth::user()->email
+                            ]
+                        );
+                }
+            }
+
         } else {
             $request->session()->flash('message.level', 'danger');
             $request->session()->flash('message.content', 'Unable to add store, Please try again...');
-        }        
+        }
         return redirect('createstore');
     }
 

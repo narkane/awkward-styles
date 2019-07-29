@@ -15,7 +15,6 @@ use App\Artwork;
  * Class CollectionsController
  * @package App\Http\Controllers
  *
- * TODO: ADD PAGINATION
  */
 class CollectionsController extends Controller
 {

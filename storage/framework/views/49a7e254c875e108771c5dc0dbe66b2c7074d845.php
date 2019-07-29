@@ -1,8 +1,23 @@
 
 <header>
-    <div class="head-top bg-dark">
-        <div class="container">
-            <ul class="head-top-ul">
+
+    <script>
+        $(document).ready(function() {
+            $('.dropdown-submenu-toggle').hover(function() {
+                $('.dropdown-submenu-toggle').find('.dropdown-menu').stop(true, true).delay(200).fadeOut(500);
+                $('.dropdown-submenu-toggle').stop(true, true).removeClass("active");
+                $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeIn(500);
+                $(this).stop(true, true).addClass("active");
+            }, function() {
+
+                $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeIn(500);
+                $(this).stop(true, true).addClass("active");
+            });
+        });
+    </script>
+
+    <div class="head-top bg-dark px-3 rounded-right">
+        <ul class="head-top-ul pl-5">
                 <li>
                     <a href="/createstore">Open Your Store</a>
                 </li>
@@ -13,18 +28,8 @@
                     <a href="/seller">Sell Everywhere</a>
                 </li>
             </ul>
-        </div>
-
     </div>
-    <div class="head-middle">
-        <div class="container">
-            <div class="row justify-content-between align-items-center">
 
-            </div>
-
-        </div>
-
-    </div>
 
     <nav class="navbar navbar-expand-lg navbar-light shadow-sm  bg-light ">
         <div class="container">
@@ -118,7 +123,7 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/products">
+                        <a class="nav-link" href="/products" id="shop-nav-link">
                             SHOP
                             <span>Custom design products</span>
                         </a>
@@ -131,12 +136,9 @@
                     </li>
                     <li class="nav-logo">
 
-
-                        <div class="col">
-                            <a href="/list">
-                                <img src="<?php echo e(asset('images/logo.png')); ?>" alt="">
-                            </a>
-                        </div>
+                        <a href="/list">
+                            <img src="<?php echo e(asset('images/logo.png')); ?>" alt="">
+                        </a>
                     </li>
                     <li class="nav-login">
                         <div class="col">
@@ -157,10 +159,9 @@
 
                                         <form id="searcharea" onSubmit="event.preventDefault(); searchfunc()" class="dropdown-menu dropdown-menu-right p-4" style="width: 400px;" aria-labelledby="userdropdown">
                                             <div class="input-group">
-                                                <input type="text" id="searchKeyword" name="keywords" class="form-control" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
-                                                <div class="input-group-append">
-                                                    <input class="btn btn-outline-secondary" type="submit" id="button-addon2" value="Search">
-                                                </div>
+                                                <input type="text" id="searchKeyword" name="keywords" class="form-control d-inline-flex w-75" placeholder="Search.." aria-label="Search" aria-describedby="button-addon2">
+                                                <input class="btn btn-outline-secondary d-inline-flex w-25" type="submit" id="button-addon2" value="Search">
+
                                             </div>
                                         </form>
                                     </div>
@@ -220,6 +221,34 @@
 
 
             </div>
+        </div>
+        <div class="header-product-menu" id="header-product-menu">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="<?php echo e(url("/products/womens/")); ?>" title="Womens">Women</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/mens/")); ?>" title="Mens">Mens</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/girls/")); ?>" title="Girls">Girls</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/boys/")); ?>" title="Boys">Boys</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/mugs/")); ?>" title="Mugs">Mugs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/hats/")); ?>" title="Hats">Hats</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/canvas/")); ?>" title="Canvas">Canvas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/other/")); ?>" title="Other">Other</a>
+                </li>
+            </ul>
         </div>
     </nav>
 </header>

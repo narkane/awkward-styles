@@ -23,7 +23,7 @@ Auth::routes();
 ###jthummel
 Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
 Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
-Route::get('/search/{id}', 'CollectionsController@searchSuggestions')->name('search-results');
+Route::get('/search/{id}', 'SearchController@index')->name('search-results');
 Route::get('/thetool/{productId}', 'ToolController@index')->name('thetool');
 ###them
 Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
@@ -33,15 +33,16 @@ Route::get('/mockupgenerator/{productId}', 'MockupgenController@index')->name('m
 Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/createstore', 'MyStoresController@createStore')->name('createstore');
+Route::get('/editstore/{id}', 'MyStoresController@editStore')->name('editStore');
 Route::post('/savestore', 'MyStoresController@saveStore')->name('savestore');
 Route::post('/saveartwork', 'MyStoresController@saveartwork')->name('saveartwork');
 Route::get('/mystores', 'MyStoresController@index')->name('mystores');
 Route::get('/myearnings', 'MyEarningsController@index')->name('myearnings');
 Route::get('/addartwork', 'MyStoresController@addArtWork')->name('addartwork');
-Route::get('/selectproductype/{artwork_id}/{artwork_name}', 'ProductsController@selectProducType')->name('selectproductype');
-Route::get('/addproducts/{artwork_id}/{artwork_name}', 'ProductsController@addProducts')->name('addproducts');
-Route::get('/addproducts', 'ProductsController@addProducts')->name('addproducts');
-Route::post('/setpricing', 'ProductsController@setPricing')->name('setpricing');
+Route::get('/selectproductype/{artwork_id}/{artwork_name}', 'AddProductsController@selectProducType')->name('selectproductype');
+Route::get('/addproducts/{artwork_id}/{artwork_name}', 'AddProductsController@addProducts')->name('addproducts');
+Route::get('/addproducts', 'AddProductsController@addProducts')->name('addproducts');
+Route::post('/setpricing', 'AddProductsController@setPricing')->name('setpricing');
 Route::get('/tagsuggestions/{id}', 'MyStoresController@tagSuggestions')->name('tagsuggestions');
 Route::get('/artworkmanagement', 'ArtworkManagementController@index')->name('artworkmanagement');
 Route::get('/updateartworkstatus', 'ArtworkManagementController@updateStatus')->name('updateartworkstatus');
@@ -50,7 +51,9 @@ Route::get('/product-details/{productId}', 'ProductDetailsController@index')->na
 Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
-Route::get('/products', 'ProductDetailsController@products')->name('collections');
+Route::get('/products/{category}/{type}', 'ProductsController@index')->name('products');
+Route::get('/products/{category}/', 'Productscontroller@index')->name('productNoType');
+Route::get('/products', 'ProductsController@home')->name('producthome');
 
 Route::get('/contact', 'ContactController@index')->name('contact us');
 
@@ -58,6 +61,11 @@ Route::get('/contact', 'ContactController@index')->name('contact us');
  * API CALLS NEEDED
  */
 Route::group(['prefix' => 'api/'], function($app){
+
+    /**
+     * PRINT PRODUCTS WITH LIMIT of 6
+     */
+    $app->get('productinformation/{type}/{page}', 'API\ProductInformationController@getProductList')->name('productlistFetcher');
 
     /**
      * COLLECT TEMPLATE INFORMATION FROM THE DATABASE

@@ -1,14 +1,12 @@
 <?php $__env->startSection('content'); ?>
 
-    <link type="text/css" rel="stylesheet" href="<?php echo e(asset('css/app.css')); ?>">
-
     <div class="contactContainer">
 
-        <div class="jumbotron bg-primary rounded-0">
+        <div class="jumbotron bg-primary contact-tron rounded-0">
 
             <div class="row">
 
-                <div class="col-6">
+                <div class="col-5">
 
                     <div class="contact-details">
                         <i class="fas fa-map"></i>
@@ -26,7 +24,7 @@
                     </div>
 
                     <div class="contact-details pb-5">
-                        <i class="fas fa-envelope"></i>
+                        <i class="fas fa-clock"></i>
                         Monday – Friday 8:00 am – 4:00 pm / Saturday 9:00 am – 3:00 pm / Sunday Closed
                     </div>
 
@@ -56,7 +54,9 @@
                         <div class="form-group">
 
                             <label for="contactMessage" class="big-label">Message:</label>
-                            <textarea class="form-control contact-input" id="contactMessage" placeholder="Message to send.." required></textarea>
+                            <textarea class="form-control contact-input"
+                                      id="contactMessage" placeholder="Message to send.."
+                                      style="height:200px;" required></textarea>
 
                         </div>
 
@@ -65,6 +65,8 @@
                     </form>
 
                 </div>
+
+                <div class="col-1"></div>
 
                 <div class="col-6">
 

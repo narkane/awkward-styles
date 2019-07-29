@@ -1,4 +1,4 @@
-@extends('layouts.toolHead');
+@extends('layouts.toolHead')
 
 @section('content')
 
