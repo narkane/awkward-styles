@@ -81945,7 +81945,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\ncanvas {\n  position: absolute;\n  top: 123;\n  left: 137;\n  border: 2px yellow outset;\n}\n#selection {\n  border: 1px solid black;\n  width: 140px;\n  padding: 10px;\n  border-radius: 30%;\n  margin-left: 500px;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
+exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  top: 125px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#selection {\n  border: 1px solid black;\n  width: 140px;\n  padding: 10px;\n  border-radius: 30%;\n  margin-left: 500px;\n}\n#productImage {\n  margin: 122px 0px;\n  left: 0px;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
 
 // exports
 
@@ -82017,7 +82017,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       if (!__WEBPACK_IMPORTED_MODULE_0_pixi_js__["e" /* utils */].isWebGLSupported()) {
         that.type = "canvas";
       }
+
       document.body.appendChild(this.app.view);
+      document.body.lastElementChild.setAttribute("id", "drawingboard");
 
       // this.app.stage.interactive = true;
       // this.app.stage.buttonMode = true;

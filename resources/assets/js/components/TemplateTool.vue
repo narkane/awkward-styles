@@ -51,7 +51,9 @@ export default {
       if (!PIXI.utils.isWebGLSupported()) {
         that.type = "canvas";
       }
+
       document.body.appendChild(this.app.view);
+      document.body.lastElementChild.setAttribute("id", "drawingboard");
 
       // this.app.stage.interactive = true;
       // this.app.stage.buttonMode = true;
@@ -298,11 +300,11 @@ export default {
 .data {
   margin-left: 500px;
 }
-canvas {
+#drawingboard {
   position: absolute;
-  top: 123;
-  left: 137;
-  border: 2px yellow outset;
+  top: 125px;
+  left: 138px;
+  border: 1px yellow outset;
 }
 #selection {
   border: 1px solid black;
@@ -310,6 +312,10 @@ canvas {
   padding: 10px;
   border-radius: 30%;
   margin-left: 500px;
+}
+#productImage {
+  margin: 122px 0px;
+  left: 0px;
 }
 button {
   width: 80px;
