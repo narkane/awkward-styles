@@ -123,7 +123,7 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/products">
+                        <a class="nav-link" href="/products" id="shop-nav-link">
                             SHOP
                             <span>Custom design products</span>
                         </a>
@@ -221,6 +221,34 @@
 
 
             </div>
+        </div>
+        <div class="header-product-menu" id="header-product-menu">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="<?php echo e(url("/products/womens/")); ?>" title="Womens">Women</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/mens/")); ?>" title="Mens">Mens</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/girls/")); ?>" title="Girls">Girls</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/boys/")); ?>" title="Boys">Boys</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/mugs/")); ?>" title="Mugs">Mugs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/hats/")); ?>" title="Hats">Hats</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/canvas/")); ?>" title="Canvas">Canvas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?php echo e(url("/products/other/")); ?>" title="Other">Other</a>
+                </li>
+            </ul>
         </div>
     </nav>
 </header>

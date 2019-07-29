@@ -23,7 +23,7 @@ Auth::routes();
 ###jthummel
 Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
 Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
-Route::get('/search/{id}', 'CollectionsController@searchSuggestions')->name('search-results');
+Route::get('/search/{id}', 'SearchController@index')->name('search-results');
 Route::get('/thetool/{productId}', 'ToolController@index')->name('thetool');
 ###them
 Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
@@ -33,6 +33,7 @@ Route::get('/mockupgenerator/{productId}', 'MockupgenController@index')->name('m
 Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/createstore', 'MyStoresController@createStore')->name('createstore');
+Route::get('/editstore/{id}', 'MyStoresController@editStore')->name('editStore');
 Route::post('/savestore', 'MyStoresController@saveStore')->name('savestore');
 Route::post('/saveartwork', 'MyStoresController@saveartwork')->name('saveartwork');
 Route::get('/mystores', 'MyStoresController@index')->name('mystores');

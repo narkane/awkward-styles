@@ -123,7 +123,7 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/products">
+                        <a class="nav-link" href="/products" id="shop-nav-link">
                             SHOP
                             <span>Custom design products</span>
                         </a>
@@ -223,6 +223,34 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
 
 
             </div>
+        </div>
+        <div class="header-product-menu" id="header-product-menu">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="{{ url("/products/womens/") }}" title="Womens">Women</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url("/products/mens/") }}" title="Mens">Mens</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url("/products/girls/") }}" title="Girls">Girls</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url("/products/boys/") }}" title="Boys">Boys</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url("/products/mugs/") }}" title="Mugs">Mugs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url("/products/hats/") }}" title="Hats">Hats</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url("/products/canvas/") }}" title="Canvas">Canvas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url("/products/other/") }}" title="Other">Other</a>
+                </li>
+            </ul>
         </div>
     </nav>
 </header>

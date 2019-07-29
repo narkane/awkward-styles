@@ -193,23 +193,28 @@
 }
 
 .store-fronts-list {
-}
-
-.store-fronts-list a {
   display: inline-block;
   padding: 10px 15px;
   background: #fff;
   border-radius: 15px;
-  color: #5d5b62;
   font-size: 13px;
   font-weight: 600;
   margin-right: 4px;
   margin-bottom: 8px;
 }
 
-.store-fronts-list a span {
+.store-fronts-list a {
+  color: #5d5b62;
+}
+
+.store-fronts-list span {
   padding-left: 5px;
   color: #82a501;
+}
+
+.store-fronts-list span:hover {
+  color: #efb402;
+  cursor: pointer;
 }
 
 .store-title {

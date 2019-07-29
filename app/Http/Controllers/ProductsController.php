@@ -197,25 +197,4 @@ class ProductsController extends Controller
 
     }
 
-    private function getToken(){
-        $data = array("privateKey" => "password");
-        $data_string = json_encode($data);
-
-        $ch = curl_init(env('API_URL').'token');
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($data_string))
-        );
-        $styles['operationCode']   = "";
-        $brands['operationCode']   = "";
-        $artworks['operationCode'] = "";
-        $result = curl_exec($ch);
-        $result = json_decode($result,true);
-
-        return ($result['operationCode'] == 200) ? $result['token'] : null;
-    }
-
 }

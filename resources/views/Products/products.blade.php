@@ -73,7 +73,8 @@
                         <div class="row">
                             <div class="col-sm-7">
                                 <h5>
-                                    <div id="carouselPaginationContainer" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left" data-ride="carousel">
+                                    <div id="carouselPaginationContainer" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left"
+                                         data-ride="carousel" data-interval="false">
 
                                         <div class="carousel-inner px-3">
                                             @foreach($paginator as $area => $links)
@@ -152,7 +153,8 @@
                         <div class="row">
                             <div class="col-sm-9">
                                 <h5>
-                                    <div id="carouselPaginationContainer" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left" data-ride="carousel">
+                                    <div id="carouselPaginationContainerTwo" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left"
+                                         data-ride="carousel" data-interval="false">
 
                                         <div class="carousel-inner px-3">
                                             @foreach($paginator as $area => $links)
@@ -177,11 +179,11 @@
 
                                         </div>
 
-                                        <a class="carousel-control-prev" href="#carouselPaginationContainer" role="button" data-slide="prev">
+                                        <a class="carousel-control-prev" href="#carouselPaginationContainerTwo" role="button" data-slide="prev">
                                             <span class="carousel-control-arrow-icon-left" aria-hidden="true"></span>
                                             <span class="sr-only text-dark">Previous</span>
                                         </a>
-                                        <a class="carousel-control-next" href="#carouselPaginationContainer" role="button" data-slide="next">
+                                        <a class="carousel-control-next" href="#carouselPaginationContainerTwo" role="button" data-slide="next">
                                             <span class="carousel-control-arrow-icon-right" aria-hidden="true"></span>
                                             <span class="sr-only text-dark">Next</span>
                                         </a>

@@ -1,6 +1,4 @@
-@extends('layouts.dashboard')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <style>
         #tags {
 
@@ -36,7 +34,7 @@
 
         <div class="row">
             <div class="col-md-3">
-                @include('menu')
+                <?php echo $__env->make('menu', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>
             </div>
 
             <div class="col-md-9">
@@ -53,17 +51,17 @@
                         <div class="col-md-6 pl-0 mt-3">
                             <div class="store-fronts p-4">
                                 <p class="store-title">Storefronts</p>
-                                @isset($storefronts)
-                                    @if(count($storefronts)>0)
-                                        @foreach($storefronts as $storefront)
+                                <?php if(isset($storefronts)): ?>
+                                    <?php if(count($storefronts)>0): ?>
+                                        <?php $__currentLoopData = $storefronts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $storefront): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <div class="store-fronts-list d-inline">
-                                                <a href="{{url('artiststorefront/'.$storefront->id)}}">{{ $storefront->name }}</a>
-                                                <span class="icon-edit1" id="store_id_{{$storefront->id}}"></span>
+                                                <a href="<?php echo e(url('artiststorefront/'.$storefront->id)); ?>"><?php echo e($storefront->name); ?></a>
+                                                <span class="icon-edit1" id="store_id_<?php echo e($storefront->id); ?>"></span>
                                             </div>
-                                        @endforeach
-                                    @else
-                                    @endif
-                                @endisset
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php else: ?>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                                 <p class="add-store mt-2">
                                     <a href="#"> <span class="icon-plus-circle"></span>Create Storefront</a>
                                 </p>
@@ -103,13 +101,15 @@
                         <div class="col-md-8 bg-white p-4">
 
                             <h4 class="mb-4">Create Storefront</h4>
-                            @if(session()->has('message.level'))
-                                <div class="alert alert-{{ session('message.level') }}">
-                                    {!! session('message.content') !!}
+                            <?php if(session()->has('message.level')): ?>
+                                <div class="alert alert-<?php echo e(session('message.level')); ?>">
+                                    <?php echo session('message.content'); ?>
+
                                 </div>
-                            @endif
-                            <form id="storeForm" action="{{ url('savestore') }}" method="post" enctype="multipart/form-data">
-                                {{ csrf_field() }}
+                            <?php endif; ?>
+                            <form id="storeForm" action="<?php echo e(url('savestore')); ?>" method="post" enctype="multipart/form-data">
+                                <?php echo e(csrf_field()); ?>
+
                                 <div class="form-group row">
                                     <label for="email" class="col-sm-5 col-form-label">Store Name</label>
                                     <div class="col-sm-7"><input type="text" class="form-control input-bg"
@@ -211,7 +211,7 @@
         $(document).ready(function () {
             var options1 = {
                 url: function (phrase) {
-                    return "{{ url('tagsuggestions/') }}/" + phrase;
+                    return "<?php echo e(url('tagsuggestions/')); ?>/" + phrase;
                 },
                 getValue: "tag"
             };
@@ -227,7 +227,7 @@
 
             if(fieldId.indexOf("store_id_") >= 0){
                 storeID = fieldId.split("_")[2];
-                window.location.href = "{{url('/editstore')}}/" + storeID;
+                window.location.href = "<?php echo e(url('/editstore')); ?>/" + storeID;
             }
 
         });
@@ -283,7 +283,7 @@
                 return true;
             });
 
-            @isset($storefront->description)
+            <?php if(isset($storefront->description)): ?>
             if(/editstore/.test(window.location.href)){
                 var storeName = $("#store_name");
                 var storeDescription = $("#store_description");
@@ -300,24 +300,26 @@
                     $("#store_banner").removeAttr('required');
                 }
 
-                var tags = {!! $tags !!};
+                var tags = <?php echo $tags; ?>;
 
                 for(var i = 0; i < tags.length; i++){
                     allTags.push(tags[i].name);
                     $('#tags input').after('<span class="tag">' + tags[i].name + '</span>');
                 }
 
-                storeName.val('{{$storefront->name}}');
-                storeDescription.val('{{$storefront->description}}');
-                storeUrl.val('{{$storefront->url}}');
-                storeImg.attr('src','{{$storefront->logo_path}}');
-                storeBanner.attr('src','{{$storefront->banner_image_path}}');
+                storeName.val('<?php echo e($storefront->name); ?>');
+                storeDescription.val('<?php echo e($storefront->description); ?>');
+                storeUrl.val('<?php echo e($storefront->url); ?>');
+                storeImg.attr('src','<?php echo e($storefront->logo_path); ?>');
+                storeBanner.attr('src','<?php echo e($storefront->banner_image_path); ?>');
 
-                $('#storeForm').prepend("<input type='hidden' name='store_id' id='store_id' value='{{$storefront->id}}'/>")
+                $('#storeForm').prepend("<input type='hidden' name='store_id' id='store_id' value='<?php echo e($storefront->id); ?>'/>")
 
             }
-            @endisset
+            <?php endif; ?>
 
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.dashboard', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>

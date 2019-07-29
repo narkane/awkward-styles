@@ -1,6 +1,4 @@
-@extends('layouts.dashboard')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 
 <div class="container panel">
 
@@ -32,24 +30,25 @@
                                  data-ride="carousel" data-interval="false">
 
                                 <div class="carousel-inner px-3">
-                                    @foreach($paginator as $area => $links)
+                                    <?php $__currentLoopData = $paginator; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $area => $links): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                        <div class="carousel-item @if($area == $paginatorArea) active @endif">
+                                        <div class="carousel-item <?php if($area == $paginatorArea): ?> active <?php endif; ?>">
                                             Page(s):
 
-                                        @foreach($links as $page)
+                                        <?php $__currentLoopData = $links; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                            @if($page == $currentPage)
-                                                {{$page}}
-                                            @else
-                                                <a href="{{ $url }}page={{$page}}" title="Page {{$page}}">{{$page}}</a>
-                                            @endif
+                                            <?php if($page == $currentPage): ?>
+                                                <?php echo e($page); ?>
 
-                                        @endforeach
+                                            <?php else: ?>
+                                                <a href="<?php echo e($url); ?>page=<?php echo e($page); ?>" title="Page <?php echo e($page); ?>"><?php echo e($page); ?></a>
+                                            <?php endif; ?>
+
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                                         </div>
 
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
 
                                 </div>
@@ -66,64 +65,66 @@
                         </h5>
                     </div>
                     <div class="col-md-2 text-right">
-                        <h5><span class="badge badge-pill badge-light rounded-border py-2 px-5 border border-dark">Found <u>{{$totalFound}}</u> results</span></h5>
+                        <h5><span class="badge badge-pill badge-light rounded-border py-2 px-5 border border-dark">Found <u><?php echo e($totalFound); ?></u> results</span></h5>
                     </div>
                 </div>
 
                 <div class="row products-row" id="art-product-list">
 
-                    @isset($request)
-                        @foreach($request as $req)
-                            @if(isset($req->id))
+                    <?php if(isset($request)): ?>
+                        <?php $__currentLoopData = $request; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $req): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php if(isset($req->id)): ?>
                                 <div class="col item">
                                     <div class="product-grid">
                                         <div class="product-image">
-                                            <a href="{{url('/')}}/product-details/{{$req->id}}">
-                                                <img src="{{ $req->full_url}}">
+                                            <a href="<?php echo e(url('/')); ?>/product-details/<?php echo e($req->id); ?>">
+                                                <img src="<?php echo e($req->full_url); ?>">
                                             </a>
                                         </div>
                                         <div class="product-content">
-                                            <h5 class="title">{{$req->label}}</h5>
+                                            <h5 class="title"><?php echo e($req->label); ?></h5>
                                             <div class="price">
-                                                {{$req->salePrice}}
+                                                <?php echo e($req->salePrice); ?>
+
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            @endif
-                        @endforeach
-                    @endisset
+                            <?php endif; ?>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php endif; ?>
 
                 </div>
 
                 <nav aria-label="Page navigation example" class="w-100 text-center">
                     <h5>
-                        @if($currentPage > 1)
-                            <a href="{{ $url }}page={{ $currentPage - 1 }}" title="Previous">Previous Page</a>
-                        @endif
+                        <?php if($currentPage > 1): ?>
+                            <a href="<?php echo e($url); ?>page=<?php echo e($currentPage - 1); ?>" title="Previous">Previous Page</a>
+                        <?php endif; ?>
 
                         <div id="carouselPaginationContainerTwo" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left"
                              data-ride="carousel" data-interval="false">
 
                             <div class="carousel-inner px-5">
-                                @foreach($paginator as $area => $links)
+                                <?php $__currentLoopData = $paginator; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $area => $links): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                    <div class="carousel-item @if($area == $paginatorArea) active @endif">
+                                    <div class="carousel-item <?php if($area == $paginatorArea): ?> active <?php endif; ?>">
                                         Page(s):
 
-                                        @foreach($links as $page)
+                                        <?php $__currentLoopData = $links; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                            @if($page == $currentPage)
-                                                {{$page}}
-                                            @else
-                                                <a href="{{ $url }}page={{$page}}" title="Page {{$page}}">{{$page}}</a>
-                                            @endif
+                                            <?php if($page == $currentPage): ?>
+                                                <?php echo e($page); ?>
 
-                                        @endforeach
+                                            <?php else: ?>
+                                                <a href="<?php echo e($url); ?>page=<?php echo e($page); ?>" title="Page <?php echo e($page); ?>"><?php echo e($page); ?></a>
+                                            <?php endif; ?>
+
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                                     </div>
 
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
 
                             </div>
@@ -138,16 +139,16 @@
                             </a>
                         </div>
 
-                        @if($currentPage < $totalPages)
-                            <a href="{{ $url }}page={{ $currentPage + 1 }}" title="Next">Next Page</a>
-                        @endif
+                        <?php if($currentPage < $totalPages): ?>
+                            <a href="<?php echo e($url); ?>page=<?php echo e($currentPage + 1); ?>" title="Next">Next Page</a>
+                        <?php endif; ?>
                     </h5>
                 </nav>
             </div>
         </div>
     </div>
-    @endsection
-    @section('footer_scripts')
+    <?php $__env->stopSection(); ?>
+    <?php $__env->startSection('footer_scripts'); ?>
     <script type="text/javascript">
     $(document).ready(function() {
         $("#collections-slider").owlCarousel({
@@ -176,4 +177,5 @@
         
     });
     </script>
-    @endsection
+    <?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.dashboard', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>
