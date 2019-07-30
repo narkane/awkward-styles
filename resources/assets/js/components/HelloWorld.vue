@@ -9,18 +9,6 @@
           <v-flex xs5 />
         </v-layout>
         <v-layout row>
-          <v-flex xs1>
-            <select v-model="size" @change="getTemplateAxios" style="border:2px inset darkgrey">
-              <option value="XS">XS</option>
-              <option value="S">S</option>
-              <option value="M">M</option>
-              <option value="L">L</option>
-              <option value="XL">XL</option>
-              <option value="2XL">2XL</option>
-              <option value="3XL">3XL</option>
-              <option value="4XL">4XL</option>
-            </select>
-          </v-flex>
           <v-flex xs7>
             <input type="checkbox" name="mode" v-model="mode" />
             <label for="mode">: Template Mode</label>

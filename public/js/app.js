@@ -81980,6 +81980,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
 
 
 
@@ -82000,23 +82001,34 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         backgroundColor: 0x1099bb,
         transparent: 1
       }),
-      drawArea: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["c" /* Rectangle */](0, 0, 200, 300),
+      // drawArea: new PIXI.Rectangle(0, 0, 200, 300),
       shapes: [],
       sprites: [],
       libraryCurrent: 0,
       librarySelect: 0,
       graphics: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */](),
-      geo: []
+      geo: [],
+      ratio: 0,
+      size: "XS"
     };
   },
 
   methods: {
+    returnShape: function returnShape() {
+      print(this.$refs.trow1.template.geo.shape);
+    },
     init: function init() {
       var that = this;
 
       if (!__WEBPACK_IMPORTED_MODULE_0_pixi_js__["e" /* utils */].isWebGLSupported()) {
         that.type = "canvas";
       }
+
+      // this.$refs.trow1.template = {
+      //   // productId: 0,
+      //   geo: {},
+      //   ratio: 0
+      // };
 
       document.body.appendChild(this.app.view);
       document.body.lastElementChild.setAttribute("id", "drawingboard");
@@ -82054,7 +82066,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         // that.sprites[that.librarySelect].rotation += 0.1 * delta;
       });
       function onDragStart(event) {
-        // that.geo[this.librarySelect].clear();
+        that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
+        that.geo[that.librarySelect].clear();
         // store a reference to the data
         // the reason for this is because of multitouch
         // we want to track the movement of this particular touch
@@ -82066,8 +82079,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         that.shapes[that.librarySelect].y = newPosition.y;
         that.shapes[that.librarySelect].width = 0;
         that.shapes[that.librarySelect].height = 0;
-        that.$refs.trow1.setX(newPosition.x);
-        that.$refs.trow1.setY(newPosition.y);
+        // that.$refs.trow1.setX(newPosition.x);
+        // that.$refs.trow1.setY(newPosition.y);
         this.dragging = true;
       }
       function onDragEnd() {
@@ -82077,6 +82090,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         // set the interaction data to null
         this.data = null;
+
+        // that.geo[that.librarySelect].alpha = 0.1;
       }
       function onDragMove() {
         if (this.dragging) {
@@ -82086,10 +82101,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
           that.shapes[that.librarySelect].width = newPosition.x - that.shapes[that.librarySelect].x;
           that.shapes[that.librarySelect].height = newPosition.y - that.shapes[that.librarySelect].y;
-          that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
-          that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
+          // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
+          // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
           // draw a rectangle
-          if (that.$refs.trow1.template.shape == 4) {
+          if (that.$refs.trow1.template.geo.shape == 4) {
             that.geo[that.librarySelect].drawRect(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, that.shapes[that.librarySelect].width, that.shapes[that.librarySelect].height);
           } else {
             // that.shapes[that.librarySelect].width = Math.sqrt(
@@ -82099,15 +82114,36 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
             // that.$refs.trow1.setH(10);
             // draw a rectangle
-            that.geo[that.librarySelect].drawCircle(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, Math.sqrt(Math.pow(newPosition.x - that.shapes[that.librarySelect].x, 2) + Math.pow(newPosition.y - that.shapes[that.librarySelect].y, 2)));
+            // alert(that.shapes[that.librarySelect]);
+            that.geo[that.librarySelect].drawCircle(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, Math.sqrt(Math.pow(that.shapes[that.librarySelect].width, 2) + Math.pow(that.shapes[that.librarySelect].height, 2)) / Math.sqrt(2) / 2);
           }
-          that.geo[that.librarySelect].alpha = 0.2;
+          that.geo[that.librarySelect].alpha = 0.1;
 
           // set the line style to have a width of 5 and set the color to red
 
           that.app.stage.addChild(that.geo[that.librarySelect]);
         }
       }
+    },
+    dataChange: function dataChange(data, xORy) {
+      this.geo[this.librarySelect].clear();
+
+      this.shapes[this.librarySelect].x = parseFloat(data.x);
+      this.shapes[this.librarySelect].y = parseFloat(data.y);
+      this.shapes[this.librarySelect].width = parseFloat(data.width);
+      this.shapes[this.librarySelect].height = parseFloat(data.height);
+      this.shapes[this.librarySelect].shape = parseInt(data.shape);
+
+      if (data.shape == 4) {
+        this.geo[this.librarySelect].drawRect(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, this.shapes[this.librarySelect].width, this.shapes[this.librarySelect].height);
+      } else {
+        this.geo[this.librarySelect].drawCircle(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2) / 2);
+      }
+      this.app.stage.addChild(this.geo[this.librarySelect]);
+    },
+    setRatSize: function setRatSize(rat, sz) {
+      this.ratio = rat;
+      this.size = sz;
     },
     createSprite: function createSprite(art) {
       var _this = this;
@@ -82139,26 +82175,31 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       this.geo[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
 
       this.geo[this.libraryCurrent].lineStyle(1, 0x0000ff);
-      this.geo[this.libraryCurrent].beginFill(0x22ff88);
+      this.geo[this.libraryCurrent].transparent = 1;
+      this.geo[this.libraryCurrent].alpha = 0.1;
+      // this.geo[this.libraryCurrent].beginFill(0x22ff88);
       this.shapes[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["c" /* Rectangle */]();
       this.shapes[this.libraryCurrent].width = 0;
 
       switch (shape) {
         case 1:
-          this.geo[this.libraryCurrent].drawCircle(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, Math.sqrt(Math.pow(newPosition.x - that.shapes[that.librarySelect].x, 2) + Math.pow(newPosition.y - that.shapes[that.librarySelect].y, 2)));
+          this.shapes[this.libraryCurrent].shape = 1;
+          this.geo[this.libraryCurrent].drawCircle(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2) / 2);
           break;
+        // case 3:
+        // this.geo[this.libraryCurrent].draw;
+        // break;
         case 4:
+          this.shapes[this.libraryCurrent].shape = 4;
           this.geo[this.libraryCurrent].drawRect(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, this.shapes[this.libraryCurrent].width, this.shapes[this.libraryCurrent].height);
           break;
         default:
+          this.shapes[this.libraryCurrent].shape = 4;
           this.geo[this.libraryCurrent].drawRect(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, this.shapes[this.libraryCurrent].width, this.shapes[this.libraryCurrent].height);
           break;
       }
 
       // this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
-
-      this.shapes[this.libraryCurrent].transparent = 1;
-      this.shapes[this.libraryCurrent].alpha = 0.1;
 
       this.app.stage.addChild(this.geo[this.libraryCurrent]);
       // this.shapes[this.libraryCurrent].on("touchstart", () => {
@@ -82177,21 +82218,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     addRow: function addRow() {
       var _this2 = this;
 
-      var RowClass = Vue.extend(__WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue___default.a);
-      var row = new RowClass();
-      row.$mount();
-      this.$refs["row"] = row.$el;
+      // var RowClass = Vue.extend(TemplateRow);
+      // var row = new RowClass();
+      // row.$mount();
+      // this.$refs["row"] = row.$el;
+
       // row.$el.ref = "trow" + this.libraryCurrent;
       // console.log(row.$el);
       // var rowEl = row.$el;
       // row.$el.setAttribute(":ref", "trow" + this.libraryCurrent);
-      var container = document.getElementById("cont");
-      container.appendChild(row.$el);
+      // var container = document.getElementById("cont");
+      // container.appendChild(row.$el);
       // row.$el.setAttribute("ref", "trow" + this.libraryCurrent);
       // var rowEle = container.lastElementChild;
       // rowEle.setAttribute("ref", "trow" + this.libraryCurrent);
       // container.lastElementChild = rowEle;
-      console.log(row.$el);
+      // console.log(row.$el);
       // row.innerHTML = "<TemplateRow ref='trow" + this.libraryCurrent + "' />";
 
       // alert(this.libraryCurrent);
@@ -82204,7 +82246,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       sel.appendChild(document.createElement("br"));
       sel.appendChild(newSel);
 
+      var lastSelection = this.librarySelect;
+
       this.createGeo(this.$refs.trow1.getShape());
+      this.$refs.trow1.template = {
+        // productId: 0,
+        geo: this.shapes[this.libraryCurrent - 1],
+        ratio: this.ratio,
+        size: this.size
+      };
     },
     createRadioElement: function createRadioElement(name) {
       var radioHtml = "<button value='" + name + "'>Select " + name + "</button>";
@@ -82220,7 +82270,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     selectRadio: function selectRadio(current) {
       this.librarySelect = current;
+      this.$refs.trow1.template = {
+        geo: this.shapes[current],
+        ratio: this.ratio,
+        size: this.size
+      };
     }
+  },
+  props: {
+    prodID: String
   },
   created: function created() {
     this.init();
@@ -90000,19 +90058,19 @@ var AnimatedSprite = /*@__PURE__*/(function (Sprite) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(105)
+  __webpack_require__(155)
 }
 var normalizeComponent = __webpack_require__(10)
 /* script */
 var __vue_script__ = __webpack_require__(107)
 /* template */
-var __vue_template__ = __webpack_require__(108)
+var __vue_template__ = __webpack_require__(157)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
-var __vue_scopeId__ = null
+var __vue_scopeId__ = "data-v-e60f42ce"
 /* moduleIdentifier (server only) */
 var __vue_module_identifier__ = null
 var Component = normalizeComponent(
@@ -90045,51 +90103,62 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 105 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(106);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(9)("8ea38f44", content, false, {});
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue", function() {
-     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 106 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(8)(false);
-// imports
-
-
-// module
-exports.push([module.i, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""]);
-
-// exports
-
-
-/***/ }),
+/* 105 */,
+/* 106 */,
 /* 107 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -90140,207 +90209,66 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
   data: function data() {
     return {
       template: {
-        productId: 0,
-        shape: 4,
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-        ratio: 0
+        geo: { shape: 4 },
+        ratio: 0,
+        size: "XS"
       }
     };
   },
 
   methods: {
     setX: function setX(x) {
-      this.template.x = x;
+      this.template.geo.x = x;
     },
     setY: function setY(y) {
-      this.template.y = y;
+      this.template.geo.y = y;
     },
     setW: function setW(w) {
-      this.template.width = w;
+      this.template.geo.width = w;
     },
     setH: function setH(h) {
-      this.template.height = h;
+      this.template.geo.height = h;
     },
     getShape: function getShape() {
-      return this.template.shape;
+      return this.template.geo.shape;
+    },
+    getTemplateAxios: function getTemplateAxios() {
+      alert("pulling off database discreetly ;))");
+      this.setRatSize(this.template.ratio, this.template.size);
     }
+  },
+  props: {
+    setRatSize: Function,
+    dataChange: Function
+  },
+  computed: {
+    inchesWtemp: {
+      get: function get() {
+        return this.template.geo.width / this.template.ratio;
+      },
+      set: function set(value) {
+        this.template.ratio = this.template.geo.width / value;
+        // this.template.geo.width = value * this.template.ratio;
+      }
+    },
+    inchesHtemp: {
+      get: function get() {
+        return this.template.geo.height / this.template.ratio;
+      },
+      set: function set(value) {
+        this.template.ratio = this.template.geo.height / value;
+        // this.template.geo.height = value * this.template.template.ratio;
+      }
+    }
+  },
+  mounted: function mounted() {
+    this.setRatSize(this.template.ratio, this.template.size);
+    this.dataChange(this.template.geo);
   }
 });
 
 /***/ }),
-/* 108 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "v-layout",
-    { attrs: { row: "" } },
-    [
-      _c("v-flex", { attrs: { xs1: "" } }, [
-        _c(
-          "select",
-          {
-            directives: [
-              {
-                name: "model",
-                rawName: "v-model",
-                value: _vm.template.shape,
-                expression: "template.shape"
-              }
-            ],
-            staticStyle: {
-              marginTop: "20px",
-              marginRight: "5px",
-              border: "1px dotted black"
-            },
-            on: {
-              change: function($event) {
-                var $$selectedVal = Array.prototype.filter
-                  .call($event.target.options, function(o) {
-                    return o.selected
-                  })
-                  .map(function(o) {
-                    var val = "_value" in o ? o._value : o.value
-                    return val
-                  })
-                _vm.$set(
-                  _vm.template,
-                  "shape",
-                  $event.target.multiple ? $$selectedVal : $$selectedVal[0]
-                )
-              }
-            }
-          },
-          [
-            _c("option", { attrs: { selected: "", value: "4" } }, [
-              _vm._v("Rectangle")
-            ]),
-            _vm._v(" "),
-            _c("option", { attrs: { value: "1" } }, [_vm._v("Circle")]),
-            _vm._v(" "),
-            _c("option", { attrs: { value: "3" } }, [_vm._v("Triangle")]),
-            _vm._v(" "),
-            _c("option", { attrs: { value: "5" } }, [_vm._v("Pentagon")]),
-            _vm._v(" "),
-            _c("option", { attrs: { value: "6" } }, [_vm._v("Hexagon")])
-          ]
-        )
-      ]),
-      _vm._v(" "),
-      _c(
-        "v-flex",
-        { attrs: { xs1: "" } },
-        [
-          _c("v-text-field", {
-            staticClass: "inputNumber",
-            attrs: { type: "number", label: "X", pattern: "\\d+" },
-            model: {
-              value: _vm.template.x,
-              callback: function($$v) {
-                _vm.$set(_vm.template, "x", $$v)
-              },
-              expression: "template.x"
-            }
-          })
-        ],
-        1
-      ),
-      _vm._v(" "),
-      _c(
-        "v-flex",
-        { attrs: { xs1: "" } },
-        [
-          _c("v-text-field", {
-            staticClass: "inputNumber",
-            attrs: { type: "number", label: "Y", pattern: "\\d+" },
-            model: {
-              value: _vm.template.y,
-              callback: function($$v) {
-                _vm.$set(_vm.template, "y", $$v)
-              },
-              expression: "template.y"
-            }
-          })
-        ],
-        1
-      ),
-      _vm._v(" "),
-      _c(
-        "v-flex",
-        { attrs: { xs1: "" } },
-        [
-          _c("v-text-field", {
-            staticClass: "inputNumber",
-            attrs: { type: "number", label: "Width", pattern: "\\d+" },
-            model: {
-              value: _vm.template.width,
-              callback: function($$v) {
-                _vm.$set(_vm.template, "width", $$v)
-              },
-              expression: "template.width"
-            }
-          })
-        ],
-        1
-      ),
-      _vm._v(" "),
-      _c(
-        "v-flex",
-        { attrs: { xs1: "" } },
-        [
-          _c("v-text-field", {
-            staticClass: "inputNumber",
-            attrs: { type: "number", label: "Height", pattern: "\\d+" },
-            model: {
-              value: _vm.template.height,
-              callback: function($$v) {
-                _vm.$set(_vm.template, "height", $$v)
-              },
-              expression: "template.height"
-            }
-          })
-        ],
-        1
-      ),
-      _vm._v(" "),
-      _c(
-        "v-flex",
-        { attrs: { xs1: "" } },
-        [
-          _c("v-text-field", {
-            attrs: { label: "ratio" },
-            model: {
-              value: _vm.template.ratio,
-              callback: function($$v) {
-                _vm.$set(_vm.template, "ratio", $$v)
-              },
-              expression: "template.ratio"
-            }
-          })
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-e60f42ce", module.exports)
-  }
-}
-
-/***/ }),
+/* 108 */,
 /* 109 */
 /***/ (function(module, exports) {
 
@@ -90863,7 +90791,15 @@ var render = function() {
           _c(
             "v-container",
             { attrs: { fluid: "", id: "cont" } },
-            [_c("TemplateRow", { ref: "trow1" })],
+            [
+              _c("TemplateRow", {
+                ref: "trow1",
+                attrs: {
+                  setRatSize: _vm.setRatSize,
+                  dataChange: _vm.dataChange
+                }
+              })
+            ],
             1
           ),
           _vm._v(" "),
@@ -90879,6 +90815,8 @@ var render = function() {
       _vm._v(" "),
       _c("div", { attrs: { id: "selection" } }, [
         _c("h3", [_vm._v("Template: " + _vm._s(_vm.librarySelect))]),
+        _vm._v(" "),
+        _c("h2", [_vm._v("Next: " + _vm._s(_vm.libraryCurrent))]),
         _vm._v(" "),
         _c(
           "button",
@@ -117749,6 +117687,423 @@ if (false) {
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 133 */,
+/* 134 */,
+/* 135 */,
+/* 136 */,
+/* 137 */,
+/* 138 */,
+/* 139 */,
+/* 140 */,
+/* 141 */,
+/* 142 */,
+/* 143 */,
+/* 144 */,
+/* 145 */,
+/* 146 */,
+/* 147 */,
+/* 148 */,
+/* 149 */,
+/* 150 */,
+/* 151 */,
+/* 152 */,
+/* 153 */,
+/* 154 */,
+/* 155 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(156);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(9)("3f4efa6f", content, false, {});
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 156 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(8)(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n.constant[data-v-e60f42ce] {\n  background-color: lightcoral;\n}\n.variable[data-v-e60f42ce] {\n  background-color: lightgreen;\n}\n#area1[data-v-e60f42ce] {\n  border: 3px outset gray;\n  border-radius: 15px 15px 0px 0px;\n}\n#area2[data-v-e60f42ce] {\n  border: 3px outset gray;\n  border-radius: 0px 0px 15px 15px;\n}\n#size[data-v-e60f42ce] {\n  margin-top: 8px;\n  padding-left: 14px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 157 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      _c(
+        "v-layout",
+        { attrs: { row: "" } },
+        [
+          _c("v-flex", { staticClass: "variable", attrs: { xs1: "" } }, [
+            _c(
+              "select",
+              {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.template.geo.shape,
+                    expression: "template.geo.shape"
+                  }
+                ],
+                staticStyle: {
+                  marginTop: "14px",
+                  padding: "10px 5px 10px 5px"
+                },
+                on: {
+                  change: [
+                    function($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function(o) {
+                          return o.selected
+                        })
+                        .map(function(o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.$set(
+                        _vm.template.geo,
+                        "shape",
+                        $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      )
+                    },
+                    function() {
+                      _vm.dataChange(_vm.template.geo, 4)
+                    }
+                  ]
+                }
+              },
+              [
+                _c("option", { attrs: { selected: "", value: "4" } }, [
+                  _vm._v("Rectangle")
+                ]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "1" } }, [_vm._v("Circle")])
+              ]
+            )
+          ]),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "X", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo, 1)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.x,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "x", $$v)
+                  },
+                  expression: "template.geo.x"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Y", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo, 2)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.y,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "y", $$v)
+                  },
+                  expression: "template.geo.y"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Width", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo, 3)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.width,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "width", $$v)
+                  },
+                  expression: "template.geo.width"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Height", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo, 3)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.height,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "height", $$v)
+                  },
+                  expression: "template.geo.height"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "constant", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Ratio" },
+                on: {
+                  change: function() {
+                    _vm.setRatSize(_vm.template.ratio, _vm.template.size)
+                  }
+                },
+                model: {
+                  value: _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template, "ratio", $$v)
+                  },
+                  expression: "template.ratio"
+                }
+              })
+            ],
+            1
+          )
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "v-layout",
+        { attrs: { row: "" } },
+        [
+          _c("v-flex", { staticClass: "constant", attrs: { xs1: "" } }, [
+            _c(
+              "select",
+              {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.template.size,
+                    expression: "template.size"
+                  }
+                ],
+                staticStyle: { fontSize: "24pt" },
+                attrs: { id: "size" },
+                on: {
+                  change: [
+                    function($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function(o) {
+                          return o.selected
+                        })
+                        .map(function(o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.$set(
+                        _vm.template,
+                        "size",
+                        $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      )
+                    },
+                    _vm.getTemplateAxios
+                  ]
+                }
+              },
+              [
+                _c("option", { attrs: { value: "XS" } }, [_vm._v("XS")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "S" } }, [_vm._v("S")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "M" } }, [_vm._v("M")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "L" } }, [_vm._v("L")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "XL" } }, [_vm._v("XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "2XL" } }, [_vm._v("2XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "3XL" } }, [_vm._v("3XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "4XL" } }, [_vm._v("4XL")])
+              ]
+            )
+          ]),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "X inches", disabled: "" },
+                model: {
+                  value: _vm.template.geo.x / _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo.x / _vm.template, "ratio", $$v)
+                  },
+                  expression: "template.geo.x / template.ratio"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Y inches", disabled: "" },
+                model: {
+                  value: _vm.template.geo.x / _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo.x / _vm.template, "ratio", $$v)
+                  },
+                  expression: "template.geo.x / template.ratio"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Width in." },
+                model: {
+                  value: _vm.inchesWtemp,
+                  callback: function($$v) {
+                    _vm.inchesWtemp = $$v
+                  },
+                  expression: "inchesWtemp"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Height in." },
+                model: {
+                  value: _vm.inchesHtemp,
+                  callback: function($$v) {
+                    _vm.inchesHtemp = $$v
+                  },
+                  expression: "inchesHtemp"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "constant", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Ratio", disabled: "" },
+                model: {
+                  value: _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template, "ratio", $$v)
+                  },
+                  expression: "template.ratio"
+                }
+              })
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-e60f42ce", module.exports)
+  }
+}
 
 /***/ })
 /******/ ]);

@@ -2,7 +2,7 @@
   <div>
     <v-form ref="form" class="data">
       <v-container fluid id="cont">
-        <TemplateRow ref="trow1"></TemplateRow>
+        <TemplateRow ref="trow1" :setRatSize="setRatSize" :dataChange="dataChange"></TemplateRow>
       </v-container>
       <v-btn fab @click="addRow" color="white">
         <v-icon>+</v-icon>
@@ -10,6 +10,7 @@
     </v-form>
     <div id="selection">
       <h3>Template: {{librarySelect}}</h3>
+      <h2>Next: {{libraryCurrent}}</h2>
       <button @click="selectRadio(1)">Select 1</button>
     </div>
   </div>
@@ -35,22 +36,33 @@ export default {
         backgroundColor: 0x1099bb,
         transparent: 1
       }),
-      drawArea: new PIXI.Rectangle(0, 0, 200, 300),
+      // drawArea: new PIXI.Rectangle(0, 0, 200, 300),
       shapes: [],
       sprites: [],
       libraryCurrent: 0,
       librarySelect: 0,
       graphics: new PIXI.Graphics(),
-      geo: []
+      geo: [],
+      ratio: 0,
+      size: "XS"
     };
   },
   methods: {
+    returnShape: function() {
+      print(this.$refs.trow1.template.geo.shape);
+    },
     init: function() {
       var that = this;
 
       if (!PIXI.utils.isWebGLSupported()) {
         that.type = "canvas";
       }
+
+      // this.$refs.trow1.template = {
+      //   // productId: 0,
+      //   geo: {},
+      //   ratio: 0
+      // };
 
       document.body.appendChild(this.app.view);
       document.body.lastElementChild.setAttribute("id", "drawingboard");
@@ -94,7 +106,8 @@ export default {
         // that.sprites[that.librarySelect].rotation += 0.1 * delta;
       });
       function onDragStart(event) {
-        // that.geo[this.librarySelect].clear();
+        that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
+        that.geo[that.librarySelect].clear();
         // store a reference to the data
         // the reason for this is because of multitouch
         // we want to track the movement of this particular touch
@@ -106,8 +119,8 @@ export default {
         that.shapes[that.librarySelect].y = newPosition.y;
         that.shapes[that.librarySelect].width = 0;
         that.shapes[that.librarySelect].height = 0;
-        that.$refs.trow1.setX(newPosition.x);
-        that.$refs.trow1.setY(newPosition.y);
+        // that.$refs.trow1.setX(newPosition.x);
+        // that.$refs.trow1.setY(newPosition.y);
         this.dragging = true;
       }
       function onDragEnd() {
@@ -117,6 +130,8 @@ export default {
 
         // set the interaction data to null
         this.data = null;
+
+        // that.geo[that.librarySelect].alpha = 0.1;
       }
       function onDragMove() {
         if (this.dragging) {
@@ -128,10 +143,10 @@ export default {
             newPosition.x - that.shapes[that.librarySelect].x;
           that.shapes[that.librarySelect].height =
             newPosition.y - that.shapes[that.librarySelect].y;
-          that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
-          that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
+          // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
+          // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
           // draw a rectangle
-          if (that.$refs.trow1.template.shape == 4) {
+          if (that.$refs.trow1.template.geo.shape == 4) {
             that.geo[that.librarySelect].drawRect(
               that.shapes[that.librarySelect].x,
               that.shapes[that.librarySelect].y,
@@ -146,22 +161,59 @@ export default {
             // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
             // that.$refs.trow1.setH(10);
             // draw a rectangle
+            // alert(that.shapes[that.librarySelect]);
             that.geo[that.librarySelect].drawCircle(
               that.shapes[that.librarySelect].x,
               that.shapes[that.librarySelect].y,
               Math.sqrt(
-                Math.pow(newPosition.x - that.shapes[that.librarySelect].x, 2) +
-                  Math.pow(newPosition.y - that.shapes[that.librarySelect].y, 2)
-              )
+                Math.pow(that.shapes[that.librarySelect].width, 2) +
+                  Math.pow(that.shapes[that.librarySelect].height, 2)
+              ) /
+                Math.sqrt(2) /
+                2
             );
           }
-          that.geo[that.librarySelect].alpha = 0.2;
+          that.geo[that.librarySelect].alpha = 0.1;
 
           // set the line style to have a width of 5 and set the color to red
 
           that.app.stage.addChild(that.geo[that.librarySelect]);
         }
       }
+    },
+    dataChange: function(data, xORy) {
+      this.geo[this.librarySelect].clear();
+
+      this.shapes[this.librarySelect].x = parseFloat(data.x);
+      this.shapes[this.librarySelect].y = parseFloat(data.y);
+      this.shapes[this.librarySelect].width = parseFloat(data.width);
+      this.shapes[this.librarySelect].height = parseFloat(data.height);
+      this.shapes[this.librarySelect].shape = parseInt(data.shape);
+
+      if (data.shape == 4) {
+        this.geo[this.librarySelect].drawRect(
+          this.shapes[this.librarySelect].x,
+          this.shapes[this.librarySelect].y,
+          this.shapes[this.librarySelect].width,
+          this.shapes[this.librarySelect].height
+        );
+      } else {
+        this.geo[this.librarySelect].drawCircle(
+          this.shapes[this.librarySelect].x,
+          this.shapes[this.librarySelect].y,
+          Math.sqrt(
+            Math.pow(this.shapes[this.librarySelect].width, 2) +
+              Math.pow(this.shapes[this.librarySelect].height, 2)
+          ) /
+            Math.sqrt(2) /
+            2
+        );
+      }
+      this.app.stage.addChild(this.geo[this.librarySelect]);
+    },
+    setRatSize: function(rat, sz) {
+      this.ratio = rat;
+      this.size = sz;
     },
     createSprite: function(art) {
       console.log("loading into this.sprites[" + this.libraryCurrent + "]");
@@ -191,22 +243,31 @@ export default {
       this.geo[this.libraryCurrent] = new PIXI.Graphics();
 
       this.geo[this.libraryCurrent].lineStyle(1, 0x0000ff);
-      this.geo[this.libraryCurrent].beginFill(0x22ff88);
+      this.geo[this.libraryCurrent].transparent = 1;
+      this.geo[this.libraryCurrent].alpha = 0.1;
+      // this.geo[this.libraryCurrent].beginFill(0x22ff88);
       this.shapes[this.libraryCurrent] = new PIXI.Rectangle();
       this.shapes[this.libraryCurrent].width = 0;
 
       switch (shape) {
         case 1:
+          this.shapes[this.libraryCurrent].shape = 1;
           this.geo[this.libraryCurrent].drawCircle(
             this.shapes[this.libraryCurrent].x,
             this.shapes[this.libraryCurrent].y,
             Math.sqrt(
-              Math.pow(newPosition.x - that.shapes[that.librarySelect].x, 2) +
-                Math.pow(newPosition.y - that.shapes[that.librarySelect].y, 2)
-            )
+              Math.pow(this.shapes[this.librarySelect].width, 2) +
+                Math.pow(this.shapes[this.librarySelect].height, 2)
+            ) /
+              Math.sqrt(2) /
+              2
           );
           break;
+        // case 3:
+        // this.geo[this.libraryCurrent].draw;
+        // break;
         case 4:
+          this.shapes[this.libraryCurrent].shape = 4;
           this.geo[this.libraryCurrent].drawRect(
             this.shapes[this.libraryCurrent].x,
             this.shapes[this.libraryCurrent].y,
@@ -215,6 +276,7 @@ export default {
           );
           break;
         default:
+          this.shapes[this.libraryCurrent].shape = 4;
           this.geo[this.libraryCurrent].drawRect(
             this.shapes[this.libraryCurrent].x,
             this.shapes[this.libraryCurrent].y,
@@ -225,9 +287,6 @@ export default {
       }
 
       // this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
-
-      this.shapes[this.libraryCurrent].transparent = 1;
-      this.shapes[this.libraryCurrent].alpha = 0.1;
 
       this.app.stage.addChild(this.geo[this.libraryCurrent]);
       // this.shapes[this.libraryCurrent].on("touchstart", () => {
@@ -244,21 +303,22 @@ export default {
       this.libraryCurrent++;
     },
     addRow: function() {
-      var RowClass = Vue.extend(TemplateRow);
-      var row = new RowClass();
-      row.$mount();
-      this.$refs["row"] = row.$el;
+      // var RowClass = Vue.extend(TemplateRow);
+      // var row = new RowClass();
+      // row.$mount();
+      // this.$refs["row"] = row.$el;
+
       // row.$el.ref = "trow" + this.libraryCurrent;
       // console.log(row.$el);
       // var rowEl = row.$el;
       // row.$el.setAttribute(":ref", "trow" + this.libraryCurrent);
-      var container = document.getElementById("cont");
-      container.appendChild(row.$el);
+      // var container = document.getElementById("cont");
+      // container.appendChild(row.$el);
       // row.$el.setAttribute("ref", "trow" + this.libraryCurrent);
       // var rowEle = container.lastElementChild;
       // rowEle.setAttribute("ref", "trow" + this.libraryCurrent);
       // container.lastElementChild = rowEle;
-      console.log(row.$el);
+      // console.log(row.$el);
       // row.innerHTML = "<TemplateRow ref='trow" + this.libraryCurrent + "' />";
 
       // alert(this.libraryCurrent);
@@ -271,7 +331,15 @@ export default {
       sel.appendChild(document.createElement("br"));
       sel.appendChild(newSel);
 
+      let lastSelection = this.librarySelect;
+
       this.createGeo(this.$refs.trow1.getShape());
+      this.$refs.trow1.template = {
+        // productId: 0,
+        geo: this.shapes[this.libraryCurrent - 1],
+        ratio: this.ratio,
+        size: this.size
+      };
     },
     createRadioElement: function(name) {
       var radioHtml =
@@ -288,7 +356,15 @@ export default {
     },
     selectRadio: function(current) {
       this.librarySelect = current;
+      this.$refs.trow1.template = {
+        geo: this.shapes[current],
+        ratio: this.ratio,
+        size: this.size
+      };
     }
+  },
+  props: {
+    prodID: String
   },
   created() {
     this.init();
