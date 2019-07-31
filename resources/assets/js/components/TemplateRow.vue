@@ -121,13 +121,15 @@ export default {
     },
     getTemplateAxios: function() {
       this.setRatSize(this.template.ratio, this.template.size);
+      this.rt();
       this.getTemplate();
     }
   },
   props: {
     setRatSize: Function,
     dataChange: Function,
-    getTemplate: Function
+    getTemplate: Function,
+    rt: Function
   },
   computed: {
     inchesWtemp: {

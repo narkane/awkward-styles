@@ -81945,7 +81945,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  margin-top: 3px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#productImage {\n  /* position: absolute; */\n  /* left: 0; */\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
+exports.push([module.i, "\n.data {\n  margin-top: 18px;\n  margin-left: 550px;\n}\n#drawingboard {\n  position: absolute;\n  margin-top: 3px;\n  left: 138px;\n  border: 1px yellow outset;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 10px !important;\n  padding: 2px 4px;\n  -webkit-filter: drop-shadow(1px 1px 3px #333333);\n          filter: drop-shadow(1px 1px 3px #333333);\n}\n#hr {\n  margin: 5px;\n}\n#save {\n  position: relative;\n  top: -200px;\n  left: 50px;\n}\n", ""]);
 
 // exports
 
@@ -81957,12 +81957,16 @@ exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_pixi_js__ = __webpack_require__(79);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue__ = __webpack_require__(104);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png__ = __webpack_require__(109);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__ = __webpack_require__(110);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_axios__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png__ = __webpack_require__(109);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css__ = __webpack_require__(110);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css__);
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 //
 //
 //
@@ -81988,6 +81992,26 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 
 
 
@@ -81997,14 +82021,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "TemplateTool",
   components: {
-    TemplateRow: __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue___default.a
+    TemplateRow: __WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue___default.a
   },
   data: function data() {
     return {
       type: "WebGL",
       app: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["a" /* Application */]({
-        width: 322,
-        height: 385,
+        width: 400,
+        height: 400,
         backgroundColor: 0x1099bb,
         transparent: 1
       }),
@@ -82043,7 +82067,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       // this.app.stage.interactive = true;
       // this.app.stage.buttonMode = true;
 
-      this.createSprite(__WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png___default.a);
+      this.createSprite(__WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png___default.a);
       this.sprites[0].x = 0;
       this.sprites[0].y = 0;
       this.sprites.zOrder = 100;
@@ -82148,6 +82172,23 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         this.geo[this.librarySelect].drawCircle(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
       }
       this.app.stage.addChild(this.geo[this.librarySelect]);
+    },
+    dataDraw: function dataDraw() {
+      for (var i = 1; i < this.shapes.length; i++) {
+        this.geo[i] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
+
+        this.geo[i].lineStyle(1, 0x0000ff);
+        this.geo[i].transparent = 1;
+        this.geo[i].alpha = 0.1;
+        // this.geo[i].clear();
+
+        if (this.shapes[i].shape == 4) {
+          this.geo[i].drawRect(this.shapes[i].x, this.shapes[i].y, this.shapes[i].width, this.shapes[i].height);
+        } else {
+          this.geo[i].drawCircle(this.shapes[i].x, this.shapes[i].y, Math.sqrt(Math.pow(this.shapes[i].width, 2) + Math.pow(this.shapes[i].height, 2)) / Math.sqrt(2));
+        }
+        this.app.stage.addChild(this.geo[i]);
+      }
     },
     setRatSize: function setRatSize(rat, sz) {
       this.ratio = rat;
@@ -82267,7 +82308,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     addMultiRow: function addMultiRow() {
       var _this3 = this;
 
-      for (var i = 1; i <= this.shapes.length; i++) {
+      for (var i = 1; i < this.shapes.length - 1; i++) {
         var newSel = this.createRadioElement(this.libraryCurrent);
         newSel.onclick = function (event) {
           _this3.selectRadio(event.target.value);
@@ -82275,18 +82316,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         var sel = document.getElementById("selection");
         sel.appendChild(document.createElement("br"));
         sel.appendChild(newSel);
-
-        // let lastSelection = this.librarySelect;
-
-        // this.createGeo(this.shapes[this.libraryCurrent].shape);
-        // this.dataChange(this.shapes[i]);
-        this.$refs.trow1.template = {
-          // productId: 0,
-          geo: this.shapes[i],
-          ratio: this.ratio,
-          size: this.size
-        };
       }
+      this.$refs.trow1.template = {
+        // productId: 0,
+        geo: this.shapes[this.shapes.length - 1],
+        ratio: this.ratio,
+        size: this.size
+      };
+      this.dataDraw();
+      this.librarySelect = this.shapes.length - 1;
     },
     createRadioElement: function createRadioElement(name) {
       var radioHtml = "<button type='button' value='" + name + "'>Select " + name + "</button>";
@@ -82308,6 +82346,20 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         size: this.size
       };
     },
+    getTempNewSize: function getTempNewSize() {
+      var dog = this.shapes.length;
+      for (var i = 1; i < dog; i++) {
+        this.geo[this.shapes.length - 1].clear();
+        this.removeTemplate();
+      }
+      this.librarySelect = 1;
+      this.$refs.trow1.template.geo = { shape: 4 };
+    },
+    removeTemplate: function removeTemplate() {
+      this.shapes.pop();
+      this.geo.pop();
+      document.getElementById("selection").removeChild(document.getElementById("selection").lastElementChild);
+    },
     saveTemplate: function saveTemplate() {
       // let ts = [];
       // for(let i=1; i<=this.shapes.length; i++)
@@ -82315,17 +82367,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       //   console.log("SWOOP! "+i);
       //   ts[i] = this.shapes[i];
       // }
-      console.log(JSON.stringify(this.shapes));
-      var templateObj = {
-        templates: this.shapes,
-        dpi: this.ratio,
-        pid: this.prodID,
-        size: this.size
-      };
-      this.saveTemplateAxios(templateObj);
+      if (this.ratio && this.shapes[1]) {
+        var templateObj = {
+          templates: this.shapes,
+          dpi: this.ratio,
+          pid: this.prodID,
+          size: this.size
+        };
+        console.log(JSON.stringify(templateObj));
+        this.saveTemplateAxios(templateObj);
+      } else {
+        alert("Please setup at least one Template: " + JSON.stringify(this.shapes[1]) + ",\n and set ratio: " + this.ratio + ", to a nonzero value.\n See console if more info needed.");
+        console.log(JSON.stringify(templateObj));
+      }
     },
     saveTemplateAxios: function saveTemplateAxios(template) {
-      axios.post("/api/template", template).then(function (response) {
+      __WEBPACK_IMPORTED_MODULE_1_axios___default.a.post("/api/template", template).then(function (response) {
         console.log(response);
       }).catch(function (error) {
         console.log(error);
@@ -82335,16 +82392,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       var that = this;
       // alert("pulling from database HEER" + this.prodID);
 
-      axios.get("/api/template/" + this.prodID + "/" + this.size).then(function (response) {
-        console.log(response);
-        if (response.data.pid === 0) {
-          that.mode = true;
+      __WEBPACK_IMPORTED_MODULE_1_axios___default.a.get("/api/template/" + this.prodID + "/" + this.size).then(function (response) {
+        // console.log("DATA vvv");
+        // response.data.values.unshift(null);
+        console.log(response.data.values);
+        console.log("DATA ^^^");
+        if (response.data.values) {
+          that.shapes = Array.from(response.data.values); //response.data.values.unshift(null);
+          // that.shapes.unshift(null);
+          that.ratio = response.data.dpi;
+          console.log(that.shapes);
+          console.log(_typeof(that.shapes));
+          that.addMultiRow();
         } else {
-          that.mode = false;
+          console.log("NO TEMPLATES ARRAY FROM SERVER FOR: " + that.prodID + " - " + that.size);
+          console.log("starting with default data, save new template data for: " + that.prodID + " - " + that.size);
         }
-        that.shapes = response.data.templates;
-        that.ratio = response.data.dpi;
-        that.addMultiRow();
       }).catch(function (error) {
         console.log(error);
       });
@@ -82354,6 +82417,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     prodID: String
   },
   created: function created() {
+    this.getTemplateAxios();
     this.init();
   }
 });
@@ -90307,13 +90371,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     getTemplateAxios: function getTemplateAxios() {
       this.setRatSize(this.template.ratio, this.template.size);
+      this.rt();
       this.getTemplate();
     }
   },
   props: {
     setRatSize: Function,
     dataChange: Function,
-    getTemplate: Function
+    getTemplate: Function,
+    rt: Function
   },
   computed: {
     inchesWtemp: {
@@ -90866,14 +90932,13 @@ var render = function() {
             "v-container",
             { attrs: { fluid: "", id: "cont" } },
             [
-              _c("h2", [_vm._v(_vm._s(_vm.prodID))]),
-              _vm._v(" "),
               _c("TemplateRow", {
                 ref: "trow1",
                 attrs: {
                   getTemplate: _vm.getTemplateAxios,
                   setRatSize: _vm.setRatSize,
-                  dataChange: _vm.dataChange
+                  dataChange: _vm.dataChange,
+                  rt: _vm.getTempNewSize
                 }
               }),
               _vm._v(" "),
@@ -90907,6 +90972,22 @@ var render = function() {
                   )
                 ],
                 1
+              ),
+              _vm._v(" "),
+              _c(
+                "v-btn",
+                {
+                  attrs: { fab: "", color: "white" },
+                  on: {
+                    click: function() {
+                      _vm.geo[_vm.shapes.length - 1].clear()
+                      _vm.removeTemplate()
+                      _vm.librarySelect = _vm.shapes.length - 1
+                    }
+                  }
+                },
+                [_c("v-icon", [_vm._v("_")])],
+                1
               )
             ],
             1
@@ -90914,18 +90995,29 @@ var render = function() {
           _vm._v(" "),
           _c(
             "button",
-            { attrs: { type: "button" }, on: { click: _vm.saveTemplate } },
+            {
+              attrs: { id: "save", type: "button" },
+              on: { click: _vm.saveTemplate }
+            },
             [
-              _vm._v(
-                "Save Template (" +
-                  _vm._s(_vm.prodID) +
-                  " - " +
-                  _vm._s(_vm.size) +
-                  ")"
-              )
+              _vm._v("\n      Save\n      "),
+              _c("hr", { attrs: { id: "hr" } }),
+              _vm._v("\n      Pid: " + _vm._s(_vm.prodID) + "\n      "),
+              _c("hr", { attrs: { id: "hr" } }),
+              _vm._v("\n      Size: " + _vm._s(_vm.size) + "\n    ")
             ]
           )
         ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "v-btn",
+        {
+          attrs: { fab: "", color: "white" },
+          on: { click: _vm.getTempNewSize }
+        },
+        [_c("v-icon", [_vm._v("NEW")])],
         1
       )
     ],

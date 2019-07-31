@@ -2,12 +2,12 @@
   <div>
     <v-form ref="form" class="data">
       <v-container fluid id="cont">
-        <h2>{{prodID}}</h2>
         <TemplateRow
           ref="trow1"
           :getTemplate="getTemplateAxios"
           :setRatSize="setRatSize"
           :dataChange="dataChange"
+          :rt="getTempNewSize"
         ></TemplateRow>
         <v-layout row id="selection">
           <h4>Template: {{librarySelect}}</h4>
@@ -17,14 +17,34 @@
           <!-- <h5>Next: {{libraryCurrent}}</!-->
           <button type="button" @click="selectRadio(1)">Select 1</button>
         </v-layout>
+        <v-btn
+          fab
+          @click="()=>{
+            geo[shapes.length - 1].clear();
+            removeTemplate();
+            librarySelect = shapes.length-1}"
+          color="white"
+        >
+          <v-icon>_</v-icon>
+        </v-btn>
       </v-container>
-      <button type="button" @click="saveTemplate">Save Template ({{prodID}} - {{size}})</button>
+      <button id="save" type="button" @click="saveTemplate">
+        Save
+        <hr id="hr" />
+        Pid: {{prodID}}
+        <hr id="hr" />
+        Size: {{size}}
+      </button>
     </v-form>
+    <v-btn fab @click="getTempNewSize" color="white">
+      <v-icon>NEW</v-icon>
+    </v-btn>
   </div>
 </template>
 
 <script>
 import * as PIXI from "pixi.js";
+import axios from "axios";
 import TemplateRow from "./TemplateRow.vue";
 import blob from "../assets/3drawarea.png";
 import "vuetify/dist/vuetify.css";
@@ -38,8 +58,8 @@ export default {
     return {
       type: "WebGL",
       app: new PIXI.Application({
-        width: 322,
-        height: 385,
+        width: 400,
+        height: 400,
         backgroundColor: 0x1099bb,
         transparent: 1
       }),
@@ -215,6 +235,35 @@ export default {
       }
       this.app.stage.addChild(this.geo[this.librarySelect]);
     },
+    dataDraw: function() {
+      for (let i = 1; i < this.shapes.length; i++) {
+        this.geo[i] = new PIXI.Graphics();
+
+        this.geo[i].lineStyle(1, 0x0000ff);
+        this.geo[i].transparent = 1;
+        this.geo[i].alpha = 0.1;
+        // this.geo[i].clear();
+
+        if (this.shapes[i].shape == 4) {
+          this.geo[i].drawRect(
+            this.shapes[i].x,
+            this.shapes[i].y,
+            this.shapes[i].width,
+            this.shapes[i].height
+          );
+        } else {
+          this.geo[i].drawCircle(
+            this.shapes[i].x,
+            this.shapes[i].y,
+            Math.sqrt(
+              Math.pow(this.shapes[i].width, 2) +
+                Math.pow(this.shapes[i].height, 2)
+            ) / Math.sqrt(2)
+          );
+        }
+        this.app.stage.addChild(this.geo[i]);
+      }
+    },
     setRatSize: function(rat, sz) {
       this.ratio = rat;
       this.size = sz;
@@ -344,7 +393,7 @@ export default {
       };
     },
     addMultiRow: function() {
-      for (let i = 1; i <= this.shapes.length; i++) {
+      for (let i = 1; i < this.shapes.length - 1; i++) {
         var newSel = this.createRadioElement(this.libraryCurrent);
         newSel.onclick = event => {
           this.selectRadio(event.target.value);
@@ -352,18 +401,15 @@ export default {
         var sel = document.getElementById("selection");
         sel.appendChild(document.createElement("br"));
         sel.appendChild(newSel);
-
-        // let lastSelection = this.librarySelect;
-
-        // this.createGeo(this.shapes[this.libraryCurrent].shape);
-        // this.dataChange(this.shapes[i]);
-        this.$refs.trow1.template = {
-          // productId: 0,
-          geo: this.shapes[i],
-          ratio: this.ratio,
-          size: this.size
-        };
       }
+      this.$refs.trow1.template = {
+        // productId: 0,
+        geo: this.shapes[this.shapes.length - 1],
+        ratio: this.ratio,
+        size: this.size
+      };
+      this.dataDraw();
+      this.librarySelect = this.shapes.length - 1;
     },
     createRadioElement: function(name) {
       var radioHtml =
@@ -390,6 +436,22 @@ export default {
         size: this.size
       };
     },
+    getTempNewSize: function() {
+      let dog = this.shapes.length;
+      for (let i = 1; i < dog; i++) {
+        this.geo[this.shapes.length - 1].clear();
+        this.removeTemplate();
+      }
+      this.librarySelect = 1;
+      this.$refs.trow1.template.geo = { shape: 4 };
+    },
+    removeTemplate: function() {
+      this.shapes.pop();
+      this.geo.pop();
+      document
+        .getElementById("selection")
+        .removeChild(document.getElementById("selection").lastElementChild);
+    },
     saveTemplate: function() {
       // let ts = [];
       // for(let i=1; i<=this.shapes.length; i++)
@@ -397,14 +459,25 @@ export default {
       //   console.log("SWOOP! "+i);
       //   ts[i] = this.shapes[i];
       // }
-      console.log(JSON.stringify(this.shapes));
-      var templateObj = {
-        templates: this.shapes,
-        dpi: this.ratio,
-        pid: this.prodID,
-        size: this.size
-      };
-      this.saveTemplateAxios(templateObj);
+      if (this.ratio && this.shapes[1]) {
+        var templateObj = {
+          templates: this.shapes,
+          dpi: this.ratio,
+          pid: this.prodID,
+          size: this.size
+        };
+        console.log(JSON.stringify(templateObj));
+        this.saveTemplateAxios(templateObj);
+      } else {
+        alert(
+          "Please setup at least one Template: " +
+            JSON.stringify(this.shapes[1]) +
+            ",\n and set ratio: " +
+            this.ratio +
+            ", to a nonzero value.\n See console if more info needed."
+        );
+        console.log(JSON.stringify(templateObj));
+      }
     },
     saveTemplateAxios: function(template) {
       axios
@@ -423,15 +496,31 @@ export default {
       axios
         .get("/api/template/" + this.prodID + "/" + this.size)
         .then(function(response) {
-          console.log(response);
-          if (response.data.pid === 0) {
-            that.mode = true;
+          // console.log("DATA vvv");
+          // response.data.values.unshift(null);
+          console.log(response.data.values);
+          console.log("DATA ^^^");
+          if (response.data.values) {
+            that.shapes = Array.from(response.data.values); //response.data.values.unshift(null);
+            // that.shapes.unshift(null);
+            that.ratio = response.data.dpi;
+            console.log(that.shapes);
+            console.log(typeof that.shapes);
+            that.addMultiRow();
           } else {
-            that.mode = false;
+            console.log(
+              "NO TEMPLATES ARRAY FROM SERVER FOR: " +
+                that.prodID +
+                " - " +
+                that.size
+            );
+            console.log(
+              "starting with default data, save new template data for: " +
+                that.prodID +
+                " - " +
+                that.size
+            );
           }
-          that.shapes = response.data.templates;
-          that.ratio = response.data.dpi;
-          that.addMultiRow();
         })
         .catch(function(error) {
           console.log(error);
@@ -442,6 +531,7 @@ export default {
     prodID: String
   },
   created() {
+    this.getTemplateAxios();
     this.init();
   }
 };
@@ -449,7 +539,8 @@ export default {
 
 <style>
 .data {
-  margin-left: 500px;
+  margin-top: 18px;
+  margin-left: 550px;
 }
 #drawingboard {
   position: absolute;
@@ -457,15 +548,20 @@ export default {
   left: 138px;
   border: 1px yellow outset;
 }
-#productImage {
-  /* position: absolute; */
-  /* left: 0; */
-}
 button {
   width: 80px;
   background-color: lightgray;
   border: 2px outset darkgray;
-  border-radius: 20px 20px 20px 20px !important;
+  border-radius: 10px !important;
   padding: 2px 4px;
+  filter: drop-shadow(1px 1px 3px #333333);
+}
+#hr {
+  margin: 5px;
+}
+#save {
+  position: relative;
+  top: -200px;
+  left: 50px;
 }
 </style>
