@@ -25,6 +25,8 @@ class ImageTemplateController extends Controller
             $response->dpi = 0;
             $response->pid = 0;
             $response->size = 0;
+        } else {
+            $response->values = json_decode($response->values);
         }
 
         return response()->json($response);

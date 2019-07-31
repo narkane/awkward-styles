@@ -25,6 +25,30 @@ var line4;
  		var circleShape = 1;
  		var rectShape = 4;
 
+ 		var template = null;
+
+ 		function setTemplate(url, pid, size) {
+
+ 			console.log("URL : " + url + "/api/template/" + pid + "/" + size);
+
+			$.ajax({
+				url: url + "/api/template/" + pid + "/" + size,
+				contentType: 'application/json',
+				//dataType: 'json',
+				type: 'GET',
+				success: (result) => {
+					console.log(result);
+				},
+				fail: (err, data) =>{
+					console.log(err);
+					console.log(data);
+
+				}
+			});
+		}
+
+		setTemplate("127.0.0.1:8000", 111, "XS");
+
 		//setup front side canvas 
  		canvas = new fabric.Canvas('tcanvas', {
 		  hoverCursor: 'pointer',

@@ -126,6 +126,6 @@ Route::group(['prefix' => 'api/'], function($app){
 
 
 
-    $app->get('insertproducts', 'API\InsertProductsController@index');
+    //$app->get('insertproducts', 'API\InsertProductsController@index');
 
 });
