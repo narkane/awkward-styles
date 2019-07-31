@@ -1,7 +1,4 @@
 var canvas;
-var canvas2;
-var canvas3;
-var canvas4;
 var tshirts = new Array(); //prototype: [{style:'x',color:'white',front:'a',back:'b',price:{tshirt:'12.95',frontPrint:'4.99',backPrint:'4.99',total:'22.47'}}]
 var a;
 var b;
@@ -22,63 +19,140 @@ var line4;
 
  	$(document).ready(function() {
 
-		//setup front side canvas
-		canvas = new fabric.Canvas('tcanvas', {
-			hoverCursor: 'pointer',
-			selection: true,
-			selectionBorderColor:'blue'
+		/**
+		 * START PAGE FUNCTIONS
+		 */
+			//var imageWidth = $width }};
+			//var imageHeight =  $height }};
+		var productImage = $("#hoodieFacing");
+		var imageWidth, imageHeight, newWidth, newHeight;
+
+		$("#hoodieFacing").one("load",function() {
+			imageWidth = productImage.width();
+			imageHeight = productImage.height();
+
+			newWidth = imageWidth;
+			newHeight = imageHeight;
+
+			console.log("Width: " + imageWidth);
+			console.log("Height: " + imageHeight);
+
+			if (imageWidth > imageHeight && imageWidth > 400) {
+				newWidth = 400;
+				newHeight = imageHeight / (imageWidth / 400);
+			} else if (imageWidth < imageHeight && imageHeight > 400) {
+				newHeight = 400;
+				newWidth = imageWidth / (imageHeight / 400);
+			}
+
+			console.log(newWidth);
+			console.log(newHeight);
+
+			productImage.css({'width': newWidth, 'height': newHeight});
+			$("#shirtDiv").css({'width': newWidth, 'height': newHeight});
+			$(".canvas-container").css({'width': newWidth, 'height': newHeight});
+			$(".upper-canvas").css({'width': newWidth, 'height': newHeight});
+			$("#hoddieDrawingArea").css({'width': newWidth, 'height': newHeight});
+			$("#tcanvas").css({'width': newWidth, 'height': newHeight});
 		});
 
-		var circleShape = 1;
- 		var rectShape = 4;
- 		var template = null;
 
- 		function setTemplate(url, pid, size) {
 
- 			console.log("URL : " + url + "/api/template/" + pid + "/" + size);
+		$(".mock-block").on("click", function (){
+			var block = this;
+			$(".edit-function").each(function(){
+				var editor = $(block).attr('data-toggle');
+				if(editor === $(this).attr('id')){
+					$(this).fadeIn('slow');
+				} else {
+					$(this).hide();
+				}
+			});
+		});
+
+		$(".mock-block").click();
+
+		/**
+		 * END PAGE FUNCTIONS
+		 */
+
+		var clipPath = new fabric.Group();
+
+		function setTemplate(url, pid, size) {
+
+			console.log("URL : " + url + "/api/template/" + pid + "/" + size);
 
 			$.ajax({
-				url: "http://" + url + "/api/template/" + pid + "/" + size,
+				url: url + "/api/template/" + pid + "/" + size,
 				contentType: 'application/json',
 				//dataType: 'json',
 				type: 'GET',
 				success: (result) => {
-					console.log(result);
-					template = null;
+					template = result;
+
+					// Run Through Template(s)
+					jQuery.each(result.values, function(){
+
+						var value = this;
+						if(this.shape === 1){
+							var myRadius = radius(value.width,value.height);
+
+							clipPath.addWithUpdate(new fabric.Circle({
+								radius: myRadius,
+								top:(value.y - myRadius), // y - h
+								left:(value.x - myRadius), // x - w
+
+								fill:'blue'
+							}));
+
+						} else if(this.shape === 4){
+
+							clipPath.addWithUpdate(new fabric.Rect({
+								width: value.width,
+								height: value.height,
+								top: value.y,
+								left: value.x,
+								fill:'blue'
+							}));
+						}
+
+					});
+
+					canvas.clipPath = clipPath;
+
 				},
 				error: (err, data) =>{
 					console.log("Error fetching template.");
+
+					// IF EMPTY, USE GENERIC
+					// SET TEMPLATE TO SHIRT
+					var w = newWidth / 3;
+					var h = newHeight / 3;
+
+					canvas.setWidth(w);
+					canvas.setHeight(h);
+
+					$("#hoddieDrawingArea").css({"top":'35%',"left":'35%',"width":w,"height":h});
 				}
 			});
 		}
 
-		setTemplate("127.0.0.1:8000", 111, "XS");
-
- 		// I'm math retarded
 		var radius = function(a,b){
 			let aSquared = a*a;
 			let bSquared = b*b;
 			return Math.sqrt(aSquared + bSquared) / Math.sqrt(2);
 		};
 
-		var myRadius = radius(50,50);
+		//setup front side canvas
+		canvas = new fabric.Canvas('tcanvas', {
+			hoverCursor: 'pointer',
+			selection: true,
+			selectionBorderColor:'blue',
+			width: newWidth,
+			height: newHeight
+		});
 
-		  var clipPath = new fabric.Group([
-			  new fabric.Circle({
-				  radius: myRadius,
-				  top:(150 - myRadius), // y - h
-				  left:(150 - myRadius) // x - w
-			  }),
-			  new fabric.Rect({
-				  width: 40,
-				  height: 50,
-				  top: 250,
-				  left: 150
-			  })
-		  ]);
-
-
-		canvas.clipPath = clipPath;
+		setTemplate("http://127.0.0.1:8000","1444", "XS");
 
  		canvas.on({
 			 'object:moving': function(e) {		  	
@@ -131,9 +205,9 @@ var line4;
 
 		document.getElementById('add-text').onclick = function() {
 			var text = $("#text-string").val();
-		    var textSample = new fabric.Text(text, {
-		      left: fabric.util.getRandomInt(0, 200),
-		      top: fabric.util.getRandomInt(0, 400),
+		    var textSample = new fabric.IText(text, {
+		      left: 75,
+		      top: 100,
 		      fontFamily: 'helvetica',
 		      angle: 0,
 		      fill: '#000000',
@@ -141,7 +215,8 @@ var line4;
 		      scaleY: 0.5,
 		      fontWeight: '',
 	  		  hasRotatingPoint:true
-		    });		    
+		    });
+
 			canvas.add(textSample);
 			canvas.item(canvas.item.length-1).hasRotatingPoint = true;
             $("#texteditor").css('display', 'block');
@@ -392,12 +467,15 @@ var line4;
 	    $("#text-string").val("");
 	    selectedObject.hasRotatingPoint = true
 	    if (selectedObject && selectedObject.type === 'text') {
-	    	//display text editor	    	
-	    	$("#texteditor").css('display', 'block');
-	    	$("#text-string").val(selectedObject.getText());	    	
+	    	//display text editor
+			$("#show-text-editor").click();
+
+			$("#text-string").val(selectedObject.getText());
+
 	    	$('#text-fontcolor').miniColors('value',selectedObject.fill);
-	    	$('#text-strokecolor').miniColors('value',selectedObject.strokeStyle);	
-	    	$("#imageeditor").css('display', 'block');
+
+	    	$('#text-strokecolor').miniColors('value',selectedObject.strokeStyle);
+
 	    }
 	    else if (selectedObject && selectedObject.type === 'image'){
 	    	//display image editor

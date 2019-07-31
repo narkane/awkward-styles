@@ -3,7 +3,7 @@
 @section('content')
     <script type="text/javascript" src="{{ asset('js/mockup/fabric.js') }}"></script>
     <script type="text/javascript" src="{{ asset('js/mockup/tshirtEditor.js')}}"></script>
-    <script type="text/javascript" src="{{ asset('js/jquery.miniColors.min.js')}}"></script>
+    <script type="text/javascript" src="{{ asset('js/mockup/jquery.miniColors.min.js')}}"></script>
     <style type="text/css">
         .footer {
             padding: 70px 0;
@@ -196,11 +196,11 @@
                 <div class="container shirt-block">
 
                     <div id="shirtDiv" class="page"
-                         style="width: 271px; height: 385px; position: relative; background-color: rgb(255, 255, 255);">
-                        <img id="hoodieFacing" src="{{ $images[0]->full_url }}"></img>
+                         style="position: relative; background-color: rgb(255, 255, 255);">
+                        <img id="hoodieFacing" src="{{ $images[0]->full_url }}"/>
                         <div id="hoddieDrawingArea"
-                             style="position: absolute;top: 0px;left: 0px;z-index: 10;width: 271px;height: 385px;">
-                            <canvas id="tcanvas" width="271" height="385" class="hover"
+                             style="position: absolute;top: 0px;left: 0px;z-index: 10;">
+                            <canvas id="tcanvas" class="hover"
                                     style="-webkit-user-select: none;"></canvas>
                         </div>
                     </div>
@@ -323,21 +323,4 @@
 
 </div>
 
-    <script>
-
-        $(".mock-block").on("click", function (){
-            var block = this;
-            $(".edit-function").each(function(){
-                var editor = $(block).attr('data-toggle');
-                if(editor === $(this).attr('id')){
-                    $(this).fadeIn('slow');
-                } else {
-                    $(this).hide();
-                }
-            });
-        });
-
-        $(".mock-block").click();
-
-    </script>
                   @endsection

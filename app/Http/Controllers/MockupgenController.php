@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Services\MockupgenService;
 use DB;
+use Illuminate\Support\Facades\URL;
 
 class MockupgenController extends Controller
 {
@@ -47,9 +48,14 @@ class MockupgenController extends Controller
             ->where('is_private', '=', '0')
             ->get();
 
+        // Get Image Dimensions
+
+        //list($w,$h) = getimagesize((strpos($images[0]->full_url, "http://") ? $images[0]->full_url :
+        //URL::to("/") . $images[0]->full_url));
+
         return view('Mockup.mockupgen-new', [
             'art' => $art,
-            'images' => $images
+            'images' => $images,
         ]);
     }
 }
