@@ -107,7 +107,7 @@
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_utils__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_settings__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_constants__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__pixi_ticker__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__pixi_ticker__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__pixi_math__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__pixi_display__ = __webpack_require__(3);
 /*!
@@ -17499,6 +17499,343 @@ function toComment(sourceMap) {
 
 /***/ }),
 /* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/*
+  MIT License http://www.opensource.org/licenses/mit-license.php
+  Author Tobias Koppers @sokra
+  Modified by Evan You @yyx990803
+*/
+
+var hasDocument = typeof document !== 'undefined'
+
+if (typeof DEBUG !== 'undefined' && DEBUG) {
+  if (!hasDocument) {
+    throw new Error(
+    'vue-style-loader cannot be used in a non-browser environment. ' +
+    "Use { target: 'node' } in your Webpack config to indicate a server-rendering environment."
+  ) }
+}
+
+var listToStyles = __webpack_require__(73)
+
+/*
+type StyleObject = {
+  id: number;
+  parts: Array<StyleObjectPart>
+}
+
+type StyleObjectPart = {
+  css: string;
+  media: string;
+  sourceMap: ?string
+}
+*/
+
+var stylesInDom = {/*
+  [id: number]: {
+    id: number,
+    refs: number,
+    parts: Array<(obj?: StyleObjectPart) => void>
+  }
+*/}
+
+var head = hasDocument && (document.head || document.getElementsByTagName('head')[0])
+var singletonElement = null
+var singletonCounter = 0
+var isProduction = false
+var noop = function () {}
+var options = null
+var ssrIdKey = 'data-vue-ssr-id'
+
+// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
+// tags it will allow on a page
+var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\b/.test(navigator.userAgent.toLowerCase())
+
+module.exports = function (parentId, list, _isProduction, _options) {
+  isProduction = _isProduction
+
+  options = _options || {}
+
+  var styles = listToStyles(parentId, list)
+  addStylesToDom(styles)
+
+  return function update (newList) {
+    var mayRemove = []
+    for (var i = 0; i < styles.length; i++) {
+      var item = styles[i]
+      var domStyle = stylesInDom[item.id]
+      domStyle.refs--
+      mayRemove.push(domStyle)
+    }
+    if (newList) {
+      styles = listToStyles(parentId, newList)
+      addStylesToDom(styles)
+    } else {
+      styles = []
+    }
+    for (var i = 0; i < mayRemove.length; i++) {
+      var domStyle = mayRemove[i]
+      if (domStyle.refs === 0) {
+        for (var j = 0; j < domStyle.parts.length; j++) {
+          domStyle.parts[j]()
+        }
+        delete stylesInDom[domStyle.id]
+      }
+    }
+  }
+}
+
+function addStylesToDom (styles /* Array<StyleObject> */) {
+  for (var i = 0; i < styles.length; i++) {
+    var item = styles[i]
+    var domStyle = stylesInDom[item.id]
+    if (domStyle) {
+      domStyle.refs++
+      for (var j = 0; j < domStyle.parts.length; j++) {
+        domStyle.parts[j](item.parts[j])
+      }
+      for (; j < item.parts.length; j++) {
+        domStyle.parts.push(addStyle(item.parts[j]))
+      }
+      if (domStyle.parts.length > item.parts.length) {
+        domStyle.parts.length = item.parts.length
+      }
+    } else {
+      var parts = []
+      for (var j = 0; j < item.parts.length; j++) {
+        parts.push(addStyle(item.parts[j]))
+      }
+      stylesInDom[item.id] = { id: item.id, refs: 1, parts: parts }
+    }
+  }
+}
+
+function createStyleElement () {
+  var styleElement = document.createElement('style')
+  styleElement.type = 'text/css'
+  head.appendChild(styleElement)
+  return styleElement
+}
+
+function addStyle (obj /* StyleObjectPart */) {
+  var update, remove
+  var styleElement = document.querySelector('style[' + ssrIdKey + '~="' + obj.id + '"]')
+
+  if (styleElement) {
+    if (isProduction) {
+      // has SSR styles and in production mode.
+      // simply do nothing.
+      return noop
+    } else {
+      // has SSR styles but in dev mode.
+      // for some reason Chrome can't handle source map in server-rendered
+      // style tags - source maps in <style> only works if the style tag is
+      // created and inserted dynamically. So we remove the server rendered
+      // styles and inject new ones.
+      styleElement.parentNode.removeChild(styleElement)
+    }
+  }
+
+  if (isOldIE) {
+    // use singleton mode for IE9.
+    var styleIndex = singletonCounter++
+    styleElement = singletonElement || (singletonElement = createStyleElement())
+    update = applyToSingletonTag.bind(null, styleElement, styleIndex, false)
+    remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true)
+  } else {
+    // use multi-style-tag mode in all other cases
+    styleElement = createStyleElement()
+    update = applyToTag.bind(null, styleElement)
+    remove = function () {
+      styleElement.parentNode.removeChild(styleElement)
+    }
+  }
+
+  update(obj)
+
+  return function updateStyle (newObj /* StyleObjectPart */) {
+    if (newObj) {
+      if (newObj.css === obj.css &&
+          newObj.media === obj.media &&
+          newObj.sourceMap === obj.sourceMap) {
+        return
+      }
+      update(obj = newObj)
+    } else {
+      remove()
+    }
+  }
+}
+
+var replaceText = (function () {
+  var textStore = []
+
+  return function (index, replacement) {
+    textStore[index] = replacement
+    return textStore.filter(Boolean).join('\n')
+  }
+})()
+
+function applyToSingletonTag (styleElement, index, remove, obj) {
+  var css = remove ? '' : obj.css
+
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = replaceText(index, css)
+  } else {
+    var cssNode = document.createTextNode(css)
+    var childNodes = styleElement.childNodes
+    if (childNodes[index]) styleElement.removeChild(childNodes[index])
+    if (childNodes.length) {
+      styleElement.insertBefore(cssNode, childNodes[index])
+    } else {
+      styleElement.appendChild(cssNode)
+    }
+  }
+}
+
+function applyToTag (styleElement, obj) {
+  var css = obj.css
+  var media = obj.media
+  var sourceMap = obj.sourceMap
+
+  if (media) {
+    styleElement.setAttribute('media', media)
+  }
+  if (options.ssrId) {
+    styleElement.setAttribute(ssrIdKey, obj.id)
+  }
+
+  if (sourceMap) {
+    // https://developer.chrome.com/devtools/docs/javascript-debugging
+    // this makes source maps inside style tags work properly in Chrome
+    css += '\n/*# sourceURL=' + sourceMap.sources[0] + ' */'
+    // http://stackoverflow.com/a/26603875
+    css += '\n/*# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + ' */'
+  }
+
+  if (styleElement.styleSheet) {
+    styleElement.styleSheet.cssText = css
+  } else {
+    while (styleElement.firstChild) {
+      styleElement.removeChild(styleElement.firstChild)
+    }
+    styleElement.appendChild(document.createTextNode(css))
+  }
+}
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports) {
+
+/* globals __VUE_SSR_CONTEXT__ */
+
+// IMPORTANT: Do NOT use ES2015 features in this file.
+// This module is a runtime utility for cleaner component module output and will
+// be included in the final webpack user bundle.
+
+module.exports = function normalizeComponent (
+  rawScriptExports,
+  compiledTemplate,
+  functionalTemplate,
+  injectStyles,
+  scopeId,
+  moduleIdentifier /* server only */
+) {
+  var esModule
+  var scriptExports = rawScriptExports = rawScriptExports || {}
+
+  // ES6 modules interop
+  var type = typeof rawScriptExports.default
+  if (type === 'object' || type === 'function') {
+    esModule = rawScriptExports
+    scriptExports = rawScriptExports.default
+  }
+
+  // Vue.extend constructor export interop
+  var options = typeof scriptExports === 'function'
+    ? scriptExports.options
+    : scriptExports
+
+  // render functions
+  if (compiledTemplate) {
+    options.render = compiledTemplate.render
+    options.staticRenderFns = compiledTemplate.staticRenderFns
+    options._compiled = true
+  }
+
+  // functional template
+  if (functionalTemplate) {
+    options.functional = true
+  }
+
+  // scopedId
+  if (scopeId) {
+    options._scopeId = scopeId
+  }
+
+  var hook
+  if (moduleIdentifier) { // server build
+    hook = function (context) {
+      // 2.3 injection
+      context =
+        context || // cached call
+        (this.$vnode && this.$vnode.ssrContext) || // stateful
+        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
+      // 2.2 with runInNewContext: true
+      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
+        context = __VUE_SSR_CONTEXT__
+      }
+      // inject component styles
+      if (injectStyles) {
+        injectStyles.call(this, context)
+      }
+      // register component module identifier for async chunk inferrence
+      if (context && context._registeredComponents) {
+        context._registeredComponents.add(moduleIdentifier)
+      }
+    }
+    // used by ssr in case component is cached and beforeCreate
+    // never gets called
+    options._ssrRegister = hook
+  } else if (injectStyles) {
+    hook = injectStyles
+  }
+
+  if (hook) {
+    var functional = options.functional
+    var existing = functional
+      ? options.render
+      : options.beforeCreate
+
+    if (!functional) {
+      // inject component registration as beforeCreate hook
+      options.beforeCreate = existing
+        ? [].concat(existing, hook)
+        : [hook]
+    } else {
+      // for template-only hot-reload because in that case the render fn doesn't
+      // go through the normalizer
+      options._injectStyles = hook
+      // register for functioal component in vue file
+      options.render = function renderWithStyleInjection (h, context) {
+        hook.call(context)
+        return existing(h, context)
+      }
+    }
+  }
+
+  return {
+    esModule: esModule,
+    exports: scriptExports,
+    options: options
+  }
+}
+
+
+/***/ }),
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -18451,7 +18788,7 @@ TickerPlugin.destroy = function destroy ()
 
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -19122,343 +19459,6 @@ var Sprite = /*@__PURE__*/(function (Container) {
 
 
 //# sourceMappingURL=sprite.es.js.map
-
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/*
-  MIT License http://www.opensource.org/licenses/mit-license.php
-  Author Tobias Koppers @sokra
-  Modified by Evan You @yyx990803
-*/
-
-var hasDocument = typeof document !== 'undefined'
-
-if (typeof DEBUG !== 'undefined' && DEBUG) {
-  if (!hasDocument) {
-    throw new Error(
-    'vue-style-loader cannot be used in a non-browser environment. ' +
-    "Use { target: 'node' } in your Webpack config to indicate a server-rendering environment."
-  ) }
-}
-
-var listToStyles = __webpack_require__(73)
-
-/*
-type StyleObject = {
-  id: number;
-  parts: Array<StyleObjectPart>
-}
-
-type StyleObjectPart = {
-  css: string;
-  media: string;
-  sourceMap: ?string
-}
-*/
-
-var stylesInDom = {/*
-  [id: number]: {
-    id: number,
-    refs: number,
-    parts: Array<(obj?: StyleObjectPart) => void>
-  }
-*/}
-
-var head = hasDocument && (document.head || document.getElementsByTagName('head')[0])
-var singletonElement = null
-var singletonCounter = 0
-var isProduction = false
-var noop = function () {}
-var options = null
-var ssrIdKey = 'data-vue-ssr-id'
-
-// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
-// tags it will allow on a page
-var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\b/.test(navigator.userAgent.toLowerCase())
-
-module.exports = function (parentId, list, _isProduction, _options) {
-  isProduction = _isProduction
-
-  options = _options || {}
-
-  var styles = listToStyles(parentId, list)
-  addStylesToDom(styles)
-
-  return function update (newList) {
-    var mayRemove = []
-    for (var i = 0; i < styles.length; i++) {
-      var item = styles[i]
-      var domStyle = stylesInDom[item.id]
-      domStyle.refs--
-      mayRemove.push(domStyle)
-    }
-    if (newList) {
-      styles = listToStyles(parentId, newList)
-      addStylesToDom(styles)
-    } else {
-      styles = []
-    }
-    for (var i = 0; i < mayRemove.length; i++) {
-      var domStyle = mayRemove[i]
-      if (domStyle.refs === 0) {
-        for (var j = 0; j < domStyle.parts.length; j++) {
-          domStyle.parts[j]()
-        }
-        delete stylesInDom[domStyle.id]
-      }
-    }
-  }
-}
-
-function addStylesToDom (styles /* Array<StyleObject> */) {
-  for (var i = 0; i < styles.length; i++) {
-    var item = styles[i]
-    var domStyle = stylesInDom[item.id]
-    if (domStyle) {
-      domStyle.refs++
-      for (var j = 0; j < domStyle.parts.length; j++) {
-        domStyle.parts[j](item.parts[j])
-      }
-      for (; j < item.parts.length; j++) {
-        domStyle.parts.push(addStyle(item.parts[j]))
-      }
-      if (domStyle.parts.length > item.parts.length) {
-        domStyle.parts.length = item.parts.length
-      }
-    } else {
-      var parts = []
-      for (var j = 0; j < item.parts.length; j++) {
-        parts.push(addStyle(item.parts[j]))
-      }
-      stylesInDom[item.id] = { id: item.id, refs: 1, parts: parts }
-    }
-  }
-}
-
-function createStyleElement () {
-  var styleElement = document.createElement('style')
-  styleElement.type = 'text/css'
-  head.appendChild(styleElement)
-  return styleElement
-}
-
-function addStyle (obj /* StyleObjectPart */) {
-  var update, remove
-  var styleElement = document.querySelector('style[' + ssrIdKey + '~="' + obj.id + '"]')
-
-  if (styleElement) {
-    if (isProduction) {
-      // has SSR styles and in production mode.
-      // simply do nothing.
-      return noop
-    } else {
-      // has SSR styles but in dev mode.
-      // for some reason Chrome can't handle source map in server-rendered
-      // style tags - source maps in <style> only works if the style tag is
-      // created and inserted dynamically. So we remove the server rendered
-      // styles and inject new ones.
-      styleElement.parentNode.removeChild(styleElement)
-    }
-  }
-
-  if (isOldIE) {
-    // use singleton mode for IE9.
-    var styleIndex = singletonCounter++
-    styleElement = singletonElement || (singletonElement = createStyleElement())
-    update = applyToSingletonTag.bind(null, styleElement, styleIndex, false)
-    remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true)
-  } else {
-    // use multi-style-tag mode in all other cases
-    styleElement = createStyleElement()
-    update = applyToTag.bind(null, styleElement)
-    remove = function () {
-      styleElement.parentNode.removeChild(styleElement)
-    }
-  }
-
-  update(obj)
-
-  return function updateStyle (newObj /* StyleObjectPart */) {
-    if (newObj) {
-      if (newObj.css === obj.css &&
-          newObj.media === obj.media &&
-          newObj.sourceMap === obj.sourceMap) {
-        return
-      }
-      update(obj = newObj)
-    } else {
-      remove()
-    }
-  }
-}
-
-var replaceText = (function () {
-  var textStore = []
-
-  return function (index, replacement) {
-    textStore[index] = replacement
-    return textStore.filter(Boolean).join('\n')
-  }
-})()
-
-function applyToSingletonTag (styleElement, index, remove, obj) {
-  var css = remove ? '' : obj.css
-
-  if (styleElement.styleSheet) {
-    styleElement.styleSheet.cssText = replaceText(index, css)
-  } else {
-    var cssNode = document.createTextNode(css)
-    var childNodes = styleElement.childNodes
-    if (childNodes[index]) styleElement.removeChild(childNodes[index])
-    if (childNodes.length) {
-      styleElement.insertBefore(cssNode, childNodes[index])
-    } else {
-      styleElement.appendChild(cssNode)
-    }
-  }
-}
-
-function applyToTag (styleElement, obj) {
-  var css = obj.css
-  var media = obj.media
-  var sourceMap = obj.sourceMap
-
-  if (media) {
-    styleElement.setAttribute('media', media)
-  }
-  if (options.ssrId) {
-    styleElement.setAttribute(ssrIdKey, obj.id)
-  }
-
-  if (sourceMap) {
-    // https://developer.chrome.com/devtools/docs/javascript-debugging
-    // this makes source maps inside style tags work properly in Chrome
-    css += '\n/*# sourceURL=' + sourceMap.sources[0] + ' */'
-    // http://stackoverflow.com/a/26603875
-    css += '\n/*# sourceMappingURL=data:application/json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + ' */'
-  }
-
-  if (styleElement.styleSheet) {
-    styleElement.styleSheet.cssText = css
-  } else {
-    while (styleElement.firstChild) {
-      styleElement.removeChild(styleElement.firstChild)
-    }
-    styleElement.appendChild(document.createTextNode(css))
-  }
-}
-
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports) {
-
-/* globals __VUE_SSR_CONTEXT__ */
-
-// IMPORTANT: Do NOT use ES2015 features in this file.
-// This module is a runtime utility for cleaner component module output and will
-// be included in the final webpack user bundle.
-
-module.exports = function normalizeComponent (
-  rawScriptExports,
-  compiledTemplate,
-  functionalTemplate,
-  injectStyles,
-  scopeId,
-  moduleIdentifier /* server only */
-) {
-  var esModule
-  var scriptExports = rawScriptExports = rawScriptExports || {}
-
-  // ES6 modules interop
-  var type = typeof rawScriptExports.default
-  if (type === 'object' || type === 'function') {
-    esModule = rawScriptExports
-    scriptExports = rawScriptExports.default
-  }
-
-  // Vue.extend constructor export interop
-  var options = typeof scriptExports === 'function'
-    ? scriptExports.options
-    : scriptExports
-
-  // render functions
-  if (compiledTemplate) {
-    options.render = compiledTemplate.render
-    options.staticRenderFns = compiledTemplate.staticRenderFns
-    options._compiled = true
-  }
-
-  // functional template
-  if (functionalTemplate) {
-    options.functional = true
-  }
-
-  // scopedId
-  if (scopeId) {
-    options._scopeId = scopeId
-  }
-
-  var hook
-  if (moduleIdentifier) { // server build
-    hook = function (context) {
-      // 2.3 injection
-      context =
-        context || // cached call
-        (this.$vnode && this.$vnode.ssrContext) || // stateful
-        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext) // functional
-      // 2.2 with runInNewContext: true
-      if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
-        context = __VUE_SSR_CONTEXT__
-      }
-      // inject component styles
-      if (injectStyles) {
-        injectStyles.call(this, context)
-      }
-      // register component module identifier for async chunk inferrence
-      if (context && context._registeredComponents) {
-        context._registeredComponents.add(moduleIdentifier)
-      }
-    }
-    // used by ssr in case component is cached and beforeCreate
-    // never gets called
-    options._ssrRegister = hook
-  } else if (injectStyles) {
-    hook = injectStyles
-  }
-
-  if (hook) {
-    var functional = options.functional
-    var existing = functional
-      ? options.render
-      : options.beforeCreate
-
-    if (!functional) {
-      // inject component registration as beforeCreate hook
-      options.beforeCreate = existing
-        ? [].concat(existing, hook)
-        : [hook]
-    } else {
-      // for template-only hot-reload because in that case the render fn doesn't
-      // go through the normalizer
-      options._injectStyles = hook
-      // register for functioal component in vue file
-      options.render = function renderWithStyleInjection (h, context) {
-        hook.call(context)
-        return existing(h, context)
-      }
-    }
-  }
-
-  return {
-    esModule: esModule,
-    exports: scriptExports,
-    options: options
-  }
-}
 
 
 /***/ }),
@@ -21407,12 +21407,6 @@ var LoaderResource = __WEBPACK_IMPORTED_MODULE_0_resource_loader__["Resource"];
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(51);
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
@@ -21510,7 +21504,7 @@ module.exports = defaults;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(19)))
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 if (false) {
@@ -21521,7 +21515,7 @@ if (false) {
 
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -21547,6 +21541,12 @@ module.exports = function(module) {
 	return module;
 };
 
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(51);
 
 /***/ }),
 /* 18 */
@@ -22085,11 +22085,11 @@ function injectStyle (ssrContext) {
   if (disposed) return
   __webpack_require__(71)
 }
-var normalizeComponent = __webpack_require__(12)
+var normalizeComponent = __webpack_require__(10)
 /* script */
 var __vue_script__ = __webpack_require__(74)
 /* template */
-var __vue_template__ = __webpack_require__(112)
+var __vue_template__ = __webpack_require__(115)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -24019,7 +24019,7 @@ Runner.prototype.run = Runner.prototype.emit;
 /* unused harmony export InteractionTrackingData */
 /* unused harmony export interactiveTarget */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__pixi_math__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_ticker__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_ticker__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_display__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_utils__ = __webpack_require__(1);
 /*!
@@ -26408,7 +26408,7 @@ var InteractionManager = /*@__PURE__*/(function (EventEmitter) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__pixi_settings__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_core__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_graphics__ = __webpack_require__(33);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_ticker__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_ticker__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__pixi_display__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__pixi_text__ = __webpack_require__(34);
 /*!
@@ -30563,7 +30563,7 @@ Graphics._TEMP_POINT = new __WEBPACK_IMPORTED_MODULE_1__pixi_math__["h" /* Point
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Text; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return TextMetrics; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return TextStyle; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__pixi_sprite__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__pixi_sprite__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_core__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_settings__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_math__ = __webpack_require__(2);
@@ -36174,7 +36174,7 @@ SpritesheetLoader.getResourcePath = function getResourcePath (resource, baseUrl)
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__pixi_core__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_math__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_utils__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_sprite__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_sprite__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__pixi_constants__ = __webpack_require__(6);
 /*!
  * @pixi/sprite-tiling - v5.0.4
@@ -36692,7 +36692,7 @@ var TilingSpriteRenderer = /*@__PURE__*/(function (ObjectRenderer) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_display__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_math__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_settings__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__pixi_sprite__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__pixi_sprite__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__pixi_utils__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__pixi_loaders__ = __webpack_require__(13);
 /*!
@@ -38338,7 +38338,7 @@ var MeshGeometry = /*@__PURE__*/(function (Geometry) {
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(46);
-module.exports = __webpack_require__(129);
+module.exports = __webpack_require__(132);
 
 
 /***/ }),
@@ -38347,11 +38347,11 @@ module.exports = __webpack_require__(129);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__App_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_vuetify__ = __webpack_require__(113);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_vuetify__ = __webpack_require__(116);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_vuetify___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_vuetify__);
 /**
  * First we will load all of this project's JavaScript dependencies which
@@ -38361,7 +38361,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 __webpack_require__(47);
 
-window.Vue = __webpack_require__(16);
+window.Vue = __webpack_require__(15);
 
 
 
@@ -38374,9 +38374,9 @@ __WEBPACK_IMPORTED_MODULE_0_vue___default.a.use(__WEBPACK_IMPORTED_MODULE_2_vuet
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
-__WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("comingsoon", __webpack_require__(114));
-__WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("example", __webpack_require__(119));
-__WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("searchbar", __webpack_require__(124));
+__WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("comingsoon", __webpack_require__(117));
+__WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("example", __webpack_require__(122));
+__WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("searchbar", __webpack_require__(127));
 __WEBPACK_IMPORTED_MODULE_0_vue___default.a.component("thetool", __webpack_require__(25));
 
 var app = new __WEBPACK_IMPORTED_MODULE_0_vue___default.a({
@@ -38411,7 +38411,7 @@ try {
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
 
-window.axios = __webpack_require__(14);
+window.axios = __webpack_require__(17);
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -55557,7 +55557,7 @@ if (token) {
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(17)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(16)(module)))
 
 /***/ }),
 /* 49 */
@@ -68760,7 +68760,7 @@ if (typeof jQuery === 'undefined') {
 var utils = __webpack_require__(5);
 var bind = __webpack_require__(18);
 var Axios = __webpack_require__(53);
-var defaults = __webpack_require__(15);
+var defaults = __webpack_require__(14);
 
 /**
  * Create an instance of Axios
@@ -68843,7 +68843,7 @@ function isSlowBuffer (obj) {
 "use strict";
 
 
-var defaults = __webpack_require__(15);
+var defaults = __webpack_require__(14);
 var utils = __webpack_require__(5);
 var InterceptorManager = __webpack_require__(62);
 var dispatchRequest = __webpack_require__(63);
@@ -69375,7 +69375,7 @@ module.exports = InterceptorManager;
 var utils = __webpack_require__(5);
 var transformData = __webpack_require__(64);
 var isCancel = __webpack_require__(22);
-var defaults = __webpack_require__(15);
+var defaults = __webpack_require__(14);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -81768,7 +81768,7 @@ var content = __webpack_require__(72);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(11)("8d8bb1ea", content, false, {});
+var update = __webpack_require__(9)("89b8cd50", content, false, {});
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
@@ -81792,7 +81792,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n#app {\r\n  width: 100vw;\r\n  position: absolute;\r\n  top: 0px;\r\n  float: right;\r\n  font-family: \"Avenir\", Helvetica, Arial, sans-serif;\r\n  -webkit-font-smoothing: antialiased;\r\n  -moz-osx-font-smoothing: grayscale;\r\n  text-align: center;\r\n  color: #2c3e50;\r\n  margin-top: 60px;\n}\r\n", ""]);
+exports.push([module.i, "\n#app {\n  width: 100vw;\n  position: absolute;\n  top: 0px;\n  float: right;\n  font-family: \"Avenir\", Helvetica, Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n  text-align: center;\n  color: #2c3e50;\n  margin-top: 60px;\n}\n", ""]);
 
 // exports
 
@@ -81836,8 +81836,9 @@ module.exports = function listToStyles (parentId, list) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_HelloWorld_vue__ = __webpack_require__(75);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_HelloWorld_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_HelloWorld_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_TemplateTool_vue__ = __webpack_require__(75);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_TemplateTool_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__components_TemplateTool_vue__);
+//
 //
 //
 //
@@ -81847,12 +81848,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 
+// import HelloWorld from "./components/HelloWorld.vue";
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "app",
   components: {
-    HelloWorld: __WEBPACK_IMPORTED_MODULE_0__components_HelloWorld_vue___default.a
+    TemplateTool: __WEBPACK_IMPORTED_MODULE_0__components_TemplateTool_vue___default.a
   },
   props: { prodid: String }
 });
@@ -81866,11 +81868,11 @@ function injectStyle (ssrContext) {
   if (disposed) return
   __webpack_require__(76)
 }
-var normalizeComponent = __webpack_require__(12)
+var normalizeComponent = __webpack_require__(10)
 /* script */
 var __vue_script__ = __webpack_require__(78)
 /* template */
-var __vue_template__ = __webpack_require__(111)
+var __vue_template__ = __webpack_require__(114)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -81887,7 +81889,7 @@ var Component = normalizeComponent(
   __vue_scopeId__,
   __vue_module_identifier__
 )
-Component.options.__file = "resources/assets/js/components/HelloWorld.vue"
+Component.options.__file = "resources/assets/js/components/TemplateTool.vue"
 
 /* hot reload */
 if (false) {(function () {
@@ -81896,9 +81898,9 @@ if (false) {(function () {
   if (!hotAPI.compatible) return
   module.hot.accept()
   if (!module.hot.data) {
-    hotAPI.createRecord("data-v-6c9d2357", Component.options)
+    hotAPI.createRecord("data-v-510ff42e", Component.options)
   } else {
-    hotAPI.reload("data-v-6c9d2357", Component.options)
+    hotAPI.reload("data-v-510ff42e", Component.options)
   }
   module.hot.dispose(function (data) {
     disposed = true
@@ -81919,13 +81921,13 @@ var content = __webpack_require__(77);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(11)("4bb96d08", content, false, {});
+var update = __webpack_require__(9)("44274d78", content, false, {});
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
  if(!content.locals) {
-   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6c9d2357\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./HelloWorld.vue", function() {
-     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-6c9d2357\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./HelloWorld.vue");
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-510ff42e\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateTool.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-510ff42e\",\"scoped\":false,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateTool.vue");
      if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
      update(newContent);
    });
@@ -81943,7 +81945,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n#data {\r\n  float: right;\r\n  width: 800px;\r\n  height: 200px;\n}\ncanvas {\r\n  border: 2px dashed lightblue;\r\n  /* background-color: rgba(0, 0, 255, 0.1); */\r\n  position: relative;\r\n  top: 0px;\r\n  margin: 2px 138px;\r\n  /* z-index: -10; */\n}\ninput {\r\n  text-align: center;\r\n  color: black;\n}\n#upload {\r\n  border: 1px solid black;\r\n  -webkit-filter: drop-shadow(2px 1px 2px #222244);\r\n          filter: drop-shadow(2px 1px 2px #222244);\r\n  width: 100%;\r\n  background: orange;\n}\n.thumb {\r\n  text-align: left;\r\n  height: 25px;\r\n  width: 25px;\r\n  border: 1px solid #000;\r\n  margin: 0 5px;\n}\n#care {\r\n  border: 2px inset gray;\r\n  background-color: rgba(150, 200, 255, 0.1);\r\n  border-width: 0px 3px 0px 3px;\r\n  border-radius: 10px;\r\n  overflow: hidden;\r\n  padding: 5px;\r\n  min-width: 50px;\n}\n#list {\r\n  /* display: flex; */\r\n  /* flex-wrap: nowrap; */\r\n  word-wrap: none;\r\n  overflow: hidden;\r\n  /* flex-wrap: nowrap; */\r\n  /* justify-content: flex-start; */\r\n  text-align: left;\n}\n.inputnumber input[type='number'] {\r\n  -moz-appearance:textfield;\n}\n.inputNumber input::-webkit-outer-spin-button,\r\n.inputNumber input::-webkit-inner-spin-button {\r\n  -webkit-appearance: none;\n}\r\n", ""]);
+exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  top: 125px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#productImage {\n  margin: 122px 0px;\n  left: 0px;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
 
 // exports
 
@@ -81955,16 +81957,12 @@ exports.push([module.i, "\n#data {\r\n  float: right;\r\n  width: 800px;\r\n  he
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_pixi_js__ = __webpack_require__(79);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__assets_blob_png__ = __webpack_require__(104);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__assets_blob_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__assets_blob_png__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_axios__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_axios__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__ = __webpack_require__(105);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png__ = __webpack_require__(109);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__ = __webpack_require__(110);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_vuetify_upload_button__ = __webpack_require__(109);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_vuetify_upload_button___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_vuetify_upload_button__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_vue_carousel__ = __webpack_require__(110);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_vue_carousel___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5_vue_carousel__);
 //
 //
 //
@@ -81990,126 +81988,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-
 
 
 
@@ -82117,482 +81995,340 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
-  name: "HelloWorld",
+  name: "TemplateTool",
   components: {
-    "upload-btn": __WEBPACK_IMPORTED_MODULE_4_vuetify_upload_button___default.a,
-    carousel: __WEBPACK_IMPORTED_MODULE_5_vue_carousel__["Carousel"],
-    slide: __WEBPACK_IMPORTED_MODULE_5_vue_carousel__["Slide"]
+    TemplateRow: __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue___default.a
   },
   data: function data() {
     return {
       type: "WebGL",
       app: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["a" /* Application */]({
-        width: 600,
-        height: 800,
-        //backgroundColor: 0x1099bb,
+        width: 322,
+        height: 385,
+        backgroundColor: 0x1099bb,
         transparent: 1
       }),
-      mode: false,
-      size: "XS",
-      libraryNum: 0,
+      // drawArea: new PIXI.Rectangle(0, 0, 200, 300),
+      shapes: [],
+      sprites: [],
       libraryCurrent: 0,
       librarySelect: 0,
-      currdeg: 0,
-      // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
-      ratio: 32,
-      sprites: [],
-      artOriginalAspect: "pending",
-      drawArea: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["c" /* Rectangle */](0, 0, 200, 300)
+      graphics: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */](),
+      geo: [],
+      ratio: 0,
+      size: "XS"
     };
   },
 
-  props: {
-    prodID: String
-  },
   methods: {
+    returnShape: function returnShape() {
+      print(this.$refs.trow1.template.geo.shape);
+    },
     init: function init() {
       var that = this;
 
       if (!__WEBPACK_IMPORTED_MODULE_0_pixi_js__["e" /* utils */].isWebGLSupported()) {
         that.type = "canvas";
       }
-      //initial changing of drawing area (renderer.view) to rect deminsions
-      that.app.renderer.view.style.left = that.drawArea.x + "px";
-      that.app.renderer.view.style.top = that.drawArea.y + "px";
-      that.app.renderer.resize(that.drawArea.width, that.drawArea.height);
 
-      document.body.appendChild(that.app.view);
+      // this.$refs.trow1.template = {
+      //   // productId: 0,
+      //   geo: {},
+      //   ratio: 0
+      // };
 
-      // setup sprites
-      // that.createSprite(blob);
+      document.body.appendChild(this.app.view);
+      document.body.lastElementChild.setAttribute("id", "drawingboard");
 
-      that.app.ticker.add(function (delta) {
-        // that.sprites[that.librarySelect].rotation += 0.1 * delta;
-      });
-    },
-    createSprite: function createSprite(art) {
-      // var that = this;
-      console.log("loading into this.sprites[" + this.libraryCurrent + "]");
-      this.sprites[this.libraryCurrent] = __WEBPACK_IMPORTED_MODULE_0_pixi_js__["d" /* Sprite */].from(art);
+      // this.app.stage.interactive = true;
+      // this.app.stage.buttonMode = true;
 
-      this.app.stage.addChild(this.sprites[this.libraryCurrent]);
-
-      this.sprites[this.libraryCurrent].anchor.set(0.5);
-      this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
-      this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
-      // this.sprites[this.libraryCurrent].position.set(
-      //   that.app.screen.width / 2,
-      //   that.app.screen.height / 2
-      // );
-      this.sprites[this.libraryCurrent].interactive = true;
-      this.sprites[this.libraryCurrent].buttonMode = true;
-
-      this.sprites[this.libraryCurrent].on("mousedown", onDragStart).on("touchstart", onDragStart)
+      this.createSprite(__WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png___default.a);
+      this.sprites[0].x = 0;
+      this.sprites[0].y = 0;
+      this.sprites.zOrder = 100;
+      this.sprites[0].width = this.app.screen.width;
+      this.sprites[0].height = this.app.screen.height;
+      this.sprites[0].interactive = true;
+      this.sprites[0].buttonMode = true;
+      // this.sprites[0].transparent = 1;
+      this.sprites[0].alpha = 0;
+      this.sprites[0].on("mousedown", onDragStart).on("touchstart", onDragStart)
       // events for drag end
       .on("mouseup", onDragEnd).on("mouseupoutside", onDragEnd).on("touchend", onDragEnd).on("touchendoutside", onDragEnd)
       // events for drag move
       .on("mousemove", onDragMove).on("touchmove", onDragMove);
 
-      // this.sprites[this.libraryCurrent].scale.y *= 1.25;
+      // this.createSprite(blob);
+      // this.sprites[1].width = 0;
+      // this.sprties[1].transparent;
+      // this.sprites[1].alpha = 0.1;
+      try {
+        that.createGeo(that.$refs.trow1.getShape());
+      } catch (e) {
+        that.createGeo(4);
+      }
 
-      // that.app.stage.addChild(that.drawArea);
-      this.app.stage.addChild(this.sprites[this.libraryCurrent]);
-      this.librarySelect = this.libraryCurrent;
-      this.libraryCurrent++;
-
+      that.app.ticker.add(function (delta) {
+        // that.sprites[that.librarySelect].rotation += 0.1 * delta;
+      });
       function onDragStart(event) {
+        that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
+        that.geo[that.librarySelect].clear();
         // store a reference to the data
         // the reason for this is because of multitouch
         // we want to track the movement of this particular touch
         this.data = event.data;
-        this.alpha = 0.5;
+
+        // that.alpha = 0.5;
+        var newPosition = this.data.getLocalPosition(this.parent);
+        that.shapes[that.librarySelect].x = Math.round(newPosition.x);
+        that.shapes[that.librarySelect].y = Math.round(newPosition.y);
+        that.shapes[that.librarySelect].width = 0;
+        that.shapes[that.librarySelect].height = 0;
+        // that.$refs.trow1.setX(newPosition.x);
+        // that.$refs.trow1.setY(newPosition.y);
         this.dragging = true;
       }
       function onDragEnd() {
-        this.alpha = 1;
+        // that.alpha = 1;
 
         this.dragging = false;
 
         // set the interaction data to null
         this.data = null;
+
+        // that.geo[that.librarySelect].alpha = 0.1;
       }
       function onDragMove() {
         if (this.dragging) {
+          that.geo[that.librarySelect].clear();
+
           var newPosition = this.data.getLocalPosition(this.parent);
-          this.x = newPosition.x;
-          this.y = newPosition.y;
+
+          that.shapes[that.librarySelect].width = Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
+          that.shapes[that.librarySelect].height = Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
+          // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
+          // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
+          // draw a rectangle
+          if (that.$refs.trow1.template.geo.shape == 4) {
+            that.geo[that.librarySelect].drawRect(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, that.shapes[that.librarySelect].width, that.shapes[that.librarySelect].height);
+          } else {
+            // that.shapes[that.librarySelect].width = Math.sqrt(
+            // Math.pow(newPosition.x - that.shapes[that.librarySelect].x, 2) +
+            //   Math.pow(newPosition.y - that.shapes[that.librarySelect].y, 2)
+            // );
+            // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
+            // that.$refs.trow1.setH(10);
+            // draw a rectangle
+            // alert(that.shapes[that.librarySelect]);
+            that.geo[that.librarySelect].drawCircle(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, Math.sqrt(Math.pow(that.shapes[that.librarySelect].width, 2) + Math.pow(that.shapes[that.librarySelect].height, 2)) / Math.sqrt(2));
+          }
+          that.geo[that.librarySelect].alpha = 0.1;
+
+          // set the line style to have a width of 5 and set the color to red
+
+          that.app.stage.addChild(that.geo[that.librarySelect]);
         }
       }
     },
-    handleFileSelect: function handleFileSelect(evt) {
-      var that = this;
-      var files = evt.target.files; // FileList object
-      that.libraryNum += files.length;
+    dataChange: function dataChange(data, xORy) {
+      this.geo[this.librarySelect].clear();
 
-      // Loop through the FileList and render image files as thumbnails.
-      for (var i = 0, f; f = files[i]; i++) {
-        // Only process image files.
-        if (!f.type.match("image.*")) {
-          continue;
-        }
+      this.shapes[this.librarySelect].x = parseFloat(data.x);
+      this.shapes[this.librarySelect].y = parseFloat(data.y);
+      this.shapes[this.librarySelect].width = parseFloat(data.width);
+      this.shapes[this.librarySelect].height = parseFloat(data.height);
+      this.shapes[this.librarySelect].shape = parseInt(data.shape);
 
-        var reader = new FileReader();
-
-        // Closure to capture the file information.
-        reader.onload = function (theFile) {
-          return function (e) {
-            // Render thumbnail.
-            var span = document.createElement("slide");
-            span.id = that.libraryCurrent;
-            span.onclick = function () {
-              that.librarySelect = span.id;
-            };
-            // span.style = that.styleCarousel(that.libraryCurrent);
-            span.innerHTML = ['<img class="thumb" src="', e.target.result, '" />', escape(theFile.name)].join("");
-            document.getElementById("list").insertBefore(span, null);
-            document.getElementById("list").insertBefore(document.createElement("hr"), null);
-            that.createSprite(e.target.result);
-          };
-        }(f);
-
-        // Read in the image file as a data URL.
-        reader.readAsDataURL(f);
+      if (data.shape == 4) {
+        this.geo[this.librarySelect].drawRect(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, this.shapes[this.librarySelect].width, this.shapes[this.librarySelect].height);
+      } else {
+        this.geo[this.librarySelect].drawCircle(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
       }
-      // for (var i = 0; i < that.libraryNum; i++) {
-      //   var span = document.getElementById(i);
-      //   span.style = that.styleCarousel(i);
+      this.app.stage.addChild(this.geo[this.librarySelect]);
+    },
+    setRatSize: function setRatSize(rat, sz) {
+      this.ratio = rat;
+      this.size = sz;
+    },
+    createSprite: function createSprite(art) {
+      var _this = this;
+
+      console.log("loading into this.sprites[" + this.libraryCurrent + "]");
+
+      this.sprites[this.libraryCurrent] = __WEBPACK_IMPORTED_MODULE_0_pixi_js__["d" /* Sprite */].from(art);
+
+      this.sprites[this.libraryCurrent].width = 0;
+      this.sprites[this.libraryCurrent].transparent = 1;
+      this.sprites[this.libraryCurrent].alpha = 0.1;
+
+      this.sprites[this.libraryCurrent].on("touchstart", function () {
+        _this.librarySelect = _this.libraryCurrent;
+      });
+
+      // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
+
+      // this.sprites[this.libraryCurrent].anchor.set(0.5);
+      // this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
+      // this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
+      this.app.stage.addChild(this.sprites[this.libraryCurrent]);
+
+      this.librarySelect = this.libraryCurrent;
+      this.libraryCurrent++;
+    },
+    createGeo: function createGeo(shape) {
+      console.log("loading into this.shapes[" + this.libraryCurrent + "]");
+      this.geo[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
+
+      this.geo[this.libraryCurrent].lineStyle(1, 0x0000ff);
+      this.geo[this.libraryCurrent].transparent = 1;
+      this.geo[this.libraryCurrent].alpha = 0.1;
+      // this.geo[this.libraryCurrent].beginFill(0x22ff88);
+      this.shapes[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["c" /* Rectangle */]();
+      this.shapes[this.libraryCurrent].width = 0;
+
+      switch (shape) {
+        case 1:
+          this.shapes[this.libraryCurrent].shape = 1;
+          this.geo[this.libraryCurrent].drawCircle(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
+          break;
+        // case 3:
+        // this.geo[this.libraryCurrent].draw;
+        // break;
+        case 4:
+          this.shapes[this.libraryCurrent].shape = 4;
+          this.geo[this.libraryCurrent].drawRect(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, this.shapes[this.libraryCurrent].width, this.shapes[this.libraryCurrent].height);
+          break;
+        default:
+          this.shapes[this.libraryCurrent].shape = 4;
+          this.geo[this.libraryCurrent].drawRect(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, this.shapes[this.libraryCurrent].width, this.shapes[this.libraryCurrent].height);
+          break;
+      }
+
+      // this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
+
+      this.app.stage.addChild(this.geo[this.libraryCurrent]);
+      // this.shapes[this.libraryCurrent].on("touchstart", () => {
+      //   this.librarySelect = this.libraryCurrent;
+      // });
+
+      // this.app.stage.addChild(this.shapes[this.libraryCurrent]);
+
+      // this.shapes[this.libraryCurrent].anchor.set(0.5);
+      // this.shapes[this.libraryCurrent].x = this.app.screen.width / 2;
+      // this.shapes[this.libraryCurrent].y = this.app.screen.height / 2;
+
+      this.librarySelect = this.libraryCurrent;
+      this.libraryCurrent++;
+    },
+    addRow: function addRow() {
+      var _this2 = this;
+
+      // var RowClass = Vue.extend(TemplateRow);
+      // var row = new RowClass();
+      // row.$mount();
+      // this.$refs["row"] = row.$el;
+
+      // row.$el.ref = "trow" + this.libraryCurrent;
+      // console.log(row.$el);
+      // var rowEl = row.$el;
+      // row.$el.setAttribute(":ref", "trow" + this.libraryCurrent);
+      // var container = document.getElementById("cont");
+      // container.appendChild(row.$el);
+      // row.$el.setAttribute("ref", "trow" + this.libraryCurrent);
+      // var rowEle = container.lastElementChild;
+      // rowEle.setAttribute("ref", "trow" + this.libraryCurrent);
+      // container.lastElementChild = rowEle;
+      // console.log(row.$el);
+      // row.innerHTML = "<TemplateRow ref='trow" + this.libraryCurrent + "' />";
+
+      // alert(this.libraryCurrent);
+      // var newSel = this.createRadioElement(this.libraryCurrent);
+      var newSel = this.createRadioElement(this.libraryCurrent);
+      newSel.onclick = function (event) {
+        _this2.selectRadio(event.target.value);
+      };
+      var sel = document.getElementById("selection");
+      sel.appendChild(document.createElement("br"));
+      sel.appendChild(newSel);
+
+      var lastSelection = this.librarySelect;
+
+      this.createGeo(this.$refs.trow1.getShape());
+      this.$refs.trow1.template = {
+        // productId: 0,
+        geo: this.shapes[this.libraryCurrent - 1],
+        ratio: this.ratio,
+        size: this.size
+      };
+    },
+    createRadioElement: function createRadioElement(name) {
+      var radioHtml = "<button type='button' value='" + name + "'>Select " + name + "</button>";
+      // if (checked) {
+      //   radioHtml += ' checked="checked"';
       // }
+      // radioHtml += "/>";
+
+      var radioFragment = document.createElement("div");
+      radioFragment.innerHTML = radioHtml;
+
+      return radioFragment.firstChild;
     },
-    addLibraryArt: function addLibraryArt(art) {
-      // axios.post;
+    selectRadio: function selectRadio(current) {
+      this.librarySelect = current;
+      this.$refs.trow1.template = {
+        geo: this.shapes[current],
+        ratio: this.ratio,
+        size: this.size
+      };
     },
-    // selectLibraryArt: function(artID) {
-    //   this.librarySelect = artID;
-    //   alert(artID);
-    // },
+    saveTemplate: function saveTemplate() {
+      // let ts = [];
+      // for(let i=1; i<=this.shapes.length; i++)
+      // {
+      //   console.log("SWOOP! "+i);
+      //   ts[i] = this.shapes[i];
+      // }
+      var templateObj = {
+        temps: this.shapes,
+        dpi: this.ratio,
+        pid: this.prodID,
+        size: this.size
+      };
+      this.saveTemplateAxios(templateObj);
+    },
+    saveTemplateAxios: function saveTemplateAxios(template) {
+      axios.post("/api/template", template).then(function (response) {
+        console.log(response);
+      }).catch(function (error) {
+        console.log(error);
+      });
+    },
     getTemplateAxios: function getTemplateAxios() {
       var that = this;
+      // alert("pulling from database HEER" + this.prodID);
 
-      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.get("/api/template/" + this.prodID + "/" + this.size).then(function (response) {
+      axios.get("/api/template/" + this.prodID + "/" + this.size).then(function (response) {
         console.log(response);
         if (response.data.pid === 0) {
           that.mode = true;
         } else {
           that.mode = false;
         }
-        that.drawArea.x = response.data.x;
-        that.drawArea.y = response.data.y;
-        that.drawArea.width = response.data.width;
-        that.drawArea.height = response.data.height;
+        that.shapes = response.data.temps;
         that.ratio = response.data.dpi;
         that.changeDraw();
       }).catch(function (error) {
         console.log(error);
       });
-    },
-    saveTemplateAxios: function saveTemplateAxios(template) {
-      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post("/api/template", template).then(function (response) {
-        console.log(response);
-      }).catch(function (error) {
-        console.log(error);
-      });
-    },
-    changeDraw: function changeDraw() {
-      // console.log("CHANGE!");
-      this.app.renderer.clear();
-      // that.app.renderer.screen
-      // this.drawArea.width = value;
-      this.app.renderer.view.style.left = this.drawArea.x + "px";
-      this.app.renderer.view.style.top = this.drawArea.y + "px";
-      this.app.renderer.resize(this.drawArea.width, this.drawArea.height);
-    },
-    saveTemplate: function saveTemplate() {
-      var templateObj = {
-        x: this.drawArea.x,
-        y: this.drawArea.y,
-        width: this.drawArea.width,
-        height: this.drawArea.height,
-        dpi: this.ratio,
-        pid: this.prodID,
-        size: this.size
-      };
-      this.saveTemplateAxios(templateObj);
-      // alert(JSON.stringify(templateObj));
-    },
-    savePrint: function savePrint() {
-      var that = this;
-
-      //capture entire printable area
-      // var graphics = new PIXI.Graphics();
-
-      // graphics.beginFill(0xffff00);
-
-      // set the line style to have a width of 5 and set the color to red
-      // graphics.lineStyle(0, 0xff0000);
-
-      // draw a rectangle
-      // graphics.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-      // PIXI.Rectangle.this.app.stage.addChild(graphics);
-
-      var lowX = this.app.stage.width;
-      var lowY = this.app.stage.height;
-      var totW = 0;
-      var totH = 0;
-      var allG = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Container */]();
-
-      var xTot = 0;
-      var yTot = 0;
-      for (var i = 0; i < this.sprites.length; i++) {
-        // if (lowX > this.sprites[i].x) {
-        //   lowX = this.sprites[i].x;
-        // }
-        // if (lowY > this.sprites[i].y) {
-        //   lowY = this.sprites[i].y;
-        // }
-        // if (this.sprites[i].width > this.drawArea.width) {
-        //   this.sprites[i].filterArea(
-        //     new PIXI.Rectangle(
-        //       0,
-        //       0,
-        //       this.drawArea.width,
-        //       this.sprites[i].height
-        //     )
-        //   );
-        // }
-        // if (this.sprites[i].height > this.drawArea.height) {
-        //   this.sprites[i].filterArea(
-        //     new PIXI.Rectangle(
-        //       0,
-        //       0,
-        //       this.sprites[i].width,
-        //       this.drawArea.height
-        //     )
-        //   );
-        // }
-        xTot += this.sprites[i].x;
-        yTot += this.sprites[i].y;
-        // console.log("each x, y: " + xTot + ", " + yTot);
-        allG.addChild(this.sprites[i]);
-        // if (totW < this.sprites[i].width) {
-        //   totW = this.sprites[i].width;
-        // }
-        // if (totH < this.sprites[i].height) {
-        //   totH = this.sprites[i].height;
-        // }
-      }
-      allG.x = xTot / this.sprites.length;
-      allG.y = yTot / this.sprites.length;
-      // allG.anchor.set(0.5);
-      // var texture = new PIXI.BaseTexture(allG);
-      // var texture2 = new PIXI.Texture(
-      //   texture,
-      //   new PIXI.Rectangle(0, 0, this.drawArea.width, this.drawArea.height)
-      // );
-      // var sprite = new PIXI.Sprite(texture2);
-      // this.app.stage.addChild(sprite);
-
-      // if (allG.width > this.drawArea.width) {
-      //   allG.filterArea(
-      //     new PIXI.Rectangle(0, 0, this.drawArea.width, allG.height)
-      //   );
-      // }
-      // if (allG.height > this.drawArea.height) {
-      //   allG.filterArea(
-      //     new PIXI.Rectangle(0, 0, allG.width, this.drawArea.height)
-      //   );
-      // }
-
-      // this.libraryNum++;
-      // this.sprites[this.sprites.length] = allG;
-      // this.librarySelect = this.libraryCurrent;
-      // this.libraryCurrent++;
-      // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
-      // this.createSprite(allG);
-      // console.log(allG.x + ", " + allG.y);
-      // this.app.stage.addChild(allG);
-
-      //get %of offset with repect to (center!)
-      var printObj = {
-        blob: this.app.renderer.extract.canvas(this.app.stage).toDataURL(),
-        library_id: 0,
-        x: allG.x / this.drawArea.width,
-        y: allG.y / this.drawArea.height,
-        width: allG.width,
-        height: allG.height,
-        dpi: this.ratio,
-        pid: this.prodID,
-        size: this.size
-      };
-      console.log(printObj.x + ", " + printObj.y + ", " + printObj.width + ", " + printObj.height + ", " + printObj.dpi + ", " + printObj.pid + ", " + printObj.size);
-
-      // allG.calculateBounds();
-
-      // render right now
-      // this.app.renderer.render(allG);
-
-      // capture immediately
-      // var data = this.app.renderer.view.toDataURL("image/png", 1);
-      // alert(data);
-      // var img = document.createElement("img");
-      // img.id = "printfile";
-      // document.body.append(img);
-      // img.setAttribute("src", data);
-      // $("img").attr("src", data);
-
-      this.app.renderer.extract.canvas(this.app.stage).toBlob(function (b) {
-        var a = document.createElement("a");
-        document.body.append(a);
-        a.download = "print-file-prod" + that.prodID + ".png";
-        a.href = URL.createObjectURL(b);
-        a.click();
-        a.remove();
-        alert(JSON.stringify(printObj));
-      }, "image/png");
-
-      __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post("/api/designs/print/create", printObj).then(function (response) {
-        console.log(response);
-      }).catch(function (error) {
-        console.log(error);
-      });
     }
+  },
+  props: {
+    prodID: String
   },
   created: function created() {
-    // this.sprites[0] = PIXI.Sprite.from(blob);
-    //set to "template mode" if no template
-    this.getTemplateAxios();
     this.init();
-  },
-  mounted: function mounted() {
-    var that = this;
-
-    // that.sprites[]
-
-    document.getElementById("list").insertBefore(document.createElement("hr"), null);
-    document.getElementById("files").addEventListener("change", this.handleFileSelect, false);
-  },
-
-  computed: {
-    Xart: {
-      get: function get() {
-        if (this.libraryCurrent > 0) {
-          console.log("libraryCurrent: " + this.libraryCurrent);
-          console.log("librarySelect: " + this.librarySelect);
-          return this.sprites[this.librarySelect].x;
-        } else {
-          console.log(this.libraryCurrent);
-          return null;
-        }
-      },
-      set: function set(value) {
-        this.sprites[this.librarySelect].x = value;
-      }
-    },
-    Yart: {
-      get: function get() {
-        if (this.libraryCurrent > 0) {
-          return this.sprites[this.librarySelect].y;
-        } else {
-          return null;
-        }
-      },
-      set: function set(value) {
-        this.sprites[this.librarySelect].y = value;
-      }
-    },
-    Wart: {
-      get: function get() {
-        if (this.libraryCurrent > 0) {
-          return this.sprites[this.librarySelect].width;
-        } else {
-          return null;
-        }
-      },
-      set: function set(value) {
-        this.sprites[this.librarySelect].width = value;
-      }
-    },
-    Hart: {
-      get: function get() {
-        if (this.libraryCurrent > 0) {
-          return this.sprites[this.librarySelect].height;
-        } else {
-          return null;
-        }
-      },
-      set: function set(value) {
-        this.sprites[this.librarySelect].height = value;
-      }
-    },
-    inchesXart: {
-      get: function get() {
-        if (this.libraryCurrent > 0) {
-          return this.Xart / this.ratio;
-        } else {
-          return null;
-        }
-      },
-      set: function set(value) {
-        // this.ratio = this.sprites[this.librarySelect].width / value;
-        this.sprites[this.librarySelect].x = this.Xart(value) * this.ratio;
-      }
-    },
-    inchesYart: {
-      get: function get() {
-        if (this.libraryCurrent > 0) {
-          return this.Yart / this.ratio;
-        } else {
-          return null;
-        }
-      },
-      set: function set(value) {
-        // this.ratio = this.sprites[this.librarySelect].width / value;
-        this.sprites[this.librarySelect].y = this.Yart(value) * this.ratio;
-      }
-    },
-    inchesWart: {
-      get: function get() {
-        if (this.libraryCurrent > 0) {
-          return this.sprites[this.librarySelect].width / this.ratio;
-        } else {
-          return null;
-        }
-      },
-      set: function set(value) {
-        // this.ratio = this.sprites[this.librarySelect].width / value;
-        this.sprites[this.librarySelect].width = value * this.ratio;
-      }
-    },
-    inchesHart: {
-      get: function get() {
-        if (this.libraryCurrent > 0) {
-          return this.sprites[this.librarySelect].height / this.ratio;
-        } else {
-          return null;
-        }
-      },
-      set: function set(value) {
-        // this.ratio = this.sprites[this.librarySelect].height / value;
-        this.sprites[this.librarySelect].height = value * this.ratio;
-      }
-    },
-    inchesWtemp: {
-      get: function get() {
-        return this.drawArea.width / this.ratio;
-      },
-      set: function set(value) {
-        this.ratio = this.drawArea.width / value;
-        // this.drawArea.width = value * this.ratio;
-      }
-    },
-    inchesHtemp: {
-      get: function get() {
-        return this.drawArea.height / this.ratio;
-      },
-      set: function set(value) {
-        this.ratio = this.drawArea.height / value;
-        // this.drawArea.height = value * this.ratio;
-      }
-    }
   }
 });
 
@@ -82629,7 +82365,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* unused harmony namespace reexport */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__pixi_text_bitmap__ = __webpack_require__(43);
 /* unused harmony namespace reexport */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__pixi_ticker__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__pixi_ticker__ = __webpack_require__(11);
 /* unused harmony namespace reexport */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__pixi_filter_alpha__ = __webpack_require__(93);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__pixi_filter_blur__ = __webpack_require__(94);
@@ -82643,9 +82379,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__pixi_constants__ = __webpack_require__(6);
 /* unused harmony namespace reexport */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__pixi_display__ = __webpack_require__(3);
-/* harmony namespace reexport (by used) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_24__pixi_display__["b"]; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__pixi_graphics__ = __webpack_require__(33);
 /* unused harmony namespace reexport */
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__pixi_graphics__ = __webpack_require__(33);
+/* harmony namespace reexport (by used) */ __webpack_require__.d(__webpack_exports__, "b", function() { return __WEBPACK_IMPORTED_MODULE_25__pixi_graphics__["a"]; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__pixi_math__ = __webpack_require__(2);
 /* harmony namespace reexport (by used) */ __webpack_require__.d(__webpack_exports__, "c", function() { return __WEBPACK_IMPORTED_MODULE_26__pixi_math__["k"]; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__pixi_mesh__ = __webpack_require__(44);
@@ -82654,7 +82390,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* unused harmony namespace reexport */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__pixi_runner__ = __webpack_require__(30);
 /* unused harmony namespace reexport */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__pixi_sprite__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__pixi_sprite__ = __webpack_require__(12);
 /* harmony namespace reexport (by used) */ __webpack_require__.d(__webpack_exports__, "d", function() { return __WEBPACK_IMPORTED_MODULE_30__pixi_sprite__["a"]; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_31__pixi_sprite_animated__ = __webpack_require__(103);
 /* unused harmony namespace reexport */
@@ -86060,7 +85796,7 @@ earcut.flatten = function (data) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17)(module), __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16)(module), __webpack_require__(7)))
 
 /***/ }),
 /* 86 */
@@ -88594,7 +88330,7 @@ var NoiseFilter = /*@__PURE__*/(function (Filter) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__pixi_core__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_sprite__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_sprite__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_display__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__pixi_math__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__pixi_utils__ = __webpack_require__(1);
@@ -89903,8 +89639,8 @@ var NineSlicePlane = /*@__PURE__*/(function (SimplePlane) {
 "use strict";
 /* unused harmony export AnimatedSprite */
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__pixi_core__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_sprite__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_ticker__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__pixi_sprite__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__pixi_ticker__ = __webpack_require__(11);
 /*!
  * @pixi/sprite-animated - v5.0.4
  * Compiled Fri, 07 Jun 2019 17:17:49 UTC
@@ -90364,18 +90100,236 @@ var AnimatedSprite = /*@__PURE__*/(function (Sprite) {
 
 /***/ }),
 /* 104 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = "/images/blob.png?aef6563077ea43eaf08b8387c5f34196";
+var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(155)
+}
+var normalizeComponent = __webpack_require__(10)
+/* script */
+var __vue_script__ = __webpack_require__(107)
+/* template */
+var __vue_template__ = __webpack_require__(157)
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = "data-v-e60f42ce"
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/TemplateRow.vue"
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-e60f42ce", Component.options)
+  } else {
+    hotAPI.reload("data-v-e60f42ce", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
 
 /***/ }),
-/* 105 */
+/* 105 */,
+/* 106 */,
+/* 107 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  name: "TemplateRow",
+  data: function data() {
+    return {
+      template: {
+        geo: { shape: 4 },
+        ratio: 0,
+        size: "XS"
+      }
+    };
+  },
+
+  methods: {
+    setX: function setX(x) {
+      this.template.geo.x = x;
+    },
+    setY: function setY(y) {
+      this.template.geo.y = y;
+    },
+    setW: function setW(w) {
+      this.template.geo.width = w;
+    },
+    setH: function setH(h) {
+      this.template.geo.height = h;
+    },
+    getShape: function getShape() {
+      return this.template.geo.shape;
+    },
+    getTemplateAxios: function getTemplateAxios() {
+      this.setRatSize(this.template.ratio, this.template.size);
+      this.getTemplate();
+    }
+  },
+  props: {
+    setRatSize: Function,
+    dataChange: Function,
+    getTemplate: Function
+  },
+  computed: {
+    inchesWtemp: {
+      get: function get() {
+        return this.template.geo.width / this.template.ratio;
+      },
+      set: function set(value) {
+        this.template.ratio = this.template.geo.width / value;
+        // this.template.geo.width = value * this.template.ratio;
+      }
+    },
+    inchesHtemp: {
+      get: function get() {
+        return this.template.geo.height / this.template.ratio;
+      },
+      set: function set(value) {
+        this.template.ratio = this.template.geo.height / value;
+        // this.template.geo.height = value * this.template.template.ratio;
+      }
+    }
+  },
+  mounted: function mounted() {
+    this.setRatSize(this.template.ratio, this.template.size);
+    this.dataChange(this.template.geo);
+  }
+});
+
+/***/ }),
+/* 108 */,
+/* 109 */
+/***/ (function(module, exports) {
+
+module.exports = "/images/3drawarea.png?5b14436ceda1dae28864500e40f7a54e";
+
+/***/ }),
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(106);
+var content = __webpack_require__(111);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -90383,7 +90337,7 @@ var transform;
 var options = {}
 options.transform = transform
 // add the styles to the DOM
-var update = __webpack_require__(107)(content, options);
+var update = __webpack_require__(112)(content, options);
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {
@@ -90400,7 +90354,7 @@ if(false) {
 }
 
 /***/ }),
-/* 106 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(8)(false);
@@ -90408,13 +90362,13 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "@-webkit-keyframes shake {\n  59% {\n    margin-left: 0;\n  }\n  60%, 80% {\n    margin-left: 2px;\n  }\n  70%, 90% {\n    margin-left: -2px;\n  }\n}\n@keyframes shake {\n  59% {\n    margin-left: 0;\n  }\n  60%, 80% {\n    margin-left: 2px;\n  }\n  70%, 90% {\n    margin-left: -2px;\n  }\n}\n.black {\n  background-color: #000 !important;\n  border-color: #000 !important;\n}\n.black--text {\n  color: #000 !important;\n  caret-color: #000 !important;\n}\n.white {\n  background-color: #fff !important;\n  border-color: #fff !important;\n}\n.white--text {\n  color: #fff !important;\n  caret-color: #fff !important;\n}\n.transparent {\n  background-color: transparent !important;\n  border-color: transparent !important;\n}\n.transparent--text {\n  color: transparent !important;\n  caret-color: transparent !important;\n}\n.red {\n  background-color: #f44336 !important;\n  border-color: #f44336 !important;\n}\n.red--text {\n  color: #f44336 !important;\n  caret-color: #f44336 !important;\n}\n.red.lighten-5 {\n  background-color: #ffebee !important;\n  border-color: #ffebee !important;\n}\n.red--text.text--lighten-5 {\n  color: #ffebee !important;\n  caret-color: #ffebee !important;\n}\n.red.lighten-4 {\n  background-color: #ffcdd2 !important;\n  border-color: #ffcdd2 !important;\n}\n.red--text.text--lighten-4 {\n  color: #ffcdd2 !important;\n  caret-color: #ffcdd2 !important;\n}\n.red.lighten-3 {\n  background-color: #ef9a9a !important;\n  border-color: #ef9a9a !important;\n}\n.red--text.text--lighten-3 {\n  color: #ef9a9a !important;\n  caret-color: #ef9a9a !important;\n}\n.red.lighten-2 {\n  background-color: #e57373 !important;\n  border-color: #e57373 !important;\n}\n.red--text.text--lighten-2 {\n  color: #e57373 !important;\n  caret-color: #e57373 !important;\n}\n.red.lighten-1 {\n  background-color: #ef5350 !important;\n  border-color: #ef5350 !important;\n}\n.red--text.text--lighten-1 {\n  color: #ef5350 !important;\n  caret-color: #ef5350 !important;\n}\n.red.darken-1 {\n  background-color: #e53935 !important;\n  border-color: #e53935 !important;\n}\n.red--text.text--darken-1 {\n  color: #e53935 !important;\n  caret-color: #e53935 !important;\n}\n.red.darken-2 {\n  background-color: #d32f2f !important;\n  border-color: #d32f2f !important;\n}\n.red--text.text--darken-2 {\n  color: #d32f2f !important;\n  caret-color: #d32f2f !important;\n}\n.red.darken-3 {\n  background-color: #c62828 !important;\n  border-color: #c62828 !important;\n}\n.red--text.text--darken-3 {\n  color: #c62828 !important;\n  caret-color: #c62828 !important;\n}\n.red.darken-4 {\n  background-color: #b71c1c !important;\n  border-color: #b71c1c !important;\n}\n.red--text.text--darken-4 {\n  color: #b71c1c !important;\n  caret-color: #b71c1c !important;\n}\n.red.accent-1 {\n  background-color: #ff8a80 !important;\n  border-color: #ff8a80 !important;\n}\n.red--text.text--accent-1 {\n  color: #ff8a80 !important;\n  caret-color: #ff8a80 !important;\n}\n.red.accent-2 {\n  background-color: #ff5252 !important;\n  border-color: #ff5252 !important;\n}\n.red--text.text--accent-2 {\n  color: #ff5252 !important;\n  caret-color: #ff5252 !important;\n}\n.red.accent-3 {\n  background-color: #ff1744 !important;\n  border-color: #ff1744 !important;\n}\n.red--text.text--accent-3 {\n  color: #ff1744 !important;\n  caret-color: #ff1744 !important;\n}\n.red.accent-4 {\n  background-color: #d50000 !important;\n  border-color: #d50000 !important;\n}\n.red--text.text--accent-4 {\n  color: #d50000 !important;\n  caret-color: #d50000 !important;\n}\n.pink {\n  background-color: #e91e63 !important;\n  border-color: #e91e63 !important;\n}\n.pink--text {\n  color: #e91e63 !important;\n  caret-color: #e91e63 !important;\n}\n.pink.lighten-5 {\n  background-color: #fce4ec !important;\n  border-color: #fce4ec !important;\n}\n.pink--text.text--lighten-5 {\n  color: #fce4ec !important;\n  caret-color: #fce4ec !important;\n}\n.pink.lighten-4 {\n  background-color: #f8bbd0 !important;\n  border-color: #f8bbd0 !important;\n}\n.pink--text.text--lighten-4 {\n  color: #f8bbd0 !important;\n  caret-color: #f8bbd0 !important;\n}\n.pink.lighten-3 {\n  background-color: #f48fb1 !important;\n  border-color: #f48fb1 !important;\n}\n.pink--text.text--lighten-3 {\n  color: #f48fb1 !important;\n  caret-color: #f48fb1 !important;\n}\n.pink.lighten-2 {\n  background-color: #f06292 !important;\n  border-color: #f06292 !important;\n}\n.pink--text.text--lighten-2 {\n  color: #f06292 !important;\n  caret-color: #f06292 !important;\n}\n.pink.lighten-1 {\n  background-color: #ec407a !important;\n  border-color: #ec407a !important;\n}\n.pink--text.text--lighten-1 {\n  color: #ec407a !important;\n  caret-color: #ec407a !important;\n}\n.pink.darken-1 {\n  background-color: #d81b60 !important;\n  border-color: #d81b60 !important;\n}\n.pink--text.text--darken-1 {\n  color: #d81b60 !important;\n  caret-color: #d81b60 !important;\n}\n.pink.darken-2 {\n  background-color: #c2185b !important;\n  border-color: #c2185b !important;\n}\n.pink--text.text--darken-2 {\n  color: #c2185b !important;\n  caret-color: #c2185b !important;\n}\n.pink.darken-3 {\n  background-color: #ad1457 !important;\n  border-color: #ad1457 !important;\n}\n.pink--text.text--darken-3 {\n  color: #ad1457 !important;\n  caret-color: #ad1457 !important;\n}\n.pink.darken-4 {\n  background-color: #880e4f !important;\n  border-color: #880e4f !important;\n}\n.pink--text.text--darken-4 {\n  color: #880e4f !important;\n  caret-color: #880e4f !important;\n}\n.pink.accent-1 {\n  background-color: #ff80ab !important;\n  border-color: #ff80ab !important;\n}\n.pink--text.text--accent-1 {\n  color: #ff80ab !important;\n  caret-color: #ff80ab !important;\n}\n.pink.accent-2 {\n  background-color: #ff4081 !important;\n  border-color: #ff4081 !important;\n}\n.pink--text.text--accent-2 {\n  color: #ff4081 !important;\n  caret-color: #ff4081 !important;\n}\n.pink.accent-3 {\n  background-color: #f50057 !important;\n  border-color: #f50057 !important;\n}\n.pink--text.text--accent-3 {\n  color: #f50057 !important;\n  caret-color: #f50057 !important;\n}\n.pink.accent-4 {\n  background-color: #c51162 !important;\n  border-color: #c51162 !important;\n}\n.pink--text.text--accent-4 {\n  color: #c51162 !important;\n  caret-color: #c51162 !important;\n}\n.purple {\n  background-color: #9c27b0 !important;\n  border-color: #9c27b0 !important;\n}\n.purple--text {\n  color: #9c27b0 !important;\n  caret-color: #9c27b0 !important;\n}\n.purple.lighten-5 {\n  background-color: #f3e5f5 !important;\n  border-color: #f3e5f5 !important;\n}\n.purple--text.text--lighten-5 {\n  color: #f3e5f5 !important;\n  caret-color: #f3e5f5 !important;\n}\n.purple.lighten-4 {\n  background-color: #e1bee7 !important;\n  border-color: #e1bee7 !important;\n}\n.purple--text.text--lighten-4 {\n  color: #e1bee7 !important;\n  caret-color: #e1bee7 !important;\n}\n.purple.lighten-3 {\n  background-color: #ce93d8 !important;\n  border-color: #ce93d8 !important;\n}\n.purple--text.text--lighten-3 {\n  color: #ce93d8 !important;\n  caret-color: #ce93d8 !important;\n}\n.purple.lighten-2 {\n  background-color: #ba68c8 !important;\n  border-color: #ba68c8 !important;\n}\n.purple--text.text--lighten-2 {\n  color: #ba68c8 !important;\n  caret-color: #ba68c8 !important;\n}\n.purple.lighten-1 {\n  background-color: #ab47bc !important;\n  border-color: #ab47bc !important;\n}\n.purple--text.text--lighten-1 {\n  color: #ab47bc !important;\n  caret-color: #ab47bc !important;\n}\n.purple.darken-1 {\n  background-color: #8e24aa !important;\n  border-color: #8e24aa !important;\n}\n.purple--text.text--darken-1 {\n  color: #8e24aa !important;\n  caret-color: #8e24aa !important;\n}\n.purple.darken-2 {\n  background-color: #7b1fa2 !important;\n  border-color: #7b1fa2 !important;\n}\n.purple--text.text--darken-2 {\n  color: #7b1fa2 !important;\n  caret-color: #7b1fa2 !important;\n}\n.purple.darken-3 {\n  background-color: #6a1b9a !important;\n  border-color: #6a1b9a !important;\n}\n.purple--text.text--darken-3 {\n  color: #6a1b9a !important;\n  caret-color: #6a1b9a !important;\n}\n.purple.darken-4 {\n  background-color: #4a148c !important;\n  border-color: #4a148c !important;\n}\n.purple--text.text--darken-4 {\n  color: #4a148c !important;\n  caret-color: #4a148c !important;\n}\n.purple.accent-1 {\n  background-color: #ea80fc !important;\n  border-color: #ea80fc !important;\n}\n.purple--text.text--accent-1 {\n  color: #ea80fc !important;\n  caret-color: #ea80fc !important;\n}\n.purple.accent-2 {\n  background-color: #e040fb !important;\n  border-color: #e040fb !important;\n}\n.purple--text.text--accent-2 {\n  color: #e040fb !important;\n  caret-color: #e040fb !important;\n}\n.purple.accent-3 {\n  background-color: #d500f9 !important;\n  border-color: #d500f9 !important;\n}\n.purple--text.text--accent-3 {\n  color: #d500f9 !important;\n  caret-color: #d500f9 !important;\n}\n.purple.accent-4 {\n  background-color: #a0f !important;\n  border-color: #a0f !important;\n}\n.purple--text.text--accent-4 {\n  color: #a0f !important;\n  caret-color: #a0f !important;\n}\n.deep-purple {\n  background-color: #673ab7 !important;\n  border-color: #673ab7 !important;\n}\n.deep-purple--text {\n  color: #673ab7 !important;\n  caret-color: #673ab7 !important;\n}\n.deep-purple.lighten-5 {\n  background-color: #ede7f6 !important;\n  border-color: #ede7f6 !important;\n}\n.deep-purple--text.text--lighten-5 {\n  color: #ede7f6 !important;\n  caret-color: #ede7f6 !important;\n}\n.deep-purple.lighten-4 {\n  background-color: #d1c4e9 !important;\n  border-color: #d1c4e9 !important;\n}\n.deep-purple--text.text--lighten-4 {\n  color: #d1c4e9 !important;\n  caret-color: #d1c4e9 !important;\n}\n.deep-purple.lighten-3 {\n  background-color: #b39ddb !important;\n  border-color: #b39ddb !important;\n}\n.deep-purple--text.text--lighten-3 {\n  color: #b39ddb !important;\n  caret-color: #b39ddb !important;\n}\n.deep-purple.lighten-2 {\n  background-color: #9575cd !important;\n  border-color: #9575cd !important;\n}\n.deep-purple--text.text--lighten-2 {\n  color: #9575cd !important;\n  caret-color: #9575cd !important;\n}\n.deep-purple.lighten-1 {\n  background-color: #7e57c2 !important;\n  border-color: #7e57c2 !important;\n}\n.deep-purple--text.text--lighten-1 {\n  color: #7e57c2 !important;\n  caret-color: #7e57c2 !important;\n}\n.deep-purple.darken-1 {\n  background-color: #5e35b1 !important;\n  border-color: #5e35b1 !important;\n}\n.deep-purple--text.text--darken-1 {\n  color: #5e35b1 !important;\n  caret-color: #5e35b1 !important;\n}\n.deep-purple.darken-2 {\n  background-color: #512da8 !important;\n  border-color: #512da8 !important;\n}\n.deep-purple--text.text--darken-2 {\n  color: #512da8 !important;\n  caret-color: #512da8 !important;\n}\n.deep-purple.darken-3 {\n  background-color: #4527a0 !important;\n  border-color: #4527a0 !important;\n}\n.deep-purple--text.text--darken-3 {\n  color: #4527a0 !important;\n  caret-color: #4527a0 !important;\n}\n.deep-purple.darken-4 {\n  background-color: #311b92 !important;\n  border-color: #311b92 !important;\n}\n.deep-purple--text.text--darken-4 {\n  color: #311b92 !important;\n  caret-color: #311b92 !important;\n}\n.deep-purple.accent-1 {\n  background-color: #b388ff !important;\n  border-color: #b388ff !important;\n}\n.deep-purple--text.text--accent-1 {\n  color: #b388ff !important;\n  caret-color: #b388ff !important;\n}\n.deep-purple.accent-2 {\n  background-color: #7c4dff !important;\n  border-color: #7c4dff !important;\n}\n.deep-purple--text.text--accent-2 {\n  color: #7c4dff !important;\n  caret-color: #7c4dff !important;\n}\n.deep-purple.accent-3 {\n  background-color: #651fff !important;\n  border-color: #651fff !important;\n}\n.deep-purple--text.text--accent-3 {\n  color: #651fff !important;\n  caret-color: #651fff !important;\n}\n.deep-purple.accent-4 {\n  background-color: #6200ea !important;\n  border-color: #6200ea !important;\n}\n.deep-purple--text.text--accent-4 {\n  color: #6200ea !important;\n  caret-color: #6200ea !important;\n}\n.indigo {\n  background-color: #3f51b5 !important;\n  border-color: #3f51b5 !important;\n}\n.indigo--text {\n  color: #3f51b5 !important;\n  caret-color: #3f51b5 !important;\n}\n.indigo.lighten-5 {\n  background-color: #e8eaf6 !important;\n  border-color: #e8eaf6 !important;\n}\n.indigo--text.text--lighten-5 {\n  color: #e8eaf6 !important;\n  caret-color: #e8eaf6 !important;\n}\n.indigo.lighten-4 {\n  background-color: #c5cae9 !important;\n  border-color: #c5cae9 !important;\n}\n.indigo--text.text--lighten-4 {\n  color: #c5cae9 !important;\n  caret-color: #c5cae9 !important;\n}\n.indigo.lighten-3 {\n  background-color: #9fa8da !important;\n  border-color: #9fa8da !important;\n}\n.indigo--text.text--lighten-3 {\n  color: #9fa8da !important;\n  caret-color: #9fa8da !important;\n}\n.indigo.lighten-2 {\n  background-color: #7986cb !important;\n  border-color: #7986cb !important;\n}\n.indigo--text.text--lighten-2 {\n  color: #7986cb !important;\n  caret-color: #7986cb !important;\n}\n.indigo.lighten-1 {\n  background-color: #5c6bc0 !important;\n  border-color: #5c6bc0 !important;\n}\n.indigo--text.text--lighten-1 {\n  color: #5c6bc0 !important;\n  caret-color: #5c6bc0 !important;\n}\n.indigo.darken-1 {\n  background-color: #3949ab !important;\n  border-color: #3949ab !important;\n}\n.indigo--text.text--darken-1 {\n  color: #3949ab !important;\n  caret-color: #3949ab !important;\n}\n.indigo.darken-2 {\n  background-color: #303f9f !important;\n  border-color: #303f9f !important;\n}\n.indigo--text.text--darken-2 {\n  color: #303f9f !important;\n  caret-color: #303f9f !important;\n}\n.indigo.darken-3 {\n  background-color: #283593 !important;\n  border-color: #283593 !important;\n}\n.indigo--text.text--darken-3 {\n  color: #283593 !important;\n  caret-color: #283593 !important;\n}\n.indigo.darken-4 {\n  background-color: #1a237e !important;\n  border-color: #1a237e !important;\n}\n.indigo--text.text--darken-4 {\n  color: #1a237e !important;\n  caret-color: #1a237e !important;\n}\n.indigo.accent-1 {\n  background-color: #8c9eff !important;\n  border-color: #8c9eff !important;\n}\n.indigo--text.text--accent-1 {\n  color: #8c9eff !important;\n  caret-color: #8c9eff !important;\n}\n.indigo.accent-2 {\n  background-color: #536dfe !important;\n  border-color: #536dfe !important;\n}\n.indigo--text.text--accent-2 {\n  color: #536dfe !important;\n  caret-color: #536dfe !important;\n}\n.indigo.accent-3 {\n  background-color: #3d5afe !important;\n  border-color: #3d5afe !important;\n}\n.indigo--text.text--accent-3 {\n  color: #3d5afe !important;\n  caret-color: #3d5afe !important;\n}\n.indigo.accent-4 {\n  background-color: #304ffe !important;\n  border-color: #304ffe !important;\n}\n.indigo--text.text--accent-4 {\n  color: #304ffe !important;\n  caret-color: #304ffe !important;\n}\n.blue {\n  background-color: #2196f3 !important;\n  border-color: #2196f3 !important;\n}\n.blue--text {\n  color: #2196f3 !important;\n  caret-color: #2196f3 !important;\n}\n.blue.lighten-5 {\n  background-color: #e3f2fd !important;\n  border-color: #e3f2fd !important;\n}\n.blue--text.text--lighten-5 {\n  color: #e3f2fd !important;\n  caret-color: #e3f2fd !important;\n}\n.blue.lighten-4 {\n  background-color: #bbdefb !important;\n  border-color: #bbdefb !important;\n}\n.blue--text.text--lighten-4 {\n  color: #bbdefb !important;\n  caret-color: #bbdefb !important;\n}\n.blue.lighten-3 {\n  background-color: #90caf9 !important;\n  border-color: #90caf9 !important;\n}\n.blue--text.text--lighten-3 {\n  color: #90caf9 !important;\n  caret-color: #90caf9 !important;\n}\n.blue.lighten-2 {\n  background-color: #64b5f6 !important;\n  border-color: #64b5f6 !important;\n}\n.blue--text.text--lighten-2 {\n  color: #64b5f6 !important;\n  caret-color: #64b5f6 !important;\n}\n.blue.lighten-1 {\n  background-color: #42a5f5 !important;\n  border-color: #42a5f5 !important;\n}\n.blue--text.text--lighten-1 {\n  color: #42a5f5 !important;\n  caret-color: #42a5f5 !important;\n}\n.blue.darken-1 {\n  background-color: #1e88e5 !important;\n  border-color: #1e88e5 !important;\n}\n.blue--text.text--darken-1 {\n  color: #1e88e5 !important;\n  caret-color: #1e88e5 !important;\n}\n.blue.darken-2 {\n  background-color: #1976d2 !important;\n  border-color: #1976d2 !important;\n}\n.blue--text.text--darken-2 {\n  color: #1976d2 !important;\n  caret-color: #1976d2 !important;\n}\n.blue.darken-3 {\n  background-color: #1565c0 !important;\n  border-color: #1565c0 !important;\n}\n.blue--text.text--darken-3 {\n  color: #1565c0 !important;\n  caret-color: #1565c0 !important;\n}\n.blue.darken-4 {\n  background-color: #0d47a1 !important;\n  border-color: #0d47a1 !important;\n}\n.blue--text.text--darken-4 {\n  color: #0d47a1 !important;\n  caret-color: #0d47a1 !important;\n}\n.blue.accent-1 {\n  background-color: #82b1ff !important;\n  border-color: #82b1ff !important;\n}\n.blue--text.text--accent-1 {\n  color: #82b1ff !important;\n  caret-color: #82b1ff !important;\n}\n.blue.accent-2 {\n  background-color: #448aff !important;\n  border-color: #448aff !important;\n}\n.blue--text.text--accent-2 {\n  color: #448aff !important;\n  caret-color: #448aff !important;\n}\n.blue.accent-3 {\n  background-color: #2979ff !important;\n  border-color: #2979ff !important;\n}\n.blue--text.text--accent-3 {\n  color: #2979ff !important;\n  caret-color: #2979ff !important;\n}\n.blue.accent-4 {\n  background-color: #2962ff !important;\n  border-color: #2962ff !important;\n}\n.blue--text.text--accent-4 {\n  color: #2962ff !important;\n  caret-color: #2962ff !important;\n}\n.light-blue {\n  background-color: #03a9f4 !important;\n  border-color: #03a9f4 !important;\n}\n.light-blue--text {\n  color: #03a9f4 !important;\n  caret-color: #03a9f4 !important;\n}\n.light-blue.lighten-5 {\n  background-color: #e1f5fe !important;\n  border-color: #e1f5fe !important;\n}\n.light-blue--text.text--lighten-5 {\n  color: #e1f5fe !important;\n  caret-color: #e1f5fe !important;\n}\n.light-blue.lighten-4 {\n  background-color: #b3e5fc !important;\n  border-color: #b3e5fc !important;\n}\n.light-blue--text.text--lighten-4 {\n  color: #b3e5fc !important;\n  caret-color: #b3e5fc !important;\n}\n.light-blue.lighten-3 {\n  background-color: #81d4fa !important;\n  border-color: #81d4fa !important;\n}\n.light-blue--text.text--lighten-3 {\n  color: #81d4fa !important;\n  caret-color: #81d4fa !important;\n}\n.light-blue.lighten-2 {\n  background-color: #4fc3f7 !important;\n  border-color: #4fc3f7 !important;\n}\n.light-blue--text.text--lighten-2 {\n  color: #4fc3f7 !important;\n  caret-color: #4fc3f7 !important;\n}\n.light-blue.lighten-1 {\n  background-color: #29b6f6 !important;\n  border-color: #29b6f6 !important;\n}\n.light-blue--text.text--lighten-1 {\n  color: #29b6f6 !important;\n  caret-color: #29b6f6 !important;\n}\n.light-blue.darken-1 {\n  background-color: #039be5 !important;\n  border-color: #039be5 !important;\n}\n.light-blue--text.text--darken-1 {\n  color: #039be5 !important;\n  caret-color: #039be5 !important;\n}\n.light-blue.darken-2 {\n  background-color: #0288d1 !important;\n  border-color: #0288d1 !important;\n}\n.light-blue--text.text--darken-2 {\n  color: #0288d1 !important;\n  caret-color: #0288d1 !important;\n}\n.light-blue.darken-3 {\n  background-color: #0277bd !important;\n  border-color: #0277bd !important;\n}\n.light-blue--text.text--darken-3 {\n  color: #0277bd !important;\n  caret-color: #0277bd !important;\n}\n.light-blue.darken-4 {\n  background-color: #01579b !important;\n  border-color: #01579b !important;\n}\n.light-blue--text.text--darken-4 {\n  color: #01579b !important;\n  caret-color: #01579b !important;\n}\n.light-blue.accent-1 {\n  background-color: #80d8ff !important;\n  border-color: #80d8ff !important;\n}\n.light-blue--text.text--accent-1 {\n  color: #80d8ff !important;\n  caret-color: #80d8ff !important;\n}\n.light-blue.accent-2 {\n  background-color: #40c4ff !important;\n  border-color: #40c4ff !important;\n}\n.light-blue--text.text--accent-2 {\n  color: #40c4ff !important;\n  caret-color: #40c4ff !important;\n}\n.light-blue.accent-3 {\n  background-color: #00b0ff !important;\n  border-color: #00b0ff !important;\n}\n.light-blue--text.text--accent-3 {\n  color: #00b0ff !important;\n  caret-color: #00b0ff !important;\n}\n.light-blue.accent-4 {\n  background-color: #0091ea !important;\n  border-color: #0091ea !important;\n}\n.light-blue--text.text--accent-4 {\n  color: #0091ea !important;\n  caret-color: #0091ea !important;\n}\n.cyan {\n  background-color: #00bcd4 !important;\n  border-color: #00bcd4 !important;\n}\n.cyan--text {\n  color: #00bcd4 !important;\n  caret-color: #00bcd4 !important;\n}\n.cyan.lighten-5 {\n  background-color: #e0f7fa !important;\n  border-color: #e0f7fa !important;\n}\n.cyan--text.text--lighten-5 {\n  color: #e0f7fa !important;\n  caret-color: #e0f7fa !important;\n}\n.cyan.lighten-4 {\n  background-color: #b2ebf2 !important;\n  border-color: #b2ebf2 !important;\n}\n.cyan--text.text--lighten-4 {\n  color: #b2ebf2 !important;\n  caret-color: #b2ebf2 !important;\n}\n.cyan.lighten-3 {\n  background-color: #80deea !important;\n  border-color: #80deea !important;\n}\n.cyan--text.text--lighten-3 {\n  color: #80deea !important;\n  caret-color: #80deea !important;\n}\n.cyan.lighten-2 {\n  background-color: #4dd0e1 !important;\n  border-color: #4dd0e1 !important;\n}\n.cyan--text.text--lighten-2 {\n  color: #4dd0e1 !important;\n  caret-color: #4dd0e1 !important;\n}\n.cyan.lighten-1 {\n  background-color: #26c6da !important;\n  border-color: #26c6da !important;\n}\n.cyan--text.text--lighten-1 {\n  color: #26c6da !important;\n  caret-color: #26c6da !important;\n}\n.cyan.darken-1 {\n  background-color: #00acc1 !important;\n  border-color: #00acc1 !important;\n}\n.cyan--text.text--darken-1 {\n  color: #00acc1 !important;\n  caret-color: #00acc1 !important;\n}\n.cyan.darken-2 {\n  background-color: #0097a7 !important;\n  border-color: #0097a7 !important;\n}\n.cyan--text.text--darken-2 {\n  color: #0097a7 !important;\n  caret-color: #0097a7 !important;\n}\n.cyan.darken-3 {\n  background-color: #00838f !important;\n  border-color: #00838f !important;\n}\n.cyan--text.text--darken-3 {\n  color: #00838f !important;\n  caret-color: #00838f !important;\n}\n.cyan.darken-4 {\n  background-color: #006064 !important;\n  border-color: #006064 !important;\n}\n.cyan--text.text--darken-4 {\n  color: #006064 !important;\n  caret-color: #006064 !important;\n}\n.cyan.accent-1 {\n  background-color: #84ffff !important;\n  border-color: #84ffff !important;\n}\n.cyan--text.text--accent-1 {\n  color: #84ffff !important;\n  caret-color: #84ffff !important;\n}\n.cyan.accent-2 {\n  background-color: #18ffff !important;\n  border-color: #18ffff !important;\n}\n.cyan--text.text--accent-2 {\n  color: #18ffff !important;\n  caret-color: #18ffff !important;\n}\n.cyan.accent-3 {\n  background-color: #00e5ff !important;\n  border-color: #00e5ff !important;\n}\n.cyan--text.text--accent-3 {\n  color: #00e5ff !important;\n  caret-color: #00e5ff !important;\n}\n.cyan.accent-4 {\n  background-color: #00b8d4 !important;\n  border-color: #00b8d4 !important;\n}\n.cyan--text.text--accent-4 {\n  color: #00b8d4 !important;\n  caret-color: #00b8d4 !important;\n}\n.teal {\n  background-color: #009688 !important;\n  border-color: #009688 !important;\n}\n.teal--text {\n  color: #009688 !important;\n  caret-color: #009688 !important;\n}\n.teal.lighten-5 {\n  background-color: #e0f2f1 !important;\n  border-color: #e0f2f1 !important;\n}\n.teal--text.text--lighten-5 {\n  color: #e0f2f1 !important;\n  caret-color: #e0f2f1 !important;\n}\n.teal.lighten-4 {\n  background-color: #b2dfdb !important;\n  border-color: #b2dfdb !important;\n}\n.teal--text.text--lighten-4 {\n  color: #b2dfdb !important;\n  caret-color: #b2dfdb !important;\n}\n.teal.lighten-3 {\n  background-color: #80cbc4 !important;\n  border-color: #80cbc4 !important;\n}\n.teal--text.text--lighten-3 {\n  color: #80cbc4 !important;\n  caret-color: #80cbc4 !important;\n}\n.teal.lighten-2 {\n  background-color: #4db6ac !important;\n  border-color: #4db6ac !important;\n}\n.teal--text.text--lighten-2 {\n  color: #4db6ac !important;\n  caret-color: #4db6ac !important;\n}\n.teal.lighten-1 {\n  background-color: #26a69a !important;\n  border-color: #26a69a !important;\n}\n.teal--text.text--lighten-1 {\n  color: #26a69a !important;\n  caret-color: #26a69a !important;\n}\n.teal.darken-1 {\n  background-color: #00897b !important;\n  border-color: #00897b !important;\n}\n.teal--text.text--darken-1 {\n  color: #00897b !important;\n  caret-color: #00897b !important;\n}\n.teal.darken-2 {\n  background-color: #00796b !important;\n  border-color: #00796b !important;\n}\n.teal--text.text--darken-2 {\n  color: #00796b !important;\n  caret-color: #00796b !important;\n}\n.teal.darken-3 {\n  background-color: #00695c !important;\n  border-color: #00695c !important;\n}\n.teal--text.text--darken-3 {\n  color: #00695c !important;\n  caret-color: #00695c !important;\n}\n.teal.darken-4 {\n  background-color: #004d40 !important;\n  border-color: #004d40 !important;\n}\n.teal--text.text--darken-4 {\n  color: #004d40 !important;\n  caret-color: #004d40 !important;\n}\n.teal.accent-1 {\n  background-color: #a7ffeb !important;\n  border-color: #a7ffeb !important;\n}\n.teal--text.text--accent-1 {\n  color: #a7ffeb !important;\n  caret-color: #a7ffeb !important;\n}\n.teal.accent-2 {\n  background-color: #64ffda !important;\n  border-color: #64ffda !important;\n}\n.teal--text.text--accent-2 {\n  color: #64ffda !important;\n  caret-color: #64ffda !important;\n}\n.teal.accent-3 {\n  background-color: #1de9b6 !important;\n  border-color: #1de9b6 !important;\n}\n.teal--text.text--accent-3 {\n  color: #1de9b6 !important;\n  caret-color: #1de9b6 !important;\n}\n.teal.accent-4 {\n  background-color: #00bfa5 !important;\n  border-color: #00bfa5 !important;\n}\n.teal--text.text--accent-4 {\n  color: #00bfa5 !important;\n  caret-color: #00bfa5 !important;\n}\n.green {\n  background-color: #4caf50 !important;\n  border-color: #4caf50 !important;\n}\n.green--text {\n  color: #4caf50 !important;\n  caret-color: #4caf50 !important;\n}\n.green.lighten-5 {\n  background-color: #e8f5e9 !important;\n  border-color: #e8f5e9 !important;\n}\n.green--text.text--lighten-5 {\n  color: #e8f5e9 !important;\n  caret-color: #e8f5e9 !important;\n}\n.green.lighten-4 {\n  background-color: #c8e6c9 !important;\n  border-color: #c8e6c9 !important;\n}\n.green--text.text--lighten-4 {\n  color: #c8e6c9 !important;\n  caret-color: #c8e6c9 !important;\n}\n.green.lighten-3 {\n  background-color: #a5d6a7 !important;\n  border-color: #a5d6a7 !important;\n}\n.green--text.text--lighten-3 {\n  color: #a5d6a7 !important;\n  caret-color: #a5d6a7 !important;\n}\n.green.lighten-2 {\n  background-color: #81c784 !important;\n  border-color: #81c784 !important;\n}\n.green--text.text--lighten-2 {\n  color: #81c784 !important;\n  caret-color: #81c784 !important;\n}\n.green.lighten-1 {\n  background-color: #66bb6a !important;\n  border-color: #66bb6a !important;\n}\n.green--text.text--lighten-1 {\n  color: #66bb6a !important;\n  caret-color: #66bb6a !important;\n}\n.green.darken-1 {\n  background-color: #43a047 !important;\n  border-color: #43a047 !important;\n}\n.green--text.text--darken-1 {\n  color: #43a047 !important;\n  caret-color: #43a047 !important;\n}\n.green.darken-2 {\n  background-color: #388e3c !important;\n  border-color: #388e3c !important;\n}\n.green--text.text--darken-2 {\n  color: #388e3c !important;\n  caret-color: #388e3c !important;\n}\n.green.darken-3 {\n  background-color: #2e7d32 !important;\n  border-color: #2e7d32 !important;\n}\n.green--text.text--darken-3 {\n  color: #2e7d32 !important;\n  caret-color: #2e7d32 !important;\n}\n.green.darken-4 {\n  background-color: #1b5e20 !important;\n  border-color: #1b5e20 !important;\n}\n.green--text.text--darken-4 {\n  color: #1b5e20 !important;\n  caret-color: #1b5e20 !important;\n}\n.green.accent-1 {\n  background-color: #b9f6ca !important;\n  border-color: #b9f6ca !important;\n}\n.green--text.text--accent-1 {\n  color: #b9f6ca !important;\n  caret-color: #b9f6ca !important;\n}\n.green.accent-2 {\n  background-color: #69f0ae !important;\n  border-color: #69f0ae !important;\n}\n.green--text.text--accent-2 {\n  color: #69f0ae !important;\n  caret-color: #69f0ae !important;\n}\n.green.accent-3 {\n  background-color: #00e676 !important;\n  border-color: #00e676 !important;\n}\n.green--text.text--accent-3 {\n  color: #00e676 !important;\n  caret-color: #00e676 !important;\n}\n.green.accent-4 {\n  background-color: #00c853 !important;\n  border-color: #00c853 !important;\n}\n.green--text.text--accent-4 {\n  color: #00c853 !important;\n  caret-color: #00c853 !important;\n}\n.light-green {\n  background-color: #8bc34a !important;\n  border-color: #8bc34a !important;\n}\n.light-green--text {\n  color: #8bc34a !important;\n  caret-color: #8bc34a !important;\n}\n.light-green.lighten-5 {\n  background-color: #f1f8e9 !important;\n  border-color: #f1f8e9 !important;\n}\n.light-green--text.text--lighten-5 {\n  color: #f1f8e9 !important;\n  caret-color: #f1f8e9 !important;\n}\n.light-green.lighten-4 {\n  background-color: #dcedc8 !important;\n  border-color: #dcedc8 !important;\n}\n.light-green--text.text--lighten-4 {\n  color: #dcedc8 !important;\n  caret-color: #dcedc8 !important;\n}\n.light-green.lighten-3 {\n  background-color: #c5e1a5 !important;\n  border-color: #c5e1a5 !important;\n}\n.light-green--text.text--lighten-3 {\n  color: #c5e1a5 !important;\n  caret-color: #c5e1a5 !important;\n}\n.light-green.lighten-2 {\n  background-color: #aed581 !important;\n  border-color: #aed581 !important;\n}\n.light-green--text.text--lighten-2 {\n  color: #aed581 !important;\n  caret-color: #aed581 !important;\n}\n.light-green.lighten-1 {\n  background-color: #9ccc65 !important;\n  border-color: #9ccc65 !important;\n}\n.light-green--text.text--lighten-1 {\n  color: #9ccc65 !important;\n  caret-color: #9ccc65 !important;\n}\n.light-green.darken-1 {\n  background-color: #7cb342 !important;\n  border-color: #7cb342 !important;\n}\n.light-green--text.text--darken-1 {\n  color: #7cb342 !important;\n  caret-color: #7cb342 !important;\n}\n.light-green.darken-2 {\n  background-color: #689f38 !important;\n  border-color: #689f38 !important;\n}\n.light-green--text.text--darken-2 {\n  color: #689f38 !important;\n  caret-color: #689f38 !important;\n}\n.light-green.darken-3 {\n  background-color: #558b2f !important;\n  border-color: #558b2f !important;\n}\n.light-green--text.text--darken-3 {\n  color: #558b2f !important;\n  caret-color: #558b2f !important;\n}\n.light-green.darken-4 {\n  background-color: #33691e !important;\n  border-color: #33691e !important;\n}\n.light-green--text.text--darken-4 {\n  color: #33691e !important;\n  caret-color: #33691e !important;\n}\n.light-green.accent-1 {\n  background-color: #ccff90 !important;\n  border-color: #ccff90 !important;\n}\n.light-green--text.text--accent-1 {\n  color: #ccff90 !important;\n  caret-color: #ccff90 !important;\n}\n.light-green.accent-2 {\n  background-color: #b2ff59 !important;\n  border-color: #b2ff59 !important;\n}\n.light-green--text.text--accent-2 {\n  color: #b2ff59 !important;\n  caret-color: #b2ff59 !important;\n}\n.light-green.accent-3 {\n  background-color: #76ff03 !important;\n  border-color: #76ff03 !important;\n}\n.light-green--text.text--accent-3 {\n  color: #76ff03 !important;\n  caret-color: #76ff03 !important;\n}\n.light-green.accent-4 {\n  background-color: #64dd17 !important;\n  border-color: #64dd17 !important;\n}\n.light-green--text.text--accent-4 {\n  color: #64dd17 !important;\n  caret-color: #64dd17 !important;\n}\n.lime {\n  background-color: #cddc39 !important;\n  border-color: #cddc39 !important;\n}\n.lime--text {\n  color: #cddc39 !important;\n  caret-color: #cddc39 !important;\n}\n.lime.lighten-5 {\n  background-color: #f9fbe7 !important;\n  border-color: #f9fbe7 !important;\n}\n.lime--text.text--lighten-5 {\n  color: #f9fbe7 !important;\n  caret-color: #f9fbe7 !important;\n}\n.lime.lighten-4 {\n  background-color: #f0f4c3 !important;\n  border-color: #f0f4c3 !important;\n}\n.lime--text.text--lighten-4 {\n  color: #f0f4c3 !important;\n  caret-color: #f0f4c3 !important;\n}\n.lime.lighten-3 {\n  background-color: #e6ee9c !important;\n  border-color: #e6ee9c !important;\n}\n.lime--text.text--lighten-3 {\n  color: #e6ee9c !important;\n  caret-color: #e6ee9c !important;\n}\n.lime.lighten-2 {\n  background-color: #dce775 !important;\n  border-color: #dce775 !important;\n}\n.lime--text.text--lighten-2 {\n  color: #dce775 !important;\n  caret-color: #dce775 !important;\n}\n.lime.lighten-1 {\n  background-color: #d4e157 !important;\n  border-color: #d4e157 !important;\n}\n.lime--text.text--lighten-1 {\n  color: #d4e157 !important;\n  caret-color: #d4e157 !important;\n}\n.lime.darken-1 {\n  background-color: #c0ca33 !important;\n  border-color: #c0ca33 !important;\n}\n.lime--text.text--darken-1 {\n  color: #c0ca33 !important;\n  caret-color: #c0ca33 !important;\n}\n.lime.darken-2 {\n  background-color: #afb42b !important;\n  border-color: #afb42b !important;\n}\n.lime--text.text--darken-2 {\n  color: #afb42b !important;\n  caret-color: #afb42b !important;\n}\n.lime.darken-3 {\n  background-color: #9e9d24 !important;\n  border-color: #9e9d24 !important;\n}\n.lime--text.text--darken-3 {\n  color: #9e9d24 !important;\n  caret-color: #9e9d24 !important;\n}\n.lime.darken-4 {\n  background-color: #827717 !important;\n  border-color: #827717 !important;\n}\n.lime--text.text--darken-4 {\n  color: #827717 !important;\n  caret-color: #827717 !important;\n}\n.lime.accent-1 {\n  background-color: #f4ff81 !important;\n  border-color: #f4ff81 !important;\n}\n.lime--text.text--accent-1 {\n  color: #f4ff81 !important;\n  caret-color: #f4ff81 !important;\n}\n.lime.accent-2 {\n  background-color: #eeff41 !important;\n  border-color: #eeff41 !important;\n}\n.lime--text.text--accent-2 {\n  color: #eeff41 !important;\n  caret-color: #eeff41 !important;\n}\n.lime.accent-3 {\n  background-color: #c6ff00 !important;\n  border-color: #c6ff00 !important;\n}\n.lime--text.text--accent-3 {\n  color: #c6ff00 !important;\n  caret-color: #c6ff00 !important;\n}\n.lime.accent-4 {\n  background-color: #aeea00 !important;\n  border-color: #aeea00 !important;\n}\n.lime--text.text--accent-4 {\n  color: #aeea00 !important;\n  caret-color: #aeea00 !important;\n}\n.yellow {\n  background-color: #ffeb3b !important;\n  border-color: #ffeb3b !important;\n}\n.yellow--text {\n  color: #ffeb3b !important;\n  caret-color: #ffeb3b !important;\n}\n.yellow.lighten-5 {\n  background-color: #fffde7 !important;\n  border-color: #fffde7 !important;\n}\n.yellow--text.text--lighten-5 {\n  color: #fffde7 !important;\n  caret-color: #fffde7 !important;\n}\n.yellow.lighten-4 {\n  background-color: #fff9c4 !important;\n  border-color: #fff9c4 !important;\n}\n.yellow--text.text--lighten-4 {\n  color: #fff9c4 !important;\n  caret-color: #fff9c4 !important;\n}\n.yellow.lighten-3 {\n  background-color: #fff59d !important;\n  border-color: #fff59d !important;\n}\n.yellow--text.text--lighten-3 {\n  color: #fff59d !important;\n  caret-color: #fff59d !important;\n}\n.yellow.lighten-2 {\n  background-color: #fff176 !important;\n  border-color: #fff176 !important;\n}\n.yellow--text.text--lighten-2 {\n  color: #fff176 !important;\n  caret-color: #fff176 !important;\n}\n.yellow.lighten-1 {\n  background-color: #ffee58 !important;\n  border-color: #ffee58 !important;\n}\n.yellow--text.text--lighten-1 {\n  color: #ffee58 !important;\n  caret-color: #ffee58 !important;\n}\n.yellow.darken-1 {\n  background-color: #fdd835 !important;\n  border-color: #fdd835 !important;\n}\n.yellow--text.text--darken-1 {\n  color: #fdd835 !important;\n  caret-color: #fdd835 !important;\n}\n.yellow.darken-2 {\n  background-color: #fbc02d !important;\n  border-color: #fbc02d !important;\n}\n.yellow--text.text--darken-2 {\n  color: #fbc02d !important;\n  caret-color: #fbc02d !important;\n}\n.yellow.darken-3 {\n  background-color: #f9a825 !important;\n  border-color: #f9a825 !important;\n}\n.yellow--text.text--darken-3 {\n  color: #f9a825 !important;\n  caret-color: #f9a825 !important;\n}\n.yellow.darken-4 {\n  background-color: #f57f17 !important;\n  border-color: #f57f17 !important;\n}\n.yellow--text.text--darken-4 {\n  color: #f57f17 !important;\n  caret-color: #f57f17 !important;\n}\n.yellow.accent-1 {\n  background-color: #ffff8d !important;\n  border-color: #ffff8d !important;\n}\n.yellow--text.text--accent-1 {\n  color: #ffff8d !important;\n  caret-color: #ffff8d !important;\n}\n.yellow.accent-2 {\n  background-color: #ff0 !important;\n  border-color: #ff0 !important;\n}\n.yellow--text.text--accent-2 {\n  color: #ff0 !important;\n  caret-color: #ff0 !important;\n}\n.yellow.accent-3 {\n  background-color: #ffea00 !important;\n  border-color: #ffea00 !important;\n}\n.yellow--text.text--accent-3 {\n  color: #ffea00 !important;\n  caret-color: #ffea00 !important;\n}\n.yellow.accent-4 {\n  background-color: #ffd600 !important;\n  border-color: #ffd600 !important;\n}\n.yellow--text.text--accent-4 {\n  color: #ffd600 !important;\n  caret-color: #ffd600 !important;\n}\n.amber {\n  background-color: #ffc107 !important;\n  border-color: #ffc107 !important;\n}\n.amber--text {\n  color: #ffc107 !important;\n  caret-color: #ffc107 !important;\n}\n.amber.lighten-5 {\n  background-color: #fff8e1 !important;\n  border-color: #fff8e1 !important;\n}\n.amber--text.text--lighten-5 {\n  color: #fff8e1 !important;\n  caret-color: #fff8e1 !important;\n}\n.amber.lighten-4 {\n  background-color: #ffecb3 !important;\n  border-color: #ffecb3 !important;\n}\n.amber--text.text--lighten-4 {\n  color: #ffecb3 !important;\n  caret-color: #ffecb3 !important;\n}\n.amber.lighten-3 {\n  background-color: #ffe082 !important;\n  border-color: #ffe082 !important;\n}\n.amber--text.text--lighten-3 {\n  color: #ffe082 !important;\n  caret-color: #ffe082 !important;\n}\n.amber.lighten-2 {\n  background-color: #ffd54f !important;\n  border-color: #ffd54f !important;\n}\n.amber--text.text--lighten-2 {\n  color: #ffd54f !important;\n  caret-color: #ffd54f !important;\n}\n.amber.lighten-1 {\n  background-color: #ffca28 !important;\n  border-color: #ffca28 !important;\n}\n.amber--text.text--lighten-1 {\n  color: #ffca28 !important;\n  caret-color: #ffca28 !important;\n}\n.amber.darken-1 {\n  background-color: #ffb300 !important;\n  border-color: #ffb300 !important;\n}\n.amber--text.text--darken-1 {\n  color: #ffb300 !important;\n  caret-color: #ffb300 !important;\n}\n.amber.darken-2 {\n  background-color: #ffa000 !important;\n  border-color: #ffa000 !important;\n}\n.amber--text.text--darken-2 {\n  color: #ffa000 !important;\n  caret-color: #ffa000 !important;\n}\n.amber.darken-3 {\n  background-color: #ff8f00 !important;\n  border-color: #ff8f00 !important;\n}\n.amber--text.text--darken-3 {\n  color: #ff8f00 !important;\n  caret-color: #ff8f00 !important;\n}\n.amber.darken-4 {\n  background-color: #ff6f00 !important;\n  border-color: #ff6f00 !important;\n}\n.amber--text.text--darken-4 {\n  color: #ff6f00 !important;\n  caret-color: #ff6f00 !important;\n}\n.amber.accent-1 {\n  background-color: #ffe57f !important;\n  border-color: #ffe57f !important;\n}\n.amber--text.text--accent-1 {\n  color: #ffe57f !important;\n  caret-color: #ffe57f !important;\n}\n.amber.accent-2 {\n  background-color: #ffd740 !important;\n  border-color: #ffd740 !important;\n}\n.amber--text.text--accent-2 {\n  color: #ffd740 !important;\n  caret-color: #ffd740 !important;\n}\n.amber.accent-3 {\n  background-color: #ffc400 !important;\n  border-color: #ffc400 !important;\n}\n.amber--text.text--accent-3 {\n  color: #ffc400 !important;\n  caret-color: #ffc400 !important;\n}\n.amber.accent-4 {\n  background-color: #ffab00 !important;\n  border-color: #ffab00 !important;\n}\n.amber--text.text--accent-4 {\n  color: #ffab00 !important;\n  caret-color: #ffab00 !important;\n}\n.orange {\n  background-color: #ff9800 !important;\n  border-color: #ff9800 !important;\n}\n.orange--text {\n  color: #ff9800 !important;\n  caret-color: #ff9800 !important;\n}\n.orange.lighten-5 {\n  background-color: #fff3e0 !important;\n  border-color: #fff3e0 !important;\n}\n.orange--text.text--lighten-5 {\n  color: #fff3e0 !important;\n  caret-color: #fff3e0 !important;\n}\n.orange.lighten-4 {\n  background-color: #ffe0b2 !important;\n  border-color: #ffe0b2 !important;\n}\n.orange--text.text--lighten-4 {\n  color: #ffe0b2 !important;\n  caret-color: #ffe0b2 !important;\n}\n.orange.lighten-3 {\n  background-color: #ffcc80 !important;\n  border-color: #ffcc80 !important;\n}\n.orange--text.text--lighten-3 {\n  color: #ffcc80 !important;\n  caret-color: #ffcc80 !important;\n}\n.orange.lighten-2 {\n  background-color: #ffb74d !important;\n  border-color: #ffb74d !important;\n}\n.orange--text.text--lighten-2 {\n  color: #ffb74d !important;\n  caret-color: #ffb74d !important;\n}\n.orange.lighten-1 {\n  background-color: #ffa726 !important;\n  border-color: #ffa726 !important;\n}\n.orange--text.text--lighten-1 {\n  color: #ffa726 !important;\n  caret-color: #ffa726 !important;\n}\n.orange.darken-1 {\n  background-color: #fb8c00 !important;\n  border-color: #fb8c00 !important;\n}\n.orange--text.text--darken-1 {\n  color: #fb8c00 !important;\n  caret-color: #fb8c00 !important;\n}\n.orange.darken-2 {\n  background-color: #f57c00 !important;\n  border-color: #f57c00 !important;\n}\n.orange--text.text--darken-2 {\n  color: #f57c00 !important;\n  caret-color: #f57c00 !important;\n}\n.orange.darken-3 {\n  background-color: #ef6c00 !important;\n  border-color: #ef6c00 !important;\n}\n.orange--text.text--darken-3 {\n  color: #ef6c00 !important;\n  caret-color: #ef6c00 !important;\n}\n.orange.darken-4 {\n  background-color: #e65100 !important;\n  border-color: #e65100 !important;\n}\n.orange--text.text--darken-4 {\n  color: #e65100 !important;\n  caret-color: #e65100 !important;\n}\n.orange.accent-1 {\n  background-color: #ffd180 !important;\n  border-color: #ffd180 !important;\n}\n.orange--text.text--accent-1 {\n  color: #ffd180 !important;\n  caret-color: #ffd180 !important;\n}\n.orange.accent-2 {\n  background-color: #ffab40 !important;\n  border-color: #ffab40 !important;\n}\n.orange--text.text--accent-2 {\n  color: #ffab40 !important;\n  caret-color: #ffab40 !important;\n}\n.orange.accent-3 {\n  background-color: #ff9100 !important;\n  border-color: #ff9100 !important;\n}\n.orange--text.text--accent-3 {\n  color: #ff9100 !important;\n  caret-color: #ff9100 !important;\n}\n.orange.accent-4 {\n  background-color: #ff6d00 !important;\n  border-color: #ff6d00 !important;\n}\n.orange--text.text--accent-4 {\n  color: #ff6d00 !important;\n  caret-color: #ff6d00 !important;\n}\n.deep-orange {\n  background-color: #ff5722 !important;\n  border-color: #ff5722 !important;\n}\n.deep-orange--text {\n  color: #ff5722 !important;\n  caret-color: #ff5722 !important;\n}\n.deep-orange.lighten-5 {\n  background-color: #fbe9e7 !important;\n  border-color: #fbe9e7 !important;\n}\n.deep-orange--text.text--lighten-5 {\n  color: #fbe9e7 !important;\n  caret-color: #fbe9e7 !important;\n}\n.deep-orange.lighten-4 {\n  background-color: #ffccbc !important;\n  border-color: #ffccbc !important;\n}\n.deep-orange--text.text--lighten-4 {\n  color: #ffccbc !important;\n  caret-color: #ffccbc !important;\n}\n.deep-orange.lighten-3 {\n  background-color: #ffab91 !important;\n  border-color: #ffab91 !important;\n}\n.deep-orange--text.text--lighten-3 {\n  color: #ffab91 !important;\n  caret-color: #ffab91 !important;\n}\n.deep-orange.lighten-2 {\n  background-color: #ff8a65 !important;\n  border-color: #ff8a65 !important;\n}\n.deep-orange--text.text--lighten-2 {\n  color: #ff8a65 !important;\n  caret-color: #ff8a65 !important;\n}\n.deep-orange.lighten-1 {\n  background-color: #ff7043 !important;\n  border-color: #ff7043 !important;\n}\n.deep-orange--text.text--lighten-1 {\n  color: #ff7043 !important;\n  caret-color: #ff7043 !important;\n}\n.deep-orange.darken-1 {\n  background-color: #f4511e !important;\n  border-color: #f4511e !important;\n}\n.deep-orange--text.text--darken-1 {\n  color: #f4511e !important;\n  caret-color: #f4511e !important;\n}\n.deep-orange.darken-2 {\n  background-color: #e64a19 !important;\n  border-color: #e64a19 !important;\n}\n.deep-orange--text.text--darken-2 {\n  color: #e64a19 !important;\n  caret-color: #e64a19 !important;\n}\n.deep-orange.darken-3 {\n  background-color: #d84315 !important;\n  border-color: #d84315 !important;\n}\n.deep-orange--text.text--darken-3 {\n  color: #d84315 !important;\n  caret-color: #d84315 !important;\n}\n.deep-orange.darken-4 {\n  background-color: #bf360c !important;\n  border-color: #bf360c !important;\n}\n.deep-orange--text.text--darken-4 {\n  color: #bf360c !important;\n  caret-color: #bf360c !important;\n}\n.deep-orange.accent-1 {\n  background-color: #ff9e80 !important;\n  border-color: #ff9e80 !important;\n}\n.deep-orange--text.text--accent-1 {\n  color: #ff9e80 !important;\n  caret-color: #ff9e80 !important;\n}\n.deep-orange.accent-2 {\n  background-color: #ff6e40 !important;\n  border-color: #ff6e40 !important;\n}\n.deep-orange--text.text--accent-2 {\n  color: #ff6e40 !important;\n  caret-color: #ff6e40 !important;\n}\n.deep-orange.accent-3 {\n  background-color: #ff3d00 !important;\n  border-color: #ff3d00 !important;\n}\n.deep-orange--text.text--accent-3 {\n  color: #ff3d00 !important;\n  caret-color: #ff3d00 !important;\n}\n.deep-orange.accent-4 {\n  background-color: #dd2c00 !important;\n  border-color: #dd2c00 !important;\n}\n.deep-orange--text.text--accent-4 {\n  color: #dd2c00 !important;\n  caret-color: #dd2c00 !important;\n}\n.brown {\n  background-color: #795548 !important;\n  border-color: #795548 !important;\n}\n.brown--text {\n  color: #795548 !important;\n  caret-color: #795548 !important;\n}\n.brown.lighten-5 {\n  background-color: #efebe9 !important;\n  border-color: #efebe9 !important;\n}\n.brown--text.text--lighten-5 {\n  color: #efebe9 !important;\n  caret-color: #efebe9 !important;\n}\n.brown.lighten-4 {\n  background-color: #d7ccc8 !important;\n  border-color: #d7ccc8 !important;\n}\n.brown--text.text--lighten-4 {\n  color: #d7ccc8 !important;\n  caret-color: #d7ccc8 !important;\n}\n.brown.lighten-3 {\n  background-color: #bcaaa4 !important;\n  border-color: #bcaaa4 !important;\n}\n.brown--text.text--lighten-3 {\n  color: #bcaaa4 !important;\n  caret-color: #bcaaa4 !important;\n}\n.brown.lighten-2 {\n  background-color: #a1887f !important;\n  border-color: #a1887f !important;\n}\n.brown--text.text--lighten-2 {\n  color: #a1887f !important;\n  caret-color: #a1887f !important;\n}\n.brown.lighten-1 {\n  background-color: #8d6e63 !important;\n  border-color: #8d6e63 !important;\n}\n.brown--text.text--lighten-1 {\n  color: #8d6e63 !important;\n  caret-color: #8d6e63 !important;\n}\n.brown.darken-1 {\n  background-color: #6d4c41 !important;\n  border-color: #6d4c41 !important;\n}\n.brown--text.text--darken-1 {\n  color: #6d4c41 !important;\n  caret-color: #6d4c41 !important;\n}\n.brown.darken-2 {\n  background-color: #5d4037 !important;\n  border-color: #5d4037 !important;\n}\n.brown--text.text--darken-2 {\n  color: #5d4037 !important;\n  caret-color: #5d4037 !important;\n}\n.brown.darken-3 {\n  background-color: #4e342e !important;\n  border-color: #4e342e !important;\n}\n.brown--text.text--darken-3 {\n  color: #4e342e !important;\n  caret-color: #4e342e !important;\n}\n.brown.darken-4 {\n  background-color: #3e2723 !important;\n  border-color: #3e2723 !important;\n}\n.brown--text.text--darken-4 {\n  color: #3e2723 !important;\n  caret-color: #3e2723 !important;\n}\n.blue-grey {\n  background-color: #607d8b !important;\n  border-color: #607d8b !important;\n}\n.blue-grey--text {\n  color: #607d8b !important;\n  caret-color: #607d8b !important;\n}\n.blue-grey.lighten-5 {\n  background-color: #eceff1 !important;\n  border-color: #eceff1 !important;\n}\n.blue-grey--text.text--lighten-5 {\n  color: #eceff1 !important;\n  caret-color: #eceff1 !important;\n}\n.blue-grey.lighten-4 {\n  background-color: #cfd8dc !important;\n  border-color: #cfd8dc !important;\n}\n.blue-grey--text.text--lighten-4 {\n  color: #cfd8dc !important;\n  caret-color: #cfd8dc !important;\n}\n.blue-grey.lighten-3 {\n  background-color: #b0bec5 !important;\n  border-color: #b0bec5 !important;\n}\n.blue-grey--text.text--lighten-3 {\n  color: #b0bec5 !important;\n  caret-color: #b0bec5 !important;\n}\n.blue-grey.lighten-2 {\n  background-color: #90a4ae !important;\n  border-color: #90a4ae !important;\n}\n.blue-grey--text.text--lighten-2 {\n  color: #90a4ae !important;\n  caret-color: #90a4ae !important;\n}\n.blue-grey.lighten-1 {\n  background-color: #78909c !important;\n  border-color: #78909c !important;\n}\n.blue-grey--text.text--lighten-1 {\n  color: #78909c !important;\n  caret-color: #78909c !important;\n}\n.blue-grey.darken-1 {\n  background-color: #546e7a !important;\n  border-color: #546e7a !important;\n}\n.blue-grey--text.text--darken-1 {\n  color: #546e7a !important;\n  caret-color: #546e7a !important;\n}\n.blue-grey.darken-2 {\n  background-color: #455a64 !important;\n  border-color: #455a64 !important;\n}\n.blue-grey--text.text--darken-2 {\n  color: #455a64 !important;\n  caret-color: #455a64 !important;\n}\n.blue-grey.darken-3 {\n  background-color: #37474f !important;\n  border-color: #37474f !important;\n}\n.blue-grey--text.text--darken-3 {\n  color: #37474f !important;\n  caret-color: #37474f !important;\n}\n.blue-grey.darken-4 {\n  background-color: #263238 !important;\n  border-color: #263238 !important;\n}\n.blue-grey--text.text--darken-4 {\n  color: #263238 !important;\n  caret-color: #263238 !important;\n}\n.grey {\n  background-color: #9e9e9e !important;\n  border-color: #9e9e9e !important;\n}\n.grey--text {\n  color: #9e9e9e !important;\n  caret-color: #9e9e9e !important;\n}\n.grey.lighten-5 {\n  background-color: #fafafa !important;\n  border-color: #fafafa !important;\n}\n.grey--text.text--lighten-5 {\n  color: #fafafa !important;\n  caret-color: #fafafa !important;\n}\n.grey.lighten-4 {\n  background-color: #f5f5f5 !important;\n  border-color: #f5f5f5 !important;\n}\n.grey--text.text--lighten-4 {\n  color: #f5f5f5 !important;\n  caret-color: #f5f5f5 !important;\n}\n.grey.lighten-3 {\n  background-color: #eee !important;\n  border-color: #eee !important;\n}\n.grey--text.text--lighten-3 {\n  color: #eee !important;\n  caret-color: #eee !important;\n}\n.grey.lighten-2 {\n  background-color: #e0e0e0 !important;\n  border-color: #e0e0e0 !important;\n}\n.grey--text.text--lighten-2 {\n  color: #e0e0e0 !important;\n  caret-color: #e0e0e0 !important;\n}\n.grey.lighten-1 {\n  background-color: #bdbdbd !important;\n  border-color: #bdbdbd !important;\n}\n.grey--text.text--lighten-1 {\n  color: #bdbdbd !important;\n  caret-color: #bdbdbd !important;\n}\n.grey.darken-1 {\n  background-color: #757575 !important;\n  border-color: #757575 !important;\n}\n.grey--text.text--darken-1 {\n  color: #757575 !important;\n  caret-color: #757575 !important;\n}\n.grey.darken-2 {\n  background-color: #616161 !important;\n  border-color: #616161 !important;\n}\n.grey--text.text--darken-2 {\n  color: #616161 !important;\n  caret-color: #616161 !important;\n}\n.grey.darken-3 {\n  background-color: #424242 !important;\n  border-color: #424242 !important;\n}\n.grey--text.text--darken-3 {\n  color: #424242 !important;\n  caret-color: #424242 !important;\n}\n.grey.darken-4 {\n  background-color: #212121 !important;\n  border-color: #212121 !important;\n}\n.grey--text.text--darken-4 {\n  color: #212121 !important;\n  caret-color: #212121 !important;\n}\n.shades.black {\n  background-color: #000 !important;\n  border-color: #000 !important;\n}\n.shades--text.text--black {\n  color: #000 !important;\n  caret-color: #000 !important;\n}\n.shades.white {\n  background-color: #fff !important;\n  border-color: #fff !important;\n}\n.shades--text.text--white {\n  color: #fff !important;\n  caret-color: #fff !important;\n}\n.shades.transparent {\n  background-color: transparent !important;\n  border-color: transparent !important;\n}\n.shades--text.text--transparent {\n  color: transparent !important;\n  caret-color: transparent !important;\n}\n.elevation-0 {\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-1 {\n  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-2 {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-3 {\n  box-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-4 {\n  box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-5 {\n  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-6 {\n  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-7 {\n  box-shadow: 0px 4px 5px -2px rgba(0,0,0,0.2), 0px 7px 10px 1px rgba(0,0,0,0.14), 0px 2px 16px 1px rgba(0,0,0,0.12) !important;\n}\n.elevation-8 {\n  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12) !important;\n}\n.elevation-9 {\n  box-shadow: 0px 5px 6px -3px rgba(0,0,0,0.2), 0px 9px 12px 1px rgba(0,0,0,0.14), 0px 3px 16px 2px rgba(0,0,0,0.12) !important;\n}\n.elevation-10 {\n  box-shadow: 0px 6px 6px -3px rgba(0,0,0,0.2), 0px 10px 14px 1px rgba(0,0,0,0.14), 0px 4px 18px 3px rgba(0,0,0,0.12) !important;\n}\n.elevation-11 {\n  box-shadow: 0px 6px 7px -4px rgba(0,0,0,0.2), 0px 11px 15px 1px rgba(0,0,0,0.14), 0px 4px 20px 3px rgba(0,0,0,0.12) !important;\n}\n.elevation-12 {\n  box-shadow: 0px 7px 8px -4px rgba(0,0,0,0.2), 0px 12px 17px 2px rgba(0,0,0,0.14), 0px 5px 22px 4px rgba(0,0,0,0.12) !important;\n}\n.elevation-13 {\n  box-shadow: 0px 7px 8px -4px rgba(0,0,0,0.2), 0px 13px 19px 2px rgba(0,0,0,0.14), 0px 5px 24px 4px rgba(0,0,0,0.12) !important;\n}\n.elevation-14 {\n  box-shadow: 0px 7px 9px -4px rgba(0,0,0,0.2), 0px 14px 21px 2px rgba(0,0,0,0.14), 0px 5px 26px 4px rgba(0,0,0,0.12) !important;\n}\n.elevation-15 {\n  box-shadow: 0px 8px 9px -5px rgba(0,0,0,0.2), 0px 15px 22px 2px rgba(0,0,0,0.14), 0px 6px 28px 5px rgba(0,0,0,0.12) !important;\n}\n.elevation-16 {\n  box-shadow: 0px 8px 10px -5px rgba(0,0,0,0.2), 0px 16px 24px 2px rgba(0,0,0,0.14), 0px 6px 30px 5px rgba(0,0,0,0.12) !important;\n}\n.elevation-17 {\n  box-shadow: 0px 8px 11px -5px rgba(0,0,0,0.2), 0px 17px 26px 2px rgba(0,0,0,0.14), 0px 6px 32px 5px rgba(0,0,0,0.12) !important;\n}\n.elevation-18 {\n  box-shadow: 0px 9px 11px -5px rgba(0,0,0,0.2), 0px 18px 28px 2px rgba(0,0,0,0.14), 0px 7px 34px 6px rgba(0,0,0,0.12) !important;\n}\n.elevation-19 {\n  box-shadow: 0px 9px 12px -6px rgba(0,0,0,0.2), 0px 19px 29px 2px rgba(0,0,0,0.14), 0px 7px 36px 6px rgba(0,0,0,0.12) !important;\n}\n.elevation-20 {\n  box-shadow: 0px 10px 13px -6px rgba(0,0,0,0.2), 0px 20px 31px 3px rgba(0,0,0,0.14), 0px 8px 38px 7px rgba(0,0,0,0.12) !important;\n}\n.elevation-21 {\n  box-shadow: 0px 10px 13px -6px rgba(0,0,0,0.2), 0px 21px 33px 3px rgba(0,0,0,0.14), 0px 8px 40px 7px rgba(0,0,0,0.12) !important;\n}\n.elevation-22 {\n  box-shadow: 0px 10px 14px -6px rgba(0,0,0,0.2), 0px 22px 35px 3px rgba(0,0,0,0.14), 0px 8px 42px 7px rgba(0,0,0,0.12) !important;\n}\n.elevation-23 {\n  box-shadow: 0px 11px 14px -7px rgba(0,0,0,0.2), 0px 23px 36px 3px rgba(0,0,0,0.14), 0px 9px 44px 8px rgba(0,0,0,0.12) !important;\n}\n.elevation-24 {\n  box-shadow: 0px 11px 15px -7px rgba(0,0,0,0.2), 0px 24px 38px 3px rgba(0,0,0,0.14), 0px 9px 46px 8px rgba(0,0,0,0.12) !important;\n}\nhtml {\n  box-sizing: border-box;\n  overflow-y: scroll; /* All browsers without overlaying scrollbars */\n  -webkit-text-size-adjust: 100%; /* iOS 8+ */\n}\n*,\n::before,\n::after {\n  box-sizing: inherit;\n}\n::before,\n::after {\n  text-decoration: inherit; /* Inherit text-decoration and vertical align to ::before and ::after pseudo elements */\n  vertical-align: inherit;\n}\n* {\n  background-repeat: no-repeat; /* Set `background-repeat: no-repeat` to all elements */\n  padding: 0; /* Reset `padding` and `margin` of all elements */\n  margin: 0;\n}\naudio:not([controls]) {\n  display: none;\n  height: 0;\n}\nhr {\n  overflow: visible; /* Show the overflow in Edge and IE */\n}\narticle,\naside,\ndetails,\nfigcaption,\nfigure,\nfooter,\nheader,\nmain,\nmenu,\nnav,\nsection,\nsummary {\n  display: block;\n}\nsummary {\n  display: list-item; /* Add the correct display in all browsers */\n}\nsmall {\n  font-size: 80%; /* Set font-size to 80% in `small` elements */\n}\n[hidden],\ntemplate {\n  display: none; /* Add the correct display in IE */\n}\nabbr[title] {\n  border-bottom: 1px dotted; /* Add a bordered underline effect in all browsers */\n  text-decoration: none; /* Remove text decoration in Firefox 40+ */\n}\na {\n  background-color: transparent; /* Remove the gray background on active links in IE 10 */\n  -webkit-text-decoration-skip: objects; /* Remove gaps in links underline in iOS 8+ and Safari 8+ */\n}\na:active,\na:hover {\n  outline-width: 0; /* Remove the outline when hovering in all browsers */\n}\ncode,\nkbd,\npre,\nsamp {\n  font-family: monospace, monospace; /* Specify the font family of code elements */\n}\nb,\nstrong {\n  font-weight: bolder; /* Correct style set to `bold` in Edge 12+, Safari 6.2+, and Chrome 18+ */\n}\ndfn {\n  font-style: italic; /* Address styling not present in Safari and Chrome */\n}\nmark {\n  background-color: #ff0;\n  color: #000;\n}\nsub,\nsup {\n  font-size: 75%;\n  line-height: 0;\n  position: relative;\n  vertical-align: baseline;\n}\nsub {\n  bottom: -0.25em;\n}\nsup {\n  top: -0.5em;\n}\ninput {\n  border-radius: 0;\n}\nbutton,\n[type=\"button\"],\n[type=\"reset\"],\n[type=\"submit\"],\n[role=\"button\"] {\n  cursor: pointer;\n}\n[disabled] {\n  cursor: default;\n}\n[type=\"number\"] {\n  width: auto; /* Firefox 36+ */\n}\n[type=\"search\"] {\n  -webkit-appearance: textfield; /* Safari 8+ */\n}\n[type=\"search\"]::-webkit-search-cancel-button,\n[type=\"search\"]::-webkit-search-decoration {\n  -webkit-appearance: none; /* Safari 8 */\n}\ntextarea {\n  overflow: auto; /* Internet Explorer 11+ */\n  resize: vertical; /* Specify textarea resizability */\n}\nbutton,\ninput,\noptgroup,\nselect,\ntextarea {\n  font: inherit; /* Specify font inheritance of form elements */\n}\noptgroup {\n  font-weight: bold; /* Restore the font weight unset by the previous rule. */\n}\nbutton {\n  overflow: visible; /* Address `overflow` set to `hidden` in IE 8/9/10/11 */\n}\nbutton::-moz-focus-inner,\n[type=\"button\"]::-moz-focus-inner,\n[type=\"reset\"]::-moz-focus-inner,\n[type=\"submit\"]::-moz-focus-inner {\n  border-style: 0;\n  padding: 0;\n}\nbutton:-moz-focusring,\n[type=\"button\"]::-moz-focus-inner,\n[type=\"reset\"]::-moz-focus-inner,\n[type=\"submit\"]::-moz-focus-inner {\n  outline: 0;\n  border: 0;\n}\nbutton,\nhtml [type=\"button\"],\n[type=\"reset\"],\n[type=\"submit\"] {\n  -webkit-appearance: button; /* Correct the inability to style clickable types in iOS */\n}\nbutton,\nselect {\n  text-transform: none; /* Firefox 40+, Internet Explorer 11- */\n}\nbutton,\ninput,\nselect,\ntextarea {\n  background-color: transparent;\n  border-style: none;\n  color: inherit;\n}\nselect {\n  -moz-appearance: none; /* Firefox 36+ */\n  -webkit-appearance: none; /* Chrome 41+ */\n}\nselect::-ms-expand {\n  display: none; /* Internet Explorer 11+ */\n}\nselect::-ms-value {\n  color: currentColor; /* Internet Explorer 11+ */\n}\nlegend {\n  border: 0; /* Correct `color` not being inherited in IE 8/9/10/11 */\n  color: inherit; /* Correct the color inheritance from `fieldset` elements in IE */\n  display: table; /* Correct the text wrapping in Edge and IE */\n  max-width: 100%; /* Correct the text wrapping in Edge and IE */\n  white-space: normal; /* Correct the text wrapping in Edge and IE */\n}\n::-webkit-file-upload-button {\n  -webkit-appearance: button; /* Correct the inability to style clickable types in iOS and Safari */\n  font: inherit; /* Change font properties to `inherit` in Chrome and Safari */\n}\n[type=\"search\"] {\n  -webkit-appearance: textfield; /* Correct the odd appearance in Chrome and Safari */\n  outline-offset: -2px; /* Correct the outline style in Safari */\n}\nimg {\n  border-style: none; /* Remove border when inside `a` element in IE 8/9/10 */\n}\nprogress {\n  vertical-align: baseline;\n}\nsvg:not(:root) {\n  overflow: hidden; /* Internet Explorer 11- */\n}\naudio,\ncanvas,\nprogress,\nvideo {\n  display: inline-block; /* Internet Explorer 11+, Windows Phone 8.1+ */\n}\n[aria-busy=\"true\"] {\n  cursor: progress;\n}\n[aria-controls] {\n  cursor: pointer;\n}\n[aria-disabled] {\n  cursor: default;\n}\n::selection {\n  background-color: #b3d4fc; /* Required when declaring ::selection */\n  color: #000;\n  text-shadow: none;\n}\n.bottom-sheet-transition-enter {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.bottom-sheet-transition-leave-to {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.carousel-transition-enter {\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.carousel-transition-leave,\n.carousel-transition-leave-to {\n  position: absolute;\n  top: 0;\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.carousel-reverse-transition-enter {\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.carousel-reverse-transition-leave,\n.carousel-reverse-transition-leave-to {\n  position: absolute;\n  top: 0;\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.dialog-transition-enter,\n.dialog-transition-leave-to {\n  -webkit-transform: scale(0.5);\n          transform: scale(0.5);\n  opacity: 0;\n}\n.dialog-transition-enter-to,\n.dialog-transition-leave {\n  opacity: 1;\n}\n.dialog-bottom-transition-enter,\n.dialog-bottom-transition-leave-to {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.picker-transition-enter-active,\n.picker-reverse-transition-enter-active,\n.picker-transition-leave-active,\n.picker-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0, 0, 0.2, 1);\n}\n.picker-transition-enter,\n.picker-reverse-transition-enter,\n.picker-transition-leave-to,\n.picker-reverse-transition-leave-to {\n  opacity: 0;\n}\n.picker-transition-leave,\n.picker-reverse-transition-leave,\n.picker-transition-leave-active,\n.picker-reverse-transition-leave-active,\n.picker-transition-leave-to,\n.picker-reverse-transition-leave-to {\n  position: absolute !important;\n}\n.picker-transition-enter {\n  -webkit-transform: translate(0, 100%);\n          transform: translate(0, 100%);\n}\n.picker-transition-leave-to {\n  -webkit-transform: translate(0, -100%);\n          transform: translate(0, -100%);\n}\n.picker-reverse-transition-enter {\n  -webkit-transform: translate(0, -100%);\n          transform: translate(0, -100%);\n}\n.picker-reverse-transition-leave-to {\n  -webkit-transform: translate(0, 100%);\n          transform: translate(0, 100%);\n}\n.picker-title-transition-enter-to,\n.picker-title-transition-leave {\n  -webkit-transform: translate(0, 0);\n          transform: translate(0, 0);\n}\n.picker-title-transition-enter {\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.picker-title-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.picker-title-transition-leave,\n.picker-title-transition-leave-to,\n.picker-title-transition-leave-active {\n  position: absolute !important;\n}\n.tab-transition-enter {\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.tab-transition-leave,\n.tab-transition-leave-active {\n  position: absolute;\n  top: 0;\n}\n.tab-transition-leave-to {\n  position: absolute;\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.tab-reverse-transition-enter {\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.tab-reverse-transition-leave,\n.tab-reverse-transition-leave-to {\n  top: 0;\n  position: absolute;\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.expand-transition-enter-active,\n.expand-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.expand-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.expand-x-transition-enter-active,\n.expand-x-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.expand-x-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scale-transition-enter-active,\n.scale-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scale-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scale-transition-enter,\n.scale-transition-leave,\n.scale-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: scale(0);\n          transform: scale(0);\n}\n.message-transition-enter-active,\n.message-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.message-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.message-transition-enter,\n.message-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.message-transition-leave,\n.message-transition-leave-active {\n  position: absolute;\n}\n.slide-y-transition-enter-active,\n.slide-y-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.slide-y-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.slide-y-transition-enter,\n.slide-y-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.slide-y-reverse-transition-enter-active,\n.slide-y-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.slide-y-reverse-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.slide-y-reverse-transition-enter,\n.slide-y-reverse-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateY(15px);\n          transform: translateY(15px);\n}\n.scroll-y-transition-enter-active,\n.scroll-y-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scroll-y-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scroll-y-transition-enter,\n.scroll-y-transition-leave-to {\n  opacity: 0;\n}\n.scroll-y-transition-enter {\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.scroll-y-transition-leave-to {\n  -webkit-transform: translateY(15px);\n          transform: translateY(15px);\n}\n.scroll-y-reverse-transition-enter-active,\n.scroll-y-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scroll-y-reverse-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scroll-y-reverse-transition-enter,\n.scroll-y-reverse-transition-leave-to {\n  opacity: 0;\n}\n.scroll-y-reverse-transition-enter {\n  -webkit-transform: translateY(15px);\n          transform: translateY(15px);\n}\n.scroll-y-reverse-transition-leave-to {\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.scroll-x-transition-enter-active,\n.scroll-x-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scroll-x-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scroll-x-transition-enter,\n.scroll-x-transition-leave-to {\n  opacity: 0;\n}\n.scroll-x-transition-enter {\n  -webkit-transform: translateX(-15px);\n          transform: translateX(-15px);\n}\n.scroll-x-transition-leave-to {\n  -webkit-transform: translateX(15px);\n          transform: translateX(15px);\n}\n.scroll-x-reverse-transition-enter-active,\n.scroll-x-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scroll-x-reverse-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scroll-x-reverse-transition-enter,\n.scroll-x-reverse-transition-leave-to {\n  opacity: 0;\n}\n.scroll-x-reverse-transition-enter {\n  -webkit-transform: translateX(15px);\n          transform: translateX(15px);\n}\n.scroll-x-reverse-transition-leave-to {\n  -webkit-transform: translateX(-15px);\n          transform: translateX(-15px);\n}\n.slide-x-transition-enter-active,\n.slide-x-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.slide-x-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.slide-x-transition-enter,\n.slide-x-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateX(-15px);\n          transform: translateX(-15px);\n}\n.slide-x-reverse-transition-enter-active,\n.slide-x-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.slide-x-reverse-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.slide-x-reverse-transition-enter,\n.slide-x-reverse-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateX(15px);\n          transform: translateX(15px);\n}\n.fade-transition-enter-active,\n.fade-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.fade-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.fade-transition-enter,\n.fade-transition-leave-to {\n  opacity: 0;\n}\n.fab-transition-enter-active,\n.fab-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.fab-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.fab-transition-enter,\n.fab-transition-leave-to {\n  -webkit-transform: scale(0) rotate(-45deg);\n          transform: scale(0) rotate(-45deg);\n}\n.blockquote {\n  padding: 16px 0 16px 24px;\n  font-size: 18px;\n  font-weight: 300;\n}\ncode,\nkbd {\n  display: inline-block;\n  border-radius: 3px;\n  white-space: pre-wrap;\n  font-size: 85%;\n  font-weight: 900;\n}\ncode:after,\nkbd:after,\ncode:before,\nkbd:before {\n  content: \"\\A0\";\n  letter-spacing: -1px;\n}\ncode {\n  background-color: #f5f5f5;\n  color: #bd4147;\n  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);\n}\nkbd {\n  background: #616161;\n  color: #fff;\n}\nhtml {\n  font-size: 14px;\n  overflow-x: hidden;\n  text-rendering: optimizeLegibility;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n  -webkit-tap-highlight-color: rgba(0,0,0,0);\n}\n.application {\n  font-family: 'Roboto', sans-serif;\n  line-height: 1.5;\n}\n::-ms-clear,\n::-ms-reveal {\n  display: none;\n}\nul,\nol {\n  padding-left: 24px;\n}\n.display-4 {\n  font-size: 112px !important;\n  font-weight: 300;\n  line-height: 1 !important;\n  letter-spacing: -0.04em !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.display-3 {\n  font-size: 56px !important;\n  font-weight: 400;\n  line-height: 1.35 !important;\n  letter-spacing: -0.02em !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.display-2 {\n  font-size: 45px !important;\n  font-weight: 400;\n  line-height: 48px !important;\n  letter-spacing: normal !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.display-1 {\n  font-size: 34px !important;\n  font-weight: 400;\n  line-height: 40px !important;\n  letter-spacing: normal !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.headline {\n  font-size: 24px !important;\n  font-weight: 400;\n  line-height: 32px !important;\n  letter-spacing: normal !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.title {\n  font-size: 20px !important;\n  font-weight: 500;\n  line-height: 1 !important;\n  letter-spacing: 0.02em !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.subheading {\n  font-size: 16px !important;\n  font-weight: 400;\n}\n.body-2 {\n  font-size: 14px !important;\n  font-weight: 500;\n}\n.body-1 {\n  font-size: 14px !important;\n  font-weight: 400;\n}\n.caption {\n  font-size: 12px !important;\n  font-weight: 400;\n}\np {\n  margin-bottom: 16px;\n}\n.overflow-hidden {\n  overflow: hidden;\n}\n.overflow-x-hidden {\n  overflow-x: hidden;\n}\n.overflow-y-hidden {\n  overflow-y: hidden;\n}\n.right {\n  float: right !important;\n}\n.left {\n  float: left !important;\n}\n.ma-auto {\n  margin-top: auto !important;\n  margin-right: auto !important;\n  margin-bottom: auto !important;\n  margin-left: auto !important;\n}\n.my-auto {\n  margin-top: auto !important;\n  margin-bottom: auto !important;\n}\n.mx-auto {\n  margin-left: auto !important;\n  margin-right: auto !important;\n}\n.mt-auto {\n  margin-top: auto !important;\n}\n.mr-auto {\n  margin-right: auto !important;\n}\n.mb-auto {\n  margin-bottom: auto !important;\n}\n.ml-auto {\n  margin-left: auto !important;\n}\n.ma-0 {\n  margin: 0 0 !important;\n}\n.my-0 {\n  margin-top: 0 !important;\n  margin-bottom: 0 !important;\n}\n.mx-0 {\n  margin-left: 0 !important;\n  margin-right: 0 !important;\n}\n.mt-0 {\n  margin-top: 0 !important;\n}\n.mr-0 {\n  margin-right: 0 !important;\n}\n.mb-0 {\n  margin-bottom: 0 !important;\n}\n.ml-0 {\n  margin-left: 0 !important;\n}\n.pa-0 {\n  padding: 0 0 !important;\n}\n.py-0 {\n  padding-top: 0 !important;\n  padding-bottom: 0 !important;\n}\n.px-0 {\n  padding-left: 0 !important;\n  padding-right: 0 !important;\n}\n.pt-0 {\n  padding-top: 0 !important;\n}\n.pr-0 {\n  padding-right: 0 !important;\n}\n.pb-0 {\n  padding-bottom: 0 !important;\n}\n.pl-0 {\n  padding-left: 0 !important;\n}\n.ma-1 {\n  margin: 4px 4px !important;\n}\n.my-1 {\n  margin-top: 4px !important;\n  margin-bottom: 4px !important;\n}\n.mx-1 {\n  margin-left: 4px !important;\n  margin-right: 4px !important;\n}\n.mt-1 {\n  margin-top: 4px !important;\n}\n.mr-1 {\n  margin-right: 4px !important;\n}\n.mb-1 {\n  margin-bottom: 4px !important;\n}\n.ml-1 {\n  margin-left: 4px !important;\n}\n.pa-1 {\n  padding: 4px 4px !important;\n}\n.py-1 {\n  padding-top: 4px !important;\n  padding-bottom: 4px !important;\n}\n.px-1 {\n  padding-left: 4px !important;\n  padding-right: 4px !important;\n}\n.pt-1 {\n  padding-top: 4px !important;\n}\n.pr-1 {\n  padding-right: 4px !important;\n}\n.pb-1 {\n  padding-bottom: 4px !important;\n}\n.pl-1 {\n  padding-left: 4px !important;\n}\n.ma-2 {\n  margin: 8px 8px !important;\n}\n.my-2 {\n  margin-top: 8px !important;\n  margin-bottom: 8px !important;\n}\n.mx-2 {\n  margin-left: 8px !important;\n  margin-right: 8px !important;\n}\n.mt-2 {\n  margin-top: 8px !important;\n}\n.mr-2 {\n  margin-right: 8px !important;\n}\n.mb-2 {\n  margin-bottom: 8px !important;\n}\n.ml-2 {\n  margin-left: 8px !important;\n}\n.pa-2 {\n  padding: 8px 8px !important;\n}\n.py-2 {\n  padding-top: 8px !important;\n  padding-bottom: 8px !important;\n}\n.px-2 {\n  padding-left: 8px !important;\n  padding-right: 8px !important;\n}\n.pt-2 {\n  padding-top: 8px !important;\n}\n.pr-2 {\n  padding-right: 8px !important;\n}\n.pb-2 {\n  padding-bottom: 8px !important;\n}\n.pl-2 {\n  padding-left: 8px !important;\n}\n.ma-3 {\n  margin: 16px 16px !important;\n}\n.my-3 {\n  margin-top: 16px !important;\n  margin-bottom: 16px !important;\n}\n.mx-3 {\n  margin-left: 16px !important;\n  margin-right: 16px !important;\n}\n.mt-3 {\n  margin-top: 16px !important;\n}\n.mr-3 {\n  margin-right: 16px !important;\n}\n.mb-3 {\n  margin-bottom: 16px !important;\n}\n.ml-3 {\n  margin-left: 16px !important;\n}\n.pa-3 {\n  padding: 16px 16px !important;\n}\n.py-3 {\n  padding-top: 16px !important;\n  padding-bottom: 16px !important;\n}\n.px-3 {\n  padding-left: 16px !important;\n  padding-right: 16px !important;\n}\n.pt-3 {\n  padding-top: 16px !important;\n}\n.pr-3 {\n  padding-right: 16px !important;\n}\n.pb-3 {\n  padding-bottom: 16px !important;\n}\n.pl-3 {\n  padding-left: 16px !important;\n}\n.ma-4 {\n  margin: 24px 24px !important;\n}\n.my-4 {\n  margin-top: 24px !important;\n  margin-bottom: 24px !important;\n}\n.mx-4 {\n  margin-left: 24px !important;\n  margin-right: 24px !important;\n}\n.mt-4 {\n  margin-top: 24px !important;\n}\n.mr-4 {\n  margin-right: 24px !important;\n}\n.mb-4 {\n  margin-bottom: 24px !important;\n}\n.ml-4 {\n  margin-left: 24px !important;\n}\n.pa-4 {\n  padding: 24px 24px !important;\n}\n.py-4 {\n  padding-top: 24px !important;\n  padding-bottom: 24px !important;\n}\n.px-4 {\n  padding-left: 24px !important;\n  padding-right: 24px !important;\n}\n.pt-4 {\n  padding-top: 24px !important;\n}\n.pr-4 {\n  padding-right: 24px !important;\n}\n.pb-4 {\n  padding-bottom: 24px !important;\n}\n.pl-4 {\n  padding-left: 24px !important;\n}\n.ma-5 {\n  margin: 48px 48px !important;\n}\n.my-5 {\n  margin-top: 48px !important;\n  margin-bottom: 48px !important;\n}\n.mx-5 {\n  margin-left: 48px !important;\n  margin-right: 48px !important;\n}\n.mt-5 {\n  margin-top: 48px !important;\n}\n.mr-5 {\n  margin-right: 48px !important;\n}\n.mb-5 {\n  margin-bottom: 48px !important;\n}\n.ml-5 {\n  margin-left: 48px !important;\n}\n.pa-5 {\n  padding: 48px 48px !important;\n}\n.py-5 {\n  padding-top: 48px !important;\n  padding-bottom: 48px !important;\n}\n.px-5 {\n  padding-left: 48px !important;\n  padding-right: 48px !important;\n}\n.pt-5 {\n  padding-top: 48px !important;\n}\n.pr-5 {\n  padding-right: 48px !important;\n}\n.pb-5 {\n  padding-bottom: 48px !important;\n}\n.pl-5 {\n  padding-left: 48px !important;\n}\n.font-weight-thin {\n  font-weight: 100 !important;\n}\n.font-weight-light {\n  font-weight: 300 !important;\n}\n.font-weight-regular {\n  font-weight: 400 !important;\n}\n.font-weight-medium {\n  font-weight: 500 !important;\n}\n.font-weight-bold {\n  font-weight: 700 !important;\n}\n.font-weight-black {\n  font-weight: 900 !important;\n}\n.font-italic {\n  font-style: italic !important;\n}\n.text-capitalize {\n  text-transform: capitalize !important;\n}\n.text-lowercase {\n  text-transform: lowercase !important;\n}\n.text-none {\n  text-transform: none !important;\n}\n.text-uppercase {\n  text-transform: uppercase !important;\n}\n.text-no-wrap {\n  white-space: nowrap !important;\n}\n.text-truncate {\n  white-space: nowrap !important;\n  overflow: hidden !important;\n  text-overflow: ellipsis !important;\n  line-height: 1.1 !important;\n}\n.transition-fast-out-slow-in {\n  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;\n}\n.transition-linear-out-slow-in {\n  transition: 0.3s cubic-bezier(0, 0, 0.2, 1) !important;\n}\n.transition-fast-out-linear-in {\n  transition: 0.3s cubic-bezier(0.4, 0, 1, 1) !important;\n}\n.transition-ease-in-out {\n  transition: 0.3s cubic-bezier(0.4, 0, 0.6, 1) !important;\n}\n.transition-fast-in-fast-out {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;\n}\n.transition-swing {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1) !important;\n}\n@media screen {\n  [hidden~=\"screen\"] {\n    display: inherit;\n  }\n  [hidden~=\"screen\"]:not(:active):not(:focus):not(:target) {\n    position: absolute !important;\n    clip: rect(0 0 0 0) !important;\n  }\n}\n@media only print {\n  .hidden-print-only {\n    display: none !important;\n  }\n}\n@media only screen {\n  .hidden-screen-only {\n    display: none !important;\n  }\n}\n@media only screen and (max-width: 599px) {\n  .hidden-xs-only {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 600px) and (max-width: 959px) {\n  .hidden-sm-only {\n    display: none !important;\n  }\n}\n@media only screen and (max-width: 959px) {\n  .hidden-sm-and-down {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 600px) {\n  .hidden-sm-and-up {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 960px) and (max-width: 1263px) {\n  .hidden-md-only {\n    display: none !important;\n  }\n}\n@media only screen and (max-width: 1263px) {\n  .hidden-md-and-down {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 960px) {\n  .hidden-md-and-up {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 1264px) and (max-width: 1903px) {\n  .hidden-lg-only {\n    display: none !important;\n  }\n}\n@media only screen and (max-width: 1903px) {\n  .hidden-lg-and-down {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 1264px) {\n  .hidden-lg-and-up {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 1904px) {\n  .hidden-xl-only {\n    display: none !important;\n  }\n}\n@media all and (min-width: 0) {\n  .text-xs-left {\n    text-align: left !important;\n  }\n  .text-xs-center {\n    text-align: center !important;\n  }\n  .text-xs-right {\n    text-align: right !important;\n  }\n  .text-xs-justify {\n    text-align: justify !important;\n  }\n}\n@media all and (min-width: 600px) {\n  .text-sm-left {\n    text-align: left !important;\n  }\n  .text-sm-center {\n    text-align: center !important;\n  }\n  .text-sm-right {\n    text-align: right !important;\n  }\n  .text-sm-justify {\n    text-align: justify !important;\n  }\n}\n@media all and (min-width: 960px) {\n  .text-md-left {\n    text-align: left !important;\n  }\n  .text-md-center {\n    text-align: center !important;\n  }\n  .text-md-right {\n    text-align: right !important;\n  }\n  .text-md-justify {\n    text-align: justify !important;\n  }\n}\n@media all and (min-width: 1264px) {\n  .text-lg-left {\n    text-align: left !important;\n  }\n  .text-lg-center {\n    text-align: center !important;\n  }\n  .text-lg-right {\n    text-align: right !important;\n  }\n  .text-lg-justify {\n    text-align: justify !important;\n  }\n}\n@media all and (min-width: 1904px) {\n  .text-xl-left {\n    text-align: left !important;\n  }\n  .text-xl-center {\n    text-align: center !important;\n  }\n  .text-xl-right {\n    text-align: right !important;\n  }\n  .text-xl-justify {\n    text-align: justify !important;\n  }\n}\n\n.application {\n  display: flex;\n}\n.application a {\n  cursor: pointer;\n}\n.application--is-rtl {\n  direction: rtl;\n}\n.application--wrap {\n  flex: 1 1 auto;\n  -webkit-backface-visibility: hidden;\n          backface-visibility: hidden;\n  display: flex;\n  flex-direction: column;\n  min-height: 100vh;\n  max-width: 100%;\n  position: relative;\n}\n.theme--light.application {\n  background: #fafafa;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.application .text--primary {\n  color: rgba(0,0,0,0.87) !important;\n}\n.theme--light.application .text--secondary {\n  color: rgba(0,0,0,0.54) !important;\n}\n.theme--light.application .text--disabled {\n  color: rgba(0,0,0,0.38) !important;\n}\n.theme--dark.application {\n  background: #303030;\n  color: #fff;\n}\n.theme--dark.application .text--primary {\n  color: #fff !important;\n}\n.theme--dark.application .text--secondary {\n  color: rgba(255,255,255,0.7) !important;\n}\n.theme--dark.application .text--disabled {\n  color: rgba(255,255,255,0.5) !important;\n}\n@-moz-document url-prefix() {\n}\n@media print {\n  @-moz-document url-prefix() {\n    .application {\n      display: block;\n    }\n    .application--wrap {\n      display: block;\n    }\n  }\n}\n\n.v-alert {\n  border-radius: 0;\n  border-width: 4px 0 0 0;\n  border-style: solid;\n  color: #fff;\n  display: flex;\n  font-size: 14px;\n  margin: 4px auto;\n  padding: 16px;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-alert .v-alert__icon.v-icon,\n.v-alert__dismissible .v-icon {\n  align-self: center;\n  color: rgba(0,0,0,0.3);\n  font-size: 24px;\n}\n.v-alert--outline .v-icon {\n  color: inherit !important;\n}\n.v-alert__icon {\n  margin-right: 16px;\n}\n.v-alert__dismissible {\n  align-self: flex-start;\n  color: inherit;\n  margin-left: 16px;\n  margin-right: 0;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-alert__dismissible:hover {\n  opacity: 0.8;\n}\n.v-alert--no-icon .v-alert__icon {\n  display: none;\n}\n.v-alert > div {\n  align-self: center;\n  flex: 1 1;\n}\n.v-alert.v-alert {\n  border-color: rgba(0,0,0,0.12) !important;\n}\n.v-alert.v-alert--outline {\n  border: 1px solid currentColor !important;\n}\n@media screen and (max-width: 600px) {\n  .v-alert__icon {\n    display: none;\n  }\n}\n\n/* Themes */\n.theme--light.v-icon {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-icon.v-icon--disabled {\n  color: rgba(0,0,0,0.38) !important;\n}\n.theme--dark.v-icon {\n  color: #fff;\n}\n.theme--dark.v-icon.v-icon--disabled {\n  color: rgba(255,255,255,0.5) !important;\n}\n.v-icon {\n  align-items: center;\n  display: inline-flex;\n  -webkit-font-feature-settings: 'liga';\n          font-feature-settings: 'liga';\n  font-size: 24px;\n  justify-content: center;\n  line-height: 1;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  vertical-align: text-bottom;\n}\n.v-icon--right {\n  margin-left: 16px;\n}\n.v-icon--left {\n  margin-right: 16px;\n}\n.v-icon.v-icon.v-icon--link {\n  cursor: pointer;\n}\n.v-icon--disabled {\n  pointer-events: none;\n  opacity: 0.6;\n}\n.v-icon--is-component {\n  height: 24px;\n}\n\n.v-autocomplete.v-input > .v-input__control > .v-input__slot {\n  cursor: text;\n}\n.v-autocomplete input {\n  align-self: center;\n}\n.v-autocomplete--is-selecting-index input {\n  opacity: 0;\n}\n.v-autocomplete.v-text-field--enclosed:not(.v-text-field--solo):not(.v-text-field--single-line) .v-select__slot > input {\n  margin-top: 24px;\n}\n.v-autocomplete:not(.v-input--is-disabled).v-select.v-text-field input {\n  pointer-events: inherit;\n}\n.v-autocomplete__content.v-menu__content {\n  border-radius: 0;\n}\n.v-autocomplete__content.v-menu__content .v-card {\n  border-radius: 0;\n}\n\n.theme--light.v-text-field > .v-input__control > .v-input__slot:before {\n  border-color: rgba(0,0,0,0.42);\n}\n.theme--light.v-text-field:not(.v-input--has-state) > .v-input__control > .v-input__slot:hover:before {\n  border-color: rgba(0,0,0,0.87);\n}\n.theme--light.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before {\n  border-image: repeating-linear-gradient(to right, rgba(0,0,0,0.38) 0px, rgba(0,0,0,0.38) 2px, transparent 2px, transparent 4px) 1 repeat;\n}\n.theme--light.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before .v-text-field__prefix,\n.theme--light.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before .v-text-field__suffix {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-text-field__prefix,\n.theme--light.v-text-field__suffix {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-text-field--solo > .v-input__control > .v-input__slot {\n  border-radius: 2px;\n  background: #fff;\n}\n.theme--light.v-text-field--solo-inverted.v-text-field--solo > .v-input__control > .v-input__slot {\n  background: rgba(0,0,0,0.16);\n}\n.theme--light.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot {\n  background: #424242;\n}\n.theme--light.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot .v-label,\n.theme--light.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot input {\n  color: #fff;\n}\n.theme--light.v-text-field--box > .v-input__control > .v-input__slot {\n  background: rgba(0,0,0,0.06);\n}\n.theme--light.v-text-field--box .v-text-field__prefix {\n  max-height: 32px;\n  margin-top: 22px;\n}\n.theme--light.v-text-field--box.v-input--is-dirty .v-text-field__prefix,\n.theme--light.v-text-field--box.v-input--is-focused .v-text-field__prefix,\n.theme--light.v-text-field--box.v-text-field--placeholder .v-text-field__prefix {\n  margin-top: 22px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.theme--light.v-text-field--box:not(.v-input--is-focused) > .v-input__control > .v-input__slot:hover {\n  background: rgba(0,0,0,0.12);\n}\n.theme--light.v-text-field--outline > .v-input__control > .v-input__slot {\n  border: 2px solid rgba(0,0,0,0.54);\n}\n.theme--light.v-text-field--outline:not(.v-input--is-focused):not(.v-input--has-state) > .v-input__control > .v-input__slot:hover {\n  border: 2px solid rgba(0,0,0,0.87);\n}\n.theme--dark.v-text-field > .v-input__control > .v-input__slot:before {\n  border-color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-text-field:not(.v-input--has-state) > .v-input__control > .v-input__slot:hover:before {\n  border-color: #fff;\n}\n.theme--dark.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before {\n  border-image: repeating-linear-gradient(to right, rgba(255,255,255,0.5) 0px, rgba(255,255,255,0.5) 2px, transparent 2px, transparent 4px) 1 repeat;\n}\n.theme--dark.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before .v-text-field__prefix,\n.theme--dark.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before .v-text-field__suffix {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-text-field__prefix,\n.theme--dark.v-text-field__suffix {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-text-field--solo > .v-input__control > .v-input__slot {\n  border-radius: 2px;\n  background: #424242;\n}\n.theme--dark.v-text-field--solo-inverted.v-text-field--solo > .v-input__control > .v-input__slot {\n  background: rgba(255,255,255,0.16);\n}\n.theme--dark.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot {\n  background: #fff;\n}\n.theme--dark.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot .v-label,\n.theme--dark.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot input {\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-text-field--box > .v-input__control > .v-input__slot {\n  background: rgba(0,0,0,0.1);\n}\n.theme--dark.v-text-field--box .v-text-field__prefix {\n  max-height: 32px;\n  margin-top: 22px;\n}\n.theme--dark.v-text-field--box.v-input--is-dirty .v-text-field__prefix,\n.theme--dark.v-text-field--box.v-input--is-focused .v-text-field__prefix,\n.theme--dark.v-text-field--box.v-text-field--placeholder .v-text-field__prefix {\n  margin-top: 22px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.theme--dark.v-text-field--box:not(.v-input--is-focused) > .v-input__control > .v-input__slot:hover {\n  background: rgba(0,0,0,0.2);\n}\n.theme--dark.v-text-field--outline > .v-input__control > .v-input__slot {\n  border: 2px solid rgba(255,255,255,0.7);\n}\n.theme--dark.v-text-field--outline:not(.v-input--is-focused):not(.v-input--has-state) > .v-input__control > .v-input__slot:hover {\n  border: 2px solid #fff;\n}\n.application--is-rtl .v-text-field .v-label {\n  -webkit-transform-origin: top right;\n          transform-origin: top right;\n}\n.application--is-rtl .v-text-field .v-counter {\n  margin-left: 0;\n  margin-right: 8px;\n}\n.application--is-rtl .v-text-field--enclosed .v-input__append-outer {\n  margin-left: 0;\n  margin-right: 16px;\n}\n.application--is-rtl .v-text-field--enclosed .v-input__prepend-outer {\n  margin-left: 16px;\n  margin-right: 0;\n}\n.application--is-rtl .v-text-field--reverse input {\n  text-align: left;\n}\n.application--is-rtl .v-text-field--reverse .v-label {\n  -webkit-transform-origin: top left;\n          transform-origin: top left;\n}\n.application--is-rtl .v-text-field__prefix {\n  text-align: left;\n  padding-right: 0;\n  padding-left: 4px;\n}\n.application--is-rtl .v-text-field__suffix {\n  padding-left: 0;\n  padding-right: 4px;\n}\n.application--is-rtl .v-text-field--reverse .v-text-field__prefix {\n  text-align: right;\n  padding-left: 0;\n  padding-right: 4px;\n}\n.application--is-rtl .v-text-field--reverse .v-text-field__suffix {\n  padding-left: 0;\n  padding-right: 4px;\n}\n.v-text-field {\n  padding-top: 12px;\n  margin-top: 4px;\n}\n.v-text-field input {\n  flex: 1 1 auto;\n  line-height: 20px;\n  padding: 8px 0 8px;\n  max-width: 100%;\n  min-width: 0px;\n  width: 100%;\n}\n.v-text-field .v-input__prepend-inner,\n.v-text-field .v-input__append-inner {\n  align-self: flex-start;\n  display: inline-flex;\n  margin-top: 4px;\n  line-height: 1;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-text-field .v-input__prepend-inner {\n  margin-right: auto;\n  padding-right: 4px;\n}\n.v-text-field .v-input__append-inner {\n  margin-left: auto;\n  padding-left: 4px;\n}\n.v-text-field .v-counter {\n  margin-left: 8px;\n  white-space: nowrap;\n}\n.v-text-field .v-label {\n  max-width: 90%;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  top: 6px;\n  -webkit-transform-origin: top left;\n          transform-origin: top left;\n  white-space: nowrap;\n  pointer-events: none;\n}\n.v-text-field .v-label--active {\n  max-width: 133%;\n  -webkit-transform: translateY(-18px) scale(0.75);\n          transform: translateY(-18px) scale(0.75);\n}\n.v-text-field > .v-input__control > .v-input__slot {\n  cursor: text;\n  transition: background 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-text-field > .v-input__control > .v-input__slot:before,\n.v-text-field > .v-input__control > .v-input__slot:after {\n  bottom: -1px;\n  content: '';\n  left: 0;\n  position: absolute;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-text-field > .v-input__control > .v-input__slot:before {\n  border-style: solid;\n  border-width: thin 0 0 0;\n}\n.v-text-field > .v-input__control > .v-input__slot:after {\n  border-color: currentColor;\n  border-style: solid;\n  border-width: thin 0 thin 0;\n  -webkit-transform: scaleX(0);\n          transform: scaleX(0);\n}\n.v-text-field__details {\n  display: flex;\n  flex: 1 0 auto;\n  max-width: 100%;\n  overflow: hidden;\n}\n.v-text-field__prefix,\n.v-text-field__suffix {\n  align-self: center;\n  cursor: default;\n}\n.v-text-field__prefix {\n  text-align: right;\n  padding-right: 4px;\n}\n.v-text-field__suffix {\n  padding-left: 4px;\n  white-space: nowrap;\n}\n.v-text-field--reverse .v-text-field__prefix {\n  text-align: left;\n  padding-right: 0;\n  padding-left: 4px;\n}\n.v-text-field--reverse .v-text-field__suffix {\n  padding-left: 0;\n  padding-right: 4px;\n}\n.v-text-field > .v-input__control > .v-input__slot > .v-text-field__slot {\n  display: flex;\n  flex: 1 1 auto;\n  position: relative;\n}\n.v-text-field--box,\n.v-text-field--full-width,\n.v-text-field--outline {\n  position: relative;\n}\n.v-text-field--box > .v-input__control > .v-input__slot,\n.v-text-field--full-width > .v-input__control > .v-input__slot,\n.v-text-field--outline > .v-input__control > .v-input__slot {\n  align-items: stretch;\n  min-height: 56px;\n}\n.v-text-field--box input,\n.v-text-field--full-width input,\n.v-text-field--outline input {\n  margin-top: 22px;\n}\n.v-text-field--box.v-text-field--single-line input,\n.v-text-field--full-width.v-text-field--single-line input,\n.v-text-field--outline.v-text-field--single-line input {\n  margin-top: 12px;\n}\n.v-text-field--box .v-label,\n.v-text-field--full-width .v-label,\n.v-text-field--outline .v-label {\n  top: 18px;\n}\n.v-text-field--box .v-label--active,\n.v-text-field--full-width .v-label--active,\n.v-text-field--outline .v-label--active {\n  -webkit-transform: translateY(-6px) scale(0.75);\n          transform: translateY(-6px) scale(0.75);\n}\n.v-text-field--box > .v-input__control > .v-input__slot {\n  border-top-left-radius: 4px;\n  border-top-right-radius: 4px;\n}\n.v-text-field--box > .v-input__control > .v-input__slot:before {\n  border-style: solid;\n  border-width: thin 0 thin 0;\n}\n.v-text-field.v-text-field--enclosed {\n  margin: 0;\n  padding: 0;\n}\n.v-text-field.v-text-field--enclosed:not(.v-text-field--box) .v-progress-linear__background {\n  display: none;\n}\n.v-text-field.v-text-field--enclosed .v-input__prepend-outer,\n.v-text-field.v-text-field--enclosed .v-input__prepend-inner,\n.v-text-field.v-text-field--enclosed .v-input__append-inner,\n.v-text-field.v-text-field--enclosed .v-input__append-outer {\n  margin-top: 16px;\n}\n.v-text-field.v-text-field--enclosed .v-text-field__details,\n.v-text-field.v-text-field--enclosed > .v-input__control > .v-input__slot {\n  padding: 0 12px;\n}\n.v-text-field.v-text-field--enclosed .v-text-field__details {\n  margin-bottom: 8px;\n}\n.v-text-field--reverse input {\n  text-align: right;\n}\n.v-text-field--reverse .v-label {\n  -webkit-transform-origin: top right;\n          transform-origin: top right;\n}\n.v-text-field--reverse > .v-input__control > .v-input__slot,\n.v-text-field--reverse .v-text-field__slot {\n  flex-direction: row-reverse;\n}\n.v-text-field--solo > .v-input__control > .v-input__slot:before,\n.v-text-field--outline > .v-input__control > .v-input__slot:before,\n.v-text-field--full-width > .v-input__control > .v-input__slot:before,\n.v-text-field--solo > .v-input__control > .v-input__slot:after,\n.v-text-field--outline > .v-input__control > .v-input__slot:after,\n.v-text-field--full-width > .v-input__control > .v-input__slot:after {\n  display: none;\n}\n.v-text-field--outline {\n  margin-bottom: 16px;\n  transition: border 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-text-field--outline > .v-input__control > .v-input__slot {\n  background: transparent !important;\n  border-radius: 4px;\n}\n.v-text-field--outline .v-text-field__prefix {\n  margin-top: 22px;\n  max-height: 32px;\n}\n.v-text-field--outline .v-input__prepend-outer,\n.v-text-field--outline .v-input__append-outer {\n  margin-top: 18px;\n}\n.v-text-field--outline.v-input--is-dirty .v-text-field__prefix,\n.v-text-field--outline.v-input--is-focused .v-text-field__prefix,\n.v-text-field--outline.v-text-field--placeholder .v-text-field__prefix {\n  margin-top: 22px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-text-field--outline.v-input--is-focused > .v-input__control > .v-input__slot,\n.v-text-field--outline.v-input--has-state > .v-input__control > .v-input__slot {\n  border: 2px solid currentColor;\n  transition: border 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-text-field.v-text-field--solo .v-label {\n  top: calc(50% - 10px);\n}\n.v-text-field.v-text-field--solo .v-input__control {\n  min-height: 48px;\n  padding: 0;\n}\n.v-text-field.v-text-field--solo:not(.v-text-field--solo-flat) > .v-input__control > .v-input__slot {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-text-field.v-text-field--solo .v-text-field__slot {\n  align-items: center;\n}\n.v-text-field.v-text-field--solo .v-input__append-inner,\n.v-text-field.v-text-field--solo .v-input__prepend-inner {\n  align-self: center;\n  margin-top: 0;\n}\n.v-text-field.v-text-field--solo .v-input__prepend-outer,\n.v-text-field.v-text-field--solo .v-input__append-outer {\n  margin-top: 12px;\n}\n.v-text-field.v-input--is-focused > .v-input__control > .v-input__slot:after {\n  -webkit-transform: scaleX(1);\n          transform: scaleX(1);\n}\n.v-text-field.v-input--has-state > .v-input__control > .v-input__slot:before {\n  border-color: currentColor;\n}\n\n.theme--light.v-select .v-select__selections {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-select.v-input--is-disabled .v-select__selections {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-select .v-chip--disabled,\n.theme--light.v-select .v-select__selection--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-select.v-text-field--solo-inverted.v-input--is-focused .v-select__selections {\n  color: #fff;\n}\n.theme--dark.v-select .v-select__selections {\n  color: #fff;\n}\n.theme--dark.v-select.v-input--is-disabled .v-select__selections {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-select .v-chip--disabled,\n.theme--dark.v-select .v-select__selection--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-select.v-text-field--solo-inverted.v-input--is-focused .v-select__selections {\n  color: rgba(0,0,0,0.87);\n}\n.v-select {\n  position: relative;\n}\n.v-select > .v-input__control > .v-input__slot {\n  cursor: pointer;\n}\n.v-select .v-chip {\n  flex: 0 1 auto;\n}\n.v-select .fade-transition-leave-active {\n  position: absolute;\n  left: 0;\n}\n.v-select.v-input--is-dirty ::-webkit-input-placeholder {\n  color: transparent !important;\n}\n.v-select.v-input--is-dirty :-ms-input-placeholder {\n  color: transparent !important;\n}\n.v-select.v-input--is-dirty ::-ms-input-placeholder {\n  color: transparent !important;\n}\n.v-select.v-input--is-dirty ::placeholder {\n  color: transparent !important;\n}\n.v-select:not(.v-input--is-dirty):not(.v-input--is-focused) .v-text-field__prefix {\n  line-height: 20px;\n  position: absolute;\n  top: 7px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-select.v-text-field--enclosed:not(.v-text-field--single-line) .v-select__selections {\n  padding-top: 24px;\n}\n.v-select.v-text-field input {\n  flex: 1 1;\n  margin-top: 0;\n  min-width: 0;\n  pointer-events: none;\n  position: relative;\n}\n.v-select.v-select--is-menu-active .v-input__icon--append .v-icon {\n  -webkit-transform: rotate(180deg);\n          transform: rotate(180deg);\n}\n.v-select.v-select--chips input {\n  margin: 0;\n}\n.v-select.v-select--chips .v-select__selections {\n  min-height: 42px;\n}\n.v-select.v-select--chips.v-select--chips--small .v-select__selections {\n  min-height: 32px;\n}\n.v-select.v-select--chips:not(.v-text-field--single-line).v-text-field--box .v-select__selections,\n.v-select.v-select--chips:not(.v-text-field--single-line).v-text-field--enclosed .v-select__selections {\n  min-height: 68px;\n}\n.v-select.v-select--chips:not(.v-text-field--single-line).v-text-field--box.v-select--chips--small .v-select__selections,\n.v-select.v-select--chips:not(.v-text-field--single-line).v-text-field--enclosed.v-select--chips--small .v-select__selections {\n  min-height: 56px;\n}\n.v-select.v-text-field--reverse .v-select__slot,\n.v-select.v-text-field--reverse .v-select__selections {\n  flex-direction: row-reverse;\n}\n.v-select__selections {\n  align-items: center;\n  display: flex;\n  flex: 1 1 auto;\n  flex-wrap: wrap;\n  line-height: 18px;\n}\n.v-select__selection {\n  max-width: 90%;\n}\n.v-select__selection--comma {\n  align-items: center;\n  display: inline-flex;\n  margin: 7px 4px 7px 0;\n}\n.v-select__slot {\n  position: relative;\n  align-items: center;\n  display: flex;\n  width: 100%;\n}\n.v-select:not(.v-text-field--single-line) .v-select__slot > input {\n  align-self: flex-end;\n}\n\n.theme--light.v-chip {\n  background: #e0e0e0;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-chip--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-chip {\n  background: #555;\n  color: #fff;\n}\n.theme--dark.v-chip--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.application--is-rtl .v-chip__close {\n  margin: 0 8px 0 2px;\n}\n.application--is-rtl .v-chip--removable .v-chip__content {\n  padding: 0 12px 0 4px;\n}\n.application--is-rtl .v-chip--select-multi {\n  margin: 4px 0 4px 4px;\n}\n.application--is-rtl .v-chip .v-avatar {\n  margin-right: -12px;\n  margin-left: 8px;\n}\n.application--is-rtl .v-chip .v-icon--right {\n  margin-right: 12px;\n  margin-left: -8px;\n}\n.application--is-rtl .v-chip .v-icon--left {\n  margin-right: -8px;\n  margin-left: 12px;\n}\n.v-chip {\n  align-items: center;\n  border-radius: 28px;\n  display: inline-flex;\n  font-size: 13px;\n  margin: 4px;\n  outline: none;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  vertical-align: middle;\n}\n.v-chip .v-chip__content {\n  align-items: center;\n  border-radius: 28px;\n  cursor: default;\n  display: inline-flex;\n  height: 32px;\n  justify-content: space-between;\n  padding: 0 12px;\n  vertical-align: middle;\n  white-space: nowrap;\n  z-index: 1;\n}\n.v-chip--removable .v-chip__content {\n  padding: 0 4px 0 12px;\n}\n.v-chip .v-avatar {\n  height: 32px !important;\n  margin-left: -12px;\n  margin-right: 8px;\n  min-width: 32px;\n  width: 32px !important;\n}\n.v-chip .v-avatar img {\n  height: 100%;\n  width: 100%;\n}\n.v-chip:focus:not(.v-chip--disabled),\n.v-chip--active,\n.v-chip--selected {\n  border-color: rgba(0,0,0,0.13);\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-chip:focus:not(.v-chip--disabled):after,\n.v-chip--active:after,\n.v-chip--selected:after {\n  background: currentColor;\n  border-radius: inherit;\n  content: '';\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  transition: inherit;\n  width: 100%;\n  pointer-events: none;\n  opacity: 0.13;\n}\n.v-chip--label {\n  border-radius: 2px;\n}\n.v-chip--label .v-chip__content {\n  border-radius: 2px;\n}\n.v-chip.v-chip.v-chip--outline {\n  background: transparent !important;\n  border: 1px solid currentColor;\n  color: #9e9e9e;\n  height: 32px;\n}\n.v-chip.v-chip.v-chip--outline .v-avatar {\n  margin-left: -13px;\n}\n.v-chip--small {\n  height: 24px !important;\n}\n.v-chip--small .v-avatar {\n  height: 24px !important;\n  min-width: 24px;\n  width: 24px !important;\n}\n.v-chip--small .v-icon {\n  font-size: 20px;\n}\n.v-chip__close {\n  align-items: center;\n  color: inherit;\n  display: flex;\n  font-size: 20px;\n  margin: 0 2px 0 8px;\n  text-decoration: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-chip__close > .v-icon {\n  color: inherit !important;\n  font-size: 20px;\n  cursor: pointer;\n  opacity: 0.5;\n}\n.v-chip__close > .v-icon:hover {\n  opacity: 1;\n}\n.v-chip--disabled .v-chip__close {\n  pointer-events: none;\n}\n.v-chip--select-multi {\n  margin: 4px 4px 4px 0;\n}\n.v-chip .v-icon {\n  color: inherit;\n}\n.v-chip .v-icon--right {\n  margin-left: 12px;\n  margin-right: -8px;\n}\n.v-chip .v-icon--left {\n  margin-left: -8px;\n  margin-right: 12px;\n}\n\n.v-menu {\n  display: block;\n  vertical-align: middle;\n}\n.v-menu--inline {\n  display: inline-block;\n}\n.v-menu__activator {\n  align-items: center;\n  cursor: pointer;\n  display: flex;\n}\n.v-menu__activator * {\n  cursor: pointer;\n}\n.v-menu__content {\n  position: absolute;\n  display: inline-block;\n  border-radius: 2px;\n  max-width: 80%;\n  overflow-y: auto;\n  overflow-x: hidden;\n  contain: content;\n  will-change: transform;\n  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);\n}\n.v-menu__content--active {\n  pointer-events: none;\n}\n.v-menu__content--fixed {\n  position: fixed;\n}\n.v-menu__content > .card {\n  contain: content;\n  -webkit-backface-visibility: hidden;\n          backface-visibility: hidden;\n}\n.v-menu > .v-menu__content {\n  max-width: none;\n}\n.v-menu-transition-enter .v-list__tile {\n  min-width: 0;\n  pointer-events: none;\n}\n.v-menu-transition-enter-to .v-list__tile {\n  pointer-events: auto;\n  transition-delay: 0.1s;\n}\n.v-menu-transition-leave-active,\n.v-menu-transition-leave-to {\n  pointer-events: none;\n}\n.v-menu-transition-enter,\n.v-menu-transition-leave-to {\n  opacity: 0;\n}\n.v-menu-transition-enter-active,\n.v-menu-transition-leave-active {\n  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-menu-transition-enter.v-menu__content--auto {\n  transition: none !important;\n}\n.v-menu-transition-enter.v-menu__content--auto .v-list__tile {\n  opacity: 0;\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.v-menu-transition-enter.v-menu__content--auto .v-list__tile--active {\n  opacity: 1;\n  -webkit-transform: none !important;\n          transform: none !important;\n  pointer-events: auto;\n}\n\n/* Themes */\n.theme--light.v-card {\n  background-color: #fff;\n  border-color: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-card {\n  background-color: #424242;\n  border-color: #424242;\n  color: #fff;\n}\n.v-card {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n  text-decoration: none;\n}\n.v-card > *:first-child:not(.v-btn):not(.v-chip) {\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n}\n.v-card > *:last-child:not(.v-btn):not(.v-chip) {\n  border-bottom-left-radius: inherit;\n  border-bottom-right-radius: inherit;\n}\n.v-card--flat {\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);\n}\n.v-card--hover {\n  cursor: pointer;\n  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);\n  transition-property: box-shadow;\n}\n.v-card--hover:hover {\n  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);\n}\n.v-card__title {\n  align-items: center;\n  display: flex;\n  flex-wrap: wrap;\n  padding: 16px;\n}\n.v-card__title--primary {\n  padding-top: 24px;\n}\n.v-card__text {\n  padding: 16px;\n  width: 100%;\n}\n.v-card__actions {\n  align-items: center;\n  display: flex;\n  padding: 8px;\n}\n.v-card__actions > *,\n.v-card__actions .v-btn {\n  margin: 0;\n}\n.v-card__actions .v-btn + .v-btn {\n  margin-left: 8px;\n}\n\n/** Theme */\n.theme--light.v-input--selection-controls.v-input--is-disabled .v-icon {\n  color: rgba(0,0,0,0.26) !important;\n}\n.theme--dark.v-input--selection-controls.v-input--is-disabled .v-icon {\n  color: rgba(255,255,255,0.3) !important;\n}\n.application--is-rtl .v-input--selection-controls .v-input--selection-controls__input {\n  margin-right: 0;\n  margin-left: 8px;\n}\n.v-input--selection-controls {\n  margin-top: 16px;\n  padding-top: 4px;\n}\n.v-input--selection-controls .v-input__append-outer,\n.v-input--selection-controls .v-input__prepend-outer {\n  margin-top: 0;\n  margin-bottom: 0;\n}\n.v-input--selection-controls .v-input__control {\n  flex-grow: 0;\n  width: auto;\n}\n.v-input--selection-controls:not(.v-input--hide-details) .v-input__slot {\n  margin-bottom: 12px;\n}\n.v-input--selection-controls__input {\n  color: inherit;\n  display: inline-flex;\n  flex: 0 0 auto;\n  height: 24px;\n  position: relative;\n  margin-right: 8px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n  transition-property: color, -webkit-transform;\n  transition-property: color, transform;\n  transition-property: color, transform, -webkit-transform;\n  width: 24px;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-input--selection-controls__input input {\n  position: absolute;\n  opacity: 0;\n  width: 100%;\n  height: 100%;\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-input--selection-controls__input + .v-label {\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-input--selection-controls__ripple {\n  border-radius: 50%;\n  cursor: pointer;\n  height: 34px;\n  position: absolute;\n  transition: inherit;\n  width: 34px;\n  left: -12px;\n  top: calc(50% - 24px);\n  margin: 7px;\n}\n.v-input--selection-controls__ripple:before {\n  border-radius: inherit;\n  bottom: 0;\n  content: '';\n  position: absolute;\n  opacity: 0.2;\n  left: 0;\n  right: 0;\n  top: 0;\n  -webkit-transform-origin: center center;\n          transform-origin: center center;\n  -webkit-transform: scale(0.2);\n          transform: scale(0.2);\n  transition: inherit;\n}\n.v-input--selection-controls__ripple .v-ripple__container {\n  -webkit-transform: scale(1.4);\n          transform: scale(1.4);\n}\n.v-input--selection-controls.v-input .v-label {\n  align-items: center;\n  display: inline-flex;\n  top: 0;\n  height: auto;\n}\n.v-input--selection-controls.v-input--is-focused .v-input--selection-controls__ripple:before,\n.v-input--selection-controls .v-radio--is-focused .v-input--selection-controls__ripple:before {\n  background: currentColor;\n  -webkit-transform: scale(0.8);\n          transform: scale(0.8);\n}\n\n/* Theme */\n.theme--light.v-input:not(.v-input--is-disabled) input,\n.theme--light.v-input:not(.v-input--is-disabled) textarea {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-input input::-webkit-input-placeholder,\n.theme--light.v-input textarea::-webkit-input-placeholder {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input input:-ms-input-placeholder,\n.theme--light.v-input textarea:-ms-input-placeholder {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input input::-ms-input-placeholder,\n.theme--light.v-input textarea::-ms-input-placeholder {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input input::placeholder,\n.theme--light.v-input textarea::placeholder {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input--is-disabled .v-label,\n.theme--light.v-input--is-disabled input,\n.theme--light.v-input--is-disabled textarea {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-input:not(.v-input--is-disabled) input,\n.theme--dark.v-input:not(.v-input--is-disabled) textarea {\n  color: #fff;\n}\n.theme--dark.v-input input::-webkit-input-placeholder,\n.theme--dark.v-input textarea::-webkit-input-placeholder {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-input input:-ms-input-placeholder,\n.theme--dark.v-input textarea:-ms-input-placeholder {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-input input::-ms-input-placeholder,\n.theme--dark.v-input textarea::-ms-input-placeholder {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-input input::placeholder,\n.theme--dark.v-input textarea::placeholder {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-input--is-disabled .v-label,\n.theme--dark.v-input--is-disabled input,\n.theme--dark.v-input--is-disabled textarea {\n  color: rgba(255,255,255,0.5);\n}\n.v-input {\n  align-items: flex-start;\n  display: flex;\n  flex: 1 1 auto;\n  font-size: 16px;\n  text-align: left;\n}\n.v-input .v-progress-linear {\n  top: calc(100% - 1px);\n  left: 0;\n  margin: 0;\n  position: absolute;\n}\n.v-input input {\n  max-height: 32px;\n}\n.v-input input:invalid,\n.v-input textarea:invalid {\n  box-shadow: none;\n}\n.v-input input:focus,\n.v-input textarea:focus,\n.v-input input:active,\n.v-input textarea:active {\n  outline: none;\n}\n.v-input .v-label {\n  height: 20px;\n  line-height: 20px;\n}\n.v-input__append-outer,\n.v-input__prepend-outer {\n  display: inline-flex;\n  margin-bottom: 4px;\n  margin-top: 4px;\n  line-height: 1;\n}\n.v-input__append-outer .v-icon,\n.v-input__prepend-outer .v-icon {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-input__append-outer {\n  margin-left: 9px;\n}\n.v-input__prepend-outer {\n  margin-right: 9px;\n}\n.v-input__control {\n  display: flex;\n  flex-direction: column;\n  height: auto;\n  flex-grow: 1;\n  flex-wrap: wrap;\n  width: 100%;\n}\n.v-input__icon {\n  align-items: center;\n  display: inline-flex;\n  height: 24px;\n  flex: 1 0 auto;\n  justify-content: center;\n  min-width: 24px;\n  width: 24px;\n}\n.v-input__icon--clear {\n  border-radius: 50%;\n}\n.v-input__slot {\n  align-items: center;\n  color: inherit;\n  display: flex;\n  margin-bottom: 8px;\n  min-height: inherit;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-input--is-disabled:not(.v-input--is-readonly) {\n  pointer-events: none;\n}\n.v-input--is-loading > .v-input__control > .v-input__slot:before,\n.v-input--is-loading > .v-input__control > .v-input__slot:after {\n  display: none;\n}\n.v-input--hide-details > .v-input__control > .v-input__slot {\n  margin-bottom: 0;\n}\n.v-input--has-state.error--text .v-label {\n  -webkit-animation: shake 0.6s cubic-bezier(0.25, 0.8, 0.5, 1);\n          animation: shake 0.6s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n\n.theme--light.v-label {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-label--is-disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-label {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-label--is-disabled {\n  color: rgba(255,255,255,0.5);\n}\n.v-label {\n  font-size: 16px;\n  line-height: 1;\n  min-height: 8px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n\n/* Theme */\n.theme--light.v-messages {\n  color: rgba(0,0,0,0.54);\n}\n.theme--dark.v-messages {\n  color: rgba(255,255,255,0.7);\n}\n.application--is-rtl .v-messages {\n  text-align: right;\n}\n.v-messages {\n  flex: 1 1 auto;\n  font-size: 12px;\n  min-height: 12px;\n  min-width: 1px;\n  position: relative;\n}\n.v-messages__message {\n  line-height: normal;\n  word-break: break-word;\n  overflow-wrap: break-word;\n  word-wrap: break-word;\n  -webkit-hyphens: auto;\n      -ms-hyphens: auto;\n          hyphens: auto;\n}\n\n.theme--light.v-divider {\n  border-color: rgba(0,0,0,0.12);\n}\n.theme--dark.v-divider {\n  border-color: rgba(255,255,255,0.12);\n}\n.v-divider {\n  display: block;\n  flex: 1 1 0px;\n  max-width: 100%;\n  height: 0px;\n  max-height: 0px;\n  border: solid;\n  border-width: thin 0 0 0;\n  transition: inherit;\n}\n.v-divider--inset:not(.v-divider--vertical) {\n  margin-left: 72px;\n  max-width: calc(100% - 72px);\n}\n.v-divider--vertical {\n  align-self: stretch;\n  border: solid;\n  border-width: 0 thin 0 0;\n  display: inline-flex;\n  height: inherit;\n  min-height: 100%;\n  max-height: 100%;\n  max-width: 0px;\n  width: 0px;\n  vertical-align: text-bottom;\n}\n.v-divider--vertical.v-divider--inset {\n  margin-top: 8px;\n  min-height: 0;\n  max-height: calc(100% - 16px);\n}\n\n.theme--light.v-subheader {\n  color: rgba(0,0,0,0.54);\n}\n.theme--dark.v-subheader {\n  color: rgba(255,255,255,0.7);\n}\n.v-subheader {\n  align-items: center;\n  display: flex;\n  height: 48px;\n  font-size: 14px;\n  font-weight: 500;\n  padding: 0 16px 0 16px;\n}\n.v-subheader--inset {\n  margin-left: 56px;\n}\n\n/* Themes */\n.theme--light.v-list {\n  background: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-list .v-list--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-list .v-list__tile__sub-title {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-list .v-list__tile__mask {\n  color: rgba(0,0,0,0.38);\n  background: #eee;\n}\n.theme--light.v-list .v-list__tile--link:hover,\n.theme--light.v-list .v-list__tile--highlighted,\n.theme--light.v-list .v-list__group__header:hover {\n  background: rgba(0,0,0,0.04);\n}\n.theme--light.v-list .v-list__group--active:before,\n.theme--light.v-list .v-list__group--active:after {\n  background: rgba(0,0,0,0.12);\n}\n.theme--light.v-list .v-list__group--disabled .v-list__tile {\n  color: rgba(0,0,0,0.38) !important;\n}\n.theme--light.v-list .v-list__group--disabled .v-list__group__header__prepend-icon .v-icon {\n  color: rgba(0,0,0,0.38) !important;\n}\n.theme--dark.v-list {\n  background: #424242;\n  color: #fff;\n}\n.theme--dark.v-list .v-list--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-list .v-list__tile__sub-title {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-list .v-list__tile__mask {\n  color: rgba(255,255,255,0.5);\n  background: #494949;\n}\n.theme--dark.v-list .v-list__tile--link:hover,\n.theme--dark.v-list .v-list__tile--highlighted,\n.theme--dark.v-list .v-list__group__header:hover {\n  background: rgba(255,255,255,0.08);\n}\n.theme--dark.v-list .v-list__group--active:before,\n.theme--dark.v-list .v-list__group--active:after {\n  background: rgba(255,255,255,0.12);\n}\n.theme--dark.v-list .v-list__group--disabled .v-list__tile {\n  color: rgba(255,255,255,0.5) !important;\n}\n.theme--dark.v-list .v-list__group--disabled .v-list__group__header__prepend-icon .v-icon {\n  color: rgba(255,255,255,0.5) !important;\n}\n.application--is-rtl .v-list__tile__title {\n  text-align: right;\n}\n.application--is-rtl .v-list__tile__content {\n  text-align: right;\n}\n.v-list {\n  list-style-type: none;\n  padding: 8px 0 8px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-list > div {\n  transition: inherit;\n}\n.v-list__tile {\n  align-items: center;\n  color: inherit;\n  display: flex;\n  font-size: 16px;\n  font-weight: 400;\n  height: 48px;\n  margin: 0;\n  padding: 0 16px;\n  position: relative;\n  text-decoration: none;\n  transition: background 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-list__tile--link {\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-list__tile__content,\n.v-list__tile__action {\n  height: 100%;\n}\n.v-list__tile__title,\n.v-list__tile__sub-title {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-list__tile__title {\n  height: 24px;\n  line-height: 24px;\n  position: relative;\n  text-align: left;\n}\n.v-list__tile__sub-title {\n  font-size: 14px;\n}\n.v-list__tile__avatar {\n  display: flex;\n  justify-content: flex-start;\n  min-width: 56px;\n}\n.v-list__tile__action {\n  display: flex;\n  justify-content: flex-start;\n  min-width: 56px;\n  align-items: center;\n}\n.v-list__tile__action .v-btn {\n  padding: 0;\n  margin: 0;\n}\n.v-list__tile__action .v-btn--icon {\n  margin: -6px;\n}\n.v-list__tile__action .v-radio.v-radio {\n  margin: 0;\n}\n.v-list__tile__action .v-input--selection-controls {\n  padding: 0;\n  margin: 0;\n}\n.v-list__tile__action .v-input--selection-controls .v-messages {\n  display: none;\n}\n.v-list__tile__action .v-input--selection-controls .v-input__slot {\n  margin: 0;\n}\n.v-list__tile__action-text {\n  color: #9e9e9e;\n  font-size: 12px;\n}\n.v-list__tile__action--stack {\n  align-items: flex-end;\n  justify-content: space-between;\n  padding-top: 8px;\n  padding-bottom: 8px;\n  white-space: nowrap;\n  flex-direction: column;\n}\n.v-list__tile__content {\n  text-align: left;\n  flex: 1 1 auto;\n  overflow: hidden;\n  display: flex;\n  align-items: flex-start;\n  justify-content: center;\n  flex-direction: column;\n}\n.v-list__tile__content ~ .v-list__tile__avatar {\n  justify-content: flex-end;\n}\n.v-list__tile__content ~ .v-list__tile__action:not(.v-list__tile__action--stack) {\n  justify-content: flex-end;\n}\n.v-list__tile--active .v-list__tile__action:first-of-type .v-icon {\n  color: inherit;\n}\n.v-list__tile--avatar {\n  height: 56px;\n}\n.v-list--dense {\n  padding-top: 4px;\n  padding-bottom: 4px;\n}\n.v-list--dense .v-subheader {\n  font-size: 13px;\n  height: 40px;\n}\n.v-list--dense .v-list__group .v-subheader {\n  height: 40px;\n}\n.v-list--dense .v-list__tile {\n  font-size: 13px;\n}\n.v-list--dense .v-list__tile--avatar {\n  height: 48px;\n}\n.v-list--dense .v-list__tile:not(.v-list__tile--avatar) {\n  height: 40px;\n}\n.v-list--dense .v-list__tile .v-icon {\n  font-size: 22px;\n}\n.v-list--dense .v-list__tile__sub-title {\n  font-size: 13px;\n}\n.v-list--disabled {\n  pointer-events: none;\n}\n.v-list--two-line .v-list__tile {\n  height: 72px;\n}\n.v-list--two-line.v-list--dense .v-list__tile {\n  height: 60px;\n}\n.v-list--three-line .v-list__tile {\n  height: 88px;\n}\n.v-list--three-line .v-list__tile__avatar {\n  margin-top: -18px;\n}\n.v-list--three-line .v-list__tile__sub-title {\n  white-space: initial;\n  -webkit-line-clamp: 2;\n  display: -webkit-box;\n}\n.v-list--three-line.v-list--dense .v-list__tile {\n  height: 76px;\n}\n.v-list > .v-list__group:before {\n  top: 0;\n}\n.v-list > .v-list__group:before .v-list__tile__avatar {\n  margin-top: -14px;\n}\n.v-list__group {\n  padding: 0;\n  position: relative;\n  transition: inherit;\n}\n.v-list__group:before,\n.v-list__group:after {\n  content: '';\n  height: 1px;\n  left: 0;\n  position: absolute;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-list__group--active ~ .v-list__group:before {\n  display: none;\n}\n.v-list__group__header {\n  align-items: center;\n  cursor: pointer;\n  display: flex;\n  list-style-type: none;\n}\n.v-list__group__header > div:not(.v-list__group__header__prepend-icon):not(.v-list__group__header__append-icon) {\n  flex: 1 1 auto;\n  overflow: hidden;\n}\n.v-list__group__header .v-list__group__header__append-icon,\n.v-list__group__header .v-list__group__header__prepend-icon {\n  padding: 0 16px;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-list__group__header--sub-group {\n  align-items: center;\n  display: flex;\n}\n.v-list__group__header--sub-group div .v-list__tile {\n  padding-left: 0;\n}\n.v-list__group__header--sub-group .v-list__group__header__prepend-icon {\n  padding: 0 0 0 40px;\n  margin-right: 8px;\n}\n.v-list__group__header .v-list__group__header__prepend-icon {\n  display: flex;\n  justify-content: flex-start;\n  min-width: 56px;\n}\n.v-list__group__header--active .v-list__group__header__append-icon .v-icon {\n  -webkit-transform: rotate(-180deg);\n          transform: rotate(-180deg);\n}\n.v-list__group__header--active .v-list__group__header__prepend-icon .v-icon {\n  color: inherit;\n}\n.v-list__group__header--active.v-list__group__header--sub-group .v-list__group__header__prepend-icon .v-icon {\n  -webkit-transform: rotate(-180deg);\n          transform: rotate(-180deg);\n}\n.v-list__group__items {\n  position: relative;\n  padding: 0;\n  transition: inherit;\n}\n.v-list__group__items > div {\n  display: block;\n}\n.v-list__group__items--no-action .v-list__tile {\n  padding-left: 72px;\n}\n.v-list__group--disabled {\n  pointer-events: none;\n}\n.v-list--subheader {\n  padding-top: 0;\n}\n\n.v-avatar {\n  align-items: center;\n  border-radius: 50%;\n  display: inline-flex;\n  justify-content: center;\n  position: relative;\n  text-align: center;\n  vertical-align: middle;\n}\n.v-avatar img,\n.v-avatar .v-icon,\n.v-avatar .v-image {\n  border-radius: 50%;\n  display: inline-flex;\n  height: inherit;\n  width: inherit;\n}\n.v-avatar--tile {\n  border-radius: 0;\n}\n.v-avatar--tile img,\n.v-avatar--tile .v-icon,\n.v-avatar--tile .v-image {\n  border-radius: 0;\n}\n\n/* Theme */\n.theme--light.v-counter {\n  color: rgba(0,0,0,0.54);\n}\n.theme--dark.v-counter {\n  color: rgba(255,255,255,0.7);\n}\n.v-counter {\n  flex: 0 1 auto;\n  font-size: 12px;\n  min-height: 12px;\n  line-height: 1;\n}\n\n.v-progress-linear {\n  background: transparent;\n  margin: 1rem 0;\n  overflow: hidden;\n  width: 100%;\n  position: relative;\n}\n.v-progress-linear__bar {\n  width: 100%;\n  height: inherit;\n  position: relative;\n  transition: 0.2s cubic-bezier(0.4, 0, 0.6, 1);\n  z-index: 1;\n}\n.v-progress-linear__bar__determinate {\n  height: inherit;\n  transition: 0.2s cubic-bezier(0.4, 0, 0.6, 1);\n}\n.v-progress-linear__bar__indeterminate .long,\n.v-progress-linear__bar__indeterminate .short {\n  height: inherit;\n  position: absolute;\n  left: 0;\n  top: 0;\n  bottom: 0;\n  will-change: left, right;\n  width: auto;\n  background-color: inherit;\n}\n.v-progress-linear__bar__indeterminate--active .long {\n  -webkit-animation: indeterminate;\n          animation: indeterminate;\n  -webkit-animation-duration: 2.2s;\n          animation-duration: 2.2s;\n  -webkit-animation-iteration-count: infinite;\n          animation-iteration-count: infinite;\n}\n.v-progress-linear__bar__indeterminate--active .short {\n  -webkit-animation: indeterminate-short;\n          animation: indeterminate-short;\n  -webkit-animation-duration: 2.2s;\n          animation-duration: 2.2s;\n  -webkit-animation-iteration-count: infinite;\n          animation-iteration-count: infinite;\n}\n.v-progress-linear__background {\n  position: absolute;\n  top: 0;\n  left: 0;\n  bottom: 0;\n  transition: 0.3s ease-in;\n}\n.v-progress-linear__content {\n  width: 100%;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  z-index: 2;\n}\n.v-progress-linear--query .v-progress-linear__bar__indeterminate--active .long {\n  -webkit-animation: query;\n          animation: query;\n  -webkit-animation-duration: 2s;\n          animation-duration: 2s;\n  -webkit-animation-iteration-count: infinite;\n          animation-iteration-count: infinite;\n}\n.v-progress-linear--query .v-progress-linear__bar__indeterminate--active .short {\n  -webkit-animation: query-short;\n          animation: query-short;\n  -webkit-animation-duration: 2s;\n          animation-duration: 2s;\n  -webkit-animation-iteration-count: infinite;\n          animation-iteration-count: infinite;\n}\n@-webkit-keyframes indeterminate {\n  0% {\n    left: -90%;\n    right: 100%;\n  }\n  60% {\n    left: -90%;\n    right: 100%;\n  }\n  100% {\n    left: 100%;\n    right: -35%;\n  }\n}\n@keyframes indeterminate {\n  0% {\n    left: -90%;\n    right: 100%;\n  }\n  60% {\n    left: -90%;\n    right: 100%;\n  }\n  100% {\n    left: 100%;\n    right: -35%;\n  }\n}\n@-webkit-keyframes indeterminate-short {\n  0% {\n    left: -200%;\n    right: 100%;\n  }\n  60% {\n    left: 107%;\n    right: -8%;\n  }\n  100% {\n    left: 107%;\n    right: -8%;\n  }\n}\n@keyframes indeterminate-short {\n  0% {\n    left: -200%;\n    right: 100%;\n  }\n  60% {\n    left: 107%;\n    right: -8%;\n  }\n  100% {\n    left: 107%;\n    right: -8%;\n  }\n}\n@-webkit-keyframes query {\n  0% {\n    right: -90%;\n    left: 100%;\n  }\n  60% {\n    right: -90%;\n    left: 100%;\n  }\n  100% {\n    right: 100%;\n    left: -35%;\n  }\n}\n@keyframes query {\n  0% {\n    right: -90%;\n    left: 100%;\n  }\n  60% {\n    right: -90%;\n    left: 100%;\n  }\n  100% {\n    right: 100%;\n    left: -35%;\n  }\n}\n@-webkit-keyframes query-short {\n  0% {\n    right: -200%;\n    left: 100%;\n  }\n  60% {\n    right: 107%;\n    left: -8%;\n  }\n  100% {\n    right: 107%;\n    left: -8%;\n  }\n}\n@keyframes query-short {\n  0% {\n    right: -200%;\n    left: 100%;\n  }\n  60% {\n    right: 107%;\n    left: -8%;\n  }\n  100% {\n    right: 107%;\n    left: -8%;\n  }\n}\n\n.application--is-rtl .v-badge__badge {\n  right: initial;\n  left: -22px;\n}\n.application--is-rtl .v-badge--overlap .v-badge__badge {\n  right: initial;\n  left: -8px;\n}\n.application--is-rtl .v-badge--overlap.v-badge--left .v-badge__badge {\n  right: -8px;\n  left: initial;\n}\n.application--is-rtl .v-badge--left .v-badge__badge {\n  right: -22px;\n  left: initial;\n}\n.v-badge {\n  display: inline-block;\n  position: relative;\n}\n.v-badge__badge {\n  color: #fff;\n  display: flex;\n  position: absolute;\n  font-size: 14px;\n  top: -11px;\n  right: -22px;\n  border-radius: 50%;\n  height: 22px;\n  width: 22px;\n  justify-content: center;\n  align-items: center;\n  flex-direction: row;\n  flex-wrap: wrap;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-badge__badge .v-icon {\n  font-size: 14px;\n}\n.v-badge--overlap .v-badge__badge {\n  top: -8px;\n  right: -8px;\n}\n.v-badge--overlap.v-badge--left .v-badge__badge {\n  left: -8px;\n  right: initial;\n}\n.v-badge--overlap.v-badge--bottom .v-badge__badge {\n  bottom: -8px;\n  top: initial;\n}\n.v-badge--left .v-badge__badge {\n  left: -22px;\n}\n.v-badge--bottom .v-badge__badge {\n  bottom: -11px;\n  top: initial;\n}\n\n.theme--light.v-bottom-nav {\n  background-color: #fff;\n}\n.theme--light.v-bottom-nav .v-btn:not(.v-btn--active) {\n  color: rgba(0,0,0,0.54) !important;\n}\n.theme--dark.v-bottom-nav {\n  background-color: #424242;\n}\n.theme--dark.v-bottom-nav .v-btn:not(.v-btn--active) {\n  color: rgba(255,255,255,0.7) !important;\n}\n.v-item-group.v-bottom-nav {\n  bottom: 0;\n  box-shadow: 0 3px 14px 2px rgba(0,0,0,0.12);\n  display: flex;\n  left: 0;\n  justify-content: center;\n  -webkit-transform: translate(0, 60px);\n          transform: translate(0, 60px);\n  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-item-group.v-bottom-nav--absolute {\n  position: absolute;\n}\n.v-item-group.v-bottom-nav--active {\n  -webkit-transform: translate(0, 0);\n          transform: translate(0, 0);\n}\n.v-item-group.v-bottom-nav--fixed {\n  position: fixed;\n  z-index: 4;\n}\n.v-item-group.v-bottom-nav .v-btn {\n  background: transparent !important;\n  border-radius: 0;\n  box-shadow: none !important;\n  font-weight: 400;\n  height: 100%;\n  margin: 0;\n  max-width: 168px;\n  min-width: 80px;\n  padding: 8px 12px 10px;\n  text-transform: none;\n  width: 100%;\n  flex-shrink: 1;\n}\n.v-item-group.v-bottom-nav .v-btn .v-btn__content {\n  flex-direction: column-reverse;\n  font-size: 12px;\n  white-space: nowrap;\n  will-change: font-size;\n}\n.v-item-group.v-bottom-nav .v-btn .v-btn__content i.v-icon {\n  color: inherit;\n  margin-bottom: 4px;\n  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-item-group.v-bottom-nav .v-btn .v-btn__content span {\n  line-height: 1;\n}\n.v-item-group.v-bottom-nav .v-btn--active {\n  padding-top: 6px;\n}\n.v-item-group.v-bottom-nav .v-btn--active:before {\n  background-color: transparent;\n}\n.v-item-group.v-bottom-nav .v-btn--active .v-btn__content {\n  font-size: 14px;\n}\n.v-item-group.v-bottom-nav .v-btn--active .v-btn__content .v-icon {\n  -webkit-transform: none;\n          transform: none;\n}\n.v-item-group.v-bottom-nav--shift .v-btn__content {\n  font-size: 14px;\n}\n.v-item-group.v-bottom-nav--shift .v-btn {\n  transition: all 0.3s;\n  min-width: 56px;\n  max-width: 96px;\n}\n.v-item-group.v-bottom-nav--shift .v-btn--active {\n  min-width: 96px;\n  max-width: 168px;\n}\n.v-bottom-nav--shift .v-btn:not(.v-btn--active) .v-btn__content .v-icon {\n  -webkit-transform: scale(1, 1) translate(0, 8px);\n          transform: scale(1, 1) translate(0, 8px);\n}\n.v-bottom-nav--shift .v-btn:not(.v-btn--active) .v-btn__content > span:not(.v-badge) {\n  color: transparent;\n}\n\n.v-item-group {\n  flex: 0 1 auto;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-item-group > * {\n  cursor: pointer;\n  flex: 1 1 auto;\n}\n\n.v-bottom-sheet.v-dialog {\n  align-self: flex-end;\n  border-radius: 0;\n  flex: 1 0 100%;\n  margin: 0;\n  min-width: 100%;\n  overflow: visible;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-bottom-sheet.v-dialog.v-bottom-sheet--inset {\n  max-width: 70%;\n  min-width: 0;\n}\n@media only screen and (max-width: 599px) {\n  .v-bottom-sheet.v-dialog.v-bottom-sheet--inset {\n    max-width: none;\n  }\n}\n\n.v-dialog {\n  box-shadow: 0px 11px 15px -7px rgba(0,0,0,0.2), 0px 24px 38px 3px rgba(0,0,0,0.14), 0px 9px 46px 8px rgba(0,0,0,0.12);\n  border-radius: 2px;\n  margin: 24px;\n  overflow-y: auto;\n  pointer-events: auto;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n  width: 100%;\n  z-index: inherit;\n}\n.v-dialog__content {\n  align-items: center;\n  display: flex;\n  height: 100%;\n  justify-content: center;\n  left: 0;\n  pointer-events: none;\n  position: fixed;\n  top: 0;\n  transition: 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);\n  width: 100%;\n  z-index: 6;\n  outline: none;\n}\n.v-dialog:not(.v-dialog--fullscreen) {\n  max-height: 90%;\n}\n.v-dialog__activator {\n  cursor: pointer;\n}\n.v-dialog__activator * {\n  cursor: pointer;\n}\n.v-dialog__container {\n  display: inline-block;\n  vertical-align: middle;\n}\n.v-dialog--animated {\n  -webkit-animation-duration: 0.15s;\n          animation-duration: 0.15s;\n  -webkit-animation-name: animate-dialog;\n          animation-name: animate-dialog;\n  -webkit-animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);\n          animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-dialog--fullscreen {\n  border-radius: 0;\n  margin: 0;\n  height: 100%;\n  position: fixed;\n  overflow-y: auto;\n  top: 0;\n  left: 0;\n}\n.v-dialog--fullscreen > .v-card {\n  min-height: 100%;\n  min-width: 100%;\n  margin: 0 !important;\n  padding: 0 !important;\n}\n.v-dialog--scrollable,\n.v-dialog--scrollable > form {\n  display: flex;\n}\n.v-dialog--scrollable > .v-card,\n.v-dialog--scrollable > form > .v-card {\n  display: flex;\n  flex: 1 1 100%;\n  max-width: 100%;\n  flex-direction: column;\n}\n.v-dialog--scrollable > .v-card > .v-card__title,\n.v-dialog--scrollable > form > .v-card > .v-card__title,\n.v-dialog--scrollable > .v-card > .v-card__actions,\n.v-dialog--scrollable > form > .v-card > .v-card__actions {\n  flex: 1 0 auto;\n}\n.v-dialog--scrollable > .v-card > .v-card__text,\n.v-dialog--scrollable > form > .v-card > .v-card__text {\n  overflow-y: auto;\n  -webkit-backface-visibility: hidden;\n          backface-visibility: hidden;\n}\n@-webkit-keyframes animate-dialog {\n  0% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n  }\n  50% {\n    -webkit-transform: scale(1.03);\n            transform: scale(1.03);\n  }\n  100% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n  }\n}\n@keyframes animate-dialog {\n  0% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n  }\n  50% {\n    -webkit-transform: scale(1.03);\n            transform: scale(1.03);\n  }\n  100% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n  }\n}\n\n.v-overlay {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  pointer-events: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  z-index: 5;\n}\n.v-overlay--absolute {\n  position: absolute;\n}\n.v-overlay:before {\n  background-color: #212121;\n  bottom: 0;\n  content: '';\n  height: 100%;\n  left: 0;\n  opacity: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  transition: inherit;\n  transition-delay: 150ms;\n  width: 100%;\n}\n.v-overlay--active {\n  pointer-events: auto;\n  touch-action: none;\n}\n.v-overlay--active:before {\n  opacity: 0.46;\n}\n\n.theme--light.v-breadcrumbs .v-breadcrumbs__divider,\n.theme--light.v-breadcrumbs .v-breadcrumbs__item--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-breadcrumbs .v-breadcrumbs__divider,\n.theme--dark.v-breadcrumbs .v-breadcrumbs__item--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.v-breadcrumbs {\n  align-items: center;\n  display: flex;\n  flex-wrap: wrap;\n  flex: 0 1 auto;\n  list-style-type: none;\n  margin: 0;\n  padding: 18px 12px;\n}\n.v-breadcrumbs li {\n  align-items: center;\n  display: inline-flex;\n  font-size: 14px;\n}\n.v-breadcrumbs li .v-icon {\n  font-size: 16px;\n}\n.v-breadcrumbs li:nth-child(even) {\n  padding: 0 12px;\n}\n.v-breadcrumbs--large li {\n  font-size: 16px;\n}\n.v-breadcrumbs--large li .v-icon {\n  font-size: 16px;\n}\n.v-breadcrumbs__item {\n  align-items: center;\n  display: inline-flex;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-breadcrumbs__item--disabled {\n  pointer-events: none;\n}\n\n.v-ripple__container {\n  color: inherit;\n  border-radius: inherit;\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0;\n  top: 0;\n  overflow: hidden;\n  z-index: 0;\n  pointer-events: none;\n  contain: strict;\n}\n.v-ripple__animation {\n  color: inherit;\n  position: absolute;\n  top: 0;\n  left: 0;\n  border-radius: 50%;\n  background: currentColor;\n  opacity: 0;\n  pointer-events: none;\n  overflow: hidden;\n  will-change: transform, opacity;\n}\n.v-ripple__animation--enter {\n  transition: none;\n}\n.v-ripple__animation--in {\n  transition: opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);\n  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1);\n  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-ripple__animation--out {\n  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.theme--light.v-btn {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-btn.v-btn--disabled {\n  color: rgba(0,0,0,0.26) !important;\n}\n.theme--light.v-btn.v-btn--disabled .v-icon,\n.theme--light.v-btn.v-btn--disabled .v-btn__loading {\n  color: rgba(0,0,0,0.26) !important;\n}\n.theme--light.v-btn.v-btn--disabled:not(.v-btn--icon):not(.v-btn--flat):not(.v-btn--outline) {\n  background-color: rgba(0,0,0,0.12) !important;\n}\n.theme--light.v-btn:not(.v-btn--icon):not(.v-btn--flat) {\n  background-color: #f5f5f5;\n}\n.theme--dark.v-btn {\n  color: #fff;\n}\n.theme--dark.v-btn.v-btn--disabled {\n  color: rgba(255,255,255,0.3) !important;\n}\n.theme--dark.v-btn.v-btn--disabled .v-icon,\n.theme--dark.v-btn.v-btn--disabled .v-btn__loading {\n  color: rgba(255,255,255,0.3) !important;\n}\n.theme--dark.v-btn.v-btn--disabled:not(.v-btn--icon):not(.v-btn--flat):not(.v-btn--outline) {\n  background-color: rgba(255,255,255,0.12) !important;\n}\n.theme--dark.v-btn:not(.v-btn--icon):not(.v-btn--flat) {\n  background-color: #212121;\n}\n/** Base Spec */\n.v-btn {\n  align-items: center;\n  border-radius: 2px;\n  display: inline-flex;\n  height: 36px;\n  flex: 0 0 auto;\n  font-size: 14px;\n  font-weight: 500;\n  justify-content: center;\n  margin: 6px 8px;\n  min-width: 88px;\n  outline: 0;\n  text-transform: uppercase;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1), color 1ms;\n  position: relative;\n  vertical-align: middle;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n/** Psuedo */\n.v-btn:before {\n  border-radius: inherit;\n  color: inherit;\n  content: '';\n  position: absolute;\n  left: 0;\n  top: 0;\n  height: 100%;\n  opacity: 0.12;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n/** Content */\n.v-btn {\n  padding: 0 16px;\n}\n.v-btn--active,\n.v-btn:hover,\n.v-btn:focus {\n  position: relative;\n}\n.v-btn--active:before,\n.v-btn:hover:before,\n.v-btn:focus:before {\n  background-color: currentColor;\n}\n.v-btn__content {\n  align-items: center;\n  border-radius: inherit;\n  color: inherit;\n  display: flex;\n  flex: 1 0 auto;\n  justify-content: center;\n  margin: 0 auto;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  white-space: nowrap;\n  width: inherit;\n}\n/** Sizes */\n.v-btn--small {\n  font-size: 13px;\n  height: 28px;\n  padding: 0 8px;\n}\n.v-btn--large {\n  font-size: 15px;\n  height: 44px;\n  padding: 0 32px;\n}\n/** Icons */\n.v-btn .v-btn__content .v-icon {\n  color: inherit;\n}\n/** Types */\n.v-btn:not(.v-btn--depressed):not(.v-btn--flat) {\n  will-change: box-shadow;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-btn:not(.v-btn--depressed):not(.v-btn--flat):active {\n  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);\n}\n.v-btn--icon {\n  background: transparent;\n  box-shadow: none !important;\n  border-radius: 50%;\n  justify-content: center;\n  min-width: 0;\n  width: 36px;\n}\n.v-btn--icon.v-btn--small {\n  width: 28px;\n}\n.v-btn--icon.v-btn--large {\n  width: 44px;\n}\n.v-btn--icon:before {\n  border-radius: 50%;\n}\n.v-btn--floating {\n  border-radius: 50%;\n  min-width: 0;\n  height: 56px;\n  width: 56px;\n  padding: 0;\n}\n.v-btn--floating.v-btn--fixed,\n.v-btn--floating.v-btn--absolute {\n  z-index: 4;\n}\n.v-btn--floating:not(.v-btn--depressed):not(.v-btn--flat) {\n  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12);\n}\n.v-btn--floating:not(.v-btn--depressed):not(.v-btn--flat):active {\n  box-shadow: 0px 7px 8px -4px rgba(0,0,0,0.2), 0px 12px 17px 2px rgba(0,0,0,0.14), 0px 5px 22px 4px rgba(0,0,0,0.12);\n}\n.v-btn--floating .v-btn__content {\n  flex: 1 1 auto;\n  margin: 0;\n  height: 100%;\n}\n.v-btn--floating:after {\n  border-radius: 50%;\n}\n.v-btn--floating .v-btn__content > :not(:only-child) {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-btn--floating .v-btn__content > :not(:only-child):first-child {\n  opacity: 1;\n}\n.v-btn--floating .v-btn__content > :not(:only-child):last-child {\n  opacity: 0;\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n.v-btn--floating .v-btn__content > :not(:only-child):last-child,\n.v-btn--floating .v-btn__content > :not(:only-child):first-child {\n  -webkit-backface-visibility: hidden;\n  position: absolute;\n  left: 0;\n  top: 0;\n}\n.v-btn--floating.v-btn--active .v-btn__content > :not(:only-child):first-child {\n  opacity: 0;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n}\n.v-btn--floating.v-btn--active .v-btn__content > :not(:only-child):last-child {\n  opacity: 1;\n  -webkit-transform: rotate(0);\n          transform: rotate(0);\n}\n.v-btn--floating .v-icon {\n  height: inherit;\n  width: inherit;\n}\n.v-btn--floating.v-btn--small {\n  height: 40px;\n  width: 40px;\n}\n.v-btn--floating.v-btn--small .v-icon {\n  font-size: 18px;\n}\n.v-btn--floating.v-btn--large {\n  height: 72px;\n  width: 72px;\n}\n.v-btn--floating.v-btn--large .v-icon {\n  font-size: 30px;\n}\n.v-btn--reverse .v-btn__content {\n  flex-direction: row-reverse;\n}\n.v-btn--reverse.v-btn--column .v-btn__content {\n  flex-direction: column-reverse;\n}\n.v-btn--fixed,\n.v-btn--absolute {\n  margin: 0;\n}\n.v-btn.v-btn--absolute {\n  position: absolute;\n}\n.v-btn.v-btn--fixed {\n  position: fixed;\n}\n.v-btn--top:not(.v-btn--absolute) {\n  top: 16px;\n}\n.v-btn--top.v-btn--absolute {\n  top: -28px;\n}\n.v-btn--top.v-btn--absolute.v-btn--small {\n  top: -20px;\n}\n.v-btn--top.v-btn--absolute.v-btn--large {\n  top: -36px;\n}\n.v-btn--bottom:not(.v-btn--absolute) {\n  bottom: 16px;\n}\n.v-btn--bottom.v-btn--absolute {\n  bottom: -28px;\n}\n.v-btn--bottom.v-btn--absolute.v-btn--small {\n  bottom: -20px;\n}\n.v-btn--bottom.v-btn--absolute.v-btn--large {\n  bottom: -36px;\n}\n.v-btn--left {\n  left: 16px;\n}\n.v-btn--right {\n  right: 16px;\n}\n/** Disabled */\n.v-btn.v-btn--disabled {\n  box-shadow: none !important;\n  pointer-events: none;\n}\n.v-btn:not(.v-btn--disabled):not(.v-btn--floating):not(.v-btn--icon) .v-btn__content .v-icon {\n  transition: none;\n}\n.v-btn--icon {\n  padding: 0;\n}\n/** Loader */\n.v-btn--loader {\n  pointer-events: none;\n}\n.v-btn--loader .v-btn__content {\n  opacity: 0;\n}\n.v-btn__loading {\n  align-items: center;\n  display: flex;\n  height: 100%;\n  justify-content: center;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n}\n.v-btn__loading .v-icon--left {\n  margin-right: 1rem;\n  line-height: inherit;\n}\n.v-btn__loading .v-icon--right {\n  margin-left: 1rem;\n  line-height: inherit;\n}\n/** Custom Buttons */\n.v-btn.v-btn--outline {\n  border: 1px solid currentColor;\n  background: transparent !important;\n  box-shadow: none;\n}\n.v-btn.v-btn--outline:hover {\n  box-shadow: none;\n}\n.v-btn--block {\n  display: flex;\n  flex: 1;\n  margin: 6px 0;\n  width: 100%;\n}\n.v-btn--round {\n  border-radius: 28px;\n}\n.v-btn--round:after {\n  border-radius: 28px;\n}\n/** Themes */\n.v-btn:not(.v-btn--outline).primary,\n.v-btn:not(.v-btn--outline).secondary,\n.v-btn:not(.v-btn--outline).accent,\n.v-btn:not(.v-btn--outline).success,\n.v-btn:not(.v-btn--outline).error,\n.v-btn:not(.v-btn--outline).warning,\n.v-btn:not(.v-btn--outline).info {\n  color: #fff;\n}\n@media (hover: none) {\n  .v-btn:hover::before {\n    background-color: transparent;\n  }\n}\n\n.v-progress-circular {\n  position: relative;\n  display: inline-flex;\n  vertical-align: middle;\n}\n.v-progress-circular svg {\n  width: 100%;\n  height: 100%;\n  margin: auto;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  z-index: 0;\n}\n.v-progress-circular--indeterminate svg {\n  -webkit-animation: progress-circular-rotate 1.4s linear infinite;\n          animation: progress-circular-rotate 1.4s linear infinite;\n  -webkit-transform-origin: center center;\n          transform-origin: center center;\n  transition: all 0.2s ease-in-out;\n}\n.v-progress-circular--indeterminate .v-progress-circular__overlay {\n  -webkit-animation: progress-circular-dash 1.4s ease-in-out infinite;\n          animation: progress-circular-dash 1.4s ease-in-out infinite;\n  stroke-linecap: round;\n  stroke-dasharray: 80, 200;\n  stroke-dashoffset: 0px;\n}\n.v-progress-circular__underlay {\n  stroke: rgba(0,0,0,0.1);\n  z-index: 1;\n}\n.v-progress-circular__overlay {\n  stroke: currentColor;\n  z-index: 2;\n  transition: all 0.6s ease-in-out;\n}\n.v-progress-circular__info {\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n@-webkit-keyframes progress-circular-dash {\n  0% {\n    stroke-dasharray: 1, 200;\n    stroke-dashoffset: 0px;\n  }\n  50% {\n    stroke-dasharray: 100, 200;\n    stroke-dashoffset: -15px;\n  }\n  100% {\n    stroke-dasharray: 100, 200;\n    stroke-dashoffset: -125px;\n  }\n}\n@keyframes progress-circular-dash {\n  0% {\n    stroke-dasharray: 1, 200;\n    stroke-dashoffset: 0px;\n  }\n  50% {\n    stroke-dasharray: 100, 200;\n    stroke-dashoffset: -15px;\n  }\n  100% {\n    stroke-dasharray: 100, 200;\n    stroke-dashoffset: -125px;\n  }\n}\n@-webkit-keyframes progress-circular-rotate {\n  100% {\n    -webkit-transform: rotate(360deg);\n            transform: rotate(360deg);\n  }\n}\n@keyframes progress-circular-rotate {\n  100% {\n    -webkit-transform: rotate(360deg);\n            transform: rotate(360deg);\n  }\n}\n\n/** Themes */\n.theme--light.v-btn-toggle {\n  background: #fff;\n}\n.theme--light.v-btn-toggle .v-btn {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-btn-toggle:not(.v-btn-toggle--only-child) .v-btn.v-btn--active:not(:last-child) {\n  border-right-color: rgba(0,0,0,0.26);\n}\n.theme--dark.v-btn-toggle {\n  background: #424242;\n}\n.theme--dark.v-btn-toggle .v-btn {\n  color: #fff;\n}\n.theme--dark.v-btn-toggle:not(.v-btn-toggle--only-child) .v-btn.v-btn--active:not(:last-child) {\n  border-right-color: rgba(255,255,255,0.3);\n}\n.v-btn-toggle {\n  display: inline-flex;\n  border-radius: 2px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  will-change: background, box-shadow;\n}\n.v-btn-toggle .v-btn {\n  justify-content: center;\n  min-width: auto;\n  width: auto;\n  padding: 0 8px;\n  margin: 0;\n  opacity: 0.4;\n  border-radius: 0;\n}\n.v-btn-toggle .v-btn:not(:last-child) {\n  border-right: 1px solid transparent;\n}\n.v-btn-toggle .v-btn:after {\n  display: none;\n}\n.v-btn-toggle .v-btn.v-btn--active {\n  opacity: 1;\n}\n.v-btn-toggle .v-btn span + .v-icon {\n  font-size: initial;\n  margin-left: 10px;\n}\n.v-btn-toggle .v-btn:first-child {\n  border-radius: 2px 0 0 2px;\n}\n.v-btn-toggle .v-btn:last-child {\n  border-radius: 0 2px 2px 0;\n}\n.v-btn-toggle--selected {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n\n.theme--light.v-calendar-weekly {\n  background-color: #fff;\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__head-weekday {\n  border-right: #e0e0e0 1px solid;\n  color: #000;\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__head-weekday.v-past {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__head-weekday.v-outside {\n  background-color: #f7f7f7;\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__day {\n  border-right: #e0e0e0 1px solid;\n  border-bottom: #e0e0e0 1px solid;\n  color: #000;\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__day.v-outside {\n  background-color: #f7f7f7;\n}\n.theme--dark.v-calendar-weekly {\n  background-color: #303030;\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__head-weekday {\n  border-right: #9e9e9e 1px solid;\n  color: #fff;\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__head-weekday.v-past {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__head-weekday.v-outside {\n  background-color: #202020;\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__day {\n  border-right: #9e9e9e 1px solid;\n  border-bottom: #9e9e9e 1px solid;\n  color: #fff;\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__day.v-outside {\n  background-color: #202020;\n}\n.v-calendar-weekly {\n  width: 100%;\n  height: 100%;\n  display: flex;\n  flex-direction: column;\n}\n.v-calendar-weekly__head {\n  display: flex;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-calendar-weekly__head-weekday {\n  flex: 1 0 20px;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  padding: 0px 4px 0px 4px;\n  font-size: 14px;\n}\n.v-calendar-weekly__week {\n  display: flex;\n  flex: 1;\n}\n.v-calendar-weekly__day {\n  flex: 1;\n  width: 0;\n  overflow: hidden;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  position: relative;\n  padding: 32px 4px 4px 4px;\n}\n.v-calendar-weekly__day.v-present .v-calendar-weekly__day-label {\n  border: 1px solid currentColor;\n}\n.v-calendar-weekly__day.v-present .v-calendar-weekly__day-month {\n  color: currentColor;\n}\n.v-calendar-weekly__day-label {\n  position: absolute;\n  text-decoration: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  cursor: pointer;\n  box-shadow: none;\n  text-align: center;\n  left: 0;\n  top: 0;\n  border-radius: 16px;\n  width: 32px;\n  height: 32px;\n  line-height: 32px;\n}\n.v-calendar-weekly__day-label:hover {\n  text-decoration: underline;\n}\n.v-calendar-weekly__day-month {\n  position: absolute;\n  text-decoration: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  box-shadow: none;\n  top: 0;\n  left: 36px;\n  height: 32px;\n  line-height: 32px;\n}\n\n.theme--light.v-calendar-daily {\n  background-color: #fff;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__intervals-head {\n  border-right: #e0e0e0 1px solid;\n}\n.theme--light.v-calendar-daily .v-calendar-daily_head-day {\n  border-right: #e0e0e0 1px solid;\n  border-bottom: #e0e0e0 1px solid;\n  color: #000;\n}\n.theme--light.v-calendar-daily .v-calendar-daily_head-day.v-past .v-calendar-daily_head-weekday,\n.theme--light.v-calendar-daily .v-calendar-daily_head-day.v-past .v-calendar-daily_head-day-label {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-calendar-daily .v-calendar-daily__intervals-body {\n  border-right: #e0e0e0 1px solid;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__intervals-body .v-calendar-daily__interval-text {\n  color: #424242;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__day {\n  border-right: #e0e0e0 1px solid;\n  border-bottom: #e0e0e0 1px solid;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__day-interval {\n  border-top: #e0e0e0 1px solid;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__day-interval:first-child {\n  border-top: none !important;\n}\n.theme--dark.v-calendar-daily {\n  background-color: #303030;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__intervals-head {\n  border-right: #9e9e9e 1px solid;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily_head-day {\n  border-right: #9e9e9e 1px solid;\n  border-bottom: #9e9e9e 1px solid;\n  color: #fff;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily_head-day.v-past .v-calendar-daily_head-weekday,\n.theme--dark.v-calendar-daily .v-calendar-daily_head-day.v-past .v-calendar-daily_head-day-label {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__intervals-body {\n  border-right: #9e9e9e 1px solid;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__intervals-body .v-calendar-daily__interval-text {\n  color: #eee;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__day {\n  border-right: #616161 1px solid;\n  border-bottom: #616161 1px solid;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__day-interval {\n  border-top: #616161 1px solid;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__day-interval:first-child {\n  border-top: none !important;\n}\n.v-calendar-daily {\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  height: 100%;\n}\n.v-calendar-daily__head {\n  flex: none;\n  display: flex;\n}\n.v-calendar-daily__intervals-head {\n  flex: none;\n  width: 44px;\n}\n.v-calendar-daily_head-day {\n  flex: 1 1 auto;\n  width: 0;\n}\n.v-calendar-daily_head-weekday {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  padding: 4px 4px 4px 8px;\n  font-size: 14px;\n}\n.v-calendar-daily_head-day-label {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  font-size: 40px;\n  padding: 0px 4px 4px 8px;\n  line-height: 40px;\n  cursor: pointer;\n}\n.v-calendar-daily_head-day-label:hover {\n  text-decoration: underline;\n}\n.v-calendar-daily__body {\n  flex: 1 1 60%;\n  overflow: hidden;\n  display: flex;\n  position: relative;\n  flex-direction: column;\n}\n.v-calendar-daily__scroll-area {\n  overflow-y: scroll;\n  flex: 1 1 auto;\n  display: flex;\n  align-items: flex-start;\n}\n.v-calendar-daily__pane {\n  width: 100%;\n  overflow-y: hidden;\n  flex: none;\n  display: flex;\n  align-items: flex-start;\n}\n.v-calendar-daily__day-container {\n  display: flex;\n  flex: 1;\n  width: 100%;\n  height: 100%;\n}\n.v-calendar-daily__intervals-body {\n  flex: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  width: 44px;\n}\n.v-calendar-daily__interval {\n  text-align: center;\n  border-bottom: none;\n}\n.v-calendar-daily__interval-text {\n  display: block;\n  position: relative;\n  top: -6px;\n  font-size: 10px;\n}\n.v-calendar-daily__day {\n  flex: 1;\n  width: 0;\n  position: relative;\n}\n\n/* Themes */\n.theme--light.v-sheet {\n  background-color: #fff;\n  border-color: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-sheet {\n  background-color: #424242;\n  border-color: #424242;\n  color: #fff;\n}\n.v-sheet {\n  display: block;\n  border-radius: 2px;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-sheet--tile {\n  border-radius: 0;\n}\n\n.v-image {\n  z-index: 0;\n}\n.v-image__image,\n.v-image__placeholder {\n  z-index: -1;\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n}\n.v-image__image {\n  background-repeat: no-repeat;\n}\n.v-image__image--preload {\n  -webkit-filter: blur(2px);\n          filter: blur(2px);\n}\n.v-image__image--contain {\n  background-size: contain;\n}\n.v-image__image--cover {\n  background-size: cover;\n}\n\n.v-responsive {\n  position: relative;\n  overflow: hidden;\n  flex: 1 0 auto;\n  display: flex;\n}\n.v-responsive__content {\n  flex: 1 0 0px;\n}\n.v-responsive__sizer {\n  transition: padding-bottom 0.2s cubic-bezier(0.25, 0.8, 0.5, 1);\n  flex: 0 0 0px;\n}\n\n.application--is-rtl .v-carousel__prev {\n  left: auto;\n  right: 5px;\n}\n.application--is-rtl .v-carousel__next {\n  left: 5px;\n  right: auto;\n}\n.v-carousel {\n  width: 100%;\n  position: relative;\n  overflow: hidden;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-carousel__prev,\n.v-carousel__next {\n  position: absolute;\n  top: 50%;\n  z-index: 1;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n}\n.v-carousel__prev .v-btn,\n.v-carousel__next .v-btn {\n  margin: 0;\n  height: auto;\n  width: auto;\n}\n.v-carousel__prev .v-btn i,\n.v-carousel__next .v-btn i {\n  font-size: 48px;\n}\n.v-carousel__prev .v-btn:hover,\n.v-carousel__next .v-btn:hover {\n  background: none;\n}\n.v-carousel__prev {\n  left: 5px;\n}\n.v-carousel__next {\n  right: 5px;\n}\n.v-carousel__controls {\n  background: rgba(0,0,0,0.5);\n  align-items: center;\n  bottom: 0;\n  display: flex;\n  justify-content: center;\n  left: 0;\n  position: absolute;\n  height: 50px;\n  list-style-type: none;\n  width: 100%;\n  z-index: 1;\n}\n.v-carousel__controls > .v-item-group {\n  flex: 0 1 auto;\n}\n.v-carousel__controls__item {\n  margin: 0 8px !important;\n}\n.v-carousel__controls__item .v-icon {\n  opacity: 0.5;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-carousel__controls__item--active .v-icon {\n  opacity: 1;\n  vertical-align: middle;\n}\n.v-carousel__controls__item:hover {\n  background: none;\n}\n.v-carousel__controls__item:hover .v-icon {\n  opacity: 0.8;\n}\n\n.v-window__container {\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-window__container--is-active {\n  overflow: hidden;\n}\n.v-window-x-transition-enter-active,\n.v-window-x-reverse-transition-enter-active,\n.v-window-y-transition-enter-active,\n.v-window-y-reverse-transition-enter-active,\n.v-window-x-transition-leave-active,\n.v-window-x-reverse-transition-leave-active,\n.v-window-y-transition-leave-active,\n.v-window-y-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-window-x-transition-leave,\n.v-window-x-reverse-transition-leave,\n.v-window-y-transition-leave,\n.v-window-y-reverse-transition-leave,\n.v-window-x-transition-leave-to,\n.v-window-x-reverse-transition-leave-to,\n.v-window-y-transition-leave-to,\n.v-window-y-reverse-transition-leave-to {\n  position: absolute !important;\n  top: 0;\n  width: 100%;\n}\n.v-window-x-transition-enter {\n  -webkit-transform: translateX(100%);\n          transform: translateX(100%);\n}\n.v-window-x-transition-leave-to {\n  -webkit-transform: translateX(-100%);\n          transform: translateX(-100%);\n}\n.v-window-x-reverse-transition-enter {\n  -webkit-transform: translateX(-100%);\n          transform: translateX(-100%);\n}\n.v-window-x-reverse-transition-leave-to {\n  -webkit-transform: translateX(100%);\n          transform: translateX(100%);\n}\n.v-window-y-transition-enter {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.v-window-y-transition-leave-to {\n  -webkit-transform: translateY(-100%);\n          transform: translateY(-100%);\n}\n.v-window-y-reverse-transition-enter {\n  -webkit-transform: translateY(-100%);\n          transform: translateY(-100%);\n}\n.v-window-y-reverse-transition-leave-to {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n\n.theme--light.v-data-iterator .v-data-iterator__actions {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-data-iterator .v-data-iterator__actions__select .v-select .v-select__selection--comma {\n  color: rgba(0,0,0,0.54) !important;\n}\n.theme--light.v-data-iterator .v-data-iterator__actions__select .v-select .v-input__append-inner {\n  color: rgba(0,0,0,0.54) !important;\n}\n.theme--dark.v-data-iterator .v-data-iterator__actions {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-data-iterator .v-data-iterator__actions__select .v-select .v-select__selection--comma {\n  color: rgba(255,255,255,0.7) !important;\n}\n.theme--dark.v-data-iterator .v-data-iterator__actions__select .v-select .v-input__append-inner {\n  color: rgba(255,255,255,0.7) !important;\n}\n/** Actions */\n.v-data-iterator__actions {\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  font-size: 12px;\n  flex-wrap: wrap-reverse;\n}\n.v-data-iterator__actions .v-btn {\n  color: inherit;\n}\n.v-data-iterator__actions .v-btn:last-of-type {\n  margin-left: 14px;\n}\n.v-data-iterator__actions__range-controls {\n  display: flex;\n  align-items: center;\n  min-height: 48px;\n}\n.v-data-iterator__actions__pagination {\n  display: block;\n  text-align: center;\n  margin: 0 32px 0 24px;\n}\n.v-data-iterator__actions__select {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  margin-right: 14px;\n  white-space: nowrap;\n}\n.v-data-iterator__actions__select .v-select {\n  flex: 0 1 0;\n  margin: 13px 0 13px 34px;\n  padding: 0;\n  position: initial;\n}\n.v-data-iterator__actions__select .v-select__selections {\n  flex-wrap: nowrap;\n}\n.v-data-iterator__actions__select .v-select__selections .v-select__selection--comma {\n  font-size: 12px;\n}\n\n.theme--light.v-overflow-btn .v-input__control::before,\n.theme--light.v-overflow-btn .v-input__slot::before {\n  background-color: rgba(0,0,0,0.12) !important;\n}\n.theme--light.v-overflow-btn.v-text-field--outline .v-input__control::before,\n.theme--light.v-overflow-btn.v-text-field--outline .v-input__slot::before {\n  background-color: transparent !important;\n}\n.theme--light.v-overflow-btn--segmented .v-input__append-inner,\n.theme--light.v-overflow-btn--editable:hover .v-input__append-inner,\n.theme--light.v-overflow-btn--editable.v-input--is-focused .v-input__append-inner,\n.theme--light.v-overflow-btn--editable.v-select--is-menu-active .v-input__append-inner {\n  border-left: 1px solid rgba(0,0,0,0.12);\n}\n.theme--light.v-overflow-btn:hover .v-input__slot,\n.theme--light.v-overflow-btn.v-input--is-focused .v-input__slot,\n.theme--light.v-overflow-btn.v-select--is-menu-active .v-input__slot {\n  background: #fff;\n}\n.theme--dark.v-overflow-btn .v-input__control::before,\n.theme--dark.v-overflow-btn .v-input__slot::before {\n  background-color: rgba(255,255,255,0.12) !important;\n}\n.theme--dark.v-overflow-btn.v-text-field--outline .v-input__control::before,\n.theme--dark.v-overflow-btn.v-text-field--outline .v-input__slot::before {\n  background-color: transparent !important;\n}\n.theme--dark.v-overflow-btn--segmented .v-input__append-inner,\n.theme--dark.v-overflow-btn--editable:hover .v-input__append-inner,\n.theme--dark.v-overflow-btn--editable.v-input--is-focused .v-input__append-inner,\n.theme--dark.v-overflow-btn--editable.v-select--is-menu-active .v-input__append-inner {\n  border-left: 1px solid rgba(255,255,255,0.12);\n}\n.theme--dark.v-overflow-btn:hover .v-input__slot,\n.theme--dark.v-overflow-btn.v-input--is-focused .v-input__slot,\n.theme--dark.v-overflow-btn.v-select--is-menu-active .v-input__slot {\n  background: #424242;\n}\n.v-overflow-btn {\n  margin-top: 12px;\n  padding-top: 0;\n}\n.v-overflow-btn:not(.v-overflow-btn--editable) > .v-input__control > .v-input__slot {\n  cursor: pointer;\n}\n.v-overflow-btn .v-select__slot {\n  height: 48px;\n}\n.v-overflow-btn .v-select__slot input {\n  margin-left: 16px;\n  cursor: pointer;\n}\n.v-overflow-btn .v-select__selection--comma:first-child {\n  margin-left: 16px;\n}\n.v-overflow-btn .v-input__slot {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-overflow-btn .v-input__slot::after {\n  content: none;\n}\n.v-overflow-btn .v-label {\n  margin-left: 16px;\n  top: calc(50% - 10px);\n}\n.v-overflow-btn .v-input__append-inner {\n  width: 48px;\n  height: 48px;\n  align-self: auto;\n  align-items: center;\n  margin-top: 0;\n  padding: 0;\n  flex-shrink: 0;\n}\n.v-overflow-btn .v-input__append-outer,\n.v-overflow-btn .v-input__prepend-outer {\n  margin-top: 12px;\n  margin-bottom: 12px;\n}\n.v-overflow-btn .v-input__control::before {\n  height: 1px;\n  top: -1px;\n  content: '';\n  left: 0;\n  position: absolute;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-overflow-btn.v-input--is-focused .v-input__slot,\n.v-overflow-btn.v-select--is-menu-active .v-input__slot {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-overflow-btn .v-select__selections {\n  width: 0px;\n}\n.v-overflow-btn--segmented .v-select__selections {\n  flex-wrap: nowrap;\n}\n.v-overflow-btn--segmented .v-select__selections .v-btn {\n  border-radius: 0;\n  margin: 0;\n  margin-right: -16px;\n  height: 48px;\n  width: 100%;\n}\n.v-overflow-btn--segmented .v-select__selections .v-btn__content {\n  justify-content: start;\n}\n.v-overflow-btn--segmented .v-select__selections .v-btn__content::before {\n  background-color: transparent;\n}\n.v-overflow-btn--editable .v-select__slot input {\n  cursor: text;\n}\n.v-overflow-btn--editable .v-input__append-inner,\n.v-overflow-btn--editable .v-input__append-inner * {\n  cursor: pointer;\n}\n\n/* Theme */\n.theme--light.v-table {\n  background-color: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-table thead tr:first-child {\n  border-bottom: 1px solid rgba(0,0,0,0.12);\n}\n.theme--light.v-table thead th {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-table tbody tr:not(:last-child) {\n  border-bottom: 1px solid rgba(0,0,0,0.12);\n}\n.theme--light.v-table tbody tr[active] {\n  background: #f5f5f5;\n}\n.theme--light.v-table tbody tr:hover:not(.v-datatable__expand-row) {\n  background: #eee;\n}\n.theme--light.v-table tfoot tr {\n  border-top: 1px solid rgba(0,0,0,0.12);\n}\n.theme--dark.v-table {\n  background-color: #424242;\n  color: #fff;\n}\n.theme--dark.v-table thead tr:first-child {\n  border-bottom: 1px solid rgba(255,255,255,0.12);\n}\n.theme--dark.v-table thead th {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-table tbody tr:not(:last-child) {\n  border-bottom: 1px solid rgba(255,255,255,0.12);\n}\n.theme--dark.v-table tbody tr[active] {\n  background: #505050;\n}\n.theme--dark.v-table tbody tr:hover:not(.v-datatable__expand-row) {\n  background: #616161;\n}\n.theme--dark.v-table tfoot tr {\n  border-top: 1px solid rgba(255,255,255,0.12);\n}\n.v-table__overflow {\n  width: 100%;\n  overflow-x: auto;\n  overflow-y: hidden;\n}\ntable.v-table {\n  border-radius: 2px;\n  border-collapse: collapse;\n  border-spacing: 0;\n  width: 100%;\n  max-width: 100%;\n}\ntable.v-table thead td:not(:nth-child(1)),\ntable.v-table tbody td:not(:nth-child(1)),\ntable.v-table thead th:not(:nth-child(1)),\ntable.v-table tbody th:not(:nth-child(1)),\ntable.v-table thead td:first-child,\ntable.v-table tbody td:first-child,\ntable.v-table thead th:first-child,\ntable.v-table tbody th:first-child {\n  padding: 0 24px;\n}\ntable.v-table thead tr {\n  height: 56px;\n}\ntable.v-table thead th {\n  font-weight: 500;\n  font-size: 12px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  white-space: nowrap;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\ntable.v-table thead th.sortable {\n  pointer-events: auto;\n}\ntable.v-table thead th > div {\n  width: 100%;\n}\ntable.v-table tbody tr {\n  transition: background 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  will-change: background;\n}\ntable.v-table tbody td,\ntable.v-table tbody th {\n  height: 48px;\n}\ntable.v-table tbody td {\n  font-weight: 400;\n  font-size: 13px;\n}\ntable.v-table .input-group--selection-controls {\n  padding: 0;\n}\ntable.v-table .input-group--selection-controls .input-group__details {\n  display: none;\n}\ntable.v-table .input-group--selection-controls.checkbox .v-icon {\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\ntable.v-table .input-group--selection-controls.checkbox .input-group--selection-controls__ripple {\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\ntable.v-table tfoot tr {\n  height: 48px;\n}\ntable.v-table tfoot tr td {\n  padding: 0 24px;\n}\n\n/* Theme */\n.theme--light.v-datatable thead th.column.sortable .v-icon {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-datatable thead th.column.sortable:hover {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-datatable thead th.column.sortable.active {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-datatable thead th.column.sortable.active .v-icon {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-datatable .v-datatable__actions {\n  background-color: #fff;\n  color: rgba(0,0,0,0.54);\n  border-top: 1px solid rgba(0,0,0,0.12);\n}\n.theme--dark.v-datatable thead th.column.sortable .v-icon {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-datatable thead th.column.sortable:hover {\n  color: #fff;\n}\n.theme--dark.v-datatable thead th.column.sortable.active {\n  color: #fff;\n}\n.theme--dark.v-datatable thead th.column.sortable.active .v-icon {\n  color: #fff;\n}\n.theme--dark.v-datatable .v-datatable__actions {\n  background-color: #424242;\n  color: rgba(255,255,255,0.7);\n  border-top: 1px solid rgba(255,255,255,0.12);\n}\n.v-datatable .v-input--selection-controls {\n  margin: 0;\n  padding: 0;\n}\n.v-datatable thead th.column.sortable {\n  cursor: pointer;\n  outline: 0;\n}\n.v-datatable thead th.column.sortable .v-icon {\n  font-size: 16px;\n  display: inline-block;\n  opacity: 0;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-datatable thead th.column.sortable:focus .v-icon,\n.v-datatable thead th.column.sortable:hover .v-icon {\n  opacity: 0.6;\n}\n.v-datatable thead th.column.sortable.active {\n  -webkit-transform: none;\n          transform: none;\n}\n.v-datatable thead th.column.sortable.active .v-icon {\n  opacity: 1;\n}\n.v-datatable thead th.column.sortable.active.desc .v-icon {\n  -webkit-transform: rotate(-180deg);\n          transform: rotate(-180deg);\n}\n/** Actions */\n.v-datatable__actions {\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  font-size: 12px;\n  flex-wrap: wrap-reverse;\n}\n.v-datatable__actions .v-btn {\n  color: inherit;\n}\n.v-datatable__actions .v-btn:last-of-type {\n  margin-left: 14px;\n}\n.v-datatable__actions__range-controls {\n  display: flex;\n  align-items: center;\n  min-height: 48px;\n}\n.v-datatable__actions__pagination {\n  display: block;\n  text-align: center;\n  margin: 0 32px 0 24px;\n}\n.v-datatable__actions__select {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  margin-right: 14px;\n  white-space: nowrap;\n}\n.v-datatable__actions__select .v-select {\n  flex: 0 1 0;\n  margin: 13px 0 13px 34px;\n  padding: 0;\n  position: initial;\n}\n.v-datatable__actions__select .v-select__selections {\n  flex-wrap: nowrap;\n}\n.v-datatable__actions__select .v-select__selections .v-select__selection--comma {\n  font-size: 12px;\n}\n.v-datatable__progress {\n  height: auto !important;\n}\n.v-datatable__progress tr,\n.v-datatable__progress td,\n.v-datatable__progress th {\n  height: auto !important;\n}\n.v-datatable__progress th {\n  padding: 0 !important;\n}\n.v-datatable__progress th .v-progress-linear {\n  margin: 0;\n}\n.v-datatable__expand-row {\n  border: none !important;\n}\n.v-datatable__expand-col {\n  padding: 0 !important;\n  height: 0px !important;\n}\n.v-datatable__expand-col--expanded {\n  border-bottom: 1px solid rgba(0,0,0,0.12);\n}\n.v-datatable__expand-content {\n  transition: height 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-datatable__expand-content > .card {\n  border-radius: 0;\n  box-shadow: none;\n}\n\n.theme--light.v-small-dialog a {\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-small-dialog a {\n  color: #fff;\n}\n.theme--light.v-small-dialog__content {\n  background: #fff;\n}\n.theme--dark.v-small-dialog__content {\n  background: #424242;\n}\n.theme--light.v-small-dialog__actions {\n  background: #fff;\n}\n.theme--dark.v-small-dialog__actions {\n  background: #424242;\n}\n.v-small-dialog {\n  display: block;\n  width: 100%;\n  height: 100%;\n}\n.v-small-dialog__content {\n  padding: 0 24px;\n}\n.v-small-dialog__actions {\n  text-align: right;\n  white-space: pre;\n}\n.v-small-dialog a {\n  display: flex;\n  align-items: center;\n  height: 100%;\n  text-decoration: none;\n}\n.v-small-dialog a > * {\n  width: 100%;\n}\n.v-small-dialog .v-menu__activator {\n  height: 100%;\n}\n\n.application--is-rtl .v-date-picker-title .v-picker__title__btn {\n  text-align: right;\n}\n.v-date-picker-title {\n  display: flex;\n  justify-content: space-between;\n  flex-direction: column;\n  flex-wrap: wrap;\n  line-height: 1;\n}\n.v-date-picker-title__year {\n  align-items: center;\n  display: inline-flex;\n  font-size: 14px;\n  font-weight: 500;\n  margin-bottom: 8px;\n}\n.v-date-picker-title__date {\n  font-size: 34px;\n  text-align: left;\n  font-weight: 500;\n  position: relative;\n  overflow: hidden;\n  padding-bottom: 8px;\n  margin-bottom: -8px;\n}\n.v-date-picker-title__date > div {\n  position: relative;\n}\n.v-date-picker-title--disabled {\n  pointer-events: none;\n}\n\n.theme--light.v-date-picker-header .v-date-picker-header__value:not(.v-date-picker-header__value--disabled) button:not(:hover):not(:focus) {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-date-picker-header .v-date-picker-header__value--disabled button {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-date-picker-header .v-date-picker-header__value:not(.v-date-picker-header__value--disabled) button:not(:hover):not(:focus) {\n  color: #fff;\n}\n.theme--dark.v-date-picker-header .v-date-picker-header__value--disabled button {\n  color: rgba(255,255,255,0.5);\n}\n.v-date-picker-header {\n  padding: 4px 16px;\n  align-items: center;\n  display: flex;\n  justify-content: space-between;\n  position: relative;\n}\n.v-date-picker-header .v-btn {\n  margin: 0;\n  z-index: auto;\n}\n.v-date-picker-header .v-icon {\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-date-picker-header__value {\n  flex: 1;\n  text-align: center;\n  position: relative;\n  overflow: hidden;\n}\n.v-date-picker-header__value div {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-date-picker-header__value button {\n  cursor: pointer;\n  font-weight: bold;\n  outline: none;\n  padding: 0.5rem;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-date-picker-header--disabled {\n  pointer-events: none;\n}\n\n.theme--light.v-date-picker-table th,\n.theme--light.v-date-picker-table .v-date-picker-table--date__week {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-date-picker-table th,\n.theme--dark.v-date-picker-table .v-date-picker-table--date__week {\n  color: rgba(255,255,255,0.5);\n}\n.v-date-picker-table {\n  position: relative;\n  padding: 0 12px;\n  height: 242px;\n}\n.v-date-picker-table table {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  top: 0;\n  table-layout: fixed;\n  width: 100%;\n}\n.v-date-picker-table td,\n.v-date-picker-table th {\n  text-align: center;\n  position: relative;\n}\n.v-date-picker-table th {\n  font-size: 12px;\n}\n.v-date-picker-table--date .v-btn {\n  height: 32px;\n  width: 32px;\n}\n.v-date-picker-table .v-btn {\n  z-index: auto;\n  margin: 0;\n  font-size: 12px;\n}\n.v-date-picker-table .v-btn.v-btn--active {\n  color: #fff;\n}\n.v-date-picker-table--month td {\n  width: 33.333333%;\n  height: 56px;\n  vertical-align: middle;\n  text-align: center;\n}\n.v-date-picker-table--month td .v-btn {\n  margin: 0 auto;\n  max-width: 160px;\n  min-width: 40px;\n  width: 100%;\n}\n.v-date-picker-table--date th {\n  padding: 8px 0;\n  font-weight: 600;\n}\n.v-date-picker-table--date td {\n  width: 45px;\n}\n.v-date-picker-table__events {\n  height: 8px;\n  left: 0;\n  position: absolute;\n  text-align: center;\n  white-space: pre;\n  width: 100%;\n}\n.v-date-picker-table__events > div {\n  border-radius: 50%;\n  display: inline-block;\n  height: 8px;\n  margin: 0 1px;\n  width: 8px;\n}\n.v-date-picker-table--date .v-date-picker-table__events {\n  bottom: 6px;\n}\n.v-date-picker-table--month .v-date-picker-table__events {\n  bottom: 8px;\n}\n.v-date-picker-table--disabled {\n  pointer-events: none;\n}\n\n.v-date-picker-years {\n  font-size: 16px;\n  font-weight: 400;\n  height: 286px;\n  list-style-type: none;\n  overflow: auto;\n  padding: 0;\n  text-align: center;\n}\n.v-date-picker-years li {\n  cursor: pointer;\n  padding: 8px 0;\n  transition: none;\n}\n.v-date-picker-years li.active {\n  font-size: 26px;\n  font-weight: 500;\n  padding: 10px 0;\n}\n.v-date-picker-years li:hover {\n  background: rgba(0,0,0,0.12);\n}\n.v-picker--landscape .v-date-picker-years {\n  height: 286px;\n}\n\n/* Themes */\n.theme--light.v-picker__title {\n  background: #e0e0e0;\n}\n.theme--dark.v-picker__title {\n  background: #616161;\n}\n.theme--light.v-picker__body {\n  background: #fff;\n}\n.theme--dark.v-picker__body {\n  background: #424242;\n}\n.v-picker {\n  border-radius: 2px;\n  contain: layout style;\n  display: inline-flex;\n  flex-direction: column;\n  vertical-align: top;\n  position: relative;\n}\n.v-picker--full-width {\n  display: flex;\n}\n.v-picker__title {\n  color: #fff;\n  border-top-left-radius: 2px;\n  border-top-right-radius: 2px;\n  padding: 16px;\n}\n.v-picker__title__btn {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-picker__title__btn:not(.v-picker__title__btn--active) {\n  opacity: 0.6;\n  cursor: pointer;\n}\n.v-picker__title__btn:not(.v-picker__title__btn--active):hover:not(:focus) {\n  opacity: 1;\n}\n.v-picker__title__btn--readonly {\n  pointer-events: none;\n}\n.v-picker__title__btn--active {\n  opacity: 1;\n}\n.v-picker__body {\n  height: auto;\n  overflow: hidden;\n  position: relative;\n  z-index: 0;\n  flex: 1 0 auto;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n}\n.v-picker__body > div {\n  width: 100%;\n}\n.v-picker__body > div.fade-transition-leave-active {\n  position: absolute;\n}\n.v-picker--landscape .v-picker__title {\n  border-top-right-radius: 0;\n  border-bottom-right-radius: 0;\n  width: 170px;\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  z-index: 1;\n}\n.v-picker--landscape .v-picker__body,\n.v-picker--landscape .v-picker__actions {\n  margin-left: 170px;\n}\n\n/** Theme */\n.theme--light.v-expansion-panel .v-expansion-panel__container {\n  border-top: 1px solid rgba(0,0,0,0.12);\n  background-color: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-expansion-panel .v-expansion-panel__container .v-expansion-panel__header .v-expansion-panel__header__icon .v-icon {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-expansion-panel .v-expansion-panel__container--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-expansion-panel--focusable .v-expansion-panel__container:focus {\n  background-color: #eee;\n}\n.theme--dark.v-expansion-panel .v-expansion-panel__container {\n  border-top: 1px solid rgba(255,255,255,0.12);\n  background-color: #424242;\n  color: #fff;\n}\n.theme--dark.v-expansion-panel .v-expansion-panel__container .v-expansion-panel__header .v-expansion-panel__header__icon .v-icon {\n  color: #fff;\n}\n.theme--dark.v-expansion-panel .v-expansion-panel__container--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-expansion-panel--focusable .v-expansion-panel__container:focus {\n  background-color: #494949;\n}\n.v-expansion-panel {\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: center;\n  list-style-type: none;\n  padding: 0;\n  text-align: left;\n  width: 100%;\n  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);\n}\n.v-expansion-panel__container {\n  flex: 1 0 100%;\n  max-width: 100%;\n  outline: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-expansion-panel__container:first-child {\n  border-top: none !important;\n}\n.v-expansion-panel__container .v-expansion-panel__header__iconnel__header__icon {\n  margin-left: auto;\n}\n.v-expansion-panel__container--disabled .v-expansion-panel__header {\n  pointer-events: none;\n}\n.v-expansion-panel__container--active > .v-expansion-panel__header .v-expansion-panel__header__icon .v-icon {\n  -webkit-transform: rotate(-180deg);\n          transform: rotate(-180deg);\n}\n.v-expansion-panel__header {\n  display: flex;\n  cursor: pointer;\n  align-items: center;\n  position: relative;\n  padding: 12px 24px;\n  min-height: 48px;\n}\n.v-expansion-panel__header > *:not(.v-expansion-panel__header__icon) {\n  flex: 1 1 auto;\n}\n.v-expansion-panel__body {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-expansion-panel__body > .v-card {\n  border-radius: 0;\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12) !important;\n}\n.v-expansion-panel--popout,\n.v-expansion-panel--inset {\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);\n}\n.v-expansion-panel--popout .v-expansion-panel__container--active,\n.v-expansion-panel--inset .v-expansion-panel__container--active {\n  margin: 16px;\n  box-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12);\n}\n.v-expansion-panel--popout .v-expansion-panel__container,\n.v-expansion-panel--inset .v-expansion-panel__container {\n  max-width: 95%;\n}\n.v-expansion-panel--popout .v-expansion-panel__container--active {\n  max-width: 100%;\n}\n.v-expansion-panel--inset .v-expansion-panel__container--active {\n  max-width: 85%;\n}\n\n.theme--light.v-footer {\n  background: #f5f5f5;\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-footer {\n  background: #212121;\n  color: #fff;\n}\n.v-footer {\n  align-items: center;\n  display: flex;\n  flex: 0 1 auto !important;\n  min-height: 36px;\n  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-footer--absolute,\n.v-footer--fixed {\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  z-index: 3;\n}\n.v-footer--inset {\n  z-index: 2;\n}\n.v-footer--absolute {\n  position: absolute;\n}\n.v-footer--fixed {\n  position: fixed;\n}\n\n.v-form > .container {\n  padding: 16px;\n}\n.v-form > .container > .layout > .flex {\n  padding: 8px;\n}\n.v-form > .container > .layout:only-child {\n  margin: -8px;\n}\n.v-form > .container > .layout:not(:only-child) {\n  margin: auto -8px;\n}\n\n.container {\n  flex: 1 1 100%;\n  margin: auto;\n  padding: 24px;\n  width: 100%;\n}\n.container.fluid {\n  max-width: 100%;\n}\n.container.fill-height {\n  align-items: center;\n  display: flex;\n}\n.container.fill-height > .layout {\n  height: 100%;\n  flex: 1 1 auto;\n}\n.container.grid-list-xs .layout .flex {\n  padding: 1px;\n}\n.container.grid-list-xs .layout:only-child {\n  margin: -1px;\n}\n.container.grid-list-xs .layout:not(:only-child) {\n  margin: auto -1px;\n}\n.container.grid-list-xs *:not(:only-child) .layout:first-child {\n  margin-top: -1px;\n}\n.container.grid-list-xs *:not(:only-child) .layout:last-child {\n  margin-bottom: -1px;\n}\n.container.grid-list-sm .layout .flex {\n  padding: 2px;\n}\n.container.grid-list-sm .layout:only-child {\n  margin: -2px;\n}\n.container.grid-list-sm .layout:not(:only-child) {\n  margin: auto -2px;\n}\n.container.grid-list-sm *:not(:only-child) .layout:first-child {\n  margin-top: -2px;\n}\n.container.grid-list-sm *:not(:only-child) .layout:last-child {\n  margin-bottom: -2px;\n}\n.container.grid-list-md .layout .flex {\n  padding: 4px;\n}\n.container.grid-list-md .layout:only-child {\n  margin: -4px;\n}\n.container.grid-list-md .layout:not(:only-child) {\n  margin: auto -4px;\n}\n.container.grid-list-md *:not(:only-child) .layout:first-child {\n  margin-top: -4px;\n}\n.container.grid-list-md *:not(:only-child) .layout:last-child {\n  margin-bottom: -4px;\n}\n.container.grid-list-lg .layout .flex {\n  padding: 8px;\n}\n.container.grid-list-lg .layout:only-child {\n  margin: -8px;\n}\n.container.grid-list-lg .layout:not(:only-child) {\n  margin: auto -8px;\n}\n.container.grid-list-lg *:not(:only-child) .layout:first-child {\n  margin-top: -8px;\n}\n.container.grid-list-lg *:not(:only-child) .layout:last-child {\n  margin-bottom: -8px;\n}\n.container.grid-list-xl .layout .flex {\n  padding: 12px;\n}\n.container.grid-list-xl .layout:only-child {\n  margin: -12px;\n}\n.container.grid-list-xl .layout:not(:only-child) {\n  margin: auto -12px;\n}\n.container.grid-list-xl *:not(:only-child) .layout:first-child {\n  margin-top: -12px;\n}\n.container.grid-list-xl *:not(:only-child) .layout:last-child {\n  margin-bottom: -12px;\n}\n.layout {\n  display: flex;\n  flex: 1 1 auto;\n  flex-wrap: nowrap;\n  min-width: 0;\n}\n.layout.row {\n  flex-direction: row;\n}\n.layout.row.reverse {\n  flex-direction: row-reverse;\n}\n.layout.column {\n  flex-direction: column;\n}\n.layout.column.reverse {\n  flex-direction: column-reverse;\n}\n.layout.column > .flex {\n  max-width: 100%;\n}\n.layout.wrap {\n  flex-wrap: wrap;\n}\n.flex,\n.child-flex > * {\n  flex: 1 1 auto;\n  max-width: 100%;\n}\n.align-start {\n  align-items: flex-start;\n}\n.align-end {\n  align-items: flex-end;\n}\n.align-center {\n  align-items: center;\n}\n.align-baseline {\n  align-items: baseline;\n}\n.align-self-start {\n  align-self: flex-start;\n}\n.align-self-end {\n  align-self: flex-end;\n}\n.align-self-center {\n  align-self: center;\n}\n.align-self-baseline {\n  align-self: baseline;\n}\n.align-content-start {\n  align-content: flex-start;\n}\n.align-content-end {\n  align-content: flex-end;\n}\n.align-content-center {\n  align-content: center;\n}\n.align-content-space-between {\n  align-content: space-between;\n}\n.align-content-space-around {\n  align-content: space-around;\n}\n.justify-start {\n  justify-content: flex-start;\n}\n.justify-end {\n  justify-content: flex-end;\n}\n.justify-center {\n  justify-content: center;\n}\n.justify-space-around {\n  justify-content: space-around;\n}\n.justify-space-between {\n  justify-content: space-between;\n}\n.justify-self-start {\n  justify-self: flex-start;\n}\n.justify-self-end {\n  justify-self: flex-end;\n}\n.justify-self-center {\n  justify-self: center;\n}\n.justify-self-baseline {\n  justify-self: baseline;\n}\n.spacer {\n  flex-grow: 1 !important;\n}\n.grow {\n  flex-grow: 1 !important;\n  flex-shrink: 0 !important;\n}\n.shrink {\n  flex-grow: 0 !important;\n  flex-shrink: 1 !important;\n}\n.scroll-y {\n  overflow-y: auto;\n}\n.fill-height {\n  height: 100%;\n}\n.hide-overflow {\n  overflow: hidden !important;\n}\n.show-overflow {\n  overflow: visible !important;\n}\n.no-wrap {\n  white-space: nowrap;\n}\n.ellipsis {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.d-flex {\n  display: flex !important;\n}\n.d-inline-flex {\n  display: inline-flex !important;\n}\n.d-flex > *,\n.d-inline-flex > * {\n  flex: 1 1 auto !important;\n}\n.d-block {\n  display: block !important;\n}\n.d-inline-block {\n  display: inline-block !important;\n}\n.d-inline {\n  display: inline !important;\n}\n.d-none {\n  display: none !important;\n}\n@media only screen and (min-width: 960px) {\n  .container {\n    max-width: 900px;\n  }\n}\n@media only screen and (min-width: 1264px) {\n  .container {\n    max-width: 1185px;\n  }\n}\n@media only screen and (min-width: 1904px) {\n  .container {\n    max-width: 1785px;\n  }\n}\n@media only screen and (max-width: 959px) {\n  .container {\n    padding: 16px;\n  }\n}\n@media all and (min-width: 0) {\n  .flex.xs1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-xs1 {\n    order: 1;\n  }\n  .flex.xs2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-xs2 {\n    order: 2;\n  }\n  .flex.xs3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-xs3 {\n    order: 3;\n  }\n  .flex.xs4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-xs4 {\n    order: 4;\n  }\n  .flex.xs5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-xs5 {\n    order: 5;\n  }\n  .flex.xs6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-xs6 {\n    order: 6;\n  }\n  .flex.xs7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-xs7 {\n    order: 7;\n  }\n  .flex.xs8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-xs8 {\n    order: 8;\n  }\n  .flex.xs9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-xs9 {\n    order: 9;\n  }\n  .flex.xs10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-xs10 {\n    order: 10;\n  }\n  .flex.xs11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-xs11 {\n    order: 11;\n  }\n  .flex.xs12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-xs12 {\n    order: 12;\n  }\n  .flex.offset-xs0 {\n    margin-left: 0%;\n  }\n  .flex.offset-xs1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-xs2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-xs3 {\n    margin-left: 25%;\n  }\n  .flex.offset-xs4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-xs5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-xs6 {\n    margin-left: 50%;\n  }\n  .flex.offset-xs7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-xs8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-xs9 {\n    margin-left: 75%;\n  }\n  .flex.offset-xs10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-xs11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-xs12 {\n    margin-left: 100%;\n  }\n}\n@media all and (min-width: 600px) {\n  .flex.sm1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-sm1 {\n    order: 1;\n  }\n  .flex.sm2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-sm2 {\n    order: 2;\n  }\n  .flex.sm3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-sm3 {\n    order: 3;\n  }\n  .flex.sm4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-sm4 {\n    order: 4;\n  }\n  .flex.sm5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-sm5 {\n    order: 5;\n  }\n  .flex.sm6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-sm6 {\n    order: 6;\n  }\n  .flex.sm7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-sm7 {\n    order: 7;\n  }\n  .flex.sm8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-sm8 {\n    order: 8;\n  }\n  .flex.sm9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-sm9 {\n    order: 9;\n  }\n  .flex.sm10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-sm10 {\n    order: 10;\n  }\n  .flex.sm11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-sm11 {\n    order: 11;\n  }\n  .flex.sm12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-sm12 {\n    order: 12;\n  }\n  .flex.offset-sm0 {\n    margin-left: 0%;\n  }\n  .flex.offset-sm1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-sm2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-sm3 {\n    margin-left: 25%;\n  }\n  .flex.offset-sm4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-sm5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-sm6 {\n    margin-left: 50%;\n  }\n  .flex.offset-sm7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-sm8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-sm9 {\n    margin-left: 75%;\n  }\n  .flex.offset-sm10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-sm11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-sm12 {\n    margin-left: 100%;\n  }\n}\n@media all and (min-width: 960px) {\n  .flex.md1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-md1 {\n    order: 1;\n  }\n  .flex.md2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-md2 {\n    order: 2;\n  }\n  .flex.md3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-md3 {\n    order: 3;\n  }\n  .flex.md4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-md4 {\n    order: 4;\n  }\n  .flex.md5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-md5 {\n    order: 5;\n  }\n  .flex.md6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-md6 {\n    order: 6;\n  }\n  .flex.md7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-md7 {\n    order: 7;\n  }\n  .flex.md8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-md8 {\n    order: 8;\n  }\n  .flex.md9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-md9 {\n    order: 9;\n  }\n  .flex.md10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-md10 {\n    order: 10;\n  }\n  .flex.md11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-md11 {\n    order: 11;\n  }\n  .flex.md12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-md12 {\n    order: 12;\n  }\n  .flex.offset-md0 {\n    margin-left: 0%;\n  }\n  .flex.offset-md1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-md2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-md3 {\n    margin-left: 25%;\n  }\n  .flex.offset-md4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-md5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-md6 {\n    margin-left: 50%;\n  }\n  .flex.offset-md7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-md8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-md9 {\n    margin-left: 75%;\n  }\n  .flex.offset-md10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-md11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-md12 {\n    margin-left: 100%;\n  }\n}\n@media all and (min-width: 1264px) {\n  .flex.lg1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-lg1 {\n    order: 1;\n  }\n  .flex.lg2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-lg2 {\n    order: 2;\n  }\n  .flex.lg3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-lg3 {\n    order: 3;\n  }\n  .flex.lg4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-lg4 {\n    order: 4;\n  }\n  .flex.lg5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-lg5 {\n    order: 5;\n  }\n  .flex.lg6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-lg6 {\n    order: 6;\n  }\n  .flex.lg7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-lg7 {\n    order: 7;\n  }\n  .flex.lg8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-lg8 {\n    order: 8;\n  }\n  .flex.lg9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-lg9 {\n    order: 9;\n  }\n  .flex.lg10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-lg10 {\n    order: 10;\n  }\n  .flex.lg11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-lg11 {\n    order: 11;\n  }\n  .flex.lg12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-lg12 {\n    order: 12;\n  }\n  .flex.offset-lg0 {\n    margin-left: 0%;\n  }\n  .flex.offset-lg1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-lg2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-lg3 {\n    margin-left: 25%;\n  }\n  .flex.offset-lg4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-lg5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-lg6 {\n    margin-left: 50%;\n  }\n  .flex.offset-lg7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-lg8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-lg9 {\n    margin-left: 75%;\n  }\n  .flex.offset-lg10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-lg11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-lg12 {\n    margin-left: 100%;\n  }\n}\n@media all and (min-width: 1904px) {\n  .flex.xl1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-xl1 {\n    order: 1;\n  }\n  .flex.xl2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-xl2 {\n    order: 2;\n  }\n  .flex.xl3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-xl3 {\n    order: 3;\n  }\n  .flex.xl4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-xl4 {\n    order: 4;\n  }\n  .flex.xl5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-xl5 {\n    order: 5;\n  }\n  .flex.xl6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-xl6 {\n    order: 6;\n  }\n  .flex.xl7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-xl7 {\n    order: 7;\n  }\n  .flex.xl8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-xl8 {\n    order: 8;\n  }\n  .flex.xl9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-xl9 {\n    order: 9;\n  }\n  .flex.xl10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-xl10 {\n    order: 10;\n  }\n  .flex.xl11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-xl11 {\n    order: 11;\n  }\n  .flex.xl12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-xl12 {\n    order: 12;\n  }\n  .flex.offset-xl0 {\n    margin-left: 0%;\n  }\n  .flex.offset-xl1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-xl2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-xl3 {\n    margin-left: 25%;\n  }\n  .flex.offset-xl4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-xl5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-xl6 {\n    margin-left: 50%;\n  }\n  .flex.offset-xl7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-xl8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-xl9 {\n    margin-left: 75%;\n  }\n  .flex.offset-xl10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-xl11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-xl12 {\n    margin-left: 100%;\n  }\n}\n\n.v-content {\n  transition: none;\n  display: flex;\n  flex: 1 0 auto;\n  max-width: 100%;\n}\n.v-content[data-booted=\"true\"] {\n  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-content__wrap {\n  flex: 1 1 auto;\n  max-width: 100%;\n  position: relative;\n}\n@-moz-document url-prefix() {\n}\n@media print {\n  @-moz-document url-prefix() {\n    .v-content {\n      display: block;\n    }\n  }\n}\n\n.theme--light.v-jumbotron .v-jumbotron__content {\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-jumbotron .v-jumbotron__content {\n  color: #fff;\n}\n.v-jumbotron {\n  display: block;\n  top: 0;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-jumbotron__wrapper {\n  height: 100%;\n  overflow: hidden;\n  position: relative;\n  transition: inherit;\n  width: 100%;\n}\n.v-jumbotron__background {\n  position: absolute;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  contain: strict;\n  transition: inherit;\n}\n.v-jumbotron__image {\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  min-width: 100%;\n  will-change: transform;\n  transition: inherit;\n}\n.v-jumbotron__content {\n  height: 100%;\n  position: relative;\n  transition: inherit;\n}\n\n.theme--light.v-navigation-drawer {\n  background-color: #fff;\n}\n.theme--light.v-navigation-drawer:not(.v-navigation-drawer--floating) .v-navigation-drawer__border {\n  background-color: rgba(0,0,0,0.12);\n}\n.theme--light.v-navigation-drawer .v-divider {\n  border-color: rgba(0,0,0,0.12);\n}\n.theme--dark.v-navigation-drawer {\n  background-color: #424242;\n}\n.theme--dark.v-navigation-drawer:not(.v-navigation-drawer--floating) .v-navigation-drawer__border {\n  background-color: rgba(255,255,255,0.12);\n}\n.theme--dark.v-navigation-drawer .v-divider {\n  border-color: rgba(255,255,255,0.12);\n}\n.v-navigation-drawer {\n  transition: none;\n  display: block;\n  left: 0;\n  max-width: 100%;\n  overflow-y: auto;\n  overflow-x: hidden;\n  pointer-events: auto;\n  top: 0;\n  will-change: transform;\n  z-index: 3;\n  -webkit-overflow-scrolling: touch;\n}\n.v-navigation-drawer[data-booted=\"true\"] {\n  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-navigation-drawer[data-booted=\"true\"] {\n  transition-property: width, -webkit-transform;\n  transition-property: transform, width;\n  transition-property: transform, width, -webkit-transform;\n}\n.v-navigation-drawer__border {\n  position: absolute;\n  right: 0;\n  top: 0;\n  height: 100%;\n  width: 1px;\n}\n.v-navigation-drawer.v-navigation-drawer--right:after {\n  left: 0;\n  right: initial;\n}\n.v-navigation-drawer--right {\n  left: auto;\n  right: 0;\n}\n.v-navigation-drawer--right > .v-navigation-drawer__border {\n  right: auto;\n  left: 0;\n}\n.v-navigation-drawer--absolute {\n  position: absolute;\n}\n.v-navigation-drawer--fixed {\n  position: fixed;\n}\n.v-navigation-drawer--floating:after {\n  display: none;\n}\n.v-navigation-drawer--mini-variant {\n  overflow: hidden;\n}\n.v-navigation-drawer--mini-variant .v-list__group__header__prepend-icon {\n  flex: 1 0 auto;\n  justify-content: center;\n  width: 100%;\n}\n.v-navigation-drawer--mini-variant .v-list__tile__action,\n.v-navigation-drawer--mini-variant .v-list__tile__avatar {\n  justify-content: center;\n  min-width: 48px;\n}\n.v-navigation-drawer--mini-variant .v-list__tile__content,\n.v-navigation-drawer--mini-variant .v-list__tile:after {\n  opacity: 0;\n}\n.v-navigation-drawer--mini-variant .v-subheader,\n.v-navigation-drawer--mini-variant .v-divider,\n.v-navigation-drawer--mini-variant .v-list--group {\n  display: none !important;\n}\n.v-navigation-drawer--temporary,\n.v-navigation-drawer--is-mobile {\n  z-index: 6;\n}\n.v-navigation-drawer--temporary:not(.v-navigation-drawer--close),\n.v-navigation-drawer--is-mobile:not(.v-navigation-drawer--close) {\n  box-shadow: 0px 8px 10px -5px rgba(0,0,0,0.2), 0px 16px 24px 2px rgba(0,0,0,0.14), 0px 6px 30px 5px rgba(0,0,0,0.12);\n}\n.v-navigation-drawer .v-list {\n  background: inherit;\n}\n.v-navigation-drawer > .v-list .v-list__tile {\n  transition: none;\n  font-weight: 500;\n}\n.v-navigation-drawer > .v-list .v-list__tile--active .v-list__tile__title {\n  color: inherit;\n}\n.v-navigation-drawer > .v-list .v-list--group .v-list__tile {\n  font-weight: 400;\n}\n.v-navigation-drawer > .v-list .v-list--group__header--active:after {\n  background: transparent;\n}\n.v-navigation-drawer > .v-list:not(.v-list--dense) .v-list__tile {\n  font-size: 14px;\n}\n\n.theme--light.v-pagination .v-pagination__item {\n  background: #fff;\n  color: #000;\n  width: auto;\n  min-width: 34px;\n  padding: 0 5px;\n}\n.theme--light.v-pagination .v-pagination__item--active {\n  color: #fff;\n}\n.theme--light.v-pagination .v-pagination__navigation {\n  background: #fff;\n}\n.theme--light.v-pagination .v-pagination__navigation .v-icon {\n  color: rgba(0,0,0,0.54);\n}\n.theme--dark.v-pagination .v-pagination__item {\n  background: #424242;\n  color: #fff;\n  width: auto;\n  min-width: 34px;\n  padding: 0 5px;\n}\n.theme--dark.v-pagination .v-pagination__item--active {\n  color: #fff;\n}\n.theme--dark.v-pagination .v-pagination__navigation {\n  background: #424242;\n}\n.theme--dark.v-pagination .v-pagination__navigation .v-icon {\n  color: #fff;\n}\n.v-pagination {\n  align-items: center;\n  display: inline-flex;\n  list-style-type: none;\n  margin: 0;\n  max-width: 100%;\n  padding: 0;\n}\n.v-pagination > li {\n  align-items: center;\n  display: flex;\n}\n.v-pagination--circle .v-pagination__item,\n.v-pagination--circle .v-pagination__more,\n.v-pagination--circle .v-pagination__navigation {\n  border-radius: 50%;\n}\n.v-pagination--disabled {\n  pointer-events: none;\n  opacity: 0.6;\n}\n.v-pagination__item {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n  border-radius: 4px;\n  font-size: 14px;\n  background: transparent;\n  height: 34px;\n  width: 34px;\n  margin: 0.3rem;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0, 0, 0.2, 1);\n}\n.v-pagination__item--active {\n  box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);\n}\n.v-pagination__navigation {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n  display: inline-flex;\n  justify-content: center;\n  align-items: center;\n  text-decoration: none;\n  height: 2rem;\n  border-radius: 4px;\n  width: 2rem;\n  margin: 0.3rem 10px;\n}\n.v-pagination__navigation .v-icon {\n  font-size: 2rem;\n  transition: 0.2s cubic-bezier(0.4, 0, 0.6, 1);\n  vertical-align: middle;\n}\n.v-pagination__navigation--disabled {\n  opacity: 0.6;\n  pointer-events: none;\n}\n.v-pagination__more {\n  margin: 0.3rem;\n  display: inline-flex;\n  align-items: flex-end;\n  justify-content: center;\n  height: 2rem;\n  width: 2rem;\n}\n\n.v-parallax {\n  position: relative;\n  overflow: hidden;\n  z-index: 0;\n}\n.v-parallax__image-container {\n  position: absolute;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  z-index: 1;\n  contain: strict;\n}\n.v-parallax__image {\n  position: absolute;\n  bottom: 0;\n  left: 50%;\n  min-width: 100%;\n  min-height: 100%;\n  display: none;\n  -webkit-transform: translate(-50%, 0);\n          transform: translate(-50%, 0);\n  will-change: transform;\n  transition: 0.3s opacity cubic-bezier(0.25, 0.8, 0.5, 1);\n  z-index: 1;\n}\n.v-parallax__content {\n  color: #fff;\n  height: 100%;\n  z-index: 2;\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  padding: 0 1rem;\n}\n\n.v-input--radio-group__input {\n  display: flex;\n  width: 100%;\n}\n.v-input--radio-group--column .v-input--radio-group__input > .v-label {\n  padding-bottom: 8px;\n}\n.v-input--radio-group--row .v-input--radio-group__input > .v-label {\n  padding-right: 8px;\n}\n.v-input--radio-group--row .v-input--radio-group__input {\n  flex-direction: row;\n  flex-wrap: wrap;\n}\n.v-input--radio-group--column .v-radio:not(:last-child):not(:only-child) {\n  margin-bottom: 8px;\n}\n.v-input--radio-group--column .v-input--radio-group__input {\n  flex-direction: column;\n}\n\n.theme--light.v-radio--is-disabled label {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-radio--is-disabled .v-icon {\n  color: rgba(0,0,0,0.26) !important;\n}\n.theme--dark.v-radio--is-disabled label {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-radio--is-disabled .v-icon {\n  color: rgba(255,255,255,0.3) !important;\n}\n.v-radio {\n  align-items: center;\n  display: flex;\n  height: auto;\n  margin-right: 16px;\n  outline: none;\n}\n.v-radio--is-disabled {\n  pointer-events: none;\n}\n\n/* Theme */\n.theme--light.v-input--range-slider.v-input--slider.v-input--is-disabled .v-slider.v-slider .v-slider__thumb {\n  background: #bdbdbd;\n}\n.theme--dark.v-input--range-slider.v-input--slider.v-input--is-disabled .v-slider.v-slider .v-slider__thumb {\n  background: #424242;\n}\n/** Input Group */\n.v-input--range-slider.v-input--is-disabled .v-slider__track-fill {\n  display: none;\n}\n.v-input--range-slider.v-input--is-disabled.v-input--slider .v-slider.v-slider .v-slider__thumb {\n  border-color: transparent;\n}\n\n/* Theme */\n.theme--light.v-input--slider .v-slider__track,\n.theme--light.v-input--slider .v-slider__track-fill {\n  background: rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider .v-slider__track__container:after {\n  border: 1px solid rgba(0,0,0,0.87);\n}\n.theme--light.v-input--slider .v-slider__ticks {\n  border-color: rgba(0,0,0,0.87);\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-input--slider:not(.v-input--is-dirty) .v-slider__thumb-label {\n  background: rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider:not(.v-input--is-dirty) .v-slider__thumb {\n  border: 3px solid rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider:not(.v-input--is-dirty).v-input--slider--is-active .v-slider__thumb {\n  border: 3px solid rgba(0,0,0,0.38);\n}\n.theme--light.v-input--slider.v-input--is-disabled .v-slider__thumb {\n  border: 5px solid rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider.v-input--is-disabled.v-input--is-dirty .v-slider__thumb {\n  background: rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider.v-input--slider--is-active .v-slider__track {\n  background: rgba(0,0,0,0.38);\n}\n.theme--dark.v-input--slider .v-slider__track,\n.theme--dark.v-input--slider .v-slider__track-fill {\n  background: rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider .v-slider__track__container:after {\n  border: 1px solid #fff;\n}\n.theme--dark.v-input--slider .v-slider__ticks {\n  border-color: #fff;\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-input--slider:not(.v-input--is-dirty) .v-slider__thumb-label {\n  background: rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider:not(.v-input--is-dirty) .v-slider__thumb {\n  border: 3px solid rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider:not(.v-input--is-dirty).v-input--slider--is-active .v-slider__thumb {\n  border: 3px solid rgba(255,255,255,0.3);\n}\n.theme--dark.v-input--slider.v-input--is-disabled .v-slider__thumb {\n  border: 5px solid rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider.v-input--is-disabled.v-input--is-dirty .v-slider__thumb {\n  background: rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider.v-input--slider--is-active .v-slider__track {\n  background: rgba(255,255,255,0.3);\n}\n.application--is-rtl .v-input--slider .v-label {\n  margin-left: 16px;\n  margin-right: 0;\n}\n/** Input Group */\n.v-input--slider {\n  margin-top: 16px;\n}\n.v-input--slider.v-input--is-focused .v-slider__thumb-container--is-active:not(.v-slider__thumb-container--show-label):before {\n  opacity: 0.2;\n  -webkit-transform: scale(1);\n          transform: scale(1);\n}\n.v-input--slider.v-input--is-focused .v-slider__track {\n  transition: none;\n}\n.v-input--slider.v-input--is-focused.v-input--slider--ticks .v-slider__track__container:after,\n.v-input--slider.v-input--is-focused.v-input--slider--ticks .v-slider .v-slider__tick {\n  opacity: 1;\n}\n.v-input--slider.v-input--slider--ticks .v-slider__ticks.v-slider__ticks--always-show {\n  opacity: 1;\n}\n.v-input--slider.v-input--slider--ticks-labels .v-input__slot {\n  margin-bottom: 16px;\n}\n.v-input--slider.v-input--is-readonly .v-input__control {\n  pointer-events: none;\n}\n.v-input--slider.v-input--is-disabled .v-slider__thumb {\n  -webkit-transform: translateY(-50%) scale(0.45);\n          transform: translateY(-50%) scale(0.45);\n}\n.v-input--slider.v-input--is-disabled.v-input--is-dirty .v-slider__thumb {\n  border: 0px solid transparent;\n}\n.v-input--slider .v-input__slot > *:first-child:not(:only-child) {\n  margin-right: 16px;\n}\n/** Slider */\n.v-slider {\n  cursor: default;\n  display: flex;\n  align-items: center;\n  position: relative;\n  height: 32px;\n  flex: 1;\n  outline: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-slider input {\n  cursor: default;\n  opacity: 0;\n  padding: 0;\n  width: 100%;\n}\n/** Thumb/Track/Ticks */\n.v-slider__track__container {\n  height: 2px;\n  left: 0;\n  overflow: hidden;\n  pointer-events: none;\n  position: absolute;\n  top: 50%;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  width: 100%;\n}\n.v-slider__track__container:after {\n  content: '';\n  position: absolute;\n  right: 0;\n  top: 0;\n  height: 2px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 2px;\n  opacity: 0;\n}\n.v-slider__track,\n.v-slider__thumb,\n.v-slider__ticks {\n  position: absolute;\n  top: 0;\n}\n.v-slider__track {\n  height: 2px;\n  left: 0;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-transform-origin: right;\n          transform-origin: right;\n  overflow: hidden;\n  width: 100%;\n}\n.v-slider__track-fill {\n  position: absolute;\n  left: 0;\n  height: 2px;\n  -webkit-transform-origin: left;\n          transform-origin: left;\n  width: 100%;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-slider__ticks-container {\n  position: absolute;\n  left: 0;\n  height: 2px;\n  width: 100%;\n  top: 50%;\n  -webkit-transform: translate(0, -50%);\n          transform: translate(0, -50%);\n}\n.v-slider__ticks {\n  opacity: 0;\n  border-style: solid;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-slider__ticks > span {\n  position: absolute;\n  top: 8px;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  white-space: nowrap;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-slider__ticks:first-child > span {\n  -webkit-transform: translateX(0);\n          transform: translateX(0);\n}\n.v-slider__ticks:last-child > span {\n  -webkit-transform: translateX(-100%);\n          transform: translateX(-100%);\n}\n.v-slider:not(.v-input--is-dirty) .v-slider__ticks:first-child {\n  border-color: transparent;\n}\n.v-slider__thumb-container {\n  position: absolute;\n  top: 50%;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-slider__thumb-container:before {\n  content: '';\n  color: inherit;\n  border-radius: 50%;\n  background: currentColor;\n  height: 32px;\n  left: -16px;\n  opacity: 0;\n  overflow: hidden;\n  pointer-events: none;\n  position: absolute;\n  top: -16px;\n  -webkit-transform: scale(0.2);\n          transform: scale(0.2);\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 32px;\n  will-change: transform, opacity;\n}\n.v-slider__thumb {\n  width: 24px;\n  height: 24px;\n  left: -12px;\n  top: 50%;\n  border-radius: 50%;\n  background: transparent;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-transform: translateY(-50%) scale(0.6);\n          transform: translateY(-50%) scale(0.6);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n/** Thumb Label */\n.v-slider--is-active .v-slider__thumb-container--is-active .v-slider__thumb {\n  -webkit-transform: translateY(-50%) scale(1);\n          transform: translateY(-50%) scale(1);\n}\n.v-slider--is-active .v-slider__thumb-container--is-active.v-slider__thumb-container--show-label .v-slider__thumb {\n  -webkit-transform: translateY(-50%) scale(0);\n          transform: translateY(-50%) scale(0);\n}\n.v-slider--is-active .v-slider__ticks-container .v-slider__ticks {\n  opacity: 1;\n}\n.v-slider__thumb-label__container {\n  position: absolute;\n  left: 0;\n  top: 0;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-slider__thumb-label {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  font-size: 12px;\n  color: #fff;\n  width: 32px;\n  height: 32px;\n  border-radius: 50% 50% 0;\n  position: absolute;\n  left: 0;\n  bottom: 100%;\n  -webkit-transform: translateY(-20%) translateY(-12px) translateX(-50%) rotate(45deg);\n          transform: translateY(-20%) translateY(-12px) translateX(-50%) rotate(45deg);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-slider__thumb-label > * {\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n.v-slider__track,\n.v-slider__track-fill {\n  position: absolute;\n}\n\n.v-rating .v-icon {\n  padding: 0.5rem;\n  border-radius: 50%;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-rating--readonly .v-icon {\n  pointer-events: none;\n}\n.v-rating--dense .v-icon {\n  padding: 0.1rem;\n}\n\n.application--is-rtl .v-snack__content .v-btn {\n  margin: 0 24px 0 0;\n}\n.v-snack {\n  position: fixed;\n  display: flex;\n  align-items: center;\n  color: #fff;\n  pointer-events: none;\n  z-index: 1000;\n  font-size: 14px;\n  left: 0;\n  right: 0;\n}\n.v-snack--absolute {\n  position: absolute;\n}\n.v-snack--top {\n  top: 0;\n}\n.v-snack--bottom {\n  bottom: 0;\n}\n.v-snack__wrapper {\n  display: flex;\n  align-items: center;\n  background-color: #323232;\n  pointer-events: auto;\n  width: 100%;\n  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12);\n}\n.v-snack__content {\n  width: 100%;\n  height: 48px;\n  padding: 14px 24px;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  overflow: hidden;\n}\n.v-snack__content .v-btn {\n  color: #fff;\n  flex: 0 0 auto;\n  padding: 8px;\n  margin: 0 0 0 24px;\n  height: auto;\n  min-width: auto;\n  width: auto;\n}\n.v-snack__content .v-btn__content {\n  margin: -2px;\n}\n.v-snack__content .v-btn::before {\n  display: none;\n}\n.v-snack--multi-line .v-snack__content {\n  height: 80px;\n  padding: 24px;\n}\n.v-snack--vertical .v-snack__content {\n  height: 112px;\n  padding: 24px 24px 14px;\n  flex-direction: column;\n  align-items: stretch;\n}\n.v-snack--vertical .v-snack__content .v-btn.v-btn {\n  justify-content: flex-end;\n  padding: 0;\n  margin-left: 0;\n  margin-top: 24px;\n}\n.v-snack--vertical .v-snack__content .v-btn__content {\n  flex: 0 0 auto;\n  margin: 0;\n}\n.v-snack--auto-height .v-snack__content {\n  height: auto;\n}\n.v-snack-transition-enter-active,\n.v-snack-transition-leave-active {\n  transition: -webkit-transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1), -webkit-transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-snack-transition-enter-active .v-snack__content,\n.v-snack-transition-leave-active .v-snack__content {\n  transition: opacity 0.3s linear 0.1s;\n}\n.v-snack-transition-enter .v-snack__content {\n  opacity: 0;\n}\n.v-snack-transition-enter-to .v-snack__content,\n.v-snack-transition-leave .v-snack__content {\n  opacity: 1;\n}\n.v-snack-transition-enter.v-snack.v-snack--top,\n.v-snack-transition-leave-to.v-snack.v-snack--top {\n  -webkit-transform: translateY(calc(-100% - 8px));\n          transform: translateY(calc(-100% - 8px));\n}\n.v-snack-transition-enter.v-snack.v-snack--bottom,\n.v-snack-transition-leave-to.v-snack.v-snack--bottom {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n@media only screen and (min-width: 600px) {\n  .application--is-rtl .v-snack__content .v-btn:first-of-type {\n    margin-left: 0;\n    margin-right: 42px;\n  }\n  .v-snack__wrapper {\n    width: auto;\n    max-width: 568px;\n    min-width: 288px;\n    margin: 0 auto;\n    border-radius: 2px;\n  }\n  .v-snack--left .v-snack__wrapper {\n    margin-left: 0;\n  }\n  .v-snack--right .v-snack__wrapper {\n    margin-right: 0;\n  }\n  .v-snack--left,\n  .v-snack--right {\n    margin: 0 24px;\n  }\n  .v-snack--left.v-snack--top,\n  .v-snack--right.v-snack--top {\n    -webkit-transform: translateY(24px);\n            transform: translateY(24px);\n  }\n  .v-snack--left.v-snack--bottom,\n  .v-snack--right.v-snack--bottom {\n    -webkit-transform: translateY(-24px);\n            transform: translateY(-24px);\n  }\n  .v-snack__content .v-btn:first-of-type {\n    margin-left: 42px;\n  }\n}\n\n.v-speed-dial {\n  position: relative;\n}\n.v-speed-dial--absolute {\n  position: absolute;\n}\n.v-speed-dial--fixed {\n  position: fixed;\n}\n.v-speed-dial--fixed,\n.v-speed-dial--absolute {\n  z-index: 4;\n}\n.v-speed-dial--fixed > .v-btn--floating,\n.v-speed-dial--absolute > .v-btn--floating {\n  margin: 0;\n}\n.v-speed-dial--top:not(.v-speed-dial--absolute) {\n  top: 16px;\n}\n.v-speed-dial--top.v-speed-dial--absolute {\n  top: 50%;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n}\n.v-speed-dial--bottom:not(.v-speed-dial--absolute) {\n  bottom: 16px;\n}\n.v-speed-dial--bottom.v-speed-dial--absolute {\n  bottom: 50%;\n  -webkit-transform: translateY(50%);\n          transform: translateY(50%);\n}\n.v-speed-dial--left {\n  left: 16px;\n}\n.v-speed-dial--right {\n  right: 16px;\n}\n.v-speed-dial--direction-left .v-speed-dial__list,\n.v-speed-dial--direction-right .v-speed-dial__list {\n  height: 100%;\n  top: 0;\n}\n.v-speed-dial--direction-top .v-speed-dial__list,\n.v-speed-dial--direction-bottom .v-speed-dial__list {\n  left: 0;\n  width: 100%;\n}\n.v-speed-dial--direction-top .v-speed-dial__list {\n  flex-direction: column-reverse;\n  bottom: 100%;\n}\n.v-speed-dial--direction-right .v-speed-dial__list {\n  flex-direction: row;\n  left: 100%;\n}\n.v-speed-dial--direction-bottom .v-speed-dial__list {\n  flex-direction: column;\n  top: 100%;\n}\n.v-speed-dial--direction-left .v-speed-dial__list {\n  flex-direction: row-reverse;\n  right: 100%;\n}\n/** Elements */\n.v-speed-dial__list {\n  align-items: center;\n  display: flex;\n  justify-content: center;\n  position: absolute;\n}\n\n.theme--light.v-stepper {\n  background: #fff;\n}\n.theme--light.v-stepper .v-stepper__step:not(.v-stepper__step--active):not(.v-stepper__step--complete):not(.v-stepper__step--error) .v-stepper__step__step {\n  background: rgba(0,0,0,0.38);\n}\n.theme--light.v-stepper .v-stepper__step__step {\n  color: #fff;\n}\n.theme--light.v-stepper .v-stepper__step__step .v-icon {\n  color: #fff;\n}\n.theme--light.v-stepper .v-stepper__header .v-divider {\n  border-color: rgba(0,0,0,0.12);\n}\n.theme--light.v-stepper .v-stepper__step--active .v-stepper__label {\n  text-shadow: 0px 0px 0px #000;\n}\n.theme--light.v-stepper .v-stepper__step--editable:hover {\n  background: rgba(0,0,0,0.06);\n}\n.theme--light.v-stepper .v-stepper__step--editable:hover .v-stepper__label {\n  text-shadow: 0px 0px 0px #000;\n}\n.theme--light.v-stepper .v-stepper__step--complete .v-stepper__label {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-stepper .v-stepper__step--inactive.v-stepper__step--editable:not(.v-stepper__step--error):hover .v-stepper__step__step {\n  background: rgba(0,0,0,0.54);\n}\n.theme--light.v-stepper .v-stepper__label {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-stepper .v-stepper__label small {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-stepper--non-linear .v-stepper__step:not(.v-stepper__step--complete):not(.v-stepper__step--error) .v-stepper__label {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-stepper--vertical .v-stepper__content:not(:last-child) {\n  border-left: 1px solid rgba(0,0,0,0.12);\n}\n.theme--dark.v-stepper {\n  background: #303030;\n}\n.theme--dark.v-stepper .v-stepper__step:not(.v-stepper__step--active):not(.v-stepper__step--complete):not(.v-stepper__step--error) .v-stepper__step__step {\n  background: rgba(255,255,255,0.5);\n}\n.theme--dark.v-stepper .v-stepper__step__step {\n  color: #fff;\n}\n.theme--dark.v-stepper .v-stepper__step__step .v-icon {\n  color: #fff;\n}\n.theme--dark.v-stepper .v-stepper__header .v-divider {\n  border-color: rgba(255,255,255,0.12);\n}\n.theme--dark.v-stepper .v-stepper__step--active .v-stepper__label {\n  text-shadow: 0px 0px 0px #fff;\n}\n.theme--dark.v-stepper .v-stepper__step--editable:hover {\n  background: rgba(255,255,255,0.06);\n}\n.theme--dark.v-stepper .v-stepper__step--editable:hover .v-stepper__label {\n  text-shadow: 0px 0px 0px #fff;\n}\n.theme--dark.v-stepper .v-stepper__step--complete .v-stepper__label {\n  color: rgba(255,255,255,0.87);\n}\n.theme--dark.v-stepper .v-stepper__step--inactive.v-stepper__step--editable:not(.v-stepper__step--error):hover .v-stepper__step__step {\n  background: rgba(255,255,255,0.75);\n}\n.theme--dark.v-stepper .v-stepper__label {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-stepper .v-stepper__label small {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-stepper--non-linear .v-stepper__step:not(.v-stepper__step--complete):not(.v-stepper__step--error) .v-stepper__label {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-stepper--vertical .v-stepper__content:not(:last-child) {\n  border-left: 1px solid rgba(255,255,255,0.12);\n}\n.application--is-rtl .v-stepper .v-stepper__step__step {\n  margin-right: 0;\n  margin-left: 12px;\n}\n.v-stepper {\n  overflow: hidden;\n  position: relative;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-stepper__header {\n  height: 72px;\n  align-items: stretch;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: space-between;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-stepper__header .v-divider {\n  align-self: center;\n  margin: 0 -16px;\n}\n.v-stepper__items {\n  position: relative;\n  overflow: hidden;\n}\n.v-stepper__step__step {\n  align-items: center;\n  border-radius: 50%;\n  display: inline-flex;\n  font-size: 12px;\n  justify-content: center;\n  height: 24px;\n  margin-right: 8px;\n  min-width: 24px;\n  width: 24px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-stepper__step__step .v-icon {\n  font-size: 18px;\n}\n.v-stepper__step {\n  align-items: center;\n  display: flex;\n  flex-direction: row;\n  padding: 24px;\n  position: relative;\n}\n.v-stepper__step--active .v-stepper__label {\n  transition: 0.3s cubic-bezier(0.4, 0, 0.6, 1);\n}\n.v-stepper__step--editable {\n  cursor: pointer;\n}\n.v-stepper__step.v-stepper__step--error .v-stepper__step__step {\n  background: transparent;\n  color: inherit;\n}\n.v-stepper__step.v-stepper__step--error .v-stepper__step__step .v-icon {\n  font-size: 24px;\n  color: inherit;\n}\n.v-stepper__step.v-stepper__step--error .v-stepper__label {\n  color: inherit;\n  text-shadow: none;\n  font-weight: 500;\n}\n.v-stepper__step.v-stepper__step--error .v-stepper__label small {\n  color: inherit;\n}\n.v-stepper__label {\n  align-items: flex-start;\n  display: flex;\n  flex-direction: column;\n  text-align: left;\n}\n.v-stepper__label small {\n  font-size: 12px;\n  font-weight: 300;\n  text-shadow: none;\n}\n.v-stepper__wrapper {\n  overflow: hidden;\n  transition: none;\n}\n.v-stepper__content {\n  top: 0;\n  padding: 24px 24px 16px 24px;\n  flex: 1 0 auto;\n  width: 100%;\n}\n.v-stepper__content > .v-btn {\n  margin: 24px 8px 8px 0;\n}\n.v-stepper--is-booted .v-stepper__content,\n.v-stepper--is-booted .v-stepper__wrapper {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-stepper--vertical {\n  padding-bottom: 36px;\n}\n.v-stepper--vertical .v-stepper__content {\n  margin: -8px -36px -16px 36px;\n  padding: 16px 60px 16px 23px;\n  width: auto;\n}\n.v-stepper--vertical .v-stepper__step {\n  padding: 24px 24px 16px;\n}\n.v-stepper--vertical .v-stepper__step__step {\n  margin-right: 12px;\n}\n.v-stepper--alt-labels .v-stepper__header {\n  height: auto;\n}\n.v-stepper--alt-labels .v-stepper__header .v-divider {\n  margin: 35px -67px 0;\n  align-self: flex-start;\n}\n.v-stepper--alt-labels .v-stepper__step {\n  flex-direction: column;\n  justify-content: flex-start;\n  align-items: center;\n  flex-basis: 175px;\n}\n.v-stepper--alt-labels .v-stepper__step small {\n  align-self: center;\n}\n.v-stepper--alt-labels .v-stepper__step__step {\n  margin-right: 0;\n  margin-bottom: 11px;\n}\n@media only screen and (max-width: 959px) {\n  .v-stepper:not(.v-stepper--vertical) .v-stepper__label {\n    display: none;\n  }\n  .v-stepper:not(.v-stepper--vertical) .v-stepper__step__step {\n    margin-right: 0;\n  }\n}\n\n/** Theme */\n.theme--light.v-input--switch__thumb {\n  color: #fafafa;\n}\n.theme--light.v-input--switch__track {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input--switch.v-input--is-disabled .v-input--switch__thumb {\n  color: #bdbdbd !important;\n}\n.theme--light.v-input--switch.v-input--is-disabled .v-input--switch__track {\n  color: rgba(0,0,0,0.12) !important;\n}\n.theme--dark.v-input--switch__thumb {\n  color: #bdbdbd;\n}\n.theme--dark.v-input--switch__track {\n  color: rgba(255,255,255,0.3);\n}\n.theme--dark.v-input--switch.v-input--is-disabled .v-input--switch__thumb {\n  color: #424242 !important;\n}\n.theme--dark.v-input--switch.v-input--is-disabled .v-input--switch__track {\n  color: rgba(255,255,255,0.1) !important;\n}\n.application--is-rtl .v-input--switch .v-input--selection-controls__ripple {\n  left: auto;\n  right: -14px;\n}\n.application--is-rtl .v-input--switch.v-input--is-dirty .v-input--selection-controls__ripple,\n.application--is-rtl .v-input--switch.v-input--is-dirty .v-input--switch__thumb {\n  -webkit-transform: translate(-16px, 0);\n          transform: translate(-16px, 0);\n}\n.v-input--switch__track,\n.v-input--switch__thumb {\n  background-color: currentColor;\n  pointer-events: none;\n  transition: inherit;\n}\n.v-input--switch__track {\n  border-radius: 8px;\n  height: 14px;\n  left: 2px;\n  opacity: 0.6;\n  position: absolute;\n  right: 2px;\n  top: calc(50% - 7px);\n}\n.v-input--switch__thumb {\n  border-radius: 50%;\n  top: calc(50% - 10px);\n  height: 20px;\n  position: relative;\n  width: 20px;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);\n}\n.v-input--switch .v-input--selection-controls__input {\n  width: 38px;\n}\n.v-input--switch .v-input--selection-controls__ripple {\n  left: -14px;\n  top: calc(50% - 24px);\n}\n.v-input--switch.v-input--is-dirty .v-input--selection-controls__ripple,\n.v-input--switch.v-input--is-dirty .v-input--switch__thumb {\n  -webkit-transform: translate(16px, 0);\n          transform: translate(16px, 0);\n}\n\n/* Theme */\n.theme--light.v-system-bar {\n  background-color: #e0e0e0;\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-system-bar .v-icon {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-system-bar--lights-out {\n  background-color: rgba(255,255,255,0.7) !important;\n}\n.theme--dark.v-system-bar {\n  background-color: #000;\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-system-bar .v-icon {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-system-bar--lights-out {\n  background-color: rgba(0,0,0,0.2) !important;\n}\n.v-system-bar {\n  align-items: center;\n  display: flex;\n  font-size: 14px;\n  font-weight: 500;\n  padding: 0 8px;\n}\n.v-system-bar .v-icon {\n  font-size: 16px;\n}\n.v-system-bar--fixed,\n.v-system-bar--absolute {\n  left: 0;\n  top: 0;\n  width: 100%;\n  z-index: 3;\n}\n.v-system-bar--fixed {\n  position: fixed;\n}\n.v-system-bar--absolute {\n  position: absolute;\n}\n.v-system-bar--status .v-icon {\n  margin-right: 4px;\n}\n.v-system-bar--window .v-icon {\n  font-size: 20px;\n  margin-right: 8px;\n}\n\n/* Theme */\n.theme--light.v-tabs__bar {\n  background-color: #fff;\n}\n.theme--light.v-tabs__bar .v-tabs__div {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-tabs__bar .v-tabs__item--disabled {\n  color: rgba(0,0,0,0.26);\n}\n.theme--dark.v-tabs__bar {\n  background-color: #424242;\n}\n.theme--dark.v-tabs__bar .v-tabs__div {\n  color: #fff;\n}\n.theme--dark.v-tabs__bar .v-tabs__item--disabled {\n  color: rgba(255,255,255,0.3);\n}\n.v-tabs {\n  position: relative;\n}\n.v-tabs__bar {\n  position: relative;\n  border-radius: inherit;\n}\n.v-tabs__icon {\n  align-items: center;\n  cursor: pointer;\n  display: inline-flex;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  width: 32px;\n}\n.v-tabs__icon--prev {\n  left: 4px;\n}\n.v-tabs__icon--next {\n  right: 4px;\n}\n.v-tabs__wrapper {\n  overflow: hidden;\n  contain: content;\n  display: flex;\n}\n.v-tabs__wrapper--show-arrows {\n  margin-left: 40px;\n  margin-right: 40px;\n}\n.v-tabs__wrapper--show-arrows .v-tabs__container--align-with-title {\n  padding-left: 16px;\n}\n.v-tabs__container {\n  flex: 1 0 auto;\n  display: flex;\n  height: 48px;\n  list-style-type: none;\n  transition: -webkit-transform 0.6s cubic-bezier(0.86, 0, 0.07, 1);\n  transition: transform 0.6s cubic-bezier(0.86, 0, 0.07, 1);\n  transition: transform 0.6s cubic-bezier(0.86, 0, 0.07, 1), -webkit-transform 0.6s cubic-bezier(0.86, 0, 0.07, 1);\n  white-space: nowrap;\n  position: relative;\n}\n.v-tabs__container--overflow .v-tabs__div {\n  flex: 1 0 auto;\n}\n.v-tabs__container--grow .v-tabs__div {\n  flex: 1 0 auto;\n  max-width: none;\n}\n.v-tabs__container--icons-and-text {\n  height: 72px;\n}\n.v-tabs__container--align-with-title {\n  padding-left: 56px;\n}\n.v-tabs__container--fixed-tabs .v-tabs__div,\n.v-tabs__container--icons-and-text .v-tabs__div {\n  min-width: 72px;\n}\n.v-tabs__container--centered > .v-tabs__div:first-child,\n.v-tabs__container--fixed-tabs > .v-tabs__div:first-child,\n.v-tabs__container--right > .v-tabs__div:first-child {\n  margin-left: auto;\n}\n.v-tabs__container--centered .v-tabs__slider-wrapper + .v-tabs__div,\n.v-tabs__container--fixed-tabs .v-tabs__slider-wrapper + .v-tabs__div,\n.v-tabs__container--right .v-tabs__slider-wrapper + .v-tabs__div {\n  margin-left: auto;\n}\n.v-tabs__container--centered > .v-tabs__div:last-child,\n.v-tabs__container--fixed-tabs > .v-tabs__div:last-child {\n  margin-right: auto;\n}\n.v-tabs__container--icons-and-text .v-tabs__item {\n  flex-direction: column-reverse;\n}\n.v-tabs__container--icons-and-text .v-tabs__item .v-icon {\n  margin-bottom: 6px;\n}\n.v-tabs__div {\n  align-items: center;\n  display: inline-flex;\n  flex: 0 1 auto;\n  font-size: 14px;\n  font-weight: 500;\n  line-height: normal;\n  height: inherit;\n  max-width: 264px;\n  text-align: center;\n  text-transform: uppercase;\n  vertical-align: middle;\n}\n.v-tabs__item {\n  align-items: center;\n  color: inherit;\n  display: flex;\n  flex: 1 1 auto;\n  height: 100%;\n  justify-content: center;\n  max-width: inherit;\n  padding: 6px 12px;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  white-space: normal;\n}\n.v-tabs__item:not(.v-tabs__item--active) {\n  opacity: 0.7;\n}\n.v-tabs__item--disabled {\n  pointer-events: none;\n}\n.v-tabs__slider {\n  height: 2px;\n  width: 100%;\n}\n.v-tabs__slider-wrapper {\n  bottom: 0;\n  margin: 0 !important;\n  position: absolute;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n@media only screen and (max-width: 599px) {\n  .v-tabs__wrapper--show-arrows .v-tabs__container--align-with-title {\n    padding-left: 24px;\n  }\n  .v-tabs__container--fixed-tabs .v-tabs__div {\n    flex: 1 0 auto;\n  }\n}\n@media only screen and (min-width: 600px) {\n  .v-tabs__container--fixed-tabs .v-tabs__div,\n  .v-tabs__container--icons-and-text .v-tabs__div {\n    min-width: 160px;\n  }\n}\n\n.theme--light.v-textarea.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused textarea {\n  color: #fff;\n}\n.theme--dark.v-textarea.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused textarea {\n  color: rgba(0,0,0,0.87);\n}\n.application--is-rtl .v-textarea.v-text-field--enclosed .v-text-field__slot {\n  margin-right: 0;\n  margin-left: -12px;\n}\n.application--is-rtl .v-textarea.v-text-field--enclosed .v-text-field__slot textarea {\n  padding-right: 0;\n  padding-left: 12px;\n}\n.v-textarea textarea {\n  flex: 1 1 auto;\n  line-height: 18px;\n  max-width: 100%;\n  min-height: 32px;\n  outline: none;\n  padding: 7px 0 8px;\n  width: 100%;\n}\n.v-textarea .v-text-field__prefix {\n  padding-top: 4px;\n  align-self: start;\n}\n.v-textarea.v-text-field--full-width .v-text-field__slot textarea,\n.v-textarea.v-text-field--full-width.v-text-field--single-line .v-text-field__slot textarea {\n  margin-top: 0;\n}\n.v-textarea.v-text-field--full-width .v-text-field__details,\n.v-textarea.v-text-field--full-width.v-text-field--single-line .v-text-field__details {\n  bottom: 4px;\n}\n.v-textarea.v-text-field--enclosed .v-text-field__slot {\n  margin-right: -12px;\n}\n.v-textarea.v-text-field--enclosed .v-text-field__slot textarea {\n  padding-right: 12px;\n}\n.v-textarea.v-text-field--box .v-text-field__prefix,\n.v-textarea.v-text-field--enclosed .v-text-field__prefix,\n.v-textarea.v-text-field--box textarea,\n.v-textarea.v-text-field--enclosed textarea {\n  margin-top: 24px;\n}\n.v-textarea.v-text-field--box.v-text-field--single-line .v-text-field__prefix,\n.v-textarea.v-text-field--enclosed.v-text-field--single-line .v-text-field__prefix,\n.v-textarea.v-text-field--box.v-text-field--single-line textarea,\n.v-textarea.v-text-field--enclosed.v-text-field--single-line textarea {\n  margin-top: 12px;\n}\n.v-textarea.v-text-field--box.v-text-field--single-line .v-label,\n.v-textarea.v-text-field--enclosed.v-text-field--single-line .v-label {\n  top: 18px;\n}\n.v-textarea.v-text-field--box.v-text-field--single-line.v-text-field--outline .v-input__control,\n.v-textarea.v-text-field--enclosed.v-text-field--single-line.v-text-field--outline .v-input__control {\n  padding-top: 0;\n}\n.v-textarea.v-text-field--solo {\n  align-items: flex-start;\n}\n.v-textarea.v-text-field--solo .v-input__prepend-inner,\n.v-textarea.v-text-field--solo .v-input__prepend-outer,\n.v-textarea.v-text-field--solo .v-input__append-inner,\n.v-textarea.v-text-field--solo .v-input__append-outer {\n  align-self: flex-start;\n  margin-top: 16px;\n}\n.v-textarea--auto-grow textarea {\n  overflow: hidden;\n}\n.v-textarea--no-resize textarea {\n  resize: none;\n}\n\n.theme--light.v-timeline:before {\n  background: rgba(0,0,0,0.12);\n}\n.theme--light.v-timeline .v-timeline-item__dot {\n  background: #fff;\n}\n.theme--light.v-timeline .v-timeline-item .v-card:before {\n  border-right-color: rgba(0,0,0,0.12);\n}\n.theme--dark.v-timeline:before {\n  background: rgba(255,255,255,0.12);\n}\n.theme--dark.v-timeline .v-timeline-item__dot {\n  background: #424242;\n}\n.theme--dark.v-timeline .v-timeline-item .v-card:before {\n  border-right-color: rgba(0,0,0,0.12);\n}\n.v-timeline-item {\n  display: flex;\n  flex-direction: row-reverse;\n  padding-bottom: 24px;\n}\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right),\n.v-timeline-item--left {\n  flex-direction: row;\n}\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-card:before,\n.v-timeline-item--left .v-card:before,\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-card:after,\n.v-timeline-item--left .v-card:after {\n  -webkit-transform: rotate(180deg);\n          transform: rotate(180deg);\n  left: 100%;\n}\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-timeline-item__opposite,\n.v-timeline-item--left .v-timeline-item__opposite {\n  margin-left: 96px;\n  text-align: left;\n}\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-timeline-item__opposite .v-card:before,\n.v-timeline-item--left .v-timeline-item__opposite .v-card:before,\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-timeline-item__opposite .v-card:after,\n.v-timeline-item--left .v-timeline-item__opposite .v-card:after {\n  -webkit-transform: rotate(0);\n          transform: rotate(0);\n  left: -10px;\n}\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-card:before,\n.v-timeline-item--right .v-card:before,\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-card:after,\n.v-timeline-item--right .v-card:after {\n  right: 100%;\n}\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-timeline-item__opposite,\n.v-timeline-item--right .v-timeline-item__opposite {\n  margin-right: 96px;\n  text-align: right;\n}\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-timeline-item__opposite .v-card:before,\n.v-timeline-item--right .v-timeline-item__opposite .v-card:before,\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-timeline-item__opposite .v-card:after,\n.v-timeline-item--right .v-timeline-item__opposite .v-card:after {\n  -webkit-transform: rotate(180deg);\n          transform: rotate(180deg);\n  right: -10px;\n}\n.v-timeline-item__dot,\n.v-timeline-item__inner-dot {\n  border-radius: 50%;\n}\n.v-timeline-item__dot {\n  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);\n  align-self: center;\n  position: absolute;\n  height: 38px;\n  left: calc(50% - 19px);\n  width: 38px;\n}\n.v-timeline-item__dot .v-timeline-item__inner-dot {\n  height: 30px;\n  margin: 4px;\n  width: 30px;\n}\n.v-timeline-item__dot--small {\n  height: 24px;\n  left: calc(50% - 12px);\n  width: 24px;\n}\n.v-timeline-item__dot--small .v-timeline-item__inner-dot {\n  height: 18px;\n  margin: 3px;\n  width: 18px;\n}\n.v-timeline-item__dot--large {\n  height: 52px;\n  left: calc(50% - 26px);\n  width: 52px;\n}\n.v-timeline-item__dot--large .v-timeline-item__inner-dot {\n  height: 42px;\n  margin: 5px;\n  width: 42px;\n}\n.v-timeline-item__inner-dot {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n.v-timeline-item__body {\n  position: relative;\n  height: 100%;\n  flex: 1 1 100%;\n  max-width: calc(50% - 48px);\n}\n.v-timeline-item .v-card:before,\n.v-timeline-item .v-card:after {\n  content: '';\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-right: 10px solid #000;\n  top: calc(50% - 10px);\n}\n.v-timeline-item .v-card:after {\n  border-right-color: inherit;\n}\n.v-timeline-item .v-card:before {\n  top: calc(50% - 10px + 2px);\n}\n.v-timeline-item__opposite {\n  flex: 1 1 auto;\n  align-self: center;\n  max-width: calc(50% - 48px);\n}\n.v-timeline-item--fill-dot .v-timeline-item__inner-dot {\n  height: inherit;\n  margin: 0;\n  width: inherit;\n}\n.v-timeline {\n  padding-top: 24px;\n  position: relative;\n}\n.v-timeline:before {\n  bottom: 0;\n  content: '';\n  height: 100%;\n  left: calc(50% - 1px);\n  position: absolute;\n  top: 0;\n  width: 2px;\n}\n.v-timeline--align-top .v-timeline-item {\n  position: relative;\n}\n.v-timeline--align-top .v-timeline-item__dot {\n  top: 6px;\n}\n.v-timeline--align-top .v-timeline-item__dot--small {\n  top: 12px;\n}\n.v-timeline--align-top .v-timeline-item__dot--large {\n  top: 0;\n}\n.v-timeline--align-top .v-timeline-item .v-card:before {\n  top: calc(0% + 10px + 2px);\n}\n.v-timeline--align-top .v-timeline-item .v-card:after {\n  top: calc(0% + 10px);\n}\n.v-timeline--dense:before {\n  left: 18px;\n}\n.v-timeline--dense .v-timeline-item:nth-child(odd):not(.v-timeline-item--right),\n.v-timeline--dense .v-timeline-item--left {\n  flex-direction: row-reverse;\n}\n.v-timeline--dense .v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-card:before,\n.v-timeline--dense .v-timeline-item--left .v-card:before,\n.v-timeline--dense .v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-card:after,\n.v-timeline--dense .v-timeline-item--left .v-card:after {\n  right: initial;\n  left: -10px;\n  -webkit-transform: none;\n          transform: none;\n}\n.v-timeline--dense .v-timeline-item__dot {\n  left: 0;\n}\n.v-timeline--dense .v-timeline-item__dot--small {\n  left: 7px;\n}\n.v-timeline--dense .v-timeline-item__dot--large {\n  left: -7px;\n}\n.v-timeline--dense .v-timeline-item__body {\n  max-width: calc(100% - 64px);\n}\n.v-timeline--dense .v-timeline-item__opposite {\n  display: none;\n}\n\n.v-time-picker-title {\n  color: #fff;\n  display: flex;\n  line-height: 1;\n  justify-content: flex-end;\n}\n.v-time-picker-title__time {\n  white-space: nowrap;\n}\n.v-time-picker-title__time .v-picker__title__btn,\n.v-time-picker-title__time span {\n  align-items: center;\n  display: inline-flex;\n  height: 70px;\n  font-size: 70px;\n  justify-content: center;\n}\n.v-time-picker-title__ampm {\n  align-self: flex-end;\n  display: flex;\n  flex-direction: column;\n  font-size: 16px;\n  margin: 8px 0 6px 8px;\n  text-transform: uppercase;\n}\n.v-time-picker-title__ampm div:only-child {\n  flex-direction: row;\n}\n.v-picker__title--landscape .v-time-picker-title {\n  flex-direction: column;\n  justify-content: center;\n  height: 100%;\n}\n.v-picker__title--landscape .v-time-picker-title__time {\n  text-align: right;\n}\n.v-picker__title--landscape .v-time-picker-title__time .v-picker__title__btn,\n.v-picker__title--landscape .v-time-picker-title__time span {\n  height: 55px;\n  font-size: 55px;\n}\n.v-picker__title--landscape .v-time-picker-title__ampm {\n  margin: 16px 0 0;\n  align-self: initial;\n  text-align: center;\n}\n\n/** Themes */\n.theme--light.v-time-picker-clock {\n  background: #e0e0e0;\n}\n.theme--light.v-time-picker-clock .v-time-picker-clock__item--disabled {\n  color: rgba(0,0,0,0.26);\n}\n.theme--light.v-time-picker-clock .v-time-picker-clock__item--disabled.v-time-picker-clock__item--active {\n  color: rgba(255,255,255,0.3);\n}\n.theme--light.v-time-picker-clock--indeterminate .v-time-picker-clock__hand {\n  background-color: #bdbdbd;\n}\n.theme--light.v-time-picker-clock--indeterminate .v-time-picker-clock__hand:after {\n  color: #bdbdbd;\n}\n.theme--light.v-time-picker-clock--indeterminate .v-time-picker-clock__item--active {\n  background-color: #bdbdbd;\n}\n.theme--dark.v-time-picker-clock {\n  background: #616161;\n}\n.theme--dark.v-time-picker-clock .v-time-picker-clock__item--disabled {\n  color: rgba(255,255,255,0.3);\n}\n.theme--dark.v-time-picker-clock .v-time-picker-clock__item--disabled.v-time-picker-clock__item--active {\n  color: rgba(255,255,255,0.3);\n}\n.theme--dark.v-time-picker-clock--indeterminate .v-time-picker-clock__hand {\n  background-color: #757575;\n}\n.theme--dark.v-time-picker-clock--indeterminate .v-time-picker-clock__hand:after {\n  color: #757575;\n}\n.theme--dark.v-time-picker-clock--indeterminate .v-time-picker-clock__item--active {\n  background-color: #757575;\n}\n.v-time-picker-clock {\n  border-radius: 100%;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  width: 100%;\n  padding-top: 100%;\n}\n.v-time-picker-clock__container {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px;\n}\n.v-time-picker-clock__hand {\n  height: calc(50% - 4px);\n  width: 2px;\n  bottom: 50%;\n  left: calc(50% - 1px);\n  -webkit-transform-origin: center bottom;\n          transform-origin: center bottom;\n  position: absolute;\n  will-change: transform;\n  z-index: 1;\n}\n.v-time-picker-clock__hand:before {\n  background: transparent;\n  border-width: 2px;\n  border-style: solid;\n  border-color: inherit;\n  border-radius: 100%;\n  width: 10px;\n  height: 10px;\n  content: '';\n  position: absolute;\n  top: -4px;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.v-time-picker-clock__hand:after {\n  content: '';\n  position: absolute;\n  height: 8px;\n  width: 8px;\n  top: 100%;\n  left: 50%;\n  border-radius: 100%;\n  border-style: solid;\n  border-color: inherit;\n  background-color: inherit;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.v-time-picker-clock__hand--inner:after {\n  height: 14px;\n}\n.v-picker--full-width .v-time-picker-clock__container {\n  max-width: 290px;\n}\n.v-time-picker-clock__inner {\n  position: absolute;\n  bottom: 27px;\n  left: 27px;\n  right: 27px;\n  top: 27px;\n}\n.v-time-picker-clock__item {\n  align-items: center;\n  border-radius: 100%;\n  cursor: default;\n  display: flex;\n  font-size: 16px;\n  justify-content: center;\n  height: 40px;\n  position: absolute;\n  text-align: center;\n  width: 40px;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.v-time-picker-clock__item > span {\n  z-index: 1;\n}\n.v-time-picker-clock__item:before,\n.v-time-picker-clock__item:after {\n  content: '';\n  border-radius: 100%;\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  height: 14px;\n  width: 14px;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.v-time-picker-clock__item:after,\n.v-time-picker-clock__item:before {\n  height: 40px;\n  width: 40px;\n}\n.v-time-picker-clock__item--active {\n  color: #fff;\n  cursor: default;\n  z-index: 2;\n}\n.v-time-picker-clock__item--disabled {\n  pointer-events: none;\n}\n\n/* Theme */\n.theme--light.v-toolbar {\n  background-color: #f5f5f5;\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-toolbar {\n  background-color: #212121;\n  color: #fff;\n}\n.application--is-rtl .v-toolbar__title:not(:first-child) {\n  margin-left: 0;\n  margin-right: 20px;\n}\n.v-toolbar {\n  transition: none;\n  box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);\n  position: relative;\n  width: 100%;\n  will-change: padding-left, padding-right;\n}\n.v-toolbar[data-booted=\"true\"] {\n  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-toolbar .v-text-field--enclosed,\n.v-toolbar .v-text-field--box {\n  margin: 0;\n}\n.v-toolbar .v-text-field--enclosed .v-text-field__details,\n.v-toolbar .v-text-field--box .v-text-field__details {\n  display: none;\n}\n/** Children */\n.v-toolbar .v-tabs {\n  width: 100%;\n}\n.v-toolbar__title {\n  font-size: 20px;\n  font-weight: 500;\n  letter-spacing: 0.02em;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.v-toolbar__title:not(:first-child) {\n  margin-left: 20px;\n}\n.v-toolbar__content,\n.v-toolbar__extension {\n  align-items: center;\n  display: flex;\n  padding: 0 24px;\n}\n.v-toolbar__content .v-btn--icon,\n.v-toolbar__extension .v-btn--icon {\n  margin: 6px;\n}\n.v-toolbar__content > *:first-child,\n.v-toolbar__extension > *:first-child {\n  margin-left: 0;\n}\n.v-toolbar__content > *:first-child.v-btn--icon,\n.v-toolbar__extension > *:first-child.v-btn--icon {\n  margin-left: -6px;\n}\n.v-toolbar__content > *:first-child.v-menu .v-menu__activator .v-btn,\n.v-toolbar__extension > *:first-child.v-menu .v-menu__activator .v-btn,\n.v-toolbar__content > *:first-child.v-tooltip span .v-btn,\n.v-toolbar__extension > *:first-child.v-tooltip span .v-btn {\n  margin-left: 0;\n}\n.v-toolbar__content > *:first-child.v-menu .v-menu__activator .v-btn--icon,\n.v-toolbar__extension > *:first-child.v-menu .v-menu__activator .v-btn--icon,\n.v-toolbar__content > *:first-child.v-tooltip span .v-btn--icon,\n.v-toolbar__extension > *:first-child.v-tooltip span .v-btn--icon {\n  margin-left: -6px;\n}\n.v-toolbar__content > *:last-child,\n.v-toolbar__extension > *:last-child {\n  margin-right: 0;\n}\n.v-toolbar__content > *:last-child.v-btn--icon,\n.v-toolbar__extension > *:last-child.v-btn--icon {\n  margin-right: -6px;\n}\n.v-toolbar__content > *:last-child.v-menu .v-menu__activator .v-btn,\n.v-toolbar__extension > *:last-child.v-menu .v-menu__activator .v-btn,\n.v-toolbar__content > *:last-child.v-tooltip span .v-btn,\n.v-toolbar__extension > *:last-child.v-tooltip span .v-btn {\n  margin-right: 0;\n}\n.v-toolbar__content > *:last-child.v-menu .v-menu__activator .v-btn--icon,\n.v-toolbar__extension > *:last-child.v-menu .v-menu__activator .v-btn--icon,\n.v-toolbar__content > *:last-child.v-tooltip span .v-btn--icon,\n.v-toolbar__extension > *:last-child.v-tooltip span .v-btn--icon {\n  margin-right: -6px;\n}\n.v-toolbar__content > .v-list,\n.v-toolbar__extension > .v-list {\n  flex: 1 1 auto;\n  max-height: 100%;\n}\n.v-toolbar__content > .v-list:first-child,\n.v-toolbar__extension > .v-list:first-child {\n  margin-left: -24px;\n}\n.v-toolbar__content > .v-list:last-child,\n.v-toolbar__extension > .v-list:last-child {\n  margin-right: -24px;\n}\n.v-toolbar__extension > .v-toolbar__title {\n  margin-left: 72px;\n}\n.v-toolbar__items {\n  display: flex;\n  height: inherit;\n  max-width: 100%;\n  padding: 0;\n}\n.v-toolbar__items .v-btn {\n  align-items: center;\n  align-self: center;\n}\n.v-toolbar__items .v-tooltip,\n.v-toolbar__items .v-tooltip > span {\n  height: inherit;\n}\n.v-toolbar__items .v-btn:not(.v-btn--floating):not(.v-btn--icon),\n.v-toolbar__items .v-menu,\n.v-toolbar__items .v-menu__activator {\n  height: inherit;\n  margin: 0;\n}\n/** Types */\n.v-toolbar .v-overflow-btn,\n.v-toolbar .v-btn-toggle {\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);\n}\n.v-toolbar .v-input {\n  margin: 0;\n}\n.v-toolbar .v-overflow-btn .v-input__control:before,\n.v-toolbar .v-overflow-btn .v-input__slot:before {\n  display: none;\n}\n.v-toolbar--card {\n  border-radius: 2px 2px 0 0;\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);\n}\n.v-toolbar--fixed {\n  position: fixed;\n  z-index: 2;\n}\n.v-toolbar--fixed,\n.v-toolbar--absolute {\n  top: 0;\n  left: 0;\n}\n.v-toolbar--absolute {\n  position: absolute;\n  z-index: 2;\n}\n.v-toolbar--floating {\n  display: inline-flex;\n  margin: 16px;\n  width: auto;\n}\n.v-toolbar--clipped {\n  z-index: 3;\n}\n@media only screen and (max-width: 959px) {\n  .v-toolbar__content,\n  .v-toolbar__extension {\n    padding: 0 16px;\n  }\n  .v-toolbar__content > .v-list:first-child,\n  .v-toolbar__extension > .v-list:first-child {\n    margin-left: -16px;\n  }\n  .v-toolbar__content > .v-list:last-child,\n  .v-toolbar__extension > .v-list:last-child {\n    margin-right: -16px;\n  }\n}\n\n.v-tooltip__content {\n  background: #616161;\n  border-radius: 2px;\n  color: #fff;\n  font-size: 12px;\n  display: inline-block;\n  padding: 5px 8px;\n  position: absolute;\n  text-transform: initial;\n  width: auto;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-tooltip__content[class*=\"-active\"] {\n  transition: 0.15s cubic-bezier(0.25, 0.8, 0.5, 1);\n  pointer-events: none;\n}\n.v-tooltip__content--fixed {\n  position: fixed;\n}\n@media only screen and (max-width: 959px) {\n  .v-tooltip .v-tooltip__content {\n    padding: 10px 16px;\n  }\n}\n\n/* Theme */\n.theme--light.v-treeview {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-treeview--hoverable .v-treeview-node__root:hover,\n.theme--light.v-treeview .v-treeview-node--active {\n  background: rgba(0,0,0,0.12);\n}\n.theme--dark.v-treeview {\n  color: #fff;\n}\n.theme--dark.v-treeview--hoverable .v-treeview-node__root:hover,\n.theme--dark.v-treeview .v-treeview-node--active {\n  background: rgba(255,255,255,0.12);\n}\n.application--is-rtl .v-treeview > .v-treeview-node {\n  margin-right: 0;\n}\n.application--is-rtl .v-treeview > .v-treeview-node--leaf {\n  margin-right: 24px;\n  margin-left: 0;\n}\n.application--is-rtl .v-treeview-node {\n  margin-right: 26px;\n  margin-left: 0;\n}\n.application--is-rtl .v-treeview-node--leaf {\n  margin-right: 50px;\n  margin-left: 0;\n}\n.application--is-rtl .v-treeview-node__toggle {\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.application--is-rtl .v-treeview-node__toggle--open {\n  -webkit-transform: none;\n          transform: none;\n}\n.v-treeview > .v-treeview-node {\n  margin-left: 0;\n}\n.v-treeview > .v-treeview-node--leaf {\n  margin-left: 24px;\n}\n.v-treeview-node {\n  margin-left: 26px;\n}\n.v-treeview-node--excluded {\n  display: none;\n}\n.v-treeview-node--click > .v-treeview-node__root,\n.v-treeview-node--click > .v-treeview-node__root > .v-treeview-node__content > * {\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-treeview-node--leaf {\n  margin-left: 50px;\n}\n.v-treeview-node__root {\n  display: flex;\n  align-items: center;\n  min-height: 34px;\n}\n.v-treeview-node__content {\n  display: flex;\n  flex-grow: 1;\n  flex-shrink: 0;\n  align-items: center;\n}\n.v-treeview-node__content .v-btn {\n  flex-grow: 0 !important;\n  flex-shrink: 1 !important;\n}\n.v-treeview-node__label {\n  font-size: 1.2rem;\n  margin-left: 6px;\n  flex-grow: 1;\n  flex-shrink: 0;\n}\n.v-treeview-node__label .v-icon {\n  padding-right: 8px;\n}\n.v-treeview-node__checkbox {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-treeview-node__toggle {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  -webkit-transform: rotate(-90deg);\n          transform: rotate(-90deg);\n}\n.v-treeview-node__toggle--open {\n  -webkit-transform: none;\n          transform: none;\n}\n.v-treeview-node__toggle--loading {\n  -webkit-animation: progress-circular-rotate 1s linear infinite;\n          animation: progress-circular-rotate 1s linear infinite;\n}\n.v-treeview-node__children {\n  transition: all 0.2s cubic-bezier(0, 0, 0.2, 1);\n}", ""]);
+exports.push([module.i, "@-webkit-keyframes shake {\n  59% {\n    margin-left: 0;\n  }\n  60%, 80% {\n    margin-left: 2px;\n  }\n  70%, 90% {\n    margin-left: -2px;\n  }\n}\n@keyframes shake {\n  59% {\n    margin-left: 0;\n  }\n  60%, 80% {\n    margin-left: 2px;\n  }\n  70%, 90% {\n    margin-left: -2px;\n  }\n}\n.black {\n  background-color: #000 !important;\n  border-color: #000 !important;\n}\n.black--text {\n  color: #000 !important;\n  caret-color: #000 !important;\n}\n.white {\n  background-color: #fff !important;\n  border-color: #fff !important;\n}\n.white--text {\n  color: #fff !important;\n  caret-color: #fff !important;\n}\n.transparent {\n  background-color: transparent !important;\n  border-color: transparent !important;\n}\n.transparent--text {\n  color: transparent !important;\n  caret-color: transparent !important;\n}\n.red {\n  background-color: #f44336 !important;\n  border-color: #f44336 !important;\n}\n.red--text {\n  color: #f44336 !important;\n  caret-color: #f44336 !important;\n}\n.red.lighten-5 {\n  background-color: #ffebee !important;\n  border-color: #ffebee !important;\n}\n.red--text.text--lighten-5 {\n  color: #ffebee !important;\n  caret-color: #ffebee !important;\n}\n.red.lighten-4 {\n  background-color: #ffcdd2 !important;\n  border-color: #ffcdd2 !important;\n}\n.red--text.text--lighten-4 {\n  color: #ffcdd2 !important;\n  caret-color: #ffcdd2 !important;\n}\n.red.lighten-3 {\n  background-color: #ef9a9a !important;\n  border-color: #ef9a9a !important;\n}\n.red--text.text--lighten-3 {\n  color: #ef9a9a !important;\n  caret-color: #ef9a9a !important;\n}\n.red.lighten-2 {\n  background-color: #e57373 !important;\n  border-color: #e57373 !important;\n}\n.red--text.text--lighten-2 {\n  color: #e57373 !important;\n  caret-color: #e57373 !important;\n}\n.red.lighten-1 {\n  background-color: #ef5350 !important;\n  border-color: #ef5350 !important;\n}\n.red--text.text--lighten-1 {\n  color: #ef5350 !important;\n  caret-color: #ef5350 !important;\n}\n.red.darken-1 {\n  background-color: #e53935 !important;\n  border-color: #e53935 !important;\n}\n.red--text.text--darken-1 {\n  color: #e53935 !important;\n  caret-color: #e53935 !important;\n}\n.red.darken-2 {\n  background-color: #d32f2f !important;\n  border-color: #d32f2f !important;\n}\n.red--text.text--darken-2 {\n  color: #d32f2f !important;\n  caret-color: #d32f2f !important;\n}\n.red.darken-3 {\n  background-color: #c62828 !important;\n  border-color: #c62828 !important;\n}\n.red--text.text--darken-3 {\n  color: #c62828 !important;\n  caret-color: #c62828 !important;\n}\n.red.darken-4 {\n  background-color: #b71c1c !important;\n  border-color: #b71c1c !important;\n}\n.red--text.text--darken-4 {\n  color: #b71c1c !important;\n  caret-color: #b71c1c !important;\n}\n.red.accent-1 {\n  background-color: #ff8a80 !important;\n  border-color: #ff8a80 !important;\n}\n.red--text.text--accent-1 {\n  color: #ff8a80 !important;\n  caret-color: #ff8a80 !important;\n}\n.red.accent-2 {\n  background-color: #ff5252 !important;\n  border-color: #ff5252 !important;\n}\n.red--text.text--accent-2 {\n  color: #ff5252 !important;\n  caret-color: #ff5252 !important;\n}\n.red.accent-3 {\n  background-color: #ff1744 !important;\n  border-color: #ff1744 !important;\n}\n.red--text.text--accent-3 {\n  color: #ff1744 !important;\n  caret-color: #ff1744 !important;\n}\n.red.accent-4 {\n  background-color: #d50000 !important;\n  border-color: #d50000 !important;\n}\n.red--text.text--accent-4 {\n  color: #d50000 !important;\n  caret-color: #d50000 !important;\n}\n.pink {\n  background-color: #e91e63 !important;\n  border-color: #e91e63 !important;\n}\n.pink--text {\n  color: #e91e63 !important;\n  caret-color: #e91e63 !important;\n}\n.pink.lighten-5 {\n  background-color: #fce4ec !important;\n  border-color: #fce4ec !important;\n}\n.pink--text.text--lighten-5 {\n  color: #fce4ec !important;\n  caret-color: #fce4ec !important;\n}\n.pink.lighten-4 {\n  background-color: #f8bbd0 !important;\n  border-color: #f8bbd0 !important;\n}\n.pink--text.text--lighten-4 {\n  color: #f8bbd0 !important;\n  caret-color: #f8bbd0 !important;\n}\n.pink.lighten-3 {\n  background-color: #f48fb1 !important;\n  border-color: #f48fb1 !important;\n}\n.pink--text.text--lighten-3 {\n  color: #f48fb1 !important;\n  caret-color: #f48fb1 !important;\n}\n.pink.lighten-2 {\n  background-color: #f06292 !important;\n  border-color: #f06292 !important;\n}\n.pink--text.text--lighten-2 {\n  color: #f06292 !important;\n  caret-color: #f06292 !important;\n}\n.pink.lighten-1 {\n  background-color: #ec407a !important;\n  border-color: #ec407a !important;\n}\n.pink--text.text--lighten-1 {\n  color: #ec407a !important;\n  caret-color: #ec407a !important;\n}\n.pink.darken-1 {\n  background-color: #d81b60 !important;\n  border-color: #d81b60 !important;\n}\n.pink--text.text--darken-1 {\n  color: #d81b60 !important;\n  caret-color: #d81b60 !important;\n}\n.pink.darken-2 {\n  background-color: #c2185b !important;\n  border-color: #c2185b !important;\n}\n.pink--text.text--darken-2 {\n  color: #c2185b !important;\n  caret-color: #c2185b !important;\n}\n.pink.darken-3 {\n  background-color: #ad1457 !important;\n  border-color: #ad1457 !important;\n}\n.pink--text.text--darken-3 {\n  color: #ad1457 !important;\n  caret-color: #ad1457 !important;\n}\n.pink.darken-4 {\n  background-color: #880e4f !important;\n  border-color: #880e4f !important;\n}\n.pink--text.text--darken-4 {\n  color: #880e4f !important;\n  caret-color: #880e4f !important;\n}\n.pink.accent-1 {\n  background-color: #ff80ab !important;\n  border-color: #ff80ab !important;\n}\n.pink--text.text--accent-1 {\n  color: #ff80ab !important;\n  caret-color: #ff80ab !important;\n}\n.pink.accent-2 {\n  background-color: #ff4081 !important;\n  border-color: #ff4081 !important;\n}\n.pink--text.text--accent-2 {\n  color: #ff4081 !important;\n  caret-color: #ff4081 !important;\n}\n.pink.accent-3 {\n  background-color: #f50057 !important;\n  border-color: #f50057 !important;\n}\n.pink--text.text--accent-3 {\n  color: #f50057 !important;\n  caret-color: #f50057 !important;\n}\n.pink.accent-4 {\n  background-color: #c51162 !important;\n  border-color: #c51162 !important;\n}\n.pink--text.text--accent-4 {\n  color: #c51162 !important;\n  caret-color: #c51162 !important;\n}\n.purple {\n  background-color: #9c27b0 !important;\n  border-color: #9c27b0 !important;\n}\n.purple--text {\n  color: #9c27b0 !important;\n  caret-color: #9c27b0 !important;\n}\n.purple.lighten-5 {\n  background-color: #f3e5f5 !important;\n  border-color: #f3e5f5 !important;\n}\n.purple--text.text--lighten-5 {\n  color: #f3e5f5 !important;\n  caret-color: #f3e5f5 !important;\n}\n.purple.lighten-4 {\n  background-color: #e1bee7 !important;\n  border-color: #e1bee7 !important;\n}\n.purple--text.text--lighten-4 {\n  color: #e1bee7 !important;\n  caret-color: #e1bee7 !important;\n}\n.purple.lighten-3 {\n  background-color: #ce93d8 !important;\n  border-color: #ce93d8 !important;\n}\n.purple--text.text--lighten-3 {\n  color: #ce93d8 !important;\n  caret-color: #ce93d8 !important;\n}\n.purple.lighten-2 {\n  background-color: #ba68c8 !important;\n  border-color: #ba68c8 !important;\n}\n.purple--text.text--lighten-2 {\n  color: #ba68c8 !important;\n  caret-color: #ba68c8 !important;\n}\n.purple.lighten-1 {\n  background-color: #ab47bc !important;\n  border-color: #ab47bc !important;\n}\n.purple--text.text--lighten-1 {\n  color: #ab47bc !important;\n  caret-color: #ab47bc !important;\n}\n.purple.darken-1 {\n  background-color: #8e24aa !important;\n  border-color: #8e24aa !important;\n}\n.purple--text.text--darken-1 {\n  color: #8e24aa !important;\n  caret-color: #8e24aa !important;\n}\n.purple.darken-2 {\n  background-color: #7b1fa2 !important;\n  border-color: #7b1fa2 !important;\n}\n.purple--text.text--darken-2 {\n  color: #7b1fa2 !important;\n  caret-color: #7b1fa2 !important;\n}\n.purple.darken-3 {\n  background-color: #6a1b9a !important;\n  border-color: #6a1b9a !important;\n}\n.purple--text.text--darken-3 {\n  color: #6a1b9a !important;\n  caret-color: #6a1b9a !important;\n}\n.purple.darken-4 {\n  background-color: #4a148c !important;\n  border-color: #4a148c !important;\n}\n.purple--text.text--darken-4 {\n  color: #4a148c !important;\n  caret-color: #4a148c !important;\n}\n.purple.accent-1 {\n  background-color: #ea80fc !important;\n  border-color: #ea80fc !important;\n}\n.purple--text.text--accent-1 {\n  color: #ea80fc !important;\n  caret-color: #ea80fc !important;\n}\n.purple.accent-2 {\n  background-color: #e040fb !important;\n  border-color: #e040fb !important;\n}\n.purple--text.text--accent-2 {\n  color: #e040fb !important;\n  caret-color: #e040fb !important;\n}\n.purple.accent-3 {\n  background-color: #d500f9 !important;\n  border-color: #d500f9 !important;\n}\n.purple--text.text--accent-3 {\n  color: #d500f9 !important;\n  caret-color: #d500f9 !important;\n}\n.purple.accent-4 {\n  background-color: #a0f !important;\n  border-color: #a0f !important;\n}\n.purple--text.text--accent-4 {\n  color: #a0f !important;\n  caret-color: #a0f !important;\n}\n.deep-purple {\n  background-color: #673ab7 !important;\n  border-color: #673ab7 !important;\n}\n.deep-purple--text {\n  color: #673ab7 !important;\n  caret-color: #673ab7 !important;\n}\n.deep-purple.lighten-5 {\n  background-color: #ede7f6 !important;\n  border-color: #ede7f6 !important;\n}\n.deep-purple--text.text--lighten-5 {\n  color: #ede7f6 !important;\n  caret-color: #ede7f6 !important;\n}\n.deep-purple.lighten-4 {\n  background-color: #d1c4e9 !important;\n  border-color: #d1c4e9 !important;\n}\n.deep-purple--text.text--lighten-4 {\n  color: #d1c4e9 !important;\n  caret-color: #d1c4e9 !important;\n}\n.deep-purple.lighten-3 {\n  background-color: #b39ddb !important;\n  border-color: #b39ddb !important;\n}\n.deep-purple--text.text--lighten-3 {\n  color: #b39ddb !important;\n  caret-color: #b39ddb !important;\n}\n.deep-purple.lighten-2 {\n  background-color: #9575cd !important;\n  border-color: #9575cd !important;\n}\n.deep-purple--text.text--lighten-2 {\n  color: #9575cd !important;\n  caret-color: #9575cd !important;\n}\n.deep-purple.lighten-1 {\n  background-color: #7e57c2 !important;\n  border-color: #7e57c2 !important;\n}\n.deep-purple--text.text--lighten-1 {\n  color: #7e57c2 !important;\n  caret-color: #7e57c2 !important;\n}\n.deep-purple.darken-1 {\n  background-color: #5e35b1 !important;\n  border-color: #5e35b1 !important;\n}\n.deep-purple--text.text--darken-1 {\n  color: #5e35b1 !important;\n  caret-color: #5e35b1 !important;\n}\n.deep-purple.darken-2 {\n  background-color: #512da8 !important;\n  border-color: #512da8 !important;\n}\n.deep-purple--text.text--darken-2 {\n  color: #512da8 !important;\n  caret-color: #512da8 !important;\n}\n.deep-purple.darken-3 {\n  background-color: #4527a0 !important;\n  border-color: #4527a0 !important;\n}\n.deep-purple--text.text--darken-3 {\n  color: #4527a0 !important;\n  caret-color: #4527a0 !important;\n}\n.deep-purple.darken-4 {\n  background-color: #311b92 !important;\n  border-color: #311b92 !important;\n}\n.deep-purple--text.text--darken-4 {\n  color: #311b92 !important;\n  caret-color: #311b92 !important;\n}\n.deep-purple.accent-1 {\n  background-color: #b388ff !important;\n  border-color: #b388ff !important;\n}\n.deep-purple--text.text--accent-1 {\n  color: #b388ff !important;\n  caret-color: #b388ff !important;\n}\n.deep-purple.accent-2 {\n  background-color: #7c4dff !important;\n  border-color: #7c4dff !important;\n}\n.deep-purple--text.text--accent-2 {\n  color: #7c4dff !important;\n  caret-color: #7c4dff !important;\n}\n.deep-purple.accent-3 {\n  background-color: #651fff !important;\n  border-color: #651fff !important;\n}\n.deep-purple--text.text--accent-3 {\n  color: #651fff !important;\n  caret-color: #651fff !important;\n}\n.deep-purple.accent-4 {\n  background-color: #6200ea !important;\n  border-color: #6200ea !important;\n}\n.deep-purple--text.text--accent-4 {\n  color: #6200ea !important;\n  caret-color: #6200ea !important;\n}\n.indigo {\n  background-color: #3f51b5 !important;\n  border-color: #3f51b5 !important;\n}\n.indigo--text {\n  color: #3f51b5 !important;\n  caret-color: #3f51b5 !important;\n}\n.indigo.lighten-5 {\n  background-color: #e8eaf6 !important;\n  border-color: #e8eaf6 !important;\n}\n.indigo--text.text--lighten-5 {\n  color: #e8eaf6 !important;\n  caret-color: #e8eaf6 !important;\n}\n.indigo.lighten-4 {\n  background-color: #c5cae9 !important;\n  border-color: #c5cae9 !important;\n}\n.indigo--text.text--lighten-4 {\n  color: #c5cae9 !important;\n  caret-color: #c5cae9 !important;\n}\n.indigo.lighten-3 {\n  background-color: #9fa8da !important;\n  border-color: #9fa8da !important;\n}\n.indigo--text.text--lighten-3 {\n  color: #9fa8da !important;\n  caret-color: #9fa8da !important;\n}\n.indigo.lighten-2 {\n  background-color: #7986cb !important;\n  border-color: #7986cb !important;\n}\n.indigo--text.text--lighten-2 {\n  color: #7986cb !important;\n  caret-color: #7986cb !important;\n}\n.indigo.lighten-1 {\n  background-color: #5c6bc0 !important;\n  border-color: #5c6bc0 !important;\n}\n.indigo--text.text--lighten-1 {\n  color: #5c6bc0 !important;\n  caret-color: #5c6bc0 !important;\n}\n.indigo.darken-1 {\n  background-color: #3949ab !important;\n  border-color: #3949ab !important;\n}\n.indigo--text.text--darken-1 {\n  color: #3949ab !important;\n  caret-color: #3949ab !important;\n}\n.indigo.darken-2 {\n  background-color: #303f9f !important;\n  border-color: #303f9f !important;\n}\n.indigo--text.text--darken-2 {\n  color: #303f9f !important;\n  caret-color: #303f9f !important;\n}\n.indigo.darken-3 {\n  background-color: #283593 !important;\n  border-color: #283593 !important;\n}\n.indigo--text.text--darken-3 {\n  color: #283593 !important;\n  caret-color: #283593 !important;\n}\n.indigo.darken-4 {\n  background-color: #1a237e !important;\n  border-color: #1a237e !important;\n}\n.indigo--text.text--darken-4 {\n  color: #1a237e !important;\n  caret-color: #1a237e !important;\n}\n.indigo.accent-1 {\n  background-color: #8c9eff !important;\n  border-color: #8c9eff !important;\n}\n.indigo--text.text--accent-1 {\n  color: #8c9eff !important;\n  caret-color: #8c9eff !important;\n}\n.indigo.accent-2 {\n  background-color: #536dfe !important;\n  border-color: #536dfe !important;\n}\n.indigo--text.text--accent-2 {\n  color: #536dfe !important;\n  caret-color: #536dfe !important;\n}\n.indigo.accent-3 {\n  background-color: #3d5afe !important;\n  border-color: #3d5afe !important;\n}\n.indigo--text.text--accent-3 {\n  color: #3d5afe !important;\n  caret-color: #3d5afe !important;\n}\n.indigo.accent-4 {\n  background-color: #304ffe !important;\n  border-color: #304ffe !important;\n}\n.indigo--text.text--accent-4 {\n  color: #304ffe !important;\n  caret-color: #304ffe !important;\n}\n.blue {\n  background-color: #2196f3 !important;\n  border-color: #2196f3 !important;\n}\n.blue--text {\n  color: #2196f3 !important;\n  caret-color: #2196f3 !important;\n}\n.blue.lighten-5 {\n  background-color: #e3f2fd !important;\n  border-color: #e3f2fd !important;\n}\n.blue--text.text--lighten-5 {\n  color: #e3f2fd !important;\n  caret-color: #e3f2fd !important;\n}\n.blue.lighten-4 {\n  background-color: #bbdefb !important;\n  border-color: #bbdefb !important;\n}\n.blue--text.text--lighten-4 {\n  color: #bbdefb !important;\n  caret-color: #bbdefb !important;\n}\n.blue.lighten-3 {\n  background-color: #90caf9 !important;\n  border-color: #90caf9 !important;\n}\n.blue--text.text--lighten-3 {\n  color: #90caf9 !important;\n  caret-color: #90caf9 !important;\n}\n.blue.lighten-2 {\n  background-color: #64b5f6 !important;\n  border-color: #64b5f6 !important;\n}\n.blue--text.text--lighten-2 {\n  color: #64b5f6 !important;\n  caret-color: #64b5f6 !important;\n}\n.blue.lighten-1 {\n  background-color: #42a5f5 !important;\n  border-color: #42a5f5 !important;\n}\n.blue--text.text--lighten-1 {\n  color: #42a5f5 !important;\n  caret-color: #42a5f5 !important;\n}\n.blue.darken-1 {\n  background-color: #1e88e5 !important;\n  border-color: #1e88e5 !important;\n}\n.blue--text.text--darken-1 {\n  color: #1e88e5 !important;\n  caret-color: #1e88e5 !important;\n}\n.blue.darken-2 {\n  background-color: #1976d2 !important;\n  border-color: #1976d2 !important;\n}\n.blue--text.text--darken-2 {\n  color: #1976d2 !important;\n  caret-color: #1976d2 !important;\n}\n.blue.darken-3 {\n  background-color: #1565c0 !important;\n  border-color: #1565c0 !important;\n}\n.blue--text.text--darken-3 {\n  color: #1565c0 !important;\n  caret-color: #1565c0 !important;\n}\n.blue.darken-4 {\n  background-color: #0d47a1 !important;\n  border-color: #0d47a1 !important;\n}\n.blue--text.text--darken-4 {\n  color: #0d47a1 !important;\n  caret-color: #0d47a1 !important;\n}\n.blue.accent-1 {\n  background-color: #82b1ff !important;\n  border-color: #82b1ff !important;\n}\n.blue--text.text--accent-1 {\n  color: #82b1ff !important;\n  caret-color: #82b1ff !important;\n}\n.blue.accent-2 {\n  background-color: #448aff !important;\n  border-color: #448aff !important;\n}\n.blue--text.text--accent-2 {\n  color: #448aff !important;\n  caret-color: #448aff !important;\n}\n.blue.accent-3 {\n  background-color: #2979ff !important;\n  border-color: #2979ff !important;\n}\n.blue--text.text--accent-3 {\n  color: #2979ff !important;\n  caret-color: #2979ff !important;\n}\n.blue.accent-4 {\n  background-color: #2962ff !important;\n  border-color: #2962ff !important;\n}\n.blue--text.text--accent-4 {\n  color: #2962ff !important;\n  caret-color: #2962ff !important;\n}\n.light-blue {\n  background-color: #03a9f4 !important;\n  border-color: #03a9f4 !important;\n}\n.light-blue--text {\n  color: #03a9f4 !important;\n  caret-color: #03a9f4 !important;\n}\n.light-blue.lighten-5 {\n  background-color: #e1f5fe !important;\n  border-color: #e1f5fe !important;\n}\n.light-blue--text.text--lighten-5 {\n  color: #e1f5fe !important;\n  caret-color: #e1f5fe !important;\n}\n.light-blue.lighten-4 {\n  background-color: #b3e5fc !important;\n  border-color: #b3e5fc !important;\n}\n.light-blue--text.text--lighten-4 {\n  color: #b3e5fc !important;\n  caret-color: #b3e5fc !important;\n}\n.light-blue.lighten-3 {\n  background-color: #81d4fa !important;\n  border-color: #81d4fa !important;\n}\n.light-blue--text.text--lighten-3 {\n  color: #81d4fa !important;\n  caret-color: #81d4fa !important;\n}\n.light-blue.lighten-2 {\n  background-color: #4fc3f7 !important;\n  border-color: #4fc3f7 !important;\n}\n.light-blue--text.text--lighten-2 {\n  color: #4fc3f7 !important;\n  caret-color: #4fc3f7 !important;\n}\n.light-blue.lighten-1 {\n  background-color: #29b6f6 !important;\n  border-color: #29b6f6 !important;\n}\n.light-blue--text.text--lighten-1 {\n  color: #29b6f6 !important;\n  caret-color: #29b6f6 !important;\n}\n.light-blue.darken-1 {\n  background-color: #039be5 !important;\n  border-color: #039be5 !important;\n}\n.light-blue--text.text--darken-1 {\n  color: #039be5 !important;\n  caret-color: #039be5 !important;\n}\n.light-blue.darken-2 {\n  background-color: #0288d1 !important;\n  border-color: #0288d1 !important;\n}\n.light-blue--text.text--darken-2 {\n  color: #0288d1 !important;\n  caret-color: #0288d1 !important;\n}\n.light-blue.darken-3 {\n  background-color: #0277bd !important;\n  border-color: #0277bd !important;\n}\n.light-blue--text.text--darken-3 {\n  color: #0277bd !important;\n  caret-color: #0277bd !important;\n}\n.light-blue.darken-4 {\n  background-color: #01579b !important;\n  border-color: #01579b !important;\n}\n.light-blue--text.text--darken-4 {\n  color: #01579b !important;\n  caret-color: #01579b !important;\n}\n.light-blue.accent-1 {\n  background-color: #80d8ff !important;\n  border-color: #80d8ff !important;\n}\n.light-blue--text.text--accent-1 {\n  color: #80d8ff !important;\n  caret-color: #80d8ff !important;\n}\n.light-blue.accent-2 {\n  background-color: #40c4ff !important;\n  border-color: #40c4ff !important;\n}\n.light-blue--text.text--accent-2 {\n  color: #40c4ff !important;\n  caret-color: #40c4ff !important;\n}\n.light-blue.accent-3 {\n  background-color: #00b0ff !important;\n  border-color: #00b0ff !important;\n}\n.light-blue--text.text--accent-3 {\n  color: #00b0ff !important;\n  caret-color: #00b0ff !important;\n}\n.light-blue.accent-4 {\n  background-color: #0091ea !important;\n  border-color: #0091ea !important;\n}\n.light-blue--text.text--accent-4 {\n  color: #0091ea !important;\n  caret-color: #0091ea !important;\n}\n.cyan {\n  background-color: #00bcd4 !important;\n  border-color: #00bcd4 !important;\n}\n.cyan--text {\n  color: #00bcd4 !important;\n  caret-color: #00bcd4 !important;\n}\n.cyan.lighten-5 {\n  background-color: #e0f7fa !important;\n  border-color: #e0f7fa !important;\n}\n.cyan--text.text--lighten-5 {\n  color: #e0f7fa !important;\n  caret-color: #e0f7fa !important;\n}\n.cyan.lighten-4 {\n  background-color: #b2ebf2 !important;\n  border-color: #b2ebf2 !important;\n}\n.cyan--text.text--lighten-4 {\n  color: #b2ebf2 !important;\n  caret-color: #b2ebf2 !important;\n}\n.cyan.lighten-3 {\n  background-color: #80deea !important;\n  border-color: #80deea !important;\n}\n.cyan--text.text--lighten-3 {\n  color: #80deea !important;\n  caret-color: #80deea !important;\n}\n.cyan.lighten-2 {\n  background-color: #4dd0e1 !important;\n  border-color: #4dd0e1 !important;\n}\n.cyan--text.text--lighten-2 {\n  color: #4dd0e1 !important;\n  caret-color: #4dd0e1 !important;\n}\n.cyan.lighten-1 {\n  background-color: #26c6da !important;\n  border-color: #26c6da !important;\n}\n.cyan--text.text--lighten-1 {\n  color: #26c6da !important;\n  caret-color: #26c6da !important;\n}\n.cyan.darken-1 {\n  background-color: #00acc1 !important;\n  border-color: #00acc1 !important;\n}\n.cyan--text.text--darken-1 {\n  color: #00acc1 !important;\n  caret-color: #00acc1 !important;\n}\n.cyan.darken-2 {\n  background-color: #0097a7 !important;\n  border-color: #0097a7 !important;\n}\n.cyan--text.text--darken-2 {\n  color: #0097a7 !important;\n  caret-color: #0097a7 !important;\n}\n.cyan.darken-3 {\n  background-color: #00838f !important;\n  border-color: #00838f !important;\n}\n.cyan--text.text--darken-3 {\n  color: #00838f !important;\n  caret-color: #00838f !important;\n}\n.cyan.darken-4 {\n  background-color: #006064 !important;\n  border-color: #006064 !important;\n}\n.cyan--text.text--darken-4 {\n  color: #006064 !important;\n  caret-color: #006064 !important;\n}\n.cyan.accent-1 {\n  background-color: #84ffff !important;\n  border-color: #84ffff !important;\n}\n.cyan--text.text--accent-1 {\n  color: #84ffff !important;\n  caret-color: #84ffff !important;\n}\n.cyan.accent-2 {\n  background-color: #18ffff !important;\n  border-color: #18ffff !important;\n}\n.cyan--text.text--accent-2 {\n  color: #18ffff !important;\n  caret-color: #18ffff !important;\n}\n.cyan.accent-3 {\n  background-color: #00e5ff !important;\n  border-color: #00e5ff !important;\n}\n.cyan--text.text--accent-3 {\n  color: #00e5ff !important;\n  caret-color: #00e5ff !important;\n}\n.cyan.accent-4 {\n  background-color: #00b8d4 !important;\n  border-color: #00b8d4 !important;\n}\n.cyan--text.text--accent-4 {\n  color: #00b8d4 !important;\n  caret-color: #00b8d4 !important;\n}\n.teal {\n  background-color: #009688 !important;\n  border-color: #009688 !important;\n}\n.teal--text {\n  color: #009688 !important;\n  caret-color: #009688 !important;\n}\n.teal.lighten-5 {\n  background-color: #e0f2f1 !important;\n  border-color: #e0f2f1 !important;\n}\n.teal--text.text--lighten-5 {\n  color: #e0f2f1 !important;\n  caret-color: #e0f2f1 !important;\n}\n.teal.lighten-4 {\n  background-color: #b2dfdb !important;\n  border-color: #b2dfdb !important;\n}\n.teal--text.text--lighten-4 {\n  color: #b2dfdb !important;\n  caret-color: #b2dfdb !important;\n}\n.teal.lighten-3 {\n  background-color: #80cbc4 !important;\n  border-color: #80cbc4 !important;\n}\n.teal--text.text--lighten-3 {\n  color: #80cbc4 !important;\n  caret-color: #80cbc4 !important;\n}\n.teal.lighten-2 {\n  background-color: #4db6ac !important;\n  border-color: #4db6ac !important;\n}\n.teal--text.text--lighten-2 {\n  color: #4db6ac !important;\n  caret-color: #4db6ac !important;\n}\n.teal.lighten-1 {\n  background-color: #26a69a !important;\n  border-color: #26a69a !important;\n}\n.teal--text.text--lighten-1 {\n  color: #26a69a !important;\n  caret-color: #26a69a !important;\n}\n.teal.darken-1 {\n  background-color: #00897b !important;\n  border-color: #00897b !important;\n}\n.teal--text.text--darken-1 {\n  color: #00897b !important;\n  caret-color: #00897b !important;\n}\n.teal.darken-2 {\n  background-color: #00796b !important;\n  border-color: #00796b !important;\n}\n.teal--text.text--darken-2 {\n  color: #00796b !important;\n  caret-color: #00796b !important;\n}\n.teal.darken-3 {\n  background-color: #00695c !important;\n  border-color: #00695c !important;\n}\n.teal--text.text--darken-3 {\n  color: #00695c !important;\n  caret-color: #00695c !important;\n}\n.teal.darken-4 {\n  background-color: #004d40 !important;\n  border-color: #004d40 !important;\n}\n.teal--text.text--darken-4 {\n  color: #004d40 !important;\n  caret-color: #004d40 !important;\n}\n.teal.accent-1 {\n  background-color: #a7ffeb !important;\n  border-color: #a7ffeb !important;\n}\n.teal--text.text--accent-1 {\n  color: #a7ffeb !important;\n  caret-color: #a7ffeb !important;\n}\n.teal.accent-2 {\n  background-color: #64ffda !important;\n  border-color: #64ffda !important;\n}\n.teal--text.text--accent-2 {\n  color: #64ffda !important;\n  caret-color: #64ffda !important;\n}\n.teal.accent-3 {\n  background-color: #1de9b6 !important;\n  border-color: #1de9b6 !important;\n}\n.teal--text.text--accent-3 {\n  color: #1de9b6 !important;\n  caret-color: #1de9b6 !important;\n}\n.teal.accent-4 {\n  background-color: #00bfa5 !important;\n  border-color: #00bfa5 !important;\n}\n.teal--text.text--accent-4 {\n  color: #00bfa5 !important;\n  caret-color: #00bfa5 !important;\n}\n.green {\n  background-color: #4caf50 !important;\n  border-color: #4caf50 !important;\n}\n.green--text {\n  color: #4caf50 !important;\n  caret-color: #4caf50 !important;\n}\n.green.lighten-5 {\n  background-color: #e8f5e9 !important;\n  border-color: #e8f5e9 !important;\n}\n.green--text.text--lighten-5 {\n  color: #e8f5e9 !important;\n  caret-color: #e8f5e9 !important;\n}\n.green.lighten-4 {\n  background-color: #c8e6c9 !important;\n  border-color: #c8e6c9 !important;\n}\n.green--text.text--lighten-4 {\n  color: #c8e6c9 !important;\n  caret-color: #c8e6c9 !important;\n}\n.green.lighten-3 {\n  background-color: #a5d6a7 !important;\n  border-color: #a5d6a7 !important;\n}\n.green--text.text--lighten-3 {\n  color: #a5d6a7 !important;\n  caret-color: #a5d6a7 !important;\n}\n.green.lighten-2 {\n  background-color: #81c784 !important;\n  border-color: #81c784 !important;\n}\n.green--text.text--lighten-2 {\n  color: #81c784 !important;\n  caret-color: #81c784 !important;\n}\n.green.lighten-1 {\n  background-color: #66bb6a !important;\n  border-color: #66bb6a !important;\n}\n.green--text.text--lighten-1 {\n  color: #66bb6a !important;\n  caret-color: #66bb6a !important;\n}\n.green.darken-1 {\n  background-color: #43a047 !important;\n  border-color: #43a047 !important;\n}\n.green--text.text--darken-1 {\n  color: #43a047 !important;\n  caret-color: #43a047 !important;\n}\n.green.darken-2 {\n  background-color: #388e3c !important;\n  border-color: #388e3c !important;\n}\n.green--text.text--darken-2 {\n  color: #388e3c !important;\n  caret-color: #388e3c !important;\n}\n.green.darken-3 {\n  background-color: #2e7d32 !important;\n  border-color: #2e7d32 !important;\n}\n.green--text.text--darken-3 {\n  color: #2e7d32 !important;\n  caret-color: #2e7d32 !important;\n}\n.green.darken-4 {\n  background-color: #1b5e20 !important;\n  border-color: #1b5e20 !important;\n}\n.green--text.text--darken-4 {\n  color: #1b5e20 !important;\n  caret-color: #1b5e20 !important;\n}\n.green.accent-1 {\n  background-color: #b9f6ca !important;\n  border-color: #b9f6ca !important;\n}\n.green--text.text--accent-1 {\n  color: #b9f6ca !important;\n  caret-color: #b9f6ca !important;\n}\n.green.accent-2 {\n  background-color: #69f0ae !important;\n  border-color: #69f0ae !important;\n}\n.green--text.text--accent-2 {\n  color: #69f0ae !important;\n  caret-color: #69f0ae !important;\n}\n.green.accent-3 {\n  background-color: #00e676 !important;\n  border-color: #00e676 !important;\n}\n.green--text.text--accent-3 {\n  color: #00e676 !important;\n  caret-color: #00e676 !important;\n}\n.green.accent-4 {\n  background-color: #00c853 !important;\n  border-color: #00c853 !important;\n}\n.green--text.text--accent-4 {\n  color: #00c853 !important;\n  caret-color: #00c853 !important;\n}\n.light-green {\n  background-color: #8bc34a !important;\n  border-color: #8bc34a !important;\n}\n.light-green--text {\n  color: #8bc34a !important;\n  caret-color: #8bc34a !important;\n}\n.light-green.lighten-5 {\n  background-color: #f1f8e9 !important;\n  border-color: #f1f8e9 !important;\n}\n.light-green--text.text--lighten-5 {\n  color: #f1f8e9 !important;\n  caret-color: #f1f8e9 !important;\n}\n.light-green.lighten-4 {\n  background-color: #dcedc8 !important;\n  border-color: #dcedc8 !important;\n}\n.light-green--text.text--lighten-4 {\n  color: #dcedc8 !important;\n  caret-color: #dcedc8 !important;\n}\n.light-green.lighten-3 {\n  background-color: #c5e1a5 !important;\n  border-color: #c5e1a5 !important;\n}\n.light-green--text.text--lighten-3 {\n  color: #c5e1a5 !important;\n  caret-color: #c5e1a5 !important;\n}\n.light-green.lighten-2 {\n  background-color: #aed581 !important;\n  border-color: #aed581 !important;\n}\n.light-green--text.text--lighten-2 {\n  color: #aed581 !important;\n  caret-color: #aed581 !important;\n}\n.light-green.lighten-1 {\n  background-color: #9ccc65 !important;\n  border-color: #9ccc65 !important;\n}\n.light-green--text.text--lighten-1 {\n  color: #9ccc65 !important;\n  caret-color: #9ccc65 !important;\n}\n.light-green.darken-1 {\n  background-color: #7cb342 !important;\n  border-color: #7cb342 !important;\n}\n.light-green--text.text--darken-1 {\n  color: #7cb342 !important;\n  caret-color: #7cb342 !important;\n}\n.light-green.darken-2 {\n  background-color: #689f38 !important;\n  border-color: #689f38 !important;\n}\n.light-green--text.text--darken-2 {\n  color: #689f38 !important;\n  caret-color: #689f38 !important;\n}\n.light-green.darken-3 {\n  background-color: #558b2f !important;\n  border-color: #558b2f !important;\n}\n.light-green--text.text--darken-3 {\n  color: #558b2f !important;\n  caret-color: #558b2f !important;\n}\n.light-green.darken-4 {\n  background-color: #33691e !important;\n  border-color: #33691e !important;\n}\n.light-green--text.text--darken-4 {\n  color: #33691e !important;\n  caret-color: #33691e !important;\n}\n.light-green.accent-1 {\n  background-color: #ccff90 !important;\n  border-color: #ccff90 !important;\n}\n.light-green--text.text--accent-1 {\n  color: #ccff90 !important;\n  caret-color: #ccff90 !important;\n}\n.light-green.accent-2 {\n  background-color: #b2ff59 !important;\n  border-color: #b2ff59 !important;\n}\n.light-green--text.text--accent-2 {\n  color: #b2ff59 !important;\n  caret-color: #b2ff59 !important;\n}\n.light-green.accent-3 {\n  background-color: #76ff03 !important;\n  border-color: #76ff03 !important;\n}\n.light-green--text.text--accent-3 {\n  color: #76ff03 !important;\n  caret-color: #76ff03 !important;\n}\n.light-green.accent-4 {\n  background-color: #64dd17 !important;\n  border-color: #64dd17 !important;\n}\n.light-green--text.text--accent-4 {\n  color: #64dd17 !important;\n  caret-color: #64dd17 !important;\n}\n.lime {\n  background-color: #cddc39 !important;\n  border-color: #cddc39 !important;\n}\n.lime--text {\n  color: #cddc39 !important;\n  caret-color: #cddc39 !important;\n}\n.lime.lighten-5 {\n  background-color: #f9fbe7 !important;\n  border-color: #f9fbe7 !important;\n}\n.lime--text.text--lighten-5 {\n  color: #f9fbe7 !important;\n  caret-color: #f9fbe7 !important;\n}\n.lime.lighten-4 {\n  background-color: #f0f4c3 !important;\n  border-color: #f0f4c3 !important;\n}\n.lime--text.text--lighten-4 {\n  color: #f0f4c3 !important;\n  caret-color: #f0f4c3 !important;\n}\n.lime.lighten-3 {\n  background-color: #e6ee9c !important;\n  border-color: #e6ee9c !important;\n}\n.lime--text.text--lighten-3 {\n  color: #e6ee9c !important;\n  caret-color: #e6ee9c !important;\n}\n.lime.lighten-2 {\n  background-color: #dce775 !important;\n  border-color: #dce775 !important;\n}\n.lime--text.text--lighten-2 {\n  color: #dce775 !important;\n  caret-color: #dce775 !important;\n}\n.lime.lighten-1 {\n  background-color: #d4e157 !important;\n  border-color: #d4e157 !important;\n}\n.lime--text.text--lighten-1 {\n  color: #d4e157 !important;\n  caret-color: #d4e157 !important;\n}\n.lime.darken-1 {\n  background-color: #c0ca33 !important;\n  border-color: #c0ca33 !important;\n}\n.lime--text.text--darken-1 {\n  color: #c0ca33 !important;\n  caret-color: #c0ca33 !important;\n}\n.lime.darken-2 {\n  background-color: #afb42b !important;\n  border-color: #afb42b !important;\n}\n.lime--text.text--darken-2 {\n  color: #afb42b !important;\n  caret-color: #afb42b !important;\n}\n.lime.darken-3 {\n  background-color: #9e9d24 !important;\n  border-color: #9e9d24 !important;\n}\n.lime--text.text--darken-3 {\n  color: #9e9d24 !important;\n  caret-color: #9e9d24 !important;\n}\n.lime.darken-4 {\n  background-color: #827717 !important;\n  border-color: #827717 !important;\n}\n.lime--text.text--darken-4 {\n  color: #827717 !important;\n  caret-color: #827717 !important;\n}\n.lime.accent-1 {\n  background-color: #f4ff81 !important;\n  border-color: #f4ff81 !important;\n}\n.lime--text.text--accent-1 {\n  color: #f4ff81 !important;\n  caret-color: #f4ff81 !important;\n}\n.lime.accent-2 {\n  background-color: #eeff41 !important;\n  border-color: #eeff41 !important;\n}\n.lime--text.text--accent-2 {\n  color: #eeff41 !important;\n  caret-color: #eeff41 !important;\n}\n.lime.accent-3 {\n  background-color: #c6ff00 !important;\n  border-color: #c6ff00 !important;\n}\n.lime--text.text--accent-3 {\n  color: #c6ff00 !important;\n  caret-color: #c6ff00 !important;\n}\n.lime.accent-4 {\n  background-color: #aeea00 !important;\n  border-color: #aeea00 !important;\n}\n.lime--text.text--accent-4 {\n  color: #aeea00 !important;\n  caret-color: #aeea00 !important;\n}\n.yellow {\n  background-color: #ffeb3b !important;\n  border-color: #ffeb3b !important;\n}\n.yellow--text {\n  color: #ffeb3b !important;\n  caret-color: #ffeb3b !important;\n}\n.yellow.lighten-5 {\n  background-color: #fffde7 !important;\n  border-color: #fffde7 !important;\n}\n.yellow--text.text--lighten-5 {\n  color: #fffde7 !important;\n  caret-color: #fffde7 !important;\n}\n.yellow.lighten-4 {\n  background-color: #fff9c4 !important;\n  border-color: #fff9c4 !important;\n}\n.yellow--text.text--lighten-4 {\n  color: #fff9c4 !important;\n  caret-color: #fff9c4 !important;\n}\n.yellow.lighten-3 {\n  background-color: #fff59d !important;\n  border-color: #fff59d !important;\n}\n.yellow--text.text--lighten-3 {\n  color: #fff59d !important;\n  caret-color: #fff59d !important;\n}\n.yellow.lighten-2 {\n  background-color: #fff176 !important;\n  border-color: #fff176 !important;\n}\n.yellow--text.text--lighten-2 {\n  color: #fff176 !important;\n  caret-color: #fff176 !important;\n}\n.yellow.lighten-1 {\n  background-color: #ffee58 !important;\n  border-color: #ffee58 !important;\n}\n.yellow--text.text--lighten-1 {\n  color: #ffee58 !important;\n  caret-color: #ffee58 !important;\n}\n.yellow.darken-1 {\n  background-color: #fdd835 !important;\n  border-color: #fdd835 !important;\n}\n.yellow--text.text--darken-1 {\n  color: #fdd835 !important;\n  caret-color: #fdd835 !important;\n}\n.yellow.darken-2 {\n  background-color: #fbc02d !important;\n  border-color: #fbc02d !important;\n}\n.yellow--text.text--darken-2 {\n  color: #fbc02d !important;\n  caret-color: #fbc02d !important;\n}\n.yellow.darken-3 {\n  background-color: #f9a825 !important;\n  border-color: #f9a825 !important;\n}\n.yellow--text.text--darken-3 {\n  color: #f9a825 !important;\n  caret-color: #f9a825 !important;\n}\n.yellow.darken-4 {\n  background-color: #f57f17 !important;\n  border-color: #f57f17 !important;\n}\n.yellow--text.text--darken-4 {\n  color: #f57f17 !important;\n  caret-color: #f57f17 !important;\n}\n.yellow.accent-1 {\n  background-color: #ffff8d !important;\n  border-color: #ffff8d !important;\n}\n.yellow--text.text--accent-1 {\n  color: #ffff8d !important;\n  caret-color: #ffff8d !important;\n}\n.yellow.accent-2 {\n  background-color: #ff0 !important;\n  border-color: #ff0 !important;\n}\n.yellow--text.text--accent-2 {\n  color: #ff0 !important;\n  caret-color: #ff0 !important;\n}\n.yellow.accent-3 {\n  background-color: #ffea00 !important;\n  border-color: #ffea00 !important;\n}\n.yellow--text.text--accent-3 {\n  color: #ffea00 !important;\n  caret-color: #ffea00 !important;\n}\n.yellow.accent-4 {\n  background-color: #ffd600 !important;\n  border-color: #ffd600 !important;\n}\n.yellow--text.text--accent-4 {\n  color: #ffd600 !important;\n  caret-color: #ffd600 !important;\n}\n.amber {\n  background-color: #ffc107 !important;\n  border-color: #ffc107 !important;\n}\n.amber--text {\n  color: #ffc107 !important;\n  caret-color: #ffc107 !important;\n}\n.amber.lighten-5 {\n  background-color: #fff8e1 !important;\n  border-color: #fff8e1 !important;\n}\n.amber--text.text--lighten-5 {\n  color: #fff8e1 !important;\n  caret-color: #fff8e1 !important;\n}\n.amber.lighten-4 {\n  background-color: #ffecb3 !important;\n  border-color: #ffecb3 !important;\n}\n.amber--text.text--lighten-4 {\n  color: #ffecb3 !important;\n  caret-color: #ffecb3 !important;\n}\n.amber.lighten-3 {\n  background-color: #ffe082 !important;\n  border-color: #ffe082 !important;\n}\n.amber--text.text--lighten-3 {\n  color: #ffe082 !important;\n  caret-color: #ffe082 !important;\n}\n.amber.lighten-2 {\n  background-color: #ffd54f !important;\n  border-color: #ffd54f !important;\n}\n.amber--text.text--lighten-2 {\n  color: #ffd54f !important;\n  caret-color: #ffd54f !important;\n}\n.amber.lighten-1 {\n  background-color: #ffca28 !important;\n  border-color: #ffca28 !important;\n}\n.amber--text.text--lighten-1 {\n  color: #ffca28 !important;\n  caret-color: #ffca28 !important;\n}\n.amber.darken-1 {\n  background-color: #ffb300 !important;\n  border-color: #ffb300 !important;\n}\n.amber--text.text--darken-1 {\n  color: #ffb300 !important;\n  caret-color: #ffb300 !important;\n}\n.amber.darken-2 {\n  background-color: #ffa000 !important;\n  border-color: #ffa000 !important;\n}\n.amber--text.text--darken-2 {\n  color: #ffa000 !important;\n  caret-color: #ffa000 !important;\n}\n.amber.darken-3 {\n  background-color: #ff8f00 !important;\n  border-color: #ff8f00 !important;\n}\n.amber--text.text--darken-3 {\n  color: #ff8f00 !important;\n  caret-color: #ff8f00 !important;\n}\n.amber.darken-4 {\n  background-color: #ff6f00 !important;\n  border-color: #ff6f00 !important;\n}\n.amber--text.text--darken-4 {\n  color: #ff6f00 !important;\n  caret-color: #ff6f00 !important;\n}\n.amber.accent-1 {\n  background-color: #ffe57f !important;\n  border-color: #ffe57f !important;\n}\n.amber--text.text--accent-1 {\n  color: #ffe57f !important;\n  caret-color: #ffe57f !important;\n}\n.amber.accent-2 {\n  background-color: #ffd740 !important;\n  border-color: #ffd740 !important;\n}\n.amber--text.text--accent-2 {\n  color: #ffd740 !important;\n  caret-color: #ffd740 !important;\n}\n.amber.accent-3 {\n  background-color: #ffc400 !important;\n  border-color: #ffc400 !important;\n}\n.amber--text.text--accent-3 {\n  color: #ffc400 !important;\n  caret-color: #ffc400 !important;\n}\n.amber.accent-4 {\n  background-color: #ffab00 !important;\n  border-color: #ffab00 !important;\n}\n.amber--text.text--accent-4 {\n  color: #ffab00 !important;\n  caret-color: #ffab00 !important;\n}\n.orange {\n  background-color: #ff9800 !important;\n  border-color: #ff9800 !important;\n}\n.orange--text {\n  color: #ff9800 !important;\n  caret-color: #ff9800 !important;\n}\n.orange.lighten-5 {\n  background-color: #fff3e0 !important;\n  border-color: #fff3e0 !important;\n}\n.orange--text.text--lighten-5 {\n  color: #fff3e0 !important;\n  caret-color: #fff3e0 !important;\n}\n.orange.lighten-4 {\n  background-color: #ffe0b2 !important;\n  border-color: #ffe0b2 !important;\n}\n.orange--text.text--lighten-4 {\n  color: #ffe0b2 !important;\n  caret-color: #ffe0b2 !important;\n}\n.orange.lighten-3 {\n  background-color: #ffcc80 !important;\n  border-color: #ffcc80 !important;\n}\n.orange--text.text--lighten-3 {\n  color: #ffcc80 !important;\n  caret-color: #ffcc80 !important;\n}\n.orange.lighten-2 {\n  background-color: #ffb74d !important;\n  border-color: #ffb74d !important;\n}\n.orange--text.text--lighten-2 {\n  color: #ffb74d !important;\n  caret-color: #ffb74d !important;\n}\n.orange.lighten-1 {\n  background-color: #ffa726 !important;\n  border-color: #ffa726 !important;\n}\n.orange--text.text--lighten-1 {\n  color: #ffa726 !important;\n  caret-color: #ffa726 !important;\n}\n.orange.darken-1 {\n  background-color: #fb8c00 !important;\n  border-color: #fb8c00 !important;\n}\n.orange--text.text--darken-1 {\n  color: #fb8c00 !important;\n  caret-color: #fb8c00 !important;\n}\n.orange.darken-2 {\n  background-color: #f57c00 !important;\n  border-color: #f57c00 !important;\n}\n.orange--text.text--darken-2 {\n  color: #f57c00 !important;\n  caret-color: #f57c00 !important;\n}\n.orange.darken-3 {\n  background-color: #ef6c00 !important;\n  border-color: #ef6c00 !important;\n}\n.orange--text.text--darken-3 {\n  color: #ef6c00 !important;\n  caret-color: #ef6c00 !important;\n}\n.orange.darken-4 {\n  background-color: #e65100 !important;\n  border-color: #e65100 !important;\n}\n.orange--text.text--darken-4 {\n  color: #e65100 !important;\n  caret-color: #e65100 !important;\n}\n.orange.accent-1 {\n  background-color: #ffd180 !important;\n  border-color: #ffd180 !important;\n}\n.orange--text.text--accent-1 {\n  color: #ffd180 !important;\n  caret-color: #ffd180 !important;\n}\n.orange.accent-2 {\n  background-color: #ffab40 !important;\n  border-color: #ffab40 !important;\n}\n.orange--text.text--accent-2 {\n  color: #ffab40 !important;\n  caret-color: #ffab40 !important;\n}\n.orange.accent-3 {\n  background-color: #ff9100 !important;\n  border-color: #ff9100 !important;\n}\n.orange--text.text--accent-3 {\n  color: #ff9100 !important;\n  caret-color: #ff9100 !important;\n}\n.orange.accent-4 {\n  background-color: #ff6d00 !important;\n  border-color: #ff6d00 !important;\n}\n.orange--text.text--accent-4 {\n  color: #ff6d00 !important;\n  caret-color: #ff6d00 !important;\n}\n.deep-orange {\n  background-color: #ff5722 !important;\n  border-color: #ff5722 !important;\n}\n.deep-orange--text {\n  color: #ff5722 !important;\n  caret-color: #ff5722 !important;\n}\n.deep-orange.lighten-5 {\n  background-color: #fbe9e7 !important;\n  border-color: #fbe9e7 !important;\n}\n.deep-orange--text.text--lighten-5 {\n  color: #fbe9e7 !important;\n  caret-color: #fbe9e7 !important;\n}\n.deep-orange.lighten-4 {\n  background-color: #ffccbc !important;\n  border-color: #ffccbc !important;\n}\n.deep-orange--text.text--lighten-4 {\n  color: #ffccbc !important;\n  caret-color: #ffccbc !important;\n}\n.deep-orange.lighten-3 {\n  background-color: #ffab91 !important;\n  border-color: #ffab91 !important;\n}\n.deep-orange--text.text--lighten-3 {\n  color: #ffab91 !important;\n  caret-color: #ffab91 !important;\n}\n.deep-orange.lighten-2 {\n  background-color: #ff8a65 !important;\n  border-color: #ff8a65 !important;\n}\n.deep-orange--text.text--lighten-2 {\n  color: #ff8a65 !important;\n  caret-color: #ff8a65 !important;\n}\n.deep-orange.lighten-1 {\n  background-color: #ff7043 !important;\n  border-color: #ff7043 !important;\n}\n.deep-orange--text.text--lighten-1 {\n  color: #ff7043 !important;\n  caret-color: #ff7043 !important;\n}\n.deep-orange.darken-1 {\n  background-color: #f4511e !important;\n  border-color: #f4511e !important;\n}\n.deep-orange--text.text--darken-1 {\n  color: #f4511e !important;\n  caret-color: #f4511e !important;\n}\n.deep-orange.darken-2 {\n  background-color: #e64a19 !important;\n  border-color: #e64a19 !important;\n}\n.deep-orange--text.text--darken-2 {\n  color: #e64a19 !important;\n  caret-color: #e64a19 !important;\n}\n.deep-orange.darken-3 {\n  background-color: #d84315 !important;\n  border-color: #d84315 !important;\n}\n.deep-orange--text.text--darken-3 {\n  color: #d84315 !important;\n  caret-color: #d84315 !important;\n}\n.deep-orange.darken-4 {\n  background-color: #bf360c !important;\n  border-color: #bf360c !important;\n}\n.deep-orange--text.text--darken-4 {\n  color: #bf360c !important;\n  caret-color: #bf360c !important;\n}\n.deep-orange.accent-1 {\n  background-color: #ff9e80 !important;\n  border-color: #ff9e80 !important;\n}\n.deep-orange--text.text--accent-1 {\n  color: #ff9e80 !important;\n  caret-color: #ff9e80 !important;\n}\n.deep-orange.accent-2 {\n  background-color: #ff6e40 !important;\n  border-color: #ff6e40 !important;\n}\n.deep-orange--text.text--accent-2 {\n  color: #ff6e40 !important;\n  caret-color: #ff6e40 !important;\n}\n.deep-orange.accent-3 {\n  background-color: #ff3d00 !important;\n  border-color: #ff3d00 !important;\n}\n.deep-orange--text.text--accent-3 {\n  color: #ff3d00 !important;\n  caret-color: #ff3d00 !important;\n}\n.deep-orange.accent-4 {\n  background-color: #dd2c00 !important;\n  border-color: #dd2c00 !important;\n}\n.deep-orange--text.text--accent-4 {\n  color: #dd2c00 !important;\n  caret-color: #dd2c00 !important;\n}\n.brown {\n  background-color: #795548 !important;\n  border-color: #795548 !important;\n}\n.brown--text {\n  color: #795548 !important;\n  caret-color: #795548 !important;\n}\n.brown.lighten-5 {\n  background-color: #efebe9 !important;\n  border-color: #efebe9 !important;\n}\n.brown--text.text--lighten-5 {\n  color: #efebe9 !important;\n  caret-color: #efebe9 !important;\n}\n.brown.lighten-4 {\n  background-color: #d7ccc8 !important;\n  border-color: #d7ccc8 !important;\n}\n.brown--text.text--lighten-4 {\n  color: #d7ccc8 !important;\n  caret-color: #d7ccc8 !important;\n}\n.brown.lighten-3 {\n  background-color: #bcaaa4 !important;\n  border-color: #bcaaa4 !important;\n}\n.brown--text.text--lighten-3 {\n  color: #bcaaa4 !important;\n  caret-color: #bcaaa4 !important;\n}\n.brown.lighten-2 {\n  background-color: #a1887f !important;\n  border-color: #a1887f !important;\n}\n.brown--text.text--lighten-2 {\n  color: #a1887f !important;\n  caret-color: #a1887f !important;\n}\n.brown.lighten-1 {\n  background-color: #8d6e63 !important;\n  border-color: #8d6e63 !important;\n}\n.brown--text.text--lighten-1 {\n  color: #8d6e63 !important;\n  caret-color: #8d6e63 !important;\n}\n.brown.darken-1 {\n  background-color: #6d4c41 !important;\n  border-color: #6d4c41 !important;\n}\n.brown--text.text--darken-1 {\n  color: #6d4c41 !important;\n  caret-color: #6d4c41 !important;\n}\n.brown.darken-2 {\n  background-color: #5d4037 !important;\n  border-color: #5d4037 !important;\n}\n.brown--text.text--darken-2 {\n  color: #5d4037 !important;\n  caret-color: #5d4037 !important;\n}\n.brown.darken-3 {\n  background-color: #4e342e !important;\n  border-color: #4e342e !important;\n}\n.brown--text.text--darken-3 {\n  color: #4e342e !important;\n  caret-color: #4e342e !important;\n}\n.brown.darken-4 {\n  background-color: #3e2723 !important;\n  border-color: #3e2723 !important;\n}\n.brown--text.text--darken-4 {\n  color: #3e2723 !important;\n  caret-color: #3e2723 !important;\n}\n.blue-grey {\n  background-color: #607d8b !important;\n  border-color: #607d8b !important;\n}\n.blue-grey--text {\n  color: #607d8b !important;\n  caret-color: #607d8b !important;\n}\n.blue-grey.lighten-5 {\n  background-color: #eceff1 !important;\n  border-color: #eceff1 !important;\n}\n.blue-grey--text.text--lighten-5 {\n  color: #eceff1 !important;\n  caret-color: #eceff1 !important;\n}\n.blue-grey.lighten-4 {\n  background-color: #cfd8dc !important;\n  border-color: #cfd8dc !important;\n}\n.blue-grey--text.text--lighten-4 {\n  color: #cfd8dc !important;\n  caret-color: #cfd8dc !important;\n}\n.blue-grey.lighten-3 {\n  background-color: #b0bec5 !important;\n  border-color: #b0bec5 !important;\n}\n.blue-grey--text.text--lighten-3 {\n  color: #b0bec5 !important;\n  caret-color: #b0bec5 !important;\n}\n.blue-grey.lighten-2 {\n  background-color: #90a4ae !important;\n  border-color: #90a4ae !important;\n}\n.blue-grey--text.text--lighten-2 {\n  color: #90a4ae !important;\n  caret-color: #90a4ae !important;\n}\n.blue-grey.lighten-1 {\n  background-color: #78909c !important;\n  border-color: #78909c !important;\n}\n.blue-grey--text.text--lighten-1 {\n  color: #78909c !important;\n  caret-color: #78909c !important;\n}\n.blue-grey.darken-1 {\n  background-color: #546e7a !important;\n  border-color: #546e7a !important;\n}\n.blue-grey--text.text--darken-1 {\n  color: #546e7a !important;\n  caret-color: #546e7a !important;\n}\n.blue-grey.darken-2 {\n  background-color: #455a64 !important;\n  border-color: #455a64 !important;\n}\n.blue-grey--text.text--darken-2 {\n  color: #455a64 !important;\n  caret-color: #455a64 !important;\n}\n.blue-grey.darken-3 {\n  background-color: #37474f !important;\n  border-color: #37474f !important;\n}\n.blue-grey--text.text--darken-3 {\n  color: #37474f !important;\n  caret-color: #37474f !important;\n}\n.blue-grey.darken-4 {\n  background-color: #263238 !important;\n  border-color: #263238 !important;\n}\n.blue-grey--text.text--darken-4 {\n  color: #263238 !important;\n  caret-color: #263238 !important;\n}\n.grey {\n  background-color: #9e9e9e !important;\n  border-color: #9e9e9e !important;\n}\n.grey--text {\n  color: #9e9e9e !important;\n  caret-color: #9e9e9e !important;\n}\n.grey.lighten-5 {\n  background-color: #fafafa !important;\n  border-color: #fafafa !important;\n}\n.grey--text.text--lighten-5 {\n  color: #fafafa !important;\n  caret-color: #fafafa !important;\n}\n.grey.lighten-4 {\n  background-color: #f5f5f5 !important;\n  border-color: #f5f5f5 !important;\n}\n.grey--text.text--lighten-4 {\n  color: #f5f5f5 !important;\n  caret-color: #f5f5f5 !important;\n}\n.grey.lighten-3 {\n  background-color: #eee !important;\n  border-color: #eee !important;\n}\n.grey--text.text--lighten-3 {\n  color: #eee !important;\n  caret-color: #eee !important;\n}\n.grey.lighten-2 {\n  background-color: #e0e0e0 !important;\n  border-color: #e0e0e0 !important;\n}\n.grey--text.text--lighten-2 {\n  color: #e0e0e0 !important;\n  caret-color: #e0e0e0 !important;\n}\n.grey.lighten-1 {\n  background-color: #bdbdbd !important;\n  border-color: #bdbdbd !important;\n}\n.grey--text.text--lighten-1 {\n  color: #bdbdbd !important;\n  caret-color: #bdbdbd !important;\n}\n.grey.darken-1 {\n  background-color: #757575 !important;\n  border-color: #757575 !important;\n}\n.grey--text.text--darken-1 {\n  color: #757575 !important;\n  caret-color: #757575 !important;\n}\n.grey.darken-2 {\n  background-color: #616161 !important;\n  border-color: #616161 !important;\n}\n.grey--text.text--darken-2 {\n  color: #616161 !important;\n  caret-color: #616161 !important;\n}\n.grey.darken-3 {\n  background-color: #424242 !important;\n  border-color: #424242 !important;\n}\n.grey--text.text--darken-3 {\n  color: #424242 !important;\n  caret-color: #424242 !important;\n}\n.grey.darken-4 {\n  background-color: #212121 !important;\n  border-color: #212121 !important;\n}\n.grey--text.text--darken-4 {\n  color: #212121 !important;\n  caret-color: #212121 !important;\n}\n.shades.black {\n  background-color: #000 !important;\n  border-color: #000 !important;\n}\n.shades--text.text--black {\n  color: #000 !important;\n  caret-color: #000 !important;\n}\n.shades.white {\n  background-color: #fff !important;\n  border-color: #fff !important;\n}\n.shades--text.text--white {\n  color: #fff !important;\n  caret-color: #fff !important;\n}\n.shades.transparent {\n  background-color: transparent !important;\n  border-color: transparent !important;\n}\n.shades--text.text--transparent {\n  color: transparent !important;\n  caret-color: transparent !important;\n}\n.elevation-0 {\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-1 {\n  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-2 {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-3 {\n  box-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-4 {\n  box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-5 {\n  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-6 {\n  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12) !important;\n}\n.elevation-7 {\n  box-shadow: 0px 4px 5px -2px rgba(0,0,0,0.2), 0px 7px 10px 1px rgba(0,0,0,0.14), 0px 2px 16px 1px rgba(0,0,0,0.12) !important;\n}\n.elevation-8 {\n  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12) !important;\n}\n.elevation-9 {\n  box-shadow: 0px 5px 6px -3px rgba(0,0,0,0.2), 0px 9px 12px 1px rgba(0,0,0,0.14), 0px 3px 16px 2px rgba(0,0,0,0.12) !important;\n}\n.elevation-10 {\n  box-shadow: 0px 6px 6px -3px rgba(0,0,0,0.2), 0px 10px 14px 1px rgba(0,0,0,0.14), 0px 4px 18px 3px rgba(0,0,0,0.12) !important;\n}\n.elevation-11 {\n  box-shadow: 0px 6px 7px -4px rgba(0,0,0,0.2), 0px 11px 15px 1px rgba(0,0,0,0.14), 0px 4px 20px 3px rgba(0,0,0,0.12) !important;\n}\n.elevation-12 {\n  box-shadow: 0px 7px 8px -4px rgba(0,0,0,0.2), 0px 12px 17px 2px rgba(0,0,0,0.14), 0px 5px 22px 4px rgba(0,0,0,0.12) !important;\n}\n.elevation-13 {\n  box-shadow: 0px 7px 8px -4px rgba(0,0,0,0.2), 0px 13px 19px 2px rgba(0,0,0,0.14), 0px 5px 24px 4px rgba(0,0,0,0.12) !important;\n}\n.elevation-14 {\n  box-shadow: 0px 7px 9px -4px rgba(0,0,0,0.2), 0px 14px 21px 2px rgba(0,0,0,0.14), 0px 5px 26px 4px rgba(0,0,0,0.12) !important;\n}\n.elevation-15 {\n  box-shadow: 0px 8px 9px -5px rgba(0,0,0,0.2), 0px 15px 22px 2px rgba(0,0,0,0.14), 0px 6px 28px 5px rgba(0,0,0,0.12) !important;\n}\n.elevation-16 {\n  box-shadow: 0px 8px 10px -5px rgba(0,0,0,0.2), 0px 16px 24px 2px rgba(0,0,0,0.14), 0px 6px 30px 5px rgba(0,0,0,0.12) !important;\n}\n.elevation-17 {\n  box-shadow: 0px 8px 11px -5px rgba(0,0,0,0.2), 0px 17px 26px 2px rgba(0,0,0,0.14), 0px 6px 32px 5px rgba(0,0,0,0.12) !important;\n}\n.elevation-18 {\n  box-shadow: 0px 9px 11px -5px rgba(0,0,0,0.2), 0px 18px 28px 2px rgba(0,0,0,0.14), 0px 7px 34px 6px rgba(0,0,0,0.12) !important;\n}\n.elevation-19 {\n  box-shadow: 0px 9px 12px -6px rgba(0,0,0,0.2), 0px 19px 29px 2px rgba(0,0,0,0.14), 0px 7px 36px 6px rgba(0,0,0,0.12) !important;\n}\n.elevation-20 {\n  box-shadow: 0px 10px 13px -6px rgba(0,0,0,0.2), 0px 20px 31px 3px rgba(0,0,0,0.14), 0px 8px 38px 7px rgba(0,0,0,0.12) !important;\n}\n.elevation-21 {\n  box-shadow: 0px 10px 13px -6px rgba(0,0,0,0.2), 0px 21px 33px 3px rgba(0,0,0,0.14), 0px 8px 40px 7px rgba(0,0,0,0.12) !important;\n}\n.elevation-22 {\n  box-shadow: 0px 10px 14px -6px rgba(0,0,0,0.2), 0px 22px 35px 3px rgba(0,0,0,0.14), 0px 8px 42px 7px rgba(0,0,0,0.12) !important;\n}\n.elevation-23 {\n  box-shadow: 0px 11px 14px -7px rgba(0,0,0,0.2), 0px 23px 36px 3px rgba(0,0,0,0.14), 0px 9px 44px 8px rgba(0,0,0,0.12) !important;\n}\n.elevation-24 {\n  box-shadow: 0px 11px 15px -7px rgba(0,0,0,0.2), 0px 24px 38px 3px rgba(0,0,0,0.14), 0px 9px 46px 8px rgba(0,0,0,0.12) !important;\n}\nhtml {\n  box-sizing: border-box;\n  overflow-y: scroll; /* All browsers without overlaying scrollbars */\n  -webkit-text-size-adjust: 100%; /* iOS 8+ */\n}\n*,\n::before,\n::after {\n  box-sizing: inherit;\n}\n::before,\n::after {\n  text-decoration: inherit; /* Inherit text-decoration and vertical align to ::before and ::after pseudo elements */\n  vertical-align: inherit;\n}\n* {\n  background-repeat: no-repeat; /* Set `background-repeat: no-repeat` to all elements */\n  padding: 0; /* Reset `padding` and `margin` of all elements */\n  margin: 0;\n}\naudio:not([controls]) {\n  display: none;\n  height: 0;\n}\nhr {\n  overflow: visible; /* Show the overflow in Edge and IE */\n}\narticle,\naside,\ndetails,\nfigcaption,\nfigure,\nfooter,\nheader,\nmain,\nmenu,\nnav,\nsection,\nsummary {\n  display: block;\n}\nsummary {\n  display: list-item; /* Add the correct display in all browsers */\n}\nsmall {\n  font-size: 80%; /* Set font-size to 80% in `small` elements */\n}\n[hidden],\ntemplate {\n  display: none; /* Add the correct display in IE */\n}\nabbr[title] {\n  border-bottom: 1px dotted; /* Add a bordered underline effect in all browsers */\n  text-decoration: none; /* Remove text decoration in Firefox 40+ */\n}\na {\n  background-color: transparent; /* Remove the gray background on active links in IE 10 */\n  -webkit-text-decoration-skip: objects; /* Remove gaps in links underline in iOS 8+ and Safari 8+ */\n}\na:active,\na:hover {\n  outline-width: 0; /* Remove the outline when hovering in all browsers */\n}\ncode,\nkbd,\npre,\nsamp {\n  font-family: monospace, monospace; /* Specify the font family of code elements */\n}\nb,\nstrong {\n  font-weight: bolder; /* Correct style set to `bold` in Edge 12+, Safari 6.2+, and Chrome 18+ */\n}\ndfn {\n  font-style: italic; /* Address styling not present in Safari and Chrome */\n}\nmark {\n  background-color: #ff0;\n  color: #000;\n}\nsub,\nsup {\n  font-size: 75%;\n  line-height: 0;\n  position: relative;\n  vertical-align: baseline;\n}\nsub {\n  bottom: -0.25em;\n}\nsup {\n  top: -0.5em;\n}\ninput {\n  border-radius: 0;\n}\nbutton,\n[type=\"button\"],\n[type=\"reset\"],\n[type=\"submit\"],\n[role=\"button\"] {\n  cursor: pointer;\n}\n[disabled] {\n  cursor: default;\n}\n[type=\"number\"] {\n  width: auto; /* Firefox 36+ */\n}\n[type=\"search\"] {\n  -webkit-appearance: textfield; /* Safari 8+ */\n}\n[type=\"search\"]::-webkit-search-cancel-button,\n[type=\"search\"]::-webkit-search-decoration {\n  -webkit-appearance: none; /* Safari 8 */\n}\ntextarea {\n  overflow: auto; /* Internet Explorer 11+ */\n  resize: vertical; /* Specify textarea resizability */\n}\nbutton,\ninput,\noptgroup,\nselect,\ntextarea {\n  font: inherit; /* Specify font inheritance of form elements */\n}\noptgroup {\n  font-weight: bold; /* Restore the font weight unset by the previous rule. */\n}\nbutton {\n  overflow: visible; /* Address `overflow` set to `hidden` in IE 8/9/10/11 */\n}\nbutton::-moz-focus-inner,\n[type=\"button\"]::-moz-focus-inner,\n[type=\"reset\"]::-moz-focus-inner,\n[type=\"submit\"]::-moz-focus-inner {\n  border-style: 0;\n  padding: 0;\n}\nbutton:-moz-focusring,\n[type=\"button\"]::-moz-focus-inner,\n[type=\"reset\"]::-moz-focus-inner,\n[type=\"submit\"]::-moz-focus-inner {\n  outline: 0;\n  border: 0;\n}\nbutton,\nhtml [type=\"button\"],\n[type=\"reset\"],\n[type=\"submit\"] {\n  -webkit-appearance: button; /* Correct the inability to style clickable types in iOS */\n}\nbutton,\nselect {\n  text-transform: none; /* Firefox 40+, Internet Explorer 11- */\n}\nbutton,\ninput,\nselect,\ntextarea {\n  background-color: transparent;\n  border-style: none;\n  color: inherit;\n}\nselect {\n  -moz-appearance: none; /* Firefox 36+ */\n  -webkit-appearance: none; /* Chrome 41+ */\n}\nselect::-ms-expand {\n  display: none; /* Internet Explorer 11+ */\n}\nselect::-ms-value {\n  color: currentColor; /* Internet Explorer 11+ */\n}\nlegend {\n  border: 0; /* Correct `color` not being inherited in IE 8/9/10/11 */\n  color: inherit; /* Correct the color inheritance from `fieldset` elements in IE */\n  display: table; /* Correct the text wrapping in Edge and IE */\n  max-width: 100%; /* Correct the text wrapping in Edge and IE */\n  white-space: normal; /* Correct the text wrapping in Edge and IE */\n}\n::-webkit-file-upload-button {\n  -webkit-appearance: button; /* Correct the inability to style clickable types in iOS and Safari */\n  font: inherit; /* Change font properties to `inherit` in Chrome and Safari */\n}\n[type=\"search\"] {\n  -webkit-appearance: textfield; /* Correct the odd appearance in Chrome and Safari */\n  outline-offset: -2px; /* Correct the outline style in Safari */\n}\nimg {\n  border-style: none; /* Remove border when inside `a` element in IE 8/9/10 */\n}\nprogress {\n  vertical-align: baseline;\n}\nsvg:not(:root) {\n  overflow: hidden; /* Internet Explorer 11- */\n}\naudio,\ncanvas,\nprogress,\nvideo {\n  display: inline-block; /* Internet Explorer 11+, Windows Phone 8.1+ */\n}\n[aria-busy=\"true\"] {\n  cursor: progress;\n}\n[aria-controls] {\n  cursor: pointer;\n}\n[aria-disabled] {\n  cursor: default;\n}\n::selection {\n  background-color: #b3d4fc; /* Required when declaring ::selection */\n  color: #000;\n  text-shadow: none;\n}\n.bottom-sheet-transition-enter {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.bottom-sheet-transition-leave-to {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.carousel-transition-enter {\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.carousel-transition-leave,\n.carousel-transition-leave-to {\n  position: absolute;\n  top: 0;\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.carousel-reverse-transition-enter {\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.carousel-reverse-transition-leave,\n.carousel-reverse-transition-leave-to {\n  position: absolute;\n  top: 0;\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.dialog-transition-enter,\n.dialog-transition-leave-to {\n  -webkit-transform: scale(0.5);\n          transform: scale(0.5);\n  opacity: 0;\n}\n.dialog-transition-enter-to,\n.dialog-transition-leave {\n  opacity: 1;\n}\n.dialog-bottom-transition-enter,\n.dialog-bottom-transition-leave-to {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.picker-transition-enter-active,\n.picker-reverse-transition-enter-active,\n.picker-transition-leave-active,\n.picker-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0, 0, 0.2, 1);\n}\n.picker-transition-enter,\n.picker-reverse-transition-enter,\n.picker-transition-leave-to,\n.picker-reverse-transition-leave-to {\n  opacity: 0;\n}\n.picker-transition-leave,\n.picker-reverse-transition-leave,\n.picker-transition-leave-active,\n.picker-reverse-transition-leave-active,\n.picker-transition-leave-to,\n.picker-reverse-transition-leave-to {\n  position: absolute !important;\n}\n.picker-transition-enter {\n  -webkit-transform: translate(0, 100%);\n          transform: translate(0, 100%);\n}\n.picker-transition-leave-to {\n  -webkit-transform: translate(0, -100%);\n          transform: translate(0, -100%);\n}\n.picker-reverse-transition-enter {\n  -webkit-transform: translate(0, -100%);\n          transform: translate(0, -100%);\n}\n.picker-reverse-transition-leave-to {\n  -webkit-transform: translate(0, 100%);\n          transform: translate(0, 100%);\n}\n.picker-title-transition-enter-to,\n.picker-title-transition-leave {\n  -webkit-transform: translate(0, 0);\n          transform: translate(0, 0);\n}\n.picker-title-transition-enter {\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.picker-title-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.picker-title-transition-leave,\n.picker-title-transition-leave-to,\n.picker-title-transition-leave-active {\n  position: absolute !important;\n}\n.tab-transition-enter {\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.tab-transition-leave,\n.tab-transition-leave-active {\n  position: absolute;\n  top: 0;\n}\n.tab-transition-leave-to {\n  position: absolute;\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.tab-reverse-transition-enter {\n  -webkit-transform: translate(-100%, 0);\n          transform: translate(-100%, 0);\n}\n.tab-reverse-transition-leave,\n.tab-reverse-transition-leave-to {\n  top: 0;\n  position: absolute;\n  -webkit-transform: translate(100%, 0);\n          transform: translate(100%, 0);\n}\n.expand-transition-enter-active,\n.expand-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.expand-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.expand-x-transition-enter-active,\n.expand-x-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.expand-x-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scale-transition-enter-active,\n.scale-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scale-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scale-transition-enter,\n.scale-transition-leave,\n.scale-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: scale(0);\n          transform: scale(0);\n}\n.message-transition-enter-active,\n.message-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.message-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.message-transition-enter,\n.message-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.message-transition-leave,\n.message-transition-leave-active {\n  position: absolute;\n}\n.slide-y-transition-enter-active,\n.slide-y-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.slide-y-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.slide-y-transition-enter,\n.slide-y-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.slide-y-reverse-transition-enter-active,\n.slide-y-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.slide-y-reverse-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.slide-y-reverse-transition-enter,\n.slide-y-reverse-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateY(15px);\n          transform: translateY(15px);\n}\n.scroll-y-transition-enter-active,\n.scroll-y-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scroll-y-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scroll-y-transition-enter,\n.scroll-y-transition-leave-to {\n  opacity: 0;\n}\n.scroll-y-transition-enter {\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.scroll-y-transition-leave-to {\n  -webkit-transform: translateY(15px);\n          transform: translateY(15px);\n}\n.scroll-y-reverse-transition-enter-active,\n.scroll-y-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scroll-y-reverse-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scroll-y-reverse-transition-enter,\n.scroll-y-reverse-transition-leave-to {\n  opacity: 0;\n}\n.scroll-y-reverse-transition-enter {\n  -webkit-transform: translateY(15px);\n          transform: translateY(15px);\n}\n.scroll-y-reverse-transition-leave-to {\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.scroll-x-transition-enter-active,\n.scroll-x-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scroll-x-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scroll-x-transition-enter,\n.scroll-x-transition-leave-to {\n  opacity: 0;\n}\n.scroll-x-transition-enter {\n  -webkit-transform: translateX(-15px);\n          transform: translateX(-15px);\n}\n.scroll-x-transition-leave-to {\n  -webkit-transform: translateX(15px);\n          transform: translateX(15px);\n}\n.scroll-x-reverse-transition-enter-active,\n.scroll-x-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.scroll-x-reverse-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.scroll-x-reverse-transition-enter,\n.scroll-x-reverse-transition-leave-to {\n  opacity: 0;\n}\n.scroll-x-reverse-transition-enter {\n  -webkit-transform: translateX(15px);\n          transform: translateX(15px);\n}\n.scroll-x-reverse-transition-leave-to {\n  -webkit-transform: translateX(-15px);\n          transform: translateX(-15px);\n}\n.slide-x-transition-enter-active,\n.slide-x-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.slide-x-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.slide-x-transition-enter,\n.slide-x-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateX(-15px);\n          transform: translateX(-15px);\n}\n.slide-x-reverse-transition-enter-active,\n.slide-x-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.slide-x-reverse-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.slide-x-reverse-transition-enter,\n.slide-x-reverse-transition-leave-to {\n  opacity: 0;\n  -webkit-transform: translateX(15px);\n          transform: translateX(15px);\n}\n.fade-transition-enter-active,\n.fade-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.fade-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.fade-transition-enter,\n.fade-transition-leave-to {\n  opacity: 0;\n}\n.fab-transition-enter-active,\n.fab-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.fab-transition-move {\n  transition: -webkit-transform 0.6s;\n  transition: transform 0.6s;\n  transition: transform 0.6s, -webkit-transform 0.6s;\n}\n.fab-transition-enter,\n.fab-transition-leave-to {\n  -webkit-transform: scale(0) rotate(-45deg);\n          transform: scale(0) rotate(-45deg);\n}\n.blockquote {\n  padding: 16px 0 16px 24px;\n  font-size: 18px;\n  font-weight: 300;\n}\ncode,\nkbd {\n  display: inline-block;\n  border-radius: 3px;\n  white-space: pre-wrap;\n  font-size: 85%;\n  font-weight: 900;\n}\ncode:after,\nkbd:after,\ncode:before,\nkbd:before {\n  content: \"\\A0\";\n  letter-spacing: -1px;\n}\ncode {\n  background-color: #f5f5f5;\n  color: #bd4147;\n  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);\n}\nkbd {\n  background: #616161;\n  color: #fff;\n}\nhtml {\n  font-size: 14px;\n  overflow-x: hidden;\n  text-rendering: optimizeLegibility;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n  -webkit-tap-highlight-color: rgba(0,0,0,0);\n}\n.application {\n  font-family: 'Roboto', sans-serif;\n  line-height: 1.5;\n}\n::-ms-clear,\n::-ms-reveal {\n  display: none;\n}\nul,\nol {\n  padding-left: 24px;\n}\n.display-4 {\n  font-size: 112px !important;\n  font-weight: 300;\n  line-height: 1 !important;\n  letter-spacing: -0.04em !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.display-3 {\n  font-size: 56px !important;\n  font-weight: 400;\n  line-height: 1.35 !important;\n  letter-spacing: -0.02em !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.display-2 {\n  font-size: 45px !important;\n  font-weight: 400;\n  line-height: 48px !important;\n  letter-spacing: normal !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.display-1 {\n  font-size: 34px !important;\n  font-weight: 400;\n  line-height: 40px !important;\n  letter-spacing: normal !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.headline {\n  font-size: 24px !important;\n  font-weight: 400;\n  line-height: 32px !important;\n  letter-spacing: normal !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.title {\n  font-size: 20px !important;\n  font-weight: 500;\n  line-height: 1 !important;\n  letter-spacing: 0.02em !important;\n  font-family: 'Roboto', sans-serif !important;\n}\n.subheading {\n  font-size: 16px !important;\n  font-weight: 400;\n}\n.body-2 {\n  font-size: 14px !important;\n  font-weight: 500;\n}\n.body-1 {\n  font-size: 14px !important;\n  font-weight: 400;\n}\n.caption {\n  font-size: 12px !important;\n  font-weight: 400;\n}\np {\n  margin-bottom: 16px;\n}\n.overflow-hidden {\n  overflow: hidden;\n}\n.overflow-x-hidden {\n  overflow-x: hidden;\n}\n.overflow-y-hidden {\n  overflow-y: hidden;\n}\n.right {\n  float: right !important;\n}\n.left {\n  float: left !important;\n}\n.ma-auto {\n  margin-top: auto !important;\n  margin-right: auto !important;\n  margin-bottom: auto !important;\n  margin-left: auto !important;\n}\n.my-auto {\n  margin-top: auto !important;\n  margin-bottom: auto !important;\n}\n.mx-auto {\n  margin-left: auto !important;\n  margin-right: auto !important;\n}\n.mt-auto {\n  margin-top: auto !important;\n}\n.mr-auto {\n  margin-right: auto !important;\n}\n.mb-auto {\n  margin-bottom: auto !important;\n}\n.ml-auto {\n  margin-left: auto !important;\n}\n.ma-0 {\n  margin: 0 0 !important;\n}\n.my-0 {\n  margin-top: 0 !important;\n  margin-bottom: 0 !important;\n}\n.mx-0 {\n  margin-left: 0 !important;\n  margin-right: 0 !important;\n}\n.mt-0 {\n  margin-top: 0 !important;\n}\n.mr-0 {\n  margin-right: 0 !important;\n}\n.mb-0 {\n  margin-bottom: 0 !important;\n}\n.ml-0 {\n  margin-left: 0 !important;\n}\n.pa-0 {\n  padding: 0 0 !important;\n}\n.py-0 {\n  padding-top: 0 !important;\n  padding-bottom: 0 !important;\n}\n.px-0 {\n  padding-left: 0 !important;\n  padding-right: 0 !important;\n}\n.pt-0 {\n  padding-top: 0 !important;\n}\n.pr-0 {\n  padding-right: 0 !important;\n}\n.pb-0 {\n  padding-bottom: 0 !important;\n}\n.pl-0 {\n  padding-left: 0 !important;\n}\n.ma-1 {\n  margin: 4px 4px !important;\n}\n.my-1 {\n  margin-top: 4px !important;\n  margin-bottom: 4px !important;\n}\n.mx-1 {\n  margin-left: 4px !important;\n  margin-right: 4px !important;\n}\n.mt-1 {\n  margin-top: 4px !important;\n}\n.mr-1 {\n  margin-right: 4px !important;\n}\n.mb-1 {\n  margin-bottom: 4px !important;\n}\n.ml-1 {\n  margin-left: 4px !important;\n}\n.pa-1 {\n  padding: 4px 4px !important;\n}\n.py-1 {\n  padding-top: 4px !important;\n  padding-bottom: 4px !important;\n}\n.px-1 {\n  padding-left: 4px !important;\n  padding-right: 4px !important;\n}\n.pt-1 {\n  padding-top: 4px !important;\n}\n.pr-1 {\n  padding-right: 4px !important;\n}\n.pb-1 {\n  padding-bottom: 4px !important;\n}\n.pl-1 {\n  padding-left: 4px !important;\n}\n.ma-2 {\n  margin: 8px 8px !important;\n}\n.my-2 {\n  margin-top: 8px !important;\n  margin-bottom: 8px !important;\n}\n.mx-2 {\n  margin-left: 8px !important;\n  margin-right: 8px !important;\n}\n.mt-2 {\n  margin-top: 8px !important;\n}\n.mr-2 {\n  margin-right: 8px !important;\n}\n.mb-2 {\n  margin-bottom: 8px !important;\n}\n.ml-2 {\n  margin-left: 8px !important;\n}\n.pa-2 {\n  padding: 8px 8px !important;\n}\n.py-2 {\n  padding-top: 8px !important;\n  padding-bottom: 8px !important;\n}\n.px-2 {\n  padding-left: 8px !important;\n  padding-right: 8px !important;\n}\n.pt-2 {\n  padding-top: 8px !important;\n}\n.pr-2 {\n  padding-right: 8px !important;\n}\n.pb-2 {\n  padding-bottom: 8px !important;\n}\n.pl-2 {\n  padding-left: 8px !important;\n}\n.ma-3 {\n  margin: 16px 16px !important;\n}\n.my-3 {\n  margin-top: 16px !important;\n  margin-bottom: 16px !important;\n}\n.mx-3 {\n  margin-left: 16px !important;\n  margin-right: 16px !important;\n}\n.mt-3 {\n  margin-top: 16px !important;\n}\n.mr-3 {\n  margin-right: 16px !important;\n}\n.mb-3 {\n  margin-bottom: 16px !important;\n}\n.ml-3 {\n  margin-left: 16px !important;\n}\n.pa-3 {\n  padding: 16px 16px !important;\n}\n.py-3 {\n  padding-top: 16px !important;\n  padding-bottom: 16px !important;\n}\n.px-3 {\n  padding-left: 16px !important;\n  padding-right: 16px !important;\n}\n.pt-3 {\n  padding-top: 16px !important;\n}\n.pr-3 {\n  padding-right: 16px !important;\n}\n.pb-3 {\n  padding-bottom: 16px !important;\n}\n.pl-3 {\n  padding-left: 16px !important;\n}\n.ma-4 {\n  margin: 24px 24px !important;\n}\n.my-4 {\n  margin-top: 24px !important;\n  margin-bottom: 24px !important;\n}\n.mx-4 {\n  margin-left: 24px !important;\n  margin-right: 24px !important;\n}\n.mt-4 {\n  margin-top: 24px !important;\n}\n.mr-4 {\n  margin-right: 24px !important;\n}\n.mb-4 {\n  margin-bottom: 24px !important;\n}\n.ml-4 {\n  margin-left: 24px !important;\n}\n.pa-4 {\n  padding: 24px 24px !important;\n}\n.py-4 {\n  padding-top: 24px !important;\n  padding-bottom: 24px !important;\n}\n.px-4 {\n  padding-left: 24px !important;\n  padding-right: 24px !important;\n}\n.pt-4 {\n  padding-top: 24px !important;\n}\n.pr-4 {\n  padding-right: 24px !important;\n}\n.pb-4 {\n  padding-bottom: 24px !important;\n}\n.pl-4 {\n  padding-left: 24px !important;\n}\n.ma-5 {\n  margin: 48px 48px !important;\n}\n.my-5 {\n  margin-top: 48px !important;\n  margin-bottom: 48px !important;\n}\n.mx-5 {\n  margin-left: 48px !important;\n  margin-right: 48px !important;\n}\n.mt-5 {\n  margin-top: 48px !important;\n}\n.mr-5 {\n  margin-right: 48px !important;\n}\n.mb-5 {\n  margin-bottom: 48px !important;\n}\n.ml-5 {\n  margin-left: 48px !important;\n}\n.pa-5 {\n  padding: 48px 48px !important;\n}\n.py-5 {\n  padding-top: 48px !important;\n  padding-bottom: 48px !important;\n}\n.px-5 {\n  padding-left: 48px !important;\n  padding-right: 48px !important;\n}\n.pt-5 {\n  padding-top: 48px !important;\n}\n.pr-5 {\n  padding-right: 48px !important;\n}\n.pb-5 {\n  padding-bottom: 48px !important;\n}\n.pl-5 {\n  padding-left: 48px !important;\n}\n.font-weight-thin {\n  font-weight: 100 !important;\n}\n.font-weight-light {\n  font-weight: 300 !important;\n}\n.font-weight-regular {\n  font-weight: 400 !important;\n}\n.font-weight-medium {\n  font-weight: 500 !important;\n}\n.font-weight-bold {\n  font-weight: 700 !important;\n}\n.font-weight-black {\n  font-weight: 900 !important;\n}\n.font-italic {\n  font-style: italic !important;\n}\n.text-capitalize {\n  text-transform: capitalize !important;\n}\n.text-lowercase {\n  text-transform: lowercase !important;\n}\n.text-none {\n  text-transform: none !important;\n}\n.text-uppercase {\n  text-transform: uppercase !important;\n}\n.text-no-wrap {\n  white-space: nowrap !important;\n}\n.text-truncate {\n  white-space: nowrap !important;\n  overflow: hidden !important;\n  text-overflow: ellipsis !important;\n  line-height: 1.1 !important;\n}\n.transition-fast-out-slow-in {\n  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;\n}\n.transition-linear-out-slow-in {\n  transition: 0.3s cubic-bezier(0, 0, 0.2, 1) !important;\n}\n.transition-fast-out-linear-in {\n  transition: 0.3s cubic-bezier(0.4, 0, 1, 1) !important;\n}\n.transition-ease-in-out {\n  transition: 0.3s cubic-bezier(0.4, 0, 0.6, 1) !important;\n}\n.transition-fast-in-fast-out {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;\n}\n.transition-swing {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1) !important;\n}\n@media screen {\n  [hidden~=\"screen\"] {\n    display: inherit;\n  }\n  [hidden~=\"screen\"]:not(:active):not(:focus):not(:target) {\n    position: absolute !important;\n    clip: rect(0 0 0 0) !important;\n  }\n}\n@media only print {\n  .hidden-print-only {\n    display: none !important;\n  }\n}\n@media only screen {\n  .hidden-screen-only {\n    display: none !important;\n  }\n}\n@media only screen and (max-width: 599px) {\n  .hidden-xs-only {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 600px) and (max-width: 959px) {\n  .hidden-sm-only {\n    display: none !important;\n  }\n}\n@media only screen and (max-width: 959px) {\n  .hidden-sm-and-down {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 600px) {\n  .hidden-sm-and-up {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 960px) and (max-width: 1263px) {\n  .hidden-md-only {\n    display: none !important;\n  }\n}\n@media only screen and (max-width: 1263px) {\n  .hidden-md-and-down {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 960px) {\n  .hidden-md-and-up {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 1264px) and (max-width: 1903px) {\n  .hidden-lg-only {\n    display: none !important;\n  }\n}\n@media only screen and (max-width: 1903px) {\n  .hidden-lg-and-down {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 1264px) {\n  .hidden-lg-and-up {\n    display: none !important;\n  }\n}\n@media only screen and (min-width: 1904px) {\n  .hidden-xl-only {\n    display: none !important;\n  }\n}\n@media all and (min-width: 0) {\n  .text-xs-left {\n    text-align: left !important;\n  }\n  .text-xs-center {\n    text-align: center !important;\n  }\n  .text-xs-right {\n    text-align: right !important;\n  }\n  .text-xs-justify {\n    text-align: justify !important;\n  }\n}\n@media all and (min-width: 600px) {\n  .text-sm-left {\n    text-align: left !important;\n  }\n  .text-sm-center {\n    text-align: center !important;\n  }\n  .text-sm-right {\n    text-align: right !important;\n  }\n  .text-sm-justify {\n    text-align: justify !important;\n  }\n}\n@media all and (min-width: 960px) {\n  .text-md-left {\n    text-align: left !important;\n  }\n  .text-md-center {\n    text-align: center !important;\n  }\n  .text-md-right {\n    text-align: right !important;\n  }\n  .text-md-justify {\n    text-align: justify !important;\n  }\n}\n@media all and (min-width: 1264px) {\n  .text-lg-left {\n    text-align: left !important;\n  }\n  .text-lg-center {\n    text-align: center !important;\n  }\n  .text-lg-right {\n    text-align: right !important;\n  }\n  .text-lg-justify {\n    text-align: justify !important;\n  }\n}\n@media all and (min-width: 1904px) {\n  .text-xl-left {\n    text-align: left !important;\n  }\n  .text-xl-center {\n    text-align: center !important;\n  }\n  .text-xl-right {\n    text-align: right !important;\n  }\n  .text-xl-justify {\n    text-align: justify !important;\n  }\n}\n\n.application {\n  display: flex;\n}\n.application a {\n  cursor: pointer;\n}\n.application--is-rtl {\n  direction: rtl;\n}\n.application--wrap {\n  flex: 1 1 auto;\n  -webkit-backface-visibility: hidden;\n          backface-visibility: hidden;\n  display: flex;\n  flex-direction: column;\n  min-height: 100vh;\n  max-width: 100%;\n  position: relative;\n}\n.theme--light.application {\n  background: #fafafa;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.application .text--primary {\n  color: rgba(0,0,0,0.87) !important;\n}\n.theme--light.application .text--secondary {\n  color: rgba(0,0,0,0.54) !important;\n}\n.theme--light.application .text--disabled {\n  color: rgba(0,0,0,0.38) !important;\n}\n.theme--dark.application {\n  background: #303030;\n  color: #fff;\n}\n.theme--dark.application .text--primary {\n  color: #fff !important;\n}\n.theme--dark.application .text--secondary {\n  color: rgba(255,255,255,0.7) !important;\n}\n.theme--dark.application .text--disabled {\n  color: rgba(255,255,255,0.5) !important;\n}\n@-moz-document url-prefix() {\n}\n@media print {\n  @-moz-document url-prefix() {\n    .application {\n      display: block;\n    }\n    .application--wrap {\n      display: block;\n    }\n  }\n}\n\n.v-alert {\n  border-radius: 0;\n  border-width: 4px 0 0 0;\n  border-style: solid;\n  color: #fff;\n  display: flex;\n  font-size: 14px;\n  margin: 4px auto;\n  padding: 16px;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-alert .v-alert__icon.v-icon,\n.v-alert__dismissible .v-icon {\n  align-self: center;\n  color: rgba(0,0,0,0.3);\n  font-size: 24px;\n}\n.v-alert--outline .v-icon {\n  color: inherit !important;\n}\n.v-alert__icon {\n  margin-right: 16px;\n}\n.v-alert__dismissible {\n  align-self: flex-start;\n  color: inherit;\n  margin-left: 16px;\n  margin-right: 0;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-alert__dismissible:hover {\n  opacity: 0.8;\n}\n.v-alert--no-icon .v-alert__icon {\n  display: none;\n}\n.v-alert > div {\n  align-self: center;\n  flex: 1 1;\n}\n.v-alert.v-alert {\n  border-color: rgba(0,0,0,0.12) !important;\n}\n.v-alert.v-alert--outline {\n  border: 1px solid currentColor !important;\n}\n@media screen and (max-width: 600px) {\n  .v-alert__icon {\n    display: none;\n  }\n}\n\n/* Themes */\n.theme--light.v-icon {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-icon.v-icon--disabled {\n  color: rgba(0,0,0,0.38) !important;\n}\n.theme--dark.v-icon {\n  color: #fff;\n}\n.theme--dark.v-icon.v-icon--disabled {\n  color: rgba(255,255,255,0.5) !important;\n}\n.v-icon {\n  align-items: center;\n  display: inline-flex;\n  -webkit-font-feature-settings: 'liga';\n          font-feature-settings: 'liga';\n  font-size: 24px;\n  justify-content: center;\n  line-height: 1;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  vertical-align: text-bottom;\n}\n.v-icon--right {\n  margin-left: 16px;\n}\n.v-icon--left {\n  margin-right: 16px;\n}\n.v-icon.v-icon.v-icon--link {\n  cursor: pointer;\n}\n.v-icon--disabled {\n  pointer-events: none;\n  opacity: 0.6;\n}\n.v-icon--is-component {\n  height: 24px;\n}\n\n.v-autocomplete.v-input > .v-input__control > .v-input__slot {\n  cursor: text;\n}\n.v-autocomplete input {\n  align-self: center;\n}\n.v-autocomplete--is-selecting-index input {\n  opacity: 0;\n}\n.v-autocomplete.v-text-field--enclosed:not(.v-text-field--solo):not(.v-text-field--single-line) .v-select__slot > input {\n  margin-top: 24px;\n}\n.v-autocomplete:not(.v-input--is-disabled).v-select.v-text-field input {\n  pointer-events: inherit;\n}\n.v-autocomplete__content.v-menu__content {\n  border-radius: 0;\n}\n.v-autocomplete__content.v-menu__content .v-card {\n  border-radius: 0;\n}\n\n.theme--light.v-text-field > .v-input__control > .v-input__slot:before {\n  border-color: rgba(0,0,0,0.42);\n}\n.theme--light.v-text-field:not(.v-input--has-state) > .v-input__control > .v-input__slot:hover:before {\n  border-color: rgba(0,0,0,0.87);\n}\n.theme--light.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before {\n  border-image: repeating-linear-gradient(to right, rgba(0,0,0,0.38) 0px, rgba(0,0,0,0.38) 2px, transparent 2px, transparent 4px) 1 repeat;\n}\n.theme--light.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before .v-text-field__prefix,\n.theme--light.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before .v-text-field__suffix {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-text-field__prefix,\n.theme--light.v-text-field__suffix {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-text-field--solo > .v-input__control > .v-input__slot {\n  border-radius: 2px;\n  background: #fff;\n}\n.theme--light.v-text-field--solo-inverted.v-text-field--solo > .v-input__control > .v-input__slot {\n  background: rgba(0,0,0,0.16);\n}\n.theme--light.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot {\n  background: #424242;\n}\n.theme--light.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot .v-label,\n.theme--light.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot input {\n  color: #fff;\n}\n.theme--light.v-text-field--box > .v-input__control > .v-input__slot {\n  background: rgba(0,0,0,0.06);\n}\n.theme--light.v-text-field--box .v-text-field__prefix {\n  max-height: 32px;\n  margin-top: 22px;\n}\n.theme--light.v-text-field--box.v-input--is-dirty .v-text-field__prefix,\n.theme--light.v-text-field--box.v-input--is-focused .v-text-field__prefix,\n.theme--light.v-text-field--box.v-text-field--placeholder .v-text-field__prefix {\n  margin-top: 22px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.theme--light.v-text-field--box:not(.v-input--is-focused) > .v-input__control > .v-input__slot:hover {\n  background: rgba(0,0,0,0.12);\n}\n.theme--light.v-text-field--outline > .v-input__control > .v-input__slot {\n  border: 2px solid rgba(0,0,0,0.54);\n}\n.theme--light.v-text-field--outline:not(.v-input--is-focused):not(.v-input--has-state) > .v-input__control > .v-input__slot:hover {\n  border: 2px solid rgba(0,0,0,0.87);\n}\n.theme--dark.v-text-field > .v-input__control > .v-input__slot:before {\n  border-color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-text-field:not(.v-input--has-state) > .v-input__control > .v-input__slot:hover:before {\n  border-color: #fff;\n}\n.theme--dark.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before {\n  border-image: repeating-linear-gradient(to right, rgba(255,255,255,0.5) 0px, rgba(255,255,255,0.5) 2px, transparent 2px, transparent 4px) 1 repeat;\n}\n.theme--dark.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before .v-text-field__prefix,\n.theme--dark.v-text-field.v-input--is-disabled > .v-input__control > .v-input__slot:before .v-text-field__suffix {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-text-field__prefix,\n.theme--dark.v-text-field__suffix {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-text-field--solo > .v-input__control > .v-input__slot {\n  border-radius: 2px;\n  background: #424242;\n}\n.theme--dark.v-text-field--solo-inverted.v-text-field--solo > .v-input__control > .v-input__slot {\n  background: rgba(255,255,255,0.16);\n}\n.theme--dark.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot {\n  background: #fff;\n}\n.theme--dark.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot .v-label,\n.theme--dark.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused > .v-input__control > .v-input__slot input {\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-text-field--box > .v-input__control > .v-input__slot {\n  background: rgba(0,0,0,0.1);\n}\n.theme--dark.v-text-field--box .v-text-field__prefix {\n  max-height: 32px;\n  margin-top: 22px;\n}\n.theme--dark.v-text-field--box.v-input--is-dirty .v-text-field__prefix,\n.theme--dark.v-text-field--box.v-input--is-focused .v-text-field__prefix,\n.theme--dark.v-text-field--box.v-text-field--placeholder .v-text-field__prefix {\n  margin-top: 22px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.theme--dark.v-text-field--box:not(.v-input--is-focused) > .v-input__control > .v-input__slot:hover {\n  background: rgba(0,0,0,0.2);\n}\n.theme--dark.v-text-field--outline > .v-input__control > .v-input__slot {\n  border: 2px solid rgba(255,255,255,0.7);\n}\n.theme--dark.v-text-field--outline:not(.v-input--is-focused):not(.v-input--has-state) > .v-input__control > .v-input__slot:hover {\n  border: 2px solid #fff;\n}\n.application--is-rtl .v-text-field .v-label {\n  -webkit-transform-origin: top right;\n          transform-origin: top right;\n}\n.application--is-rtl .v-text-field .v-counter {\n  margin-left: 0;\n  margin-right: 8px;\n}\n.application--is-rtl .v-text-field--enclosed .v-input__append-outer {\n  margin-left: 0;\n  margin-right: 16px;\n}\n.application--is-rtl .v-text-field--enclosed .v-input__prepend-outer {\n  margin-left: 16px;\n  margin-right: 0;\n}\n.application--is-rtl .v-text-field--reverse input {\n  text-align: left;\n}\n.application--is-rtl .v-text-field--reverse .v-label {\n  -webkit-transform-origin: top left;\n          transform-origin: top left;\n}\n.application--is-rtl .v-text-field__prefix {\n  text-align: left;\n  padding-right: 0;\n  padding-left: 4px;\n}\n.application--is-rtl .v-text-field__suffix {\n  padding-left: 0;\n  padding-right: 4px;\n}\n.application--is-rtl .v-text-field--reverse .v-text-field__prefix {\n  text-align: right;\n  padding-left: 0;\n  padding-right: 4px;\n}\n.application--is-rtl .v-text-field--reverse .v-text-field__suffix {\n  padding-left: 0;\n  padding-right: 4px;\n}\n.v-text-field {\n  padding-top: 12px;\n  margin-top: 4px;\n}\n.v-text-field input {\n  flex: 1 1 auto;\n  line-height: 20px;\n  padding: 8px 0 8px;\n  max-width: 100%;\n  min-width: 0px;\n  width: 100%;\n}\n.v-text-field .v-input__prepend-inner,\n.v-text-field .v-input__append-inner {\n  align-self: flex-start;\n  display: inline-flex;\n  margin-top: 4px;\n  line-height: 1;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-text-field .v-input__prepend-inner {\n  margin-right: auto;\n  padding-right: 4px;\n}\n.v-text-field .v-input__append-inner {\n  margin-left: auto;\n  padding-left: 4px;\n}\n.v-text-field .v-counter {\n  margin-left: 8px;\n  white-space: nowrap;\n}\n.v-text-field .v-label {\n  max-width: 90%;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  top: 6px;\n  -webkit-transform-origin: top left;\n          transform-origin: top left;\n  white-space: nowrap;\n  pointer-events: none;\n}\n.v-text-field .v-label--active {\n  max-width: 133%;\n  -webkit-transform: translateY(-18px) scale(0.75);\n          transform: translateY(-18px) scale(0.75);\n}\n.v-text-field > .v-input__control > .v-input__slot {\n  cursor: text;\n  transition: background 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-text-field > .v-input__control > .v-input__slot:before,\n.v-text-field > .v-input__control > .v-input__slot:after {\n  bottom: -1px;\n  content: '';\n  left: 0;\n  position: absolute;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-text-field > .v-input__control > .v-input__slot:before {\n  border-style: solid;\n  border-width: thin 0 0 0;\n}\n.v-text-field > .v-input__control > .v-input__slot:after {\n  border-color: currentColor;\n  border-style: solid;\n  border-width: thin 0 thin 0;\n  -webkit-transform: scaleX(0);\n          transform: scaleX(0);\n}\n.v-text-field__details {\n  display: flex;\n  flex: 1 0 auto;\n  max-width: 100%;\n  overflow: hidden;\n}\n.v-text-field__prefix,\n.v-text-field__suffix {\n  align-self: center;\n  cursor: default;\n}\n.v-text-field__prefix {\n  text-align: right;\n  padding-right: 4px;\n}\n.v-text-field__suffix {\n  padding-left: 4px;\n  white-space: nowrap;\n}\n.v-text-field--reverse .v-text-field__prefix {\n  text-align: left;\n  padding-right: 0;\n  padding-left: 4px;\n}\n.v-text-field--reverse .v-text-field__suffix {\n  padding-left: 0;\n  padding-right: 4px;\n}\n.v-text-field > .v-input__control > .v-input__slot > .v-text-field__slot {\n  display: flex;\n  flex: 1 1 auto;\n  position: relative;\n}\n.v-text-field--box,\n.v-text-field--full-width,\n.v-text-field--outline {\n  position: relative;\n}\n.v-text-field--box > .v-input__control > .v-input__slot,\n.v-text-field--full-width > .v-input__control > .v-input__slot,\n.v-text-field--outline > .v-input__control > .v-input__slot {\n  align-items: stretch;\n  min-height: 56px;\n}\n.v-text-field--box input,\n.v-text-field--full-width input,\n.v-text-field--outline input {\n  margin-top: 22px;\n}\n.v-text-field--box.v-text-field--single-line input,\n.v-text-field--full-width.v-text-field--single-line input,\n.v-text-field--outline.v-text-field--single-line input {\n  margin-top: 12px;\n}\n.v-text-field--box .v-label,\n.v-text-field--full-width .v-label,\n.v-text-field--outline .v-label {\n  top: 18px;\n}\n.v-text-field--box .v-label--active,\n.v-text-field--full-width .v-label--active,\n.v-text-field--outline .v-label--active {\n  -webkit-transform: translateY(-6px) scale(0.75);\n          transform: translateY(-6px) scale(0.75);\n}\n.v-text-field--box > .v-input__control > .v-input__slot {\n  border-top-left-radius: 4px;\n  border-top-right-radius: 4px;\n}\n.v-text-field--box > .v-input__control > .v-input__slot:before {\n  border-style: solid;\n  border-width: thin 0 thin 0;\n}\n.v-text-field.v-text-field--enclosed {\n  margin: 0;\n  padding: 0;\n}\n.v-text-field.v-text-field--enclosed:not(.v-text-field--box) .v-progress-linear__background {\n  display: none;\n}\n.v-text-field.v-text-field--enclosed .v-input__prepend-outer,\n.v-text-field.v-text-field--enclosed .v-input__prepend-inner,\n.v-text-field.v-text-field--enclosed .v-input__append-inner,\n.v-text-field.v-text-field--enclosed .v-input__append-outer {\n  margin-top: 16px;\n}\n.v-text-field.v-text-field--enclosed .v-text-field__details,\n.v-text-field.v-text-field--enclosed > .v-input__control > .v-input__slot {\n  padding: 0 12px;\n}\n.v-text-field.v-text-field--enclosed .v-text-field__details {\n  margin-bottom: 8px;\n}\n.v-text-field--reverse input {\n  text-align: right;\n}\n.v-text-field--reverse .v-label {\n  -webkit-transform-origin: top right;\n          transform-origin: top right;\n}\n.v-text-field--reverse > .v-input__control > .v-input__slot,\n.v-text-field--reverse .v-text-field__slot {\n  flex-direction: row-reverse;\n}\n.v-text-field--solo > .v-input__control > .v-input__slot:before,\n.v-text-field--outline > .v-input__control > .v-input__slot:before,\n.v-text-field--full-width > .v-input__control > .v-input__slot:before,\n.v-text-field--solo > .v-input__control > .v-input__slot:after,\n.v-text-field--outline > .v-input__control > .v-input__slot:after,\n.v-text-field--full-width > .v-input__control > .v-input__slot:after {\n  display: none;\n}\n.v-text-field--outline {\n  margin-bottom: 16px;\n  transition: border 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-text-field--outline > .v-input__control > .v-input__slot {\n  background: transparent !important;\n  border-radius: 4px;\n}\n.v-text-field--outline .v-text-field__prefix {\n  margin-top: 22px;\n  max-height: 32px;\n}\n.v-text-field--outline .v-input__prepend-outer,\n.v-text-field--outline .v-input__append-outer {\n  margin-top: 18px;\n}\n.v-text-field--outline.v-input--is-dirty .v-text-field__prefix,\n.v-text-field--outline.v-input--is-focused .v-text-field__prefix,\n.v-text-field--outline.v-text-field--placeholder .v-text-field__prefix {\n  margin-top: 22px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-text-field--outline.v-input--is-focused > .v-input__control > .v-input__slot,\n.v-text-field--outline.v-input--has-state > .v-input__control > .v-input__slot {\n  border: 2px solid currentColor;\n  transition: border 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-text-field.v-text-field--solo .v-label {\n  top: calc(50% - 10px);\n}\n.v-text-field.v-text-field--solo .v-input__control {\n  min-height: 48px;\n  padding: 0;\n}\n.v-text-field.v-text-field--solo:not(.v-text-field--solo-flat) > .v-input__control > .v-input__slot {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-text-field.v-text-field--solo .v-text-field__slot {\n  align-items: center;\n}\n.v-text-field.v-text-field--solo .v-input__append-inner,\n.v-text-field.v-text-field--solo .v-input__prepend-inner {\n  align-self: center;\n  margin-top: 0;\n}\n.v-text-field.v-text-field--solo .v-input__prepend-outer,\n.v-text-field.v-text-field--solo .v-input__append-outer {\n  margin-top: 12px;\n}\n.v-text-field.v-input--is-focused > .v-input__control > .v-input__slot:after {\n  -webkit-transform: scaleX(1);\n          transform: scaleX(1);\n}\n.v-text-field.v-input--has-state > .v-input__control > .v-input__slot:before {\n  border-color: currentColor;\n}\n\n.theme--light.v-select .v-select__selections {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-select.v-input--is-disabled .v-select__selections {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-select .v-chip--disabled,\n.theme--light.v-select .v-select__selection--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-select.v-text-field--solo-inverted.v-input--is-focused .v-select__selections {\n  color: #fff;\n}\n.theme--dark.v-select .v-select__selections {\n  color: #fff;\n}\n.theme--dark.v-select.v-input--is-disabled .v-select__selections {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-select .v-chip--disabled,\n.theme--dark.v-select .v-select__selection--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-select.v-text-field--solo-inverted.v-input--is-focused .v-select__selections {\n  color: rgba(0,0,0,0.87);\n}\n.v-select {\n  position: relative;\n}\n.v-select > .v-input__control > .v-input__slot {\n  cursor: pointer;\n}\n.v-select .v-chip {\n  flex: 0 1 auto;\n}\n.v-select .fade-transition-leave-active {\n  position: absolute;\n  left: 0;\n}\n.v-select.v-input--is-dirty ::-webkit-input-placeholder {\n  color: transparent !important;\n}\n.v-select.v-input--is-dirty :-ms-input-placeholder {\n  color: transparent !important;\n}\n.v-select.v-input--is-dirty ::-ms-input-placeholder {\n  color: transparent !important;\n}\n.v-select.v-input--is-dirty ::placeholder {\n  color: transparent !important;\n}\n.v-select:not(.v-input--is-dirty):not(.v-input--is-focused) .v-text-field__prefix {\n  line-height: 20px;\n  position: absolute;\n  top: 7px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-select.v-text-field--enclosed:not(.v-text-field--single-line) .v-select__selections {\n  padding-top: 24px;\n}\n.v-select.v-text-field input {\n  flex: 1 1;\n  margin-top: 0;\n  min-width: 0;\n  pointer-events: none;\n  position: relative;\n}\n.v-select.v-select--is-menu-active .v-input__icon--append .v-icon {\n  -webkit-transform: rotate(180deg);\n          transform: rotate(180deg);\n}\n.v-select.v-select--chips input {\n  margin: 0;\n}\n.v-select.v-select--chips .v-select__selections {\n  min-height: 42px;\n}\n.v-select.v-select--chips.v-select--chips--small .v-select__selections {\n  min-height: 32px;\n}\n.v-select.v-select--chips:not(.v-text-field--single-line).v-text-field--box .v-select__selections,\n.v-select.v-select--chips:not(.v-text-field--single-line).v-text-field--enclosed .v-select__selections {\n  min-height: 68px;\n}\n.v-select.v-select--chips:not(.v-text-field--single-line).v-text-field--box.v-select--chips--small .v-select__selections,\n.v-select.v-select--chips:not(.v-text-field--single-line).v-text-field--enclosed.v-select--chips--small .v-select__selections {\n  min-height: 56px;\n}\n.v-select.v-text-field--reverse .v-select__slot,\n.v-select.v-text-field--reverse .v-select__selections {\n  flex-direction: row-reverse;\n}\n.v-select__selections {\n  align-items: center;\n  display: flex;\n  flex: 1 1 auto;\n  flex-wrap: wrap;\n  line-height: 18px;\n}\n.v-select__selection {\n  max-width: 90%;\n}\n.v-select__selection--comma {\n  align-items: center;\n  display: inline-flex;\n  margin: 7px 4px 7px 0;\n}\n.v-select__slot {\n  position: relative;\n  align-items: center;\n  display: flex;\n  width: 100%;\n}\n.v-select:not(.v-text-field--single-line) .v-select__slot > input {\n  align-self: flex-end;\n}\n\n.theme--light.v-chip {\n  background: #e0e0e0;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-chip--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-chip {\n  background: #555;\n  color: #fff;\n}\n.theme--dark.v-chip--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.application--is-rtl .v-chip__close {\n  margin: 0 8px 0 2px;\n}\n.application--is-rtl .v-chip--removable .v-chip__content {\n  padding: 0 12px 0 4px;\n}\n.application--is-rtl .v-chip--select-multi {\n  margin: 4px 0 4px 4px;\n}\n.application--is-rtl .v-chip .v-avatar {\n  margin-right: -12px;\n  margin-left: 8px;\n}\n.application--is-rtl .v-chip .v-icon--right {\n  margin-right: 12px;\n  margin-left: -8px;\n}\n.application--is-rtl .v-chip .v-icon--left {\n  margin-right: -8px;\n  margin-left: 12px;\n}\n.v-chip {\n  align-items: center;\n  border-radius: 28px;\n  display: inline-flex;\n  font-size: 13px;\n  margin: 4px;\n  outline: none;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  vertical-align: middle;\n}\n.v-chip .v-chip__content {\n  align-items: center;\n  border-radius: 28px;\n  cursor: default;\n  display: inline-flex;\n  height: 32px;\n  justify-content: space-between;\n  padding: 0 12px;\n  vertical-align: middle;\n  white-space: nowrap;\n  z-index: 1;\n}\n.v-chip--removable .v-chip__content {\n  padding: 0 4px 0 12px;\n}\n.v-chip .v-avatar {\n  height: 32px !important;\n  margin-left: -12px;\n  margin-right: 8px;\n  min-width: 32px;\n  width: 32px !important;\n}\n.v-chip .v-avatar img {\n  height: 100%;\n  width: 100%;\n}\n.v-chip:focus:not(.v-chip--disabled),\n.v-chip--active,\n.v-chip--selected {\n  border-color: rgba(0,0,0,0.13);\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-chip:focus:not(.v-chip--disabled):after,\n.v-chip--active:after,\n.v-chip--selected:after {\n  background: currentColor;\n  border-radius: inherit;\n  content: '';\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  transition: inherit;\n  width: 100%;\n  pointer-events: none;\n  opacity: 0.13;\n}\n.v-chip--label {\n  border-radius: 2px;\n}\n.v-chip--label .v-chip__content {\n  border-radius: 2px;\n}\n.v-chip.v-chip.v-chip--outline {\n  background: transparent !important;\n  border: 1px solid currentColor;\n  color: #9e9e9e;\n  height: 32px;\n}\n.v-chip.v-chip.v-chip--outline .v-avatar {\n  margin-left: -13px;\n}\n.v-chip--small {\n  height: 24px !important;\n}\n.v-chip--small .v-avatar {\n  height: 24px !important;\n  min-width: 24px;\n  width: 24px !important;\n}\n.v-chip--small .v-icon {\n  font-size: 20px;\n}\n.v-chip__close {\n  align-items: center;\n  color: inherit;\n  display: flex;\n  font-size: 20px;\n  margin: 0 2px 0 8px;\n  text-decoration: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-chip__close > .v-icon {\n  color: inherit !important;\n  font-size: 20px;\n  cursor: pointer;\n  opacity: 0.5;\n}\n.v-chip__close > .v-icon:hover {\n  opacity: 1;\n}\n.v-chip--disabled .v-chip__close {\n  pointer-events: none;\n}\n.v-chip--select-multi {\n  margin: 4px 4px 4px 0;\n}\n.v-chip .v-icon {\n  color: inherit;\n}\n.v-chip .v-icon--right {\n  margin-left: 12px;\n  margin-right: -8px;\n}\n.v-chip .v-icon--left {\n  margin-left: -8px;\n  margin-right: 12px;\n}\n\n.v-menu {\n  display: block;\n  vertical-align: middle;\n}\n.v-menu--inline {\n  display: inline-block;\n}\n.v-menu__activator {\n  align-items: center;\n  cursor: pointer;\n  display: flex;\n}\n.v-menu__activator * {\n  cursor: pointer;\n}\n.v-menu__content {\n  position: absolute;\n  display: inline-block;\n  border-radius: 2px;\n  max-width: 80%;\n  overflow-y: auto;\n  overflow-x: hidden;\n  contain: content;\n  will-change: transform;\n  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);\n}\n.v-menu__content--active {\n  pointer-events: none;\n}\n.v-menu__content--fixed {\n  position: fixed;\n}\n.v-menu__content > .card {\n  contain: content;\n  -webkit-backface-visibility: hidden;\n          backface-visibility: hidden;\n}\n.v-menu > .v-menu__content {\n  max-width: none;\n}\n.v-menu-transition-enter .v-list__tile {\n  min-width: 0;\n  pointer-events: none;\n}\n.v-menu-transition-enter-to .v-list__tile {\n  pointer-events: auto;\n  transition-delay: 0.1s;\n}\n.v-menu-transition-leave-active,\n.v-menu-transition-leave-to {\n  pointer-events: none;\n}\n.v-menu-transition-enter,\n.v-menu-transition-leave-to {\n  opacity: 0;\n}\n.v-menu-transition-enter-active,\n.v-menu-transition-leave-active {\n  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-menu-transition-enter.v-menu__content--auto {\n  transition: none !important;\n}\n.v-menu-transition-enter.v-menu__content--auto .v-list__tile {\n  opacity: 0;\n  -webkit-transform: translateY(-15px);\n          transform: translateY(-15px);\n}\n.v-menu-transition-enter.v-menu__content--auto .v-list__tile--active {\n  opacity: 1;\n  -webkit-transform: none !important;\n          transform: none !important;\n  pointer-events: auto;\n}\n\n/* Themes */\n.theme--light.v-card {\n  background-color: #fff;\n  border-color: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-card {\n  background-color: #424242;\n  border-color: #424242;\n  color: #fff;\n}\n.v-card {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n  text-decoration: none;\n}\n.v-card > *:first-child:not(.v-btn):not(.v-chip) {\n  border-top-left-radius: inherit;\n  border-top-right-radius: inherit;\n}\n.v-card > *:last-child:not(.v-btn):not(.v-chip) {\n  border-bottom-left-radius: inherit;\n  border-bottom-right-radius: inherit;\n}\n.v-card--flat {\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);\n}\n.v-card--hover {\n  cursor: pointer;\n  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);\n  transition-property: box-shadow;\n}\n.v-card--hover:hover {\n  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);\n}\n.v-card__title {\n  align-items: center;\n  display: flex;\n  flex-wrap: wrap;\n  padding: 16px;\n}\n.v-card__title--primary {\n  padding-top: 24px;\n}\n.v-card__text {\n  padding: 16px;\n  width: 100%;\n}\n.v-card__actions {\n  align-items: center;\n  display: flex;\n  padding: 8px;\n}\n.v-card__actions > *,\n.v-card__actions .v-btn {\n  margin: 0;\n}\n.v-card__actions .v-btn + .v-btn {\n  margin-left: 8px;\n}\n\n/** Theme */\n.theme--light.v-input--selection-controls.v-input--is-disabled .v-icon {\n  color: rgba(0,0,0,0.26) !important;\n}\n.theme--dark.v-input--selection-controls.v-input--is-disabled .v-icon {\n  color: rgba(255,255,255,0.3) !important;\n}\n.application--is-rtl .v-input--selection-controls .v-input--selection-controls__input {\n  margin-right: 0;\n  margin-left: 8px;\n}\n.v-input--selection-controls {\n  margin-top: 16px;\n  padding-top: 4px;\n}\n.v-input--selection-controls .v-input__append-outer,\n.v-input--selection-controls .v-input__prepend-outer {\n  margin-top: 0;\n  margin-bottom: 0;\n}\n.v-input--selection-controls .v-input__control {\n  flex-grow: 0;\n  width: auto;\n}\n.v-input--selection-controls:not(.v-input--hide-details) .v-input__slot {\n  margin-bottom: 12px;\n}\n.v-input--selection-controls__input {\n  color: inherit;\n  display: inline-flex;\n  flex: 0 0 auto;\n  height: 24px;\n  position: relative;\n  margin-right: 8px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n  transition-property: color, -webkit-transform;\n  transition-property: color, transform;\n  transition-property: color, transform, -webkit-transform;\n  width: 24px;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-input--selection-controls__input input {\n  position: absolute;\n  opacity: 0;\n  width: 100%;\n  height: 100%;\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-input--selection-controls__input + .v-label {\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-input--selection-controls__ripple {\n  border-radius: 50%;\n  cursor: pointer;\n  height: 34px;\n  position: absolute;\n  transition: inherit;\n  width: 34px;\n  left: -12px;\n  top: calc(50% - 24px);\n  margin: 7px;\n}\n.v-input--selection-controls__ripple:before {\n  border-radius: inherit;\n  bottom: 0;\n  content: '';\n  position: absolute;\n  opacity: 0.2;\n  left: 0;\n  right: 0;\n  top: 0;\n  -webkit-transform-origin: center center;\n          transform-origin: center center;\n  -webkit-transform: scale(0.2);\n          transform: scale(0.2);\n  transition: inherit;\n}\n.v-input--selection-controls__ripple .v-ripple__container {\n  -webkit-transform: scale(1.4);\n          transform: scale(1.4);\n}\n.v-input--selection-controls.v-input .v-label {\n  align-items: center;\n  display: inline-flex;\n  top: 0;\n  height: auto;\n}\n.v-input--selection-controls.v-input--is-focused .v-input--selection-controls__ripple:before,\n.v-input--selection-controls .v-radio--is-focused .v-input--selection-controls__ripple:before {\n  background: currentColor;\n  -webkit-transform: scale(0.8);\n          transform: scale(0.8);\n}\n\n/* Theme */\n.theme--light.v-input:not(.v-input--is-disabled) input,\n.theme--light.v-input:not(.v-input--is-disabled) textarea {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-input input::-webkit-input-placeholder,\n.theme--light.v-input textarea::-webkit-input-placeholder {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input input:-ms-input-placeholder,\n.theme--light.v-input textarea:-ms-input-placeholder {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input input::-ms-input-placeholder,\n.theme--light.v-input textarea::-ms-input-placeholder {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input input::placeholder,\n.theme--light.v-input textarea::placeholder {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input--is-disabled .v-label,\n.theme--light.v-input--is-disabled input,\n.theme--light.v-input--is-disabled textarea {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-input:not(.v-input--is-disabled) input,\n.theme--dark.v-input:not(.v-input--is-disabled) textarea {\n  color: #fff;\n}\n.theme--dark.v-input input::-webkit-input-placeholder,\n.theme--dark.v-input textarea::-webkit-input-placeholder {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-input input:-ms-input-placeholder,\n.theme--dark.v-input textarea:-ms-input-placeholder {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-input input::-ms-input-placeholder,\n.theme--dark.v-input textarea::-ms-input-placeholder {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-input input::placeholder,\n.theme--dark.v-input textarea::placeholder {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-input--is-disabled .v-label,\n.theme--dark.v-input--is-disabled input,\n.theme--dark.v-input--is-disabled textarea {\n  color: rgba(255,255,255,0.5);\n}\n.v-input {\n  align-items: flex-start;\n  display: flex;\n  flex: 1 1 auto;\n  font-size: 16px;\n  text-align: left;\n}\n.v-input .v-progress-linear {\n  top: calc(100% - 1px);\n  left: 0;\n  margin: 0;\n  position: absolute;\n}\n.v-input input {\n  max-height: 32px;\n}\n.v-input input:invalid,\n.v-input textarea:invalid {\n  box-shadow: none;\n}\n.v-input input:focus,\n.v-input textarea:focus,\n.v-input input:active,\n.v-input textarea:active {\n  outline: none;\n}\n.v-input .v-label {\n  height: 20px;\n  line-height: 20px;\n}\n.v-input__append-outer,\n.v-input__prepend-outer {\n  display: inline-flex;\n  margin-bottom: 4px;\n  margin-top: 4px;\n  line-height: 1;\n}\n.v-input__append-outer .v-icon,\n.v-input__prepend-outer .v-icon {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-input__append-outer {\n  margin-left: 9px;\n}\n.v-input__prepend-outer {\n  margin-right: 9px;\n}\n.v-input__control {\n  display: flex;\n  flex-direction: column;\n  height: auto;\n  flex-grow: 1;\n  flex-wrap: wrap;\n  width: 100%;\n}\n.v-input__icon {\n  align-items: center;\n  display: inline-flex;\n  height: 24px;\n  flex: 1 0 auto;\n  justify-content: center;\n  min-width: 24px;\n  width: 24px;\n}\n.v-input__icon--clear {\n  border-radius: 50%;\n}\n.v-input__slot {\n  align-items: center;\n  color: inherit;\n  display: flex;\n  margin-bottom: 8px;\n  min-height: inherit;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-input--is-disabled:not(.v-input--is-readonly) {\n  pointer-events: none;\n}\n.v-input--is-loading > .v-input__control > .v-input__slot:before,\n.v-input--is-loading > .v-input__control > .v-input__slot:after {\n  display: none;\n}\n.v-input--hide-details > .v-input__control > .v-input__slot {\n  margin-bottom: 0;\n}\n.v-input--has-state.error--text .v-label {\n  -webkit-animation: shake 0.6s cubic-bezier(0.25, 0.8, 0.5, 1);\n          animation: shake 0.6s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n\n.theme--light.v-label {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-label--is-disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-label {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-label--is-disabled {\n  color: rgba(255,255,255,0.5);\n}\n.v-label {\n  font-size: 16px;\n  line-height: 1;\n  min-height: 8px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n\n/* Theme */\n.theme--light.v-messages {\n  color: rgba(0,0,0,0.54);\n}\n.theme--dark.v-messages {\n  color: rgba(255,255,255,0.7);\n}\n.application--is-rtl .v-messages {\n  text-align: right;\n}\n.v-messages {\n  flex: 1 1 auto;\n  font-size: 12px;\n  min-height: 12px;\n  min-width: 1px;\n  position: relative;\n}\n.v-messages__message {\n  line-height: normal;\n  word-break: break-word;\n  overflow-wrap: break-word;\n  word-wrap: break-word;\n  -webkit-hyphens: auto;\n      -ms-hyphens: auto;\n          hyphens: auto;\n}\n\n.theme--light.v-divider {\n  border-color: rgba(0,0,0,0.12);\n}\n.theme--dark.v-divider {\n  border-color: rgba(255,255,255,0.12);\n}\n.v-divider {\n  display: block;\n  flex: 1 1 0px;\n  max-width: 100%;\n  height: 0px;\n  max-height: 0px;\n  border: solid;\n  border-width: thin 0 0 0;\n  transition: inherit;\n}\n.v-divider--inset:not(.v-divider--vertical) {\n  margin-left: 72px;\n  max-width: calc(100% - 72px);\n}\n.v-divider--vertical {\n  align-self: stretch;\n  border: solid;\n  border-width: 0 thin 0 0;\n  display: inline-flex;\n  height: inherit;\n  min-height: 100%;\n  max-height: 100%;\n  max-width: 0px;\n  width: 0px;\n  vertical-align: text-bottom;\n}\n.v-divider--vertical.v-divider--inset {\n  margin-top: 8px;\n  min-height: 0;\n  max-height: calc(100% - 16px);\n}\n\n.theme--light.v-subheader {\n  color: rgba(0,0,0,0.54);\n}\n.theme--dark.v-subheader {\n  color: rgba(255,255,255,0.7);\n}\n.v-subheader {\n  align-items: center;\n  display: flex;\n  height: 48px;\n  font-size: 14px;\n  font-weight: 500;\n  padding: 0 16px 0 16px;\n}\n.v-subheader--inset {\n  margin-left: 56px;\n}\n\n/* Themes */\n.theme--light.v-list {\n  background: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-list .v-list--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-list .v-list__tile__sub-title {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-list .v-list__tile__mask {\n  color: rgba(0,0,0,0.38);\n  background: #eee;\n}\n.theme--light.v-list .v-list__tile--link:hover,\n.theme--light.v-list .v-list__tile--highlighted,\n.theme--light.v-list .v-list__group__header:hover {\n  background: rgba(0,0,0,0.04);\n}\n.theme--light.v-list .v-list__group--active:before,\n.theme--light.v-list .v-list__group--active:after {\n  background: rgba(0,0,0,0.12);\n}\n.theme--light.v-list .v-list__group--disabled .v-list__tile {\n  color: rgba(0,0,0,0.38) !important;\n}\n.theme--light.v-list .v-list__group--disabled .v-list__group__header__prepend-icon .v-icon {\n  color: rgba(0,0,0,0.38) !important;\n}\n.theme--dark.v-list {\n  background: #424242;\n  color: #fff;\n}\n.theme--dark.v-list .v-list--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-list .v-list__tile__sub-title {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-list .v-list__tile__mask {\n  color: rgba(255,255,255,0.5);\n  background: #494949;\n}\n.theme--dark.v-list .v-list__tile--link:hover,\n.theme--dark.v-list .v-list__tile--highlighted,\n.theme--dark.v-list .v-list__group__header:hover {\n  background: rgba(255,255,255,0.08);\n}\n.theme--dark.v-list .v-list__group--active:before,\n.theme--dark.v-list .v-list__group--active:after {\n  background: rgba(255,255,255,0.12);\n}\n.theme--dark.v-list .v-list__group--disabled .v-list__tile {\n  color: rgba(255,255,255,0.5) !important;\n}\n.theme--dark.v-list .v-list__group--disabled .v-list__group__header__prepend-icon .v-icon {\n  color: rgba(255,255,255,0.5) !important;\n}\n.application--is-rtl .v-list__tile__title {\n  text-align: right;\n}\n.application--is-rtl .v-list__tile__content {\n  text-align: right;\n}\n.v-list {\n  list-style-type: none;\n  padding: 8px 0 8px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-list > div {\n  transition: inherit;\n}\n.v-list__tile {\n  align-items: center;\n  color: inherit;\n  display: flex;\n  font-size: 16px;\n  font-weight: 400;\n  height: 48px;\n  margin: 0;\n  padding: 0 16px;\n  position: relative;\n  text-decoration: none;\n  transition: background 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-list__tile--link {\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-list__tile__content,\n.v-list__tile__action {\n  height: 100%;\n}\n.v-list__tile__title,\n.v-list__tile__sub-title {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-list__tile__title {\n  height: 24px;\n  line-height: 24px;\n  position: relative;\n  text-align: left;\n}\n.v-list__tile__sub-title {\n  font-size: 14px;\n}\n.v-list__tile__avatar {\n  display: flex;\n  justify-content: flex-start;\n  min-width: 56px;\n}\n.v-list__tile__action {\n  display: flex;\n  justify-content: flex-start;\n  min-width: 56px;\n  align-items: center;\n}\n.v-list__tile__action .v-btn {\n  padding: 0;\n  margin: 0;\n}\n.v-list__tile__action .v-btn--icon {\n  margin: -6px;\n}\n.v-list__tile__action .v-radio.v-radio {\n  margin: 0;\n}\n.v-list__tile__action .v-input--selection-controls {\n  padding: 0;\n  margin: 0;\n}\n.v-list__tile__action .v-input--selection-controls .v-messages {\n  display: none;\n}\n.v-list__tile__action .v-input--selection-controls .v-input__slot {\n  margin: 0;\n}\n.v-list__tile__action-text {\n  color: #9e9e9e;\n  font-size: 12px;\n}\n.v-list__tile__action--stack {\n  align-items: flex-end;\n  justify-content: space-between;\n  padding-top: 8px;\n  padding-bottom: 8px;\n  white-space: nowrap;\n  flex-direction: column;\n}\n.v-list__tile__content {\n  text-align: left;\n  flex: 1 1 auto;\n  overflow: hidden;\n  display: flex;\n  align-items: flex-start;\n  justify-content: center;\n  flex-direction: column;\n}\n.v-list__tile__content ~ .v-list__tile__avatar {\n  justify-content: flex-end;\n}\n.v-list__tile__content ~ .v-list__tile__action:not(.v-list__tile__action--stack) {\n  justify-content: flex-end;\n}\n.v-list__tile--active .v-list__tile__action:first-of-type .v-icon {\n  color: inherit;\n}\n.v-list__tile--avatar {\n  height: 56px;\n}\n.v-list--dense {\n  padding-top: 4px;\n  padding-bottom: 4px;\n}\n.v-list--dense .v-subheader {\n  font-size: 13px;\n  height: 40px;\n}\n.v-list--dense .v-list__group .v-subheader {\n  height: 40px;\n}\n.v-list--dense .v-list__tile {\n  font-size: 13px;\n}\n.v-list--dense .v-list__tile--avatar {\n  height: 48px;\n}\n.v-list--dense .v-list__tile:not(.v-list__tile--avatar) {\n  height: 40px;\n}\n.v-list--dense .v-list__tile .v-icon {\n  font-size: 22px;\n}\n.v-list--dense .v-list__tile__sub-title {\n  font-size: 13px;\n}\n.v-list--disabled {\n  pointer-events: none;\n}\n.v-list--two-line .v-list__tile {\n  height: 72px;\n}\n.v-list--two-line.v-list--dense .v-list__tile {\n  height: 60px;\n}\n.v-list--three-line .v-list__tile {\n  height: 88px;\n}\n.v-list--three-line .v-list__tile__avatar {\n  margin-top: -18px;\n}\n.v-list--three-line .v-list__tile__sub-title {\n  white-space: initial;\n  -webkit-line-clamp: 2;\n  display: -webkit-box;\n}\n.v-list--three-line.v-list--dense .v-list__tile {\n  height: 76px;\n}\n.v-list > .v-list__group:before {\n  top: 0;\n}\n.v-list > .v-list__group:before .v-list__tile__avatar {\n  margin-top: -14px;\n}\n.v-list__group {\n  padding: 0;\n  position: relative;\n  transition: inherit;\n}\n.v-list__group:before,\n.v-list__group:after {\n  content: '';\n  height: 1px;\n  left: 0;\n  position: absolute;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-list__group--active ~ .v-list__group:before {\n  display: none;\n}\n.v-list__group__header {\n  align-items: center;\n  cursor: pointer;\n  display: flex;\n  list-style-type: none;\n}\n.v-list__group__header > div:not(.v-list__group__header__prepend-icon):not(.v-list__group__header__append-icon) {\n  flex: 1 1 auto;\n  overflow: hidden;\n}\n.v-list__group__header .v-list__group__header__append-icon,\n.v-list__group__header .v-list__group__header__prepend-icon {\n  padding: 0 16px;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-list__group__header--sub-group {\n  align-items: center;\n  display: flex;\n}\n.v-list__group__header--sub-group div .v-list__tile {\n  padding-left: 0;\n}\n.v-list__group__header--sub-group .v-list__group__header__prepend-icon {\n  padding: 0 0 0 40px;\n  margin-right: 8px;\n}\n.v-list__group__header .v-list__group__header__prepend-icon {\n  display: flex;\n  justify-content: flex-start;\n  min-width: 56px;\n}\n.v-list__group__header--active .v-list__group__header__append-icon .v-icon {\n  -webkit-transform: rotate(-180deg);\n          transform: rotate(-180deg);\n}\n.v-list__group__header--active .v-list__group__header__prepend-icon .v-icon {\n  color: inherit;\n}\n.v-list__group__header--active.v-list__group__header--sub-group .v-list__group__header__prepend-icon .v-icon {\n  -webkit-transform: rotate(-180deg);\n          transform: rotate(-180deg);\n}\n.v-list__group__items {\n  position: relative;\n  padding: 0;\n  transition: inherit;\n}\n.v-list__group__items > div {\n  display: block;\n}\n.v-list__group__items--no-action .v-list__tile {\n  padding-left: 72px;\n}\n.v-list__group--disabled {\n  pointer-events: none;\n}\n.v-list--subheader {\n  padding-top: 0;\n}\n\n.v-avatar {\n  align-items: center;\n  border-radius: 50%;\n  display: inline-flex;\n  justify-content: center;\n  position: relative;\n  text-align: center;\n  vertical-align: middle;\n}\n.v-avatar img,\n.v-avatar .v-icon,\n.v-avatar .v-image {\n  border-radius: 50%;\n  display: inline-flex;\n  height: inherit;\n  width: inherit;\n}\n.v-avatar--tile {\n  border-radius: 0;\n}\n.v-avatar--tile img,\n.v-avatar--tile .v-icon,\n.v-avatar--tile .v-image {\n  border-radius: 0;\n}\n\n/* Theme */\n.theme--light.v-counter {\n  color: rgba(0,0,0,0.54);\n}\n.theme--dark.v-counter {\n  color: rgba(255,255,255,0.7);\n}\n.v-counter {\n  flex: 0 1 auto;\n  font-size: 12px;\n  min-height: 12px;\n  line-height: 1;\n}\n\n.v-progress-linear {\n  background: transparent;\n  margin: 1rem 0;\n  overflow: hidden;\n  width: 100%;\n  position: relative;\n}\n.v-progress-linear__bar {\n  width: 100%;\n  height: inherit;\n  position: relative;\n  transition: 0.2s cubic-bezier(0.4, 0, 0.6, 1);\n  z-index: 1;\n}\n.v-progress-linear__bar__determinate {\n  height: inherit;\n  transition: 0.2s cubic-bezier(0.4, 0, 0.6, 1);\n}\n.v-progress-linear__bar__indeterminate .long,\n.v-progress-linear__bar__indeterminate .short {\n  height: inherit;\n  position: absolute;\n  left: 0;\n  top: 0;\n  bottom: 0;\n  will-change: left, right;\n  width: auto;\n  background-color: inherit;\n}\n.v-progress-linear__bar__indeterminate--active .long {\n  -webkit-animation: indeterminate;\n          animation: indeterminate;\n  -webkit-animation-duration: 2.2s;\n          animation-duration: 2.2s;\n  -webkit-animation-iteration-count: infinite;\n          animation-iteration-count: infinite;\n}\n.v-progress-linear__bar__indeterminate--active .short {\n  -webkit-animation: indeterminate-short;\n          animation: indeterminate-short;\n  -webkit-animation-duration: 2.2s;\n          animation-duration: 2.2s;\n  -webkit-animation-iteration-count: infinite;\n          animation-iteration-count: infinite;\n}\n.v-progress-linear__background {\n  position: absolute;\n  top: 0;\n  left: 0;\n  bottom: 0;\n  transition: 0.3s ease-in;\n}\n.v-progress-linear__content {\n  width: 100%;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  z-index: 2;\n}\n.v-progress-linear--query .v-progress-linear__bar__indeterminate--active .long {\n  -webkit-animation: query;\n          animation: query;\n  -webkit-animation-duration: 2s;\n          animation-duration: 2s;\n  -webkit-animation-iteration-count: infinite;\n          animation-iteration-count: infinite;\n}\n.v-progress-linear--query .v-progress-linear__bar__indeterminate--active .short {\n  -webkit-animation: query-short;\n          animation: query-short;\n  -webkit-animation-duration: 2s;\n          animation-duration: 2s;\n  -webkit-animation-iteration-count: infinite;\n          animation-iteration-count: infinite;\n}\n@-webkit-keyframes indeterminate {\n  0% {\n    left: -90%;\n    right: 100%;\n  }\n  60% {\n    left: -90%;\n    right: 100%;\n  }\n  100% {\n    left: 100%;\n    right: -35%;\n  }\n}\n@keyframes indeterminate {\n  0% {\n    left: -90%;\n    right: 100%;\n  }\n  60% {\n    left: -90%;\n    right: 100%;\n  }\n  100% {\n    left: 100%;\n    right: -35%;\n  }\n}\n@-webkit-keyframes indeterminate-short {\n  0% {\n    left: -200%;\n    right: 100%;\n  }\n  60% {\n    left: 107%;\n    right: -8%;\n  }\n  100% {\n    left: 107%;\n    right: -8%;\n  }\n}\n@keyframes indeterminate-short {\n  0% {\n    left: -200%;\n    right: 100%;\n  }\n  60% {\n    left: 107%;\n    right: -8%;\n  }\n  100% {\n    left: 107%;\n    right: -8%;\n  }\n}\n@-webkit-keyframes query {\n  0% {\n    right: -90%;\n    left: 100%;\n  }\n  60% {\n    right: -90%;\n    left: 100%;\n  }\n  100% {\n    right: 100%;\n    left: -35%;\n  }\n}\n@keyframes query {\n  0% {\n    right: -90%;\n    left: 100%;\n  }\n  60% {\n    right: -90%;\n    left: 100%;\n  }\n  100% {\n    right: 100%;\n    left: -35%;\n  }\n}\n@-webkit-keyframes query-short {\n  0% {\n    right: -200%;\n    left: 100%;\n  }\n  60% {\n    right: 107%;\n    left: -8%;\n  }\n  100% {\n    right: 107%;\n    left: -8%;\n  }\n}\n@keyframes query-short {\n  0% {\n    right: -200%;\n    left: 100%;\n  }\n  60% {\n    right: 107%;\n    left: -8%;\n  }\n  100% {\n    right: 107%;\n    left: -8%;\n  }\n}\n\n.application--is-rtl .v-badge__badge {\n  right: initial;\n  left: -22px;\n}\n.application--is-rtl .v-badge--overlap .v-badge__badge {\n  right: initial;\n  left: -8px;\n}\n.application--is-rtl .v-badge--overlap.v-badge--left .v-badge__badge {\n  right: -8px;\n  left: initial;\n}\n.application--is-rtl .v-badge--left .v-badge__badge {\n  right: -22px;\n  left: initial;\n}\n.v-badge {\n  display: inline-block;\n  position: relative;\n}\n.v-badge__badge {\n  color: #fff;\n  display: flex;\n  position: absolute;\n  font-size: 14px;\n  top: -11px;\n  right: -22px;\n  border-radius: 50%;\n  height: 22px;\n  width: 22px;\n  justify-content: center;\n  align-items: center;\n  flex-direction: row;\n  flex-wrap: wrap;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-badge__badge .v-icon {\n  font-size: 14px;\n}\n.v-badge--overlap .v-badge__badge {\n  top: -8px;\n  right: -8px;\n}\n.v-badge--overlap.v-badge--left .v-badge__badge {\n  left: -8px;\n  right: initial;\n}\n.v-badge--overlap.v-badge--bottom .v-badge__badge {\n  bottom: -8px;\n  top: initial;\n}\n.v-badge--left .v-badge__badge {\n  left: -22px;\n}\n.v-badge--bottom .v-badge__badge {\n  bottom: -11px;\n  top: initial;\n}\n\n.theme--light.v-bottom-nav {\n  background-color: #fff;\n}\n.theme--light.v-bottom-nav .v-btn:not(.v-btn--active) {\n  color: rgba(0,0,0,0.54) !important;\n}\n.theme--dark.v-bottom-nav {\n  background-color: #424242;\n}\n.theme--dark.v-bottom-nav .v-btn:not(.v-btn--active) {\n  color: rgba(255,255,255,0.7) !important;\n}\n.v-item-group.v-bottom-nav {\n  bottom: 0;\n  box-shadow: 0 3px 14px 2px rgba(0,0,0,0.12);\n  display: flex;\n  left: 0;\n  justify-content: center;\n  -webkit-transform: translate(0, 60px);\n          transform: translate(0, 60px);\n  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-item-group.v-bottom-nav--absolute {\n  position: absolute;\n}\n.v-item-group.v-bottom-nav--active {\n  -webkit-transform: translate(0, 0);\n          transform: translate(0, 0);\n}\n.v-item-group.v-bottom-nav--fixed {\n  position: fixed;\n  z-index: 4;\n}\n.v-item-group.v-bottom-nav .v-btn {\n  background: transparent !important;\n  border-radius: 0;\n  box-shadow: none !important;\n  font-weight: 400;\n  height: 100%;\n  margin: 0;\n  max-width: 168px;\n  min-width: 80px;\n  padding: 8px 12px 10px;\n  text-transform: none;\n  width: 100%;\n  flex-shrink: 1;\n}\n.v-item-group.v-bottom-nav .v-btn .v-btn__content {\n  flex-direction: column-reverse;\n  font-size: 12px;\n  white-space: nowrap;\n  will-change: font-size;\n}\n.v-item-group.v-bottom-nav .v-btn .v-btn__content i.v-icon {\n  color: inherit;\n  margin-bottom: 4px;\n  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-item-group.v-bottom-nav .v-btn .v-btn__content span {\n  line-height: 1;\n}\n.v-item-group.v-bottom-nav .v-btn--active {\n  padding-top: 6px;\n}\n.v-item-group.v-bottom-nav .v-btn--active:before {\n  background-color: transparent;\n}\n.v-item-group.v-bottom-nav .v-btn--active .v-btn__content {\n  font-size: 14px;\n}\n.v-item-group.v-bottom-nav .v-btn--active .v-btn__content .v-icon {\n  -webkit-transform: none;\n          transform: none;\n}\n.v-item-group.v-bottom-nav--shift .v-btn__content {\n  font-size: 14px;\n}\n.v-item-group.v-bottom-nav--shift .v-btn {\n  transition: all 0.3s;\n  min-width: 56px;\n  max-width: 96px;\n}\n.v-item-group.v-bottom-nav--shift .v-btn--active {\n  min-width: 96px;\n  max-width: 168px;\n}\n.v-bottom-nav--shift .v-btn:not(.v-btn--active) .v-btn__content .v-icon {\n  -webkit-transform: scale(1, 1) translate(0, 8px);\n          transform: scale(1, 1) translate(0, 8px);\n}\n.v-bottom-nav--shift .v-btn:not(.v-btn--active) .v-btn__content > span:not(.v-badge) {\n  color: transparent;\n}\n\n.v-item-group {\n  flex: 0 1 auto;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-item-group > * {\n  cursor: pointer;\n  flex: 1 1 auto;\n}\n\n.v-bottom-sheet.v-dialog {\n  align-self: flex-end;\n  border-radius: 0;\n  flex: 1 0 100%;\n  margin: 0;\n  min-width: 100%;\n  overflow: visible;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-bottom-sheet.v-dialog.v-bottom-sheet--inset {\n  max-width: 70%;\n  min-width: 0;\n}\n@media only screen and (max-width: 599px) {\n  .v-bottom-sheet.v-dialog.v-bottom-sheet--inset {\n    max-width: none;\n  }\n}\n\n.v-dialog {\n  box-shadow: 0px 11px 15px -7px rgba(0,0,0,0.2), 0px 24px 38px 3px rgba(0,0,0,0.14), 0px 9px 46px 8px rgba(0,0,0,0.12);\n  border-radius: 2px;\n  margin: 24px;\n  overflow-y: auto;\n  pointer-events: auto;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n  width: 100%;\n  z-index: inherit;\n}\n.v-dialog__content {\n  align-items: center;\n  display: flex;\n  height: 100%;\n  justify-content: center;\n  left: 0;\n  pointer-events: none;\n  position: fixed;\n  top: 0;\n  transition: 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);\n  width: 100%;\n  z-index: 6;\n  outline: none;\n}\n.v-dialog:not(.v-dialog--fullscreen) {\n  max-height: 90%;\n}\n.v-dialog__activator {\n  cursor: pointer;\n}\n.v-dialog__activator * {\n  cursor: pointer;\n}\n.v-dialog__container {\n  display: inline-block;\n  vertical-align: middle;\n}\n.v-dialog--animated {\n  -webkit-animation-duration: 0.15s;\n          animation-duration: 0.15s;\n  -webkit-animation-name: animate-dialog;\n          animation-name: animate-dialog;\n  -webkit-animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);\n          animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-dialog--fullscreen {\n  border-radius: 0;\n  margin: 0;\n  height: 100%;\n  position: fixed;\n  overflow-y: auto;\n  top: 0;\n  left: 0;\n}\n.v-dialog--fullscreen > .v-card {\n  min-height: 100%;\n  min-width: 100%;\n  margin: 0 !important;\n  padding: 0 !important;\n}\n.v-dialog--scrollable,\n.v-dialog--scrollable > form {\n  display: flex;\n}\n.v-dialog--scrollable > .v-card,\n.v-dialog--scrollable > form > .v-card {\n  display: flex;\n  flex: 1 1 100%;\n  max-width: 100%;\n  flex-direction: column;\n}\n.v-dialog--scrollable > .v-card > .v-card__title,\n.v-dialog--scrollable > form > .v-card > .v-card__title,\n.v-dialog--scrollable > .v-card > .v-card__actions,\n.v-dialog--scrollable > form > .v-card > .v-card__actions {\n  flex: 1 0 auto;\n}\n.v-dialog--scrollable > .v-card > .v-card__text,\n.v-dialog--scrollable > form > .v-card > .v-card__text {\n  overflow-y: auto;\n  -webkit-backface-visibility: hidden;\n          backface-visibility: hidden;\n}\n@-webkit-keyframes animate-dialog {\n  0% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n  }\n  50% {\n    -webkit-transform: scale(1.03);\n            transform: scale(1.03);\n  }\n  100% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n  }\n}\n@keyframes animate-dialog {\n  0% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n  }\n  50% {\n    -webkit-transform: scale(1.03);\n            transform: scale(1.03);\n  }\n  100% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n  }\n}\n\n.v-overlay {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  pointer-events: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  z-index: 5;\n}\n.v-overlay--absolute {\n  position: absolute;\n}\n.v-overlay:before {\n  background-color: #212121;\n  bottom: 0;\n  content: '';\n  height: 100%;\n  left: 0;\n  opacity: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  transition: inherit;\n  transition-delay: 150ms;\n  width: 100%;\n}\n.v-overlay--active {\n  pointer-events: auto;\n  touch-action: none;\n}\n.v-overlay--active:before {\n  opacity: 0.46;\n}\n\n.theme--light.v-breadcrumbs .v-breadcrumbs__divider,\n.theme--light.v-breadcrumbs .v-breadcrumbs__item--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-breadcrumbs .v-breadcrumbs__divider,\n.theme--dark.v-breadcrumbs .v-breadcrumbs__item--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.v-breadcrumbs {\n  align-items: center;\n  display: flex;\n  flex-wrap: wrap;\n  flex: 0 1 auto;\n  list-style-type: none;\n  margin: 0;\n  padding: 18px 12px;\n}\n.v-breadcrumbs li {\n  align-items: center;\n  display: inline-flex;\n  font-size: 14px;\n}\n.v-breadcrumbs li .v-icon {\n  font-size: 16px;\n}\n.v-breadcrumbs li:nth-child(even) {\n  padding: 0 12px;\n}\n.v-breadcrumbs--large li {\n  font-size: 16px;\n}\n.v-breadcrumbs--large li .v-icon {\n  font-size: 16px;\n}\n.v-breadcrumbs__item {\n  align-items: center;\n  display: inline-flex;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-breadcrumbs__item--disabled {\n  pointer-events: none;\n}\n\n.v-ripple__container {\n  color: inherit;\n  border-radius: inherit;\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0;\n  top: 0;\n  overflow: hidden;\n  z-index: 0;\n  pointer-events: none;\n  contain: strict;\n}\n.v-ripple__animation {\n  color: inherit;\n  position: absolute;\n  top: 0;\n  left: 0;\n  border-radius: 50%;\n  background: currentColor;\n  opacity: 0;\n  pointer-events: none;\n  overflow: hidden;\n  will-change: transform, opacity;\n}\n.v-ripple__animation--enter {\n  transition: none;\n}\n.v-ripple__animation--in {\n  transition: opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);\n  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1);\n  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s cubic-bezier(0.4, 0, 0.2, 1), -webkit-transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-ripple__animation--out {\n  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.theme--light.v-btn {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-btn.v-btn--disabled {\n  color: rgba(0,0,0,0.26) !important;\n}\n.theme--light.v-btn.v-btn--disabled .v-icon,\n.theme--light.v-btn.v-btn--disabled .v-btn__loading {\n  color: rgba(0,0,0,0.26) !important;\n}\n.theme--light.v-btn.v-btn--disabled:not(.v-btn--icon):not(.v-btn--flat):not(.v-btn--outline) {\n  background-color: rgba(0,0,0,0.12) !important;\n}\n.theme--light.v-btn:not(.v-btn--icon):not(.v-btn--flat) {\n  background-color: #f5f5f5;\n}\n.theme--dark.v-btn {\n  color: #fff;\n}\n.theme--dark.v-btn.v-btn--disabled {\n  color: rgba(255,255,255,0.3) !important;\n}\n.theme--dark.v-btn.v-btn--disabled .v-icon,\n.theme--dark.v-btn.v-btn--disabled .v-btn__loading {\n  color: rgba(255,255,255,0.3) !important;\n}\n.theme--dark.v-btn.v-btn--disabled:not(.v-btn--icon):not(.v-btn--flat):not(.v-btn--outline) {\n  background-color: rgba(255,255,255,0.12) !important;\n}\n.theme--dark.v-btn:not(.v-btn--icon):not(.v-btn--flat) {\n  background-color: #212121;\n}\n/** Base Spec */\n.v-btn {\n  align-items: center;\n  border-radius: 2px;\n  display: inline-flex;\n  height: 36px;\n  flex: 0 0 auto;\n  font-size: 14px;\n  font-weight: 500;\n  justify-content: center;\n  margin: 6px 8px;\n  min-width: 88px;\n  outline: 0;\n  text-transform: uppercase;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1), color 1ms;\n  position: relative;\n  vertical-align: middle;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n/** Psuedo */\n.v-btn:before {\n  border-radius: inherit;\n  color: inherit;\n  content: '';\n  position: absolute;\n  left: 0;\n  top: 0;\n  height: 100%;\n  opacity: 0.12;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n/** Content */\n.v-btn {\n  padding: 0 16px;\n}\n.v-btn--active,\n.v-btn:hover,\n.v-btn:focus {\n  position: relative;\n}\n.v-btn--active:before,\n.v-btn:hover:before,\n.v-btn:focus:before {\n  background-color: currentColor;\n}\n.v-btn__content {\n  align-items: center;\n  border-radius: inherit;\n  color: inherit;\n  display: flex;\n  flex: 1 0 auto;\n  justify-content: center;\n  margin: 0 auto;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  white-space: nowrap;\n  width: inherit;\n}\n/** Sizes */\n.v-btn--small {\n  font-size: 13px;\n  height: 28px;\n  padding: 0 8px;\n}\n.v-btn--large {\n  font-size: 15px;\n  height: 44px;\n  padding: 0 32px;\n}\n/** Icons */\n.v-btn .v-btn__content .v-icon {\n  color: inherit;\n}\n/** Types */\n.v-btn:not(.v-btn--depressed):not(.v-btn--flat) {\n  will-change: box-shadow;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-btn:not(.v-btn--depressed):not(.v-btn--flat):active {\n  box-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);\n}\n.v-btn--icon {\n  background: transparent;\n  box-shadow: none !important;\n  border-radius: 50%;\n  justify-content: center;\n  min-width: 0;\n  width: 36px;\n}\n.v-btn--icon.v-btn--small {\n  width: 28px;\n}\n.v-btn--icon.v-btn--large {\n  width: 44px;\n}\n.v-btn--icon:before {\n  border-radius: 50%;\n}\n.v-btn--floating {\n  border-radius: 50%;\n  min-width: 0;\n  height: 56px;\n  width: 56px;\n  padding: 0;\n}\n.v-btn--floating.v-btn--fixed,\n.v-btn--floating.v-btn--absolute {\n  z-index: 4;\n}\n.v-btn--floating:not(.v-btn--depressed):not(.v-btn--flat) {\n  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12);\n}\n.v-btn--floating:not(.v-btn--depressed):not(.v-btn--flat):active {\n  box-shadow: 0px 7px 8px -4px rgba(0,0,0,0.2), 0px 12px 17px 2px rgba(0,0,0,0.14), 0px 5px 22px 4px rgba(0,0,0,0.12);\n}\n.v-btn--floating .v-btn__content {\n  flex: 1 1 auto;\n  margin: 0;\n  height: 100%;\n}\n.v-btn--floating:after {\n  border-radius: 50%;\n}\n.v-btn--floating .v-btn__content > :not(:only-child) {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-btn--floating .v-btn__content > :not(:only-child):first-child {\n  opacity: 1;\n}\n.v-btn--floating .v-btn__content > :not(:only-child):last-child {\n  opacity: 0;\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n.v-btn--floating .v-btn__content > :not(:only-child):last-child,\n.v-btn--floating .v-btn__content > :not(:only-child):first-child {\n  -webkit-backface-visibility: hidden;\n  position: absolute;\n  left: 0;\n  top: 0;\n}\n.v-btn--floating.v-btn--active .v-btn__content > :not(:only-child):first-child {\n  opacity: 0;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n}\n.v-btn--floating.v-btn--active .v-btn__content > :not(:only-child):last-child {\n  opacity: 1;\n  -webkit-transform: rotate(0);\n          transform: rotate(0);\n}\n.v-btn--floating .v-icon {\n  height: inherit;\n  width: inherit;\n}\n.v-btn--floating.v-btn--small {\n  height: 40px;\n  width: 40px;\n}\n.v-btn--floating.v-btn--small .v-icon {\n  font-size: 18px;\n}\n.v-btn--floating.v-btn--large {\n  height: 72px;\n  width: 72px;\n}\n.v-btn--floating.v-btn--large .v-icon {\n  font-size: 30px;\n}\n.v-btn--reverse .v-btn__content {\n  flex-direction: row-reverse;\n}\n.v-btn--reverse.v-btn--column .v-btn__content {\n  flex-direction: column-reverse;\n}\n.v-btn--fixed,\n.v-btn--absolute {\n  margin: 0;\n}\n.v-btn.v-btn--absolute {\n  position: absolute;\n}\n.v-btn.v-btn--fixed {\n  position: fixed;\n}\n.v-btn--top:not(.v-btn--absolute) {\n  top: 16px;\n}\n.v-btn--top.v-btn--absolute {\n  top: -28px;\n}\n.v-btn--top.v-btn--absolute.v-btn--small {\n  top: -20px;\n}\n.v-btn--top.v-btn--absolute.v-btn--large {\n  top: -36px;\n}\n.v-btn--bottom:not(.v-btn--absolute) {\n  bottom: 16px;\n}\n.v-btn--bottom.v-btn--absolute {\n  bottom: -28px;\n}\n.v-btn--bottom.v-btn--absolute.v-btn--small {\n  bottom: -20px;\n}\n.v-btn--bottom.v-btn--absolute.v-btn--large {\n  bottom: -36px;\n}\n.v-btn--left {\n  left: 16px;\n}\n.v-btn--right {\n  right: 16px;\n}\n/** Disabled */\n.v-btn.v-btn--disabled {\n  box-shadow: none !important;\n  pointer-events: none;\n}\n.v-btn:not(.v-btn--disabled):not(.v-btn--floating):not(.v-btn--icon) .v-btn__content .v-icon {\n  transition: none;\n}\n.v-btn--icon {\n  padding: 0;\n}\n/** Loader */\n.v-btn--loader {\n  pointer-events: none;\n}\n.v-btn--loader .v-btn__content {\n  opacity: 0;\n}\n.v-btn__loading {\n  align-items: center;\n  display: flex;\n  height: 100%;\n  justify-content: center;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n}\n.v-btn__loading .v-icon--left {\n  margin-right: 1rem;\n  line-height: inherit;\n}\n.v-btn__loading .v-icon--right {\n  margin-left: 1rem;\n  line-height: inherit;\n}\n/** Custom Buttons */\n.v-btn.v-btn--outline {\n  border: 1px solid currentColor;\n  background: transparent !important;\n  box-shadow: none;\n}\n.v-btn.v-btn--outline:hover {\n  box-shadow: none;\n}\n.v-btn--block {\n  display: flex;\n  flex: 1;\n  margin: 6px 0;\n  width: 100%;\n}\n.v-btn--round {\n  border-radius: 28px;\n}\n.v-btn--round:after {\n  border-radius: 28px;\n}\n/** Themes */\n.v-btn:not(.v-btn--outline).primary,\n.v-btn:not(.v-btn--outline).secondary,\n.v-btn:not(.v-btn--outline).accent,\n.v-btn:not(.v-btn--outline).success,\n.v-btn:not(.v-btn--outline).error,\n.v-btn:not(.v-btn--outline).warning,\n.v-btn:not(.v-btn--outline).info {\n  color: #fff;\n}\n@media (hover: none) {\n  .v-btn:hover::before {\n    background-color: transparent;\n  }\n}\n\n.v-progress-circular {\n  position: relative;\n  display: inline-flex;\n  vertical-align: middle;\n}\n.v-progress-circular svg {\n  width: 100%;\n  height: 100%;\n  margin: auto;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  z-index: 0;\n}\n.v-progress-circular--indeterminate svg {\n  -webkit-animation: progress-circular-rotate 1.4s linear infinite;\n          animation: progress-circular-rotate 1.4s linear infinite;\n  -webkit-transform-origin: center center;\n          transform-origin: center center;\n  transition: all 0.2s ease-in-out;\n}\n.v-progress-circular--indeterminate .v-progress-circular__overlay {\n  -webkit-animation: progress-circular-dash 1.4s ease-in-out infinite;\n          animation: progress-circular-dash 1.4s ease-in-out infinite;\n  stroke-linecap: round;\n  stroke-dasharray: 80, 200;\n  stroke-dashoffset: 0px;\n}\n.v-progress-circular__underlay {\n  stroke: rgba(0,0,0,0.1);\n  z-index: 1;\n}\n.v-progress-circular__overlay {\n  stroke: currentColor;\n  z-index: 2;\n  transition: all 0.6s ease-in-out;\n}\n.v-progress-circular__info {\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n@-webkit-keyframes progress-circular-dash {\n  0% {\n    stroke-dasharray: 1, 200;\n    stroke-dashoffset: 0px;\n  }\n  50% {\n    stroke-dasharray: 100, 200;\n    stroke-dashoffset: -15px;\n  }\n  100% {\n    stroke-dasharray: 100, 200;\n    stroke-dashoffset: -125px;\n  }\n}\n@keyframes progress-circular-dash {\n  0% {\n    stroke-dasharray: 1, 200;\n    stroke-dashoffset: 0px;\n  }\n  50% {\n    stroke-dasharray: 100, 200;\n    stroke-dashoffset: -15px;\n  }\n  100% {\n    stroke-dasharray: 100, 200;\n    stroke-dashoffset: -125px;\n  }\n}\n@-webkit-keyframes progress-circular-rotate {\n  100% {\n    -webkit-transform: rotate(360deg);\n            transform: rotate(360deg);\n  }\n}\n@keyframes progress-circular-rotate {\n  100% {\n    -webkit-transform: rotate(360deg);\n            transform: rotate(360deg);\n  }\n}\n\n/** Themes */\n.theme--light.v-btn-toggle {\n  background: #fff;\n}\n.theme--light.v-btn-toggle .v-btn {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-btn-toggle:not(.v-btn-toggle--only-child) .v-btn.v-btn--active:not(:last-child) {\n  border-right-color: rgba(0,0,0,0.26);\n}\n.theme--dark.v-btn-toggle {\n  background: #424242;\n}\n.theme--dark.v-btn-toggle .v-btn {\n  color: #fff;\n}\n.theme--dark.v-btn-toggle:not(.v-btn-toggle--only-child) .v-btn.v-btn--active:not(:last-child) {\n  border-right-color: rgba(255,255,255,0.3);\n}\n.v-btn-toggle {\n  display: inline-flex;\n  border-radius: 2px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  will-change: background, box-shadow;\n}\n.v-btn-toggle .v-btn {\n  justify-content: center;\n  min-width: auto;\n  width: auto;\n  padding: 0 8px;\n  margin: 0;\n  opacity: 0.4;\n  border-radius: 0;\n}\n.v-btn-toggle .v-btn:not(:last-child) {\n  border-right: 1px solid transparent;\n}\n.v-btn-toggle .v-btn:after {\n  display: none;\n}\n.v-btn-toggle .v-btn.v-btn--active {\n  opacity: 1;\n}\n.v-btn-toggle .v-btn span + .v-icon {\n  font-size: initial;\n  margin-left: 10px;\n}\n.v-btn-toggle .v-btn:first-child {\n  border-radius: 2px 0 0 2px;\n}\n.v-btn-toggle .v-btn:last-child {\n  border-radius: 0 2px 2px 0;\n}\n.v-btn-toggle--selected {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n\n.theme--light.v-calendar-weekly {\n  background-color: #fff;\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__head-weekday {\n  border-right: #e0e0e0 1px solid;\n  color: #000;\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__head-weekday.v-past {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__head-weekday.v-outside {\n  background-color: #f7f7f7;\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__day {\n  border-right: #e0e0e0 1px solid;\n  border-bottom: #e0e0e0 1px solid;\n  color: #000;\n}\n.theme--light.v-calendar-weekly .v-calendar-weekly__day.v-outside {\n  background-color: #f7f7f7;\n}\n.theme--dark.v-calendar-weekly {\n  background-color: #303030;\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__head-weekday {\n  border-right: #9e9e9e 1px solid;\n  color: #fff;\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__head-weekday.v-past {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__head-weekday.v-outside {\n  background-color: #202020;\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__day {\n  border-right: #9e9e9e 1px solid;\n  border-bottom: #9e9e9e 1px solid;\n  color: #fff;\n}\n.theme--dark.v-calendar-weekly .v-calendar-weekly__day.v-outside {\n  background-color: #202020;\n}\n.v-calendar-weekly {\n  width: 100%;\n  height: 100%;\n  display: flex;\n  flex-direction: column;\n}\n.v-calendar-weekly__head {\n  display: flex;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-calendar-weekly__head-weekday {\n  flex: 1 0 20px;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  padding: 0px 4px 0px 4px;\n  font-size: 14px;\n}\n.v-calendar-weekly__week {\n  display: flex;\n  flex: 1;\n}\n.v-calendar-weekly__day {\n  flex: 1;\n  width: 0;\n  overflow: hidden;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  position: relative;\n  padding: 32px 4px 4px 4px;\n}\n.v-calendar-weekly__day.v-present .v-calendar-weekly__day-label {\n  border: 1px solid currentColor;\n}\n.v-calendar-weekly__day.v-present .v-calendar-weekly__day-month {\n  color: currentColor;\n}\n.v-calendar-weekly__day-label {\n  position: absolute;\n  text-decoration: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  cursor: pointer;\n  box-shadow: none;\n  text-align: center;\n  left: 0;\n  top: 0;\n  border-radius: 16px;\n  width: 32px;\n  height: 32px;\n  line-height: 32px;\n}\n.v-calendar-weekly__day-label:hover {\n  text-decoration: underline;\n}\n.v-calendar-weekly__day-month {\n  position: absolute;\n  text-decoration: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  box-shadow: none;\n  top: 0;\n  left: 36px;\n  height: 32px;\n  line-height: 32px;\n}\n\n.theme--light.v-calendar-daily {\n  background-color: #fff;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__intervals-head {\n  border-right: #e0e0e0 1px solid;\n}\n.theme--light.v-calendar-daily .v-calendar-daily_head-day {\n  border-right: #e0e0e0 1px solid;\n  border-bottom: #e0e0e0 1px solid;\n  color: #000;\n}\n.theme--light.v-calendar-daily .v-calendar-daily_head-day.v-past .v-calendar-daily_head-weekday,\n.theme--light.v-calendar-daily .v-calendar-daily_head-day.v-past .v-calendar-daily_head-day-label {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-calendar-daily .v-calendar-daily__intervals-body {\n  border-right: #e0e0e0 1px solid;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__intervals-body .v-calendar-daily__interval-text {\n  color: #424242;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__day {\n  border-right: #e0e0e0 1px solid;\n  border-bottom: #e0e0e0 1px solid;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__day-interval {\n  border-top: #e0e0e0 1px solid;\n}\n.theme--light.v-calendar-daily .v-calendar-daily__day-interval:first-child {\n  border-top: none !important;\n}\n.theme--dark.v-calendar-daily {\n  background-color: #303030;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__intervals-head {\n  border-right: #9e9e9e 1px solid;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily_head-day {\n  border-right: #9e9e9e 1px solid;\n  border-bottom: #9e9e9e 1px solid;\n  color: #fff;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily_head-day.v-past .v-calendar-daily_head-weekday,\n.theme--dark.v-calendar-daily .v-calendar-daily_head-day.v-past .v-calendar-daily_head-day-label {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__intervals-body {\n  border-right: #9e9e9e 1px solid;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__intervals-body .v-calendar-daily__interval-text {\n  color: #eee;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__day {\n  border-right: #616161 1px solid;\n  border-bottom: #616161 1px solid;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__day-interval {\n  border-top: #616161 1px solid;\n}\n.theme--dark.v-calendar-daily .v-calendar-daily__day-interval:first-child {\n  border-top: none !important;\n}\n.v-calendar-daily {\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  height: 100%;\n}\n.v-calendar-daily__head {\n  flex: none;\n  display: flex;\n}\n.v-calendar-daily__intervals-head {\n  flex: none;\n  width: 44px;\n}\n.v-calendar-daily_head-day {\n  flex: 1 1 auto;\n  width: 0;\n}\n.v-calendar-daily_head-weekday {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  padding: 4px 4px 4px 8px;\n  font-size: 14px;\n}\n.v-calendar-daily_head-day-label {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  font-size: 40px;\n  padding: 0px 4px 4px 8px;\n  line-height: 40px;\n  cursor: pointer;\n}\n.v-calendar-daily_head-day-label:hover {\n  text-decoration: underline;\n}\n.v-calendar-daily__body {\n  flex: 1 1 60%;\n  overflow: hidden;\n  display: flex;\n  position: relative;\n  flex-direction: column;\n}\n.v-calendar-daily__scroll-area {\n  overflow-y: scroll;\n  flex: 1 1 auto;\n  display: flex;\n  align-items: flex-start;\n}\n.v-calendar-daily__pane {\n  width: 100%;\n  overflow-y: hidden;\n  flex: none;\n  display: flex;\n  align-items: flex-start;\n}\n.v-calendar-daily__day-container {\n  display: flex;\n  flex: 1;\n  width: 100%;\n  height: 100%;\n}\n.v-calendar-daily__intervals-body {\n  flex: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  width: 44px;\n}\n.v-calendar-daily__interval {\n  text-align: center;\n  border-bottom: none;\n}\n.v-calendar-daily__interval-text {\n  display: block;\n  position: relative;\n  top: -6px;\n  font-size: 10px;\n}\n.v-calendar-daily__day {\n  flex: 1;\n  width: 0;\n  position: relative;\n}\n\n/* Themes */\n.theme--light.v-sheet {\n  background-color: #fff;\n  border-color: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-sheet {\n  background-color: #424242;\n  border-color: #424242;\n  color: #fff;\n}\n.v-sheet {\n  display: block;\n  border-radius: 2px;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-sheet--tile {\n  border-radius: 0;\n}\n\n.v-image {\n  z-index: 0;\n}\n.v-image__image,\n.v-image__placeholder {\n  z-index: -1;\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n}\n.v-image__image {\n  background-repeat: no-repeat;\n}\n.v-image__image--preload {\n  -webkit-filter: blur(2px);\n          filter: blur(2px);\n}\n.v-image__image--contain {\n  background-size: contain;\n}\n.v-image__image--cover {\n  background-size: cover;\n}\n\n.v-responsive {\n  position: relative;\n  overflow: hidden;\n  flex: 1 0 auto;\n  display: flex;\n}\n.v-responsive__content {\n  flex: 1 0 0px;\n}\n.v-responsive__sizer {\n  transition: padding-bottom 0.2s cubic-bezier(0.25, 0.8, 0.5, 1);\n  flex: 0 0 0px;\n}\n\n.application--is-rtl .v-carousel__prev {\n  left: auto;\n  right: 5px;\n}\n.application--is-rtl .v-carousel__next {\n  left: 5px;\n  right: auto;\n}\n.v-carousel {\n  width: 100%;\n  position: relative;\n  overflow: hidden;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-carousel__prev,\n.v-carousel__next {\n  position: absolute;\n  top: 50%;\n  z-index: 1;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n}\n.v-carousel__prev .v-btn,\n.v-carousel__next .v-btn {\n  margin: 0;\n  height: auto;\n  width: auto;\n}\n.v-carousel__prev .v-btn i,\n.v-carousel__next .v-btn i {\n  font-size: 48px;\n}\n.v-carousel__prev .v-btn:hover,\n.v-carousel__next .v-btn:hover {\n  background: none;\n}\n.v-carousel__prev {\n  left: 5px;\n}\n.v-carousel__next {\n  right: 5px;\n}\n.v-carousel__controls {\n  background: rgba(0,0,0,0.5);\n  align-items: center;\n  bottom: 0;\n  display: flex;\n  justify-content: center;\n  left: 0;\n  position: absolute;\n  height: 50px;\n  list-style-type: none;\n  width: 100%;\n  z-index: 1;\n}\n.v-carousel__controls > .v-item-group {\n  flex: 0 1 auto;\n}\n.v-carousel__controls__item {\n  margin: 0 8px !important;\n}\n.v-carousel__controls__item .v-icon {\n  opacity: 0.5;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-carousel__controls__item--active .v-icon {\n  opacity: 1;\n  vertical-align: middle;\n}\n.v-carousel__controls__item:hover {\n  background: none;\n}\n.v-carousel__controls__item:hover .v-icon {\n  opacity: 0.8;\n}\n\n.v-window__container {\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-window__container--is-active {\n  overflow: hidden;\n}\n.v-window-x-transition-enter-active,\n.v-window-x-reverse-transition-enter-active,\n.v-window-y-transition-enter-active,\n.v-window-y-reverse-transition-enter-active,\n.v-window-x-transition-leave-active,\n.v-window-x-reverse-transition-leave-active,\n.v-window-y-transition-leave-active,\n.v-window-y-reverse-transition-leave-active {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-window-x-transition-leave,\n.v-window-x-reverse-transition-leave,\n.v-window-y-transition-leave,\n.v-window-y-reverse-transition-leave,\n.v-window-x-transition-leave-to,\n.v-window-x-reverse-transition-leave-to,\n.v-window-y-transition-leave-to,\n.v-window-y-reverse-transition-leave-to {\n  position: absolute !important;\n  top: 0;\n  width: 100%;\n}\n.v-window-x-transition-enter {\n  -webkit-transform: translateX(100%);\n          transform: translateX(100%);\n}\n.v-window-x-transition-leave-to {\n  -webkit-transform: translateX(-100%);\n          transform: translateX(-100%);\n}\n.v-window-x-reverse-transition-enter {\n  -webkit-transform: translateX(-100%);\n          transform: translateX(-100%);\n}\n.v-window-x-reverse-transition-leave-to {\n  -webkit-transform: translateX(100%);\n          transform: translateX(100%);\n}\n.v-window-y-transition-enter {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.v-window-y-transition-leave-to {\n  -webkit-transform: translateY(-100%);\n          transform: translateY(-100%);\n}\n.v-window-y-reverse-transition-enter {\n  -webkit-transform: translateY(-100%);\n          transform: translateY(-100%);\n}\n.v-window-y-reverse-transition-leave-to {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n\n.theme--light.v-data-iterator .v-data-iterator__actions {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-data-iterator .v-data-iterator__actions__select .v-select .v-select__selection--comma {\n  color: rgba(0,0,0,0.54) !important;\n}\n.theme--light.v-data-iterator .v-data-iterator__actions__select .v-select .v-input__append-inner {\n  color: rgba(0,0,0,0.54) !important;\n}\n.theme--dark.v-data-iterator .v-data-iterator__actions {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-data-iterator .v-data-iterator__actions__select .v-select .v-select__selection--comma {\n  color: rgba(255,255,255,0.7) !important;\n}\n.theme--dark.v-data-iterator .v-data-iterator__actions__select .v-select .v-input__append-inner {\n  color: rgba(255,255,255,0.7) !important;\n}\n/** Actions */\n.v-data-iterator__actions {\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  font-size: 12px;\n  flex-wrap: wrap-reverse;\n}\n.v-data-iterator__actions .v-btn {\n  color: inherit;\n}\n.v-data-iterator__actions .v-btn:last-of-type {\n  margin-left: 14px;\n}\n.v-data-iterator__actions__range-controls {\n  display: flex;\n  align-items: center;\n  min-height: 48px;\n}\n.v-data-iterator__actions__pagination {\n  display: block;\n  text-align: center;\n  margin: 0 32px 0 24px;\n}\n.v-data-iterator__actions__select {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  margin-right: 14px;\n  white-space: nowrap;\n}\n.v-data-iterator__actions__select .v-select {\n  flex: 0 1 0;\n  margin: 13px 0 13px 34px;\n  padding: 0;\n  position: initial;\n}\n.v-data-iterator__actions__select .v-select__selections {\n  flex-wrap: nowrap;\n}\n.v-data-iterator__actions__select .v-select__selections .v-select__selection--comma {\n  font-size: 12px;\n}\n\n.theme--light.v-overflow-btn .v-input__control::before,\n.theme--light.v-overflow-btn .v-input__slot::before {\n  background-color: rgba(0,0,0,0.12) !important;\n}\n.theme--light.v-overflow-btn.v-text-field--outline .v-input__control::before,\n.theme--light.v-overflow-btn.v-text-field--outline .v-input__slot::before {\n  background-color: transparent !important;\n}\n.theme--light.v-overflow-btn--segmented .v-input__append-inner,\n.theme--light.v-overflow-btn--editable:hover .v-input__append-inner,\n.theme--light.v-overflow-btn--editable.v-input--is-focused .v-input__append-inner,\n.theme--light.v-overflow-btn--editable.v-select--is-menu-active .v-input__append-inner {\n  border-left: 1px solid rgba(0,0,0,0.12);\n}\n.theme--light.v-overflow-btn:hover .v-input__slot,\n.theme--light.v-overflow-btn.v-input--is-focused .v-input__slot,\n.theme--light.v-overflow-btn.v-select--is-menu-active .v-input__slot {\n  background: #fff;\n}\n.theme--dark.v-overflow-btn .v-input__control::before,\n.theme--dark.v-overflow-btn .v-input__slot::before {\n  background-color: rgba(255,255,255,0.12) !important;\n}\n.theme--dark.v-overflow-btn.v-text-field--outline .v-input__control::before,\n.theme--dark.v-overflow-btn.v-text-field--outline .v-input__slot::before {\n  background-color: transparent !important;\n}\n.theme--dark.v-overflow-btn--segmented .v-input__append-inner,\n.theme--dark.v-overflow-btn--editable:hover .v-input__append-inner,\n.theme--dark.v-overflow-btn--editable.v-input--is-focused .v-input__append-inner,\n.theme--dark.v-overflow-btn--editable.v-select--is-menu-active .v-input__append-inner {\n  border-left: 1px solid rgba(255,255,255,0.12);\n}\n.theme--dark.v-overflow-btn:hover .v-input__slot,\n.theme--dark.v-overflow-btn.v-input--is-focused .v-input__slot,\n.theme--dark.v-overflow-btn.v-select--is-menu-active .v-input__slot {\n  background: #424242;\n}\n.v-overflow-btn {\n  margin-top: 12px;\n  padding-top: 0;\n}\n.v-overflow-btn:not(.v-overflow-btn--editable) > .v-input__control > .v-input__slot {\n  cursor: pointer;\n}\n.v-overflow-btn .v-select__slot {\n  height: 48px;\n}\n.v-overflow-btn .v-select__slot input {\n  margin-left: 16px;\n  cursor: pointer;\n}\n.v-overflow-btn .v-select__selection--comma:first-child {\n  margin-left: 16px;\n}\n.v-overflow-btn .v-input__slot {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-overflow-btn .v-input__slot::after {\n  content: none;\n}\n.v-overflow-btn .v-label {\n  margin-left: 16px;\n  top: calc(50% - 10px);\n}\n.v-overflow-btn .v-input__append-inner {\n  width: 48px;\n  height: 48px;\n  align-self: auto;\n  align-items: center;\n  margin-top: 0;\n  padding: 0;\n  flex-shrink: 0;\n}\n.v-overflow-btn .v-input__append-outer,\n.v-overflow-btn .v-input__prepend-outer {\n  margin-top: 12px;\n  margin-bottom: 12px;\n}\n.v-overflow-btn .v-input__control::before {\n  height: 1px;\n  top: -1px;\n  content: '';\n  left: 0;\n  position: absolute;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-overflow-btn.v-input--is-focused .v-input__slot,\n.v-overflow-btn.v-select--is-menu-active .v-input__slot {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-overflow-btn .v-select__selections {\n  width: 0px;\n}\n.v-overflow-btn--segmented .v-select__selections {\n  flex-wrap: nowrap;\n}\n.v-overflow-btn--segmented .v-select__selections .v-btn {\n  border-radius: 0;\n  margin: 0;\n  margin-right: -16px;\n  height: 48px;\n  width: 100%;\n}\n.v-overflow-btn--segmented .v-select__selections .v-btn__content {\n  justify-content: start;\n}\n.v-overflow-btn--segmented .v-select__selections .v-btn__content::before {\n  background-color: transparent;\n}\n.v-overflow-btn--editable .v-select__slot input {\n  cursor: text;\n}\n.v-overflow-btn--editable .v-input__append-inner,\n.v-overflow-btn--editable .v-input__append-inner * {\n  cursor: pointer;\n}\n\n/* Theme */\n.theme--light.v-table {\n  background-color: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-table thead tr:first-child {\n  border-bottom: 1px solid rgba(0,0,0,0.12);\n}\n.theme--light.v-table thead th {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-table tbody tr:not(:last-child) {\n  border-bottom: 1px solid rgba(0,0,0,0.12);\n}\n.theme--light.v-table tbody tr[active] {\n  background: #f5f5f5;\n}\n.theme--light.v-table tbody tr:hover:not(.v-datatable__expand-row) {\n  background: #eee;\n}\n.theme--light.v-table tfoot tr {\n  border-top: 1px solid rgba(0,0,0,0.12);\n}\n.theme--dark.v-table {\n  background-color: #424242;\n  color: #fff;\n}\n.theme--dark.v-table thead tr:first-child {\n  border-bottom: 1px solid rgba(255,255,255,0.12);\n}\n.theme--dark.v-table thead th {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-table tbody tr:not(:last-child) {\n  border-bottom: 1px solid rgba(255,255,255,0.12);\n}\n.theme--dark.v-table tbody tr[active] {\n  background: #505050;\n}\n.theme--dark.v-table tbody tr:hover:not(.v-datatable__expand-row) {\n  background: #616161;\n}\n.theme--dark.v-table tfoot tr {\n  border-top: 1px solid rgba(255,255,255,0.12);\n}\n.v-table__overflow {\n  width: 100%;\n  overflow-x: auto;\n  overflow-y: hidden;\n}\ntable.v-table {\n  border-radius: 2px;\n  border-collapse: collapse;\n  border-spacing: 0;\n  width: 100%;\n  max-width: 100%;\n}\ntable.v-table thead td:not(:nth-child(1)),\ntable.v-table tbody td:not(:nth-child(1)),\ntable.v-table thead th:not(:nth-child(1)),\ntable.v-table tbody th:not(:nth-child(1)),\ntable.v-table thead td:first-child,\ntable.v-table tbody td:first-child,\ntable.v-table thead th:first-child,\ntable.v-table tbody th:first-child {\n  padding: 0 24px;\n}\ntable.v-table thead tr {\n  height: 56px;\n}\ntable.v-table thead th {\n  font-weight: 500;\n  font-size: 12px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  white-space: nowrap;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\ntable.v-table thead th.sortable {\n  pointer-events: auto;\n}\ntable.v-table thead th > div {\n  width: 100%;\n}\ntable.v-table tbody tr {\n  transition: background 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  will-change: background;\n}\ntable.v-table tbody td,\ntable.v-table tbody th {\n  height: 48px;\n}\ntable.v-table tbody td {\n  font-weight: 400;\n  font-size: 13px;\n}\ntable.v-table .input-group--selection-controls {\n  padding: 0;\n}\ntable.v-table .input-group--selection-controls .input-group__details {\n  display: none;\n}\ntable.v-table .input-group--selection-controls.checkbox .v-icon {\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\ntable.v-table .input-group--selection-controls.checkbox .input-group--selection-controls__ripple {\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\ntable.v-table tfoot tr {\n  height: 48px;\n}\ntable.v-table tfoot tr td {\n  padding: 0 24px;\n}\n\n/* Theme */\n.theme--light.v-datatable thead th.column.sortable .v-icon {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-datatable thead th.column.sortable:hover {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-datatable thead th.column.sortable.active {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-datatable thead th.column.sortable.active .v-icon {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-datatable .v-datatable__actions {\n  background-color: #fff;\n  color: rgba(0,0,0,0.54);\n  border-top: 1px solid rgba(0,0,0,0.12);\n}\n.theme--dark.v-datatable thead th.column.sortable .v-icon {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-datatable thead th.column.sortable:hover {\n  color: #fff;\n}\n.theme--dark.v-datatable thead th.column.sortable.active {\n  color: #fff;\n}\n.theme--dark.v-datatable thead th.column.sortable.active .v-icon {\n  color: #fff;\n}\n.theme--dark.v-datatable .v-datatable__actions {\n  background-color: #424242;\n  color: rgba(255,255,255,0.7);\n  border-top: 1px solid rgba(255,255,255,0.12);\n}\n.v-datatable .v-input--selection-controls {\n  margin: 0;\n  padding: 0;\n}\n.v-datatable thead th.column.sortable {\n  cursor: pointer;\n  outline: 0;\n}\n.v-datatable thead th.column.sortable .v-icon {\n  font-size: 16px;\n  display: inline-block;\n  opacity: 0;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-datatable thead th.column.sortable:focus .v-icon,\n.v-datatable thead th.column.sortable:hover .v-icon {\n  opacity: 0.6;\n}\n.v-datatable thead th.column.sortable.active {\n  -webkit-transform: none;\n          transform: none;\n}\n.v-datatable thead th.column.sortable.active .v-icon {\n  opacity: 1;\n}\n.v-datatable thead th.column.sortable.active.desc .v-icon {\n  -webkit-transform: rotate(-180deg);\n          transform: rotate(-180deg);\n}\n/** Actions */\n.v-datatable__actions {\n  display: flex;\n  justify-content: flex-end;\n  align-items: center;\n  font-size: 12px;\n  flex-wrap: wrap-reverse;\n}\n.v-datatable__actions .v-btn {\n  color: inherit;\n}\n.v-datatable__actions .v-btn:last-of-type {\n  margin-left: 14px;\n}\n.v-datatable__actions__range-controls {\n  display: flex;\n  align-items: center;\n  min-height: 48px;\n}\n.v-datatable__actions__pagination {\n  display: block;\n  text-align: center;\n  margin: 0 32px 0 24px;\n}\n.v-datatable__actions__select {\n  display: flex;\n  align-items: center;\n  justify-content: flex-end;\n  margin-right: 14px;\n  white-space: nowrap;\n}\n.v-datatable__actions__select .v-select {\n  flex: 0 1 0;\n  margin: 13px 0 13px 34px;\n  padding: 0;\n  position: initial;\n}\n.v-datatable__actions__select .v-select__selections {\n  flex-wrap: nowrap;\n}\n.v-datatable__actions__select .v-select__selections .v-select__selection--comma {\n  font-size: 12px;\n}\n.v-datatable__progress {\n  height: auto !important;\n}\n.v-datatable__progress tr,\n.v-datatable__progress td,\n.v-datatable__progress th {\n  height: auto !important;\n}\n.v-datatable__progress th {\n  padding: 0 !important;\n}\n.v-datatable__progress th .v-progress-linear {\n  margin: 0;\n}\n.v-datatable__expand-row {\n  border: none !important;\n}\n.v-datatable__expand-col {\n  padding: 0 !important;\n  height: 0px !important;\n}\n.v-datatable__expand-col--expanded {\n  border-bottom: 1px solid rgba(0,0,0,0.12);\n}\n.v-datatable__expand-content {\n  transition: height 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-datatable__expand-content > .card {\n  border-radius: 0;\n  box-shadow: none;\n}\n\n.theme--light.v-small-dialog a {\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-small-dialog a {\n  color: #fff;\n}\n.theme--light.v-small-dialog__content {\n  background: #fff;\n}\n.theme--dark.v-small-dialog__content {\n  background: #424242;\n}\n.theme--light.v-small-dialog__actions {\n  background: #fff;\n}\n.theme--dark.v-small-dialog__actions {\n  background: #424242;\n}\n.v-small-dialog {\n  display: block;\n  width: 100%;\n  height: 100%;\n}\n.v-small-dialog__content {\n  padding: 0 24px;\n}\n.v-small-dialog__actions {\n  text-align: right;\n  white-space: pre;\n}\n.v-small-dialog a {\n  display: flex;\n  align-items: center;\n  height: 100%;\n  text-decoration: none;\n}\n.v-small-dialog a > * {\n  width: 100%;\n}\n.v-small-dialog .v-menu__activator {\n  height: 100%;\n}\n\n.application--is-rtl .v-date-picker-title .v-picker__title__btn {\n  text-align: right;\n}\n.v-date-picker-title {\n  display: flex;\n  justify-content: space-between;\n  flex-direction: column;\n  flex-wrap: wrap;\n  line-height: 1;\n}\n.v-date-picker-title__year {\n  align-items: center;\n  display: inline-flex;\n  font-size: 14px;\n  font-weight: 500;\n  margin-bottom: 8px;\n}\n.v-date-picker-title__date {\n  font-size: 34px;\n  text-align: left;\n  font-weight: 500;\n  position: relative;\n  overflow: hidden;\n  padding-bottom: 8px;\n  margin-bottom: -8px;\n}\n.v-date-picker-title__date > div {\n  position: relative;\n}\n.v-date-picker-title--disabled {\n  pointer-events: none;\n}\n\n.theme--light.v-date-picker-header .v-date-picker-header__value:not(.v-date-picker-header__value--disabled) button:not(:hover):not(:focus) {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-date-picker-header .v-date-picker-header__value--disabled button {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-date-picker-header .v-date-picker-header__value:not(.v-date-picker-header__value--disabled) button:not(:hover):not(:focus) {\n  color: #fff;\n}\n.theme--dark.v-date-picker-header .v-date-picker-header__value--disabled button {\n  color: rgba(255,255,255,0.5);\n}\n.v-date-picker-header {\n  padding: 4px 16px;\n  align-items: center;\n  display: flex;\n  justify-content: space-between;\n  position: relative;\n}\n.v-date-picker-header .v-btn {\n  margin: 0;\n  z-index: auto;\n}\n.v-date-picker-header .v-icon {\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-date-picker-header__value {\n  flex: 1;\n  text-align: center;\n  position: relative;\n  overflow: hidden;\n}\n.v-date-picker-header__value div {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-date-picker-header__value button {\n  cursor: pointer;\n  font-weight: bold;\n  outline: none;\n  padding: 0.5rem;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-date-picker-header--disabled {\n  pointer-events: none;\n}\n\n.theme--light.v-date-picker-table th,\n.theme--light.v-date-picker-table .v-date-picker-table--date__week {\n  color: rgba(0,0,0,0.38);\n}\n.theme--dark.v-date-picker-table th,\n.theme--dark.v-date-picker-table .v-date-picker-table--date__week {\n  color: rgba(255,255,255,0.5);\n}\n.v-date-picker-table {\n  position: relative;\n  padding: 0 12px;\n  height: 242px;\n}\n.v-date-picker-table table {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  top: 0;\n  table-layout: fixed;\n  width: 100%;\n}\n.v-date-picker-table td,\n.v-date-picker-table th {\n  text-align: center;\n  position: relative;\n}\n.v-date-picker-table th {\n  font-size: 12px;\n}\n.v-date-picker-table--date .v-btn {\n  height: 32px;\n  width: 32px;\n}\n.v-date-picker-table .v-btn {\n  z-index: auto;\n  margin: 0;\n  font-size: 12px;\n}\n.v-date-picker-table .v-btn.v-btn--active {\n  color: #fff;\n}\n.v-date-picker-table--month td {\n  width: 33.333333%;\n  height: 56px;\n  vertical-align: middle;\n  text-align: center;\n}\n.v-date-picker-table--month td .v-btn {\n  margin: 0 auto;\n  max-width: 160px;\n  min-width: 40px;\n  width: 100%;\n}\n.v-date-picker-table--date th {\n  padding: 8px 0;\n  font-weight: 600;\n}\n.v-date-picker-table--date td {\n  width: 45px;\n}\n.v-date-picker-table__events {\n  height: 8px;\n  left: 0;\n  position: absolute;\n  text-align: center;\n  white-space: pre;\n  width: 100%;\n}\n.v-date-picker-table__events > div {\n  border-radius: 50%;\n  display: inline-block;\n  height: 8px;\n  margin: 0 1px;\n  width: 8px;\n}\n.v-date-picker-table--date .v-date-picker-table__events {\n  bottom: 6px;\n}\n.v-date-picker-table--month .v-date-picker-table__events {\n  bottom: 8px;\n}\n.v-date-picker-table--disabled {\n  pointer-events: none;\n}\n\n.v-date-picker-years {\n  font-size: 16px;\n  font-weight: 400;\n  height: 286px;\n  list-style-type: none;\n  overflow: auto;\n  padding: 0;\n  text-align: center;\n}\n.v-date-picker-years li {\n  cursor: pointer;\n  padding: 8px 0;\n  transition: none;\n}\n.v-date-picker-years li.active {\n  font-size: 26px;\n  font-weight: 500;\n  padding: 10px 0;\n}\n.v-date-picker-years li:hover {\n  background: rgba(0,0,0,0.12);\n}\n.v-picker--landscape .v-date-picker-years {\n  height: 286px;\n}\n\n/* Themes */\n.theme--light.v-picker__title {\n  background: #e0e0e0;\n}\n.theme--dark.v-picker__title {\n  background: #616161;\n}\n.theme--light.v-picker__body {\n  background: #fff;\n}\n.theme--dark.v-picker__body {\n  background: #424242;\n}\n.v-picker {\n  border-radius: 2px;\n  contain: layout style;\n  display: inline-flex;\n  flex-direction: column;\n  vertical-align: top;\n  position: relative;\n}\n.v-picker--full-width {\n  display: flex;\n}\n.v-picker__title {\n  color: #fff;\n  border-top-left-radius: 2px;\n  border-top-right-radius: 2px;\n  padding: 16px;\n}\n.v-picker__title__btn {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-picker__title__btn:not(.v-picker__title__btn--active) {\n  opacity: 0.6;\n  cursor: pointer;\n}\n.v-picker__title__btn:not(.v-picker__title__btn--active):hover:not(:focus) {\n  opacity: 1;\n}\n.v-picker__title__btn--readonly {\n  pointer-events: none;\n}\n.v-picker__title__btn--active {\n  opacity: 1;\n}\n.v-picker__body {\n  height: auto;\n  overflow: hidden;\n  position: relative;\n  z-index: 0;\n  flex: 1 0 auto;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n}\n.v-picker__body > div {\n  width: 100%;\n}\n.v-picker__body > div.fade-transition-leave-active {\n  position: absolute;\n}\n.v-picker--landscape .v-picker__title {\n  border-top-right-radius: 0;\n  border-bottom-right-radius: 0;\n  width: 170px;\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  z-index: 1;\n}\n.v-picker--landscape .v-picker__body,\n.v-picker--landscape .v-picker__actions {\n  margin-left: 170px;\n}\n\n/** Theme */\n.theme--light.v-expansion-panel .v-expansion-panel__container {\n  border-top: 1px solid rgba(0,0,0,0.12);\n  background-color: #fff;\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-expansion-panel .v-expansion-panel__container .v-expansion-panel__header .v-expansion-panel__header__icon .v-icon {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-expansion-panel .v-expansion-panel__container--disabled {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-expansion-panel--focusable .v-expansion-panel__container:focus {\n  background-color: #eee;\n}\n.theme--dark.v-expansion-panel .v-expansion-panel__container {\n  border-top: 1px solid rgba(255,255,255,0.12);\n  background-color: #424242;\n  color: #fff;\n}\n.theme--dark.v-expansion-panel .v-expansion-panel__container .v-expansion-panel__header .v-expansion-panel__header__icon .v-icon {\n  color: #fff;\n}\n.theme--dark.v-expansion-panel .v-expansion-panel__container--disabled {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-expansion-panel--focusable .v-expansion-panel__container:focus {\n  background-color: #494949;\n}\n.v-expansion-panel {\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: center;\n  list-style-type: none;\n  padding: 0;\n  text-align: left;\n  width: 100%;\n  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);\n}\n.v-expansion-panel__container {\n  flex: 1 0 100%;\n  max-width: 100%;\n  outline: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-expansion-panel__container:first-child {\n  border-top: none !important;\n}\n.v-expansion-panel__container .v-expansion-panel__header__iconnel__header__icon {\n  margin-left: auto;\n}\n.v-expansion-panel__container--disabled .v-expansion-panel__header {\n  pointer-events: none;\n}\n.v-expansion-panel__container--active > .v-expansion-panel__header .v-expansion-panel__header__icon .v-icon {\n  -webkit-transform: rotate(-180deg);\n          transform: rotate(-180deg);\n}\n.v-expansion-panel__header {\n  display: flex;\n  cursor: pointer;\n  align-items: center;\n  position: relative;\n  padding: 12px 24px;\n  min-height: 48px;\n}\n.v-expansion-panel__header > *:not(.v-expansion-panel__header__icon) {\n  flex: 1 1 auto;\n}\n.v-expansion-panel__body {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-expansion-panel__body > .v-card {\n  border-radius: 0;\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12) !important;\n}\n.v-expansion-panel--popout,\n.v-expansion-panel--inset {\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);\n}\n.v-expansion-panel--popout .v-expansion-panel__container--active,\n.v-expansion-panel--inset .v-expansion-panel__container--active {\n  margin: 16px;\n  box-shadow: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12);\n}\n.v-expansion-panel--popout .v-expansion-panel__container,\n.v-expansion-panel--inset .v-expansion-panel__container {\n  max-width: 95%;\n}\n.v-expansion-panel--popout .v-expansion-panel__container--active {\n  max-width: 100%;\n}\n.v-expansion-panel--inset .v-expansion-panel__container--active {\n  max-width: 85%;\n}\n\n.theme--light.v-footer {\n  background: #f5f5f5;\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-footer {\n  background: #212121;\n  color: #fff;\n}\n.v-footer {\n  align-items: center;\n  display: flex;\n  flex: 0 1 auto !important;\n  min-height: 36px;\n  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-footer--absolute,\n.v-footer--fixed {\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  z-index: 3;\n}\n.v-footer--inset {\n  z-index: 2;\n}\n.v-footer--absolute {\n  position: absolute;\n}\n.v-footer--fixed {\n  position: fixed;\n}\n\n.v-form > .container {\n  padding: 16px;\n}\n.v-form > .container > .layout > .flex {\n  padding: 8px;\n}\n.v-form > .container > .layout:only-child {\n  margin: -8px;\n}\n.v-form > .container > .layout:not(:only-child) {\n  margin: auto -8px;\n}\n\n\n.container.fluid {\n  max-width: 100%;\n}\n.container.fill-height {\n  align-items: center;\n  display: flex;\n}\n.container.fill-height > .layout {\n  height: 100%;\n  flex: 1 1 auto;\n}\n.container.grid-list-xs .layout .flex {\n  padding: 1px;\n}\n.container.grid-list-xs .layout:only-child {\n  margin: -1px;\n}\n.container.grid-list-xs .layout:not(:only-child) {\n  margin: auto -1px;\n}\n.container.grid-list-xs *:not(:only-child) .layout:first-child {\n  margin-top: -1px;\n}\n.container.grid-list-xs *:not(:only-child) .layout:last-child {\n  margin-bottom: -1px;\n}\n.container.grid-list-sm .layout .flex {\n  padding: 2px;\n}\n.container.grid-list-sm .layout:only-child {\n  margin: -2px;\n}\n.container.grid-list-sm .layout:not(:only-child) {\n  margin: auto -2px;\n}\n.container.grid-list-sm *:not(:only-child) .layout:first-child {\n  margin-top: -2px;\n}\n.container.grid-list-sm *:not(:only-child) .layout:last-child {\n  margin-bottom: -2px;\n}\n.container.grid-list-md .layout .flex {\n  padding: 4px;\n}\n.container.grid-list-md .layout:only-child {\n  margin: -4px;\n}\n.container.grid-list-md .layout:not(:only-child) {\n  margin: auto -4px;\n}\n.container.grid-list-md *:not(:only-child) .layout:first-child {\n  margin-top: -4px;\n}\n.container.grid-list-md *:not(:only-child) .layout:last-child {\n  margin-bottom: -4px;\n}\n.container.grid-list-lg .layout .flex {\n  padding: 8px;\n}\n.container.grid-list-lg .layout:only-child {\n  margin: -8px;\n}\n.container.grid-list-lg .layout:not(:only-child) {\n  margin: auto -8px;\n}\n.container.grid-list-lg *:not(:only-child) .layout:first-child {\n  margin-top: -8px;\n}\n.container.grid-list-lg *:not(:only-child) .layout:last-child {\n  margin-bottom: -8px;\n}\n.container.grid-list-xl .layout .flex {\n  padding: 12px;\n}\n.container.grid-list-xl .layout:only-child {\n  margin: -12px;\n}\n.container.grid-list-xl .layout:not(:only-child) {\n  margin: auto -12px;\n}\n.container.grid-list-xl *:not(:only-child) .layout:first-child {\n  margin-top: -12px;\n}\n.container.grid-list-xl *:not(:only-child) .layout:last-child {\n  margin-bottom: -12px;\n}\n.layout {\n  display: flex;\n  flex: 1 1 auto;\n  flex-wrap: nowrap;\n  min-width: 0;\n}\n.layout.row {\n  flex-direction: row;\n}\n.layout.row.reverse {\n  flex-direction: row-reverse;\n}\n.layout.column {\n  flex-direction: column;\n}\n.layout.column.reverse {\n  flex-direction: column-reverse;\n}\n.layout.column > .flex {\n  max-width: 100%;\n}\n.layout.wrap {\n  flex-wrap: wrap;\n}\n.flex,\n.child-flex > * {\n  flex: 1 1 auto;\n  max-width: 100%;\n}\n.align-start {\n  align-items: flex-start;\n}\n.align-end {\n  align-items: flex-end;\n}\n.align-center {\n  align-items: center;\n}\n.align-baseline {\n  align-items: baseline;\n}\n.align-self-start {\n  align-self: flex-start;\n}\n.align-self-end {\n  align-self: flex-end;\n}\n.align-self-center {\n  align-self: center;\n}\n.align-self-baseline {\n  align-self: baseline;\n}\n.align-content-start {\n  align-content: flex-start;\n}\n.align-content-end {\n  align-content: flex-end;\n}\n.align-content-center {\n  align-content: center;\n}\n.align-content-space-between {\n  align-content: space-between;\n}\n.align-content-space-around {\n  align-content: space-around;\n}\n.justify-start {\n  justify-content: flex-start;\n}\n.justify-end {\n  justify-content: flex-end;\n}\n.justify-center {\n  justify-content: center;\n}\n.justify-space-around {\n  justify-content: space-around;\n}\n.justify-space-between {\n  justify-content: space-between;\n}\n.justify-self-start {\n  justify-self: flex-start;\n}\n.justify-self-end {\n  justify-self: flex-end;\n}\n.justify-self-center {\n  justify-self: center;\n}\n.justify-self-baseline {\n  justify-self: baseline;\n}\n.spacer {\n  flex-grow: 1 !important;\n}\n.grow {\n  flex-grow: 1 !important;\n  flex-shrink: 0 !important;\n}\n.shrink {\n  flex-grow: 0 !important;\n  flex-shrink: 1 !important;\n}\n.scroll-y {\n  overflow-y: auto;\n}\n.fill-height {\n  height: 100%;\n}\n.hide-overflow {\n  overflow: hidden !important;\n}\n.show-overflow {\n  overflow: visible !important;\n}\n.no-wrap {\n  white-space: nowrap;\n}\n.ellipsis {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.d-flex {\n  display: flex !important;\n}\n.d-inline-flex {\n  display: inline-flex !important;\n}\n.d-flex > *,\n.d-inline-flex > * {\n  flex: 1 1 auto !important;\n}\n.d-block {\n  display: block !important;\n}\n.d-inline-block {\n  display: inline-block !important;\n}\n.d-inline {\n  display: inline !important;\n}\n.d-none {\n  display: none !important;\n}\n@media only screen and (min-width: 960px) {\n  .container {\n    max-width: 900px;\n  }\n}\n@media only screen and (min-width: 1264px) {\n  .container {\n    max-width: 1185px;\n  }\n}\n@media only screen and (min-width: 1904px) {\n  .container {\n    max-width: 1785px;\n  }\n}\n@media only screen and (max-width: 959px) {\n  .container {\n    padding: 16px;\n  }\n}\n@media all and (min-width: 0) {\n  .flex.xs1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-xs1 {\n    order: 1;\n  }\n  .flex.xs2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-xs2 {\n    order: 2;\n  }\n  .flex.xs3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-xs3 {\n    order: 3;\n  }\n  .flex.xs4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-xs4 {\n    order: 4;\n  }\n  .flex.xs5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-xs5 {\n    order: 5;\n  }\n  .flex.xs6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-xs6 {\n    order: 6;\n  }\n  .flex.xs7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-xs7 {\n    order: 7;\n  }\n  .flex.xs8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-xs8 {\n    order: 8;\n  }\n  .flex.xs9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-xs9 {\n    order: 9;\n  }\n  .flex.xs10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-xs10 {\n    order: 10;\n  }\n  .flex.xs11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-xs11 {\n    order: 11;\n  }\n  .flex.xs12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-xs12 {\n    order: 12;\n  }\n  .flex.offset-xs0 {\n    margin-left: 0%;\n  }\n  .flex.offset-xs1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-xs2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-xs3 {\n    margin-left: 25%;\n  }\n  .flex.offset-xs4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-xs5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-xs6 {\n    margin-left: 50%;\n  }\n  .flex.offset-xs7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-xs8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-xs9 {\n    margin-left: 75%;\n  }\n  .flex.offset-xs10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-xs11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-xs12 {\n    margin-left: 100%;\n  }\n}\n@media all and (min-width: 600px) {\n  .flex.sm1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-sm1 {\n    order: 1;\n  }\n  .flex.sm2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-sm2 {\n    order: 2;\n  }\n  .flex.sm3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-sm3 {\n    order: 3;\n  }\n  .flex.sm4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-sm4 {\n    order: 4;\n  }\n  .flex.sm5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-sm5 {\n    order: 5;\n  }\n  .flex.sm6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-sm6 {\n    order: 6;\n  }\n  .flex.sm7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-sm7 {\n    order: 7;\n  }\n  .flex.sm8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-sm8 {\n    order: 8;\n  }\n  .flex.sm9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-sm9 {\n    order: 9;\n  }\n  .flex.sm10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-sm10 {\n    order: 10;\n  }\n  .flex.sm11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-sm11 {\n    order: 11;\n  }\n  .flex.sm12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-sm12 {\n    order: 12;\n  }\n  .flex.offset-sm0 {\n    margin-left: 0%;\n  }\n  .flex.offset-sm1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-sm2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-sm3 {\n    margin-left: 25%;\n  }\n  .flex.offset-sm4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-sm5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-sm6 {\n    margin-left: 50%;\n  }\n  .flex.offset-sm7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-sm8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-sm9 {\n    margin-left: 75%;\n  }\n  .flex.offset-sm10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-sm11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-sm12 {\n    margin-left: 100%;\n  }\n}\n@media all and (min-width: 960px) {\n  .flex.md1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-md1 {\n    order: 1;\n  }\n  .flex.md2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-md2 {\n    order: 2;\n  }\n  .flex.md3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-md3 {\n    order: 3;\n  }\n  .flex.md4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-md4 {\n    order: 4;\n  }\n  .flex.md5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-md5 {\n    order: 5;\n  }\n  .flex.md6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-md6 {\n    order: 6;\n  }\n  .flex.md7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-md7 {\n    order: 7;\n  }\n  .flex.md8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-md8 {\n    order: 8;\n  }\n  .flex.md9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-md9 {\n    order: 9;\n  }\n  .flex.md10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-md10 {\n    order: 10;\n  }\n  .flex.md11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-md11 {\n    order: 11;\n  }\n  .flex.md12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-md12 {\n    order: 12;\n  }\n  .flex.offset-md0 {\n    margin-left: 0%;\n  }\n  .flex.offset-md1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-md2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-md3 {\n    margin-left: 25%;\n  }\n  .flex.offset-md4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-md5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-md6 {\n    margin-left: 50%;\n  }\n  .flex.offset-md7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-md8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-md9 {\n    margin-left: 75%;\n  }\n  .flex.offset-md10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-md11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-md12 {\n    margin-left: 100%;\n  }\n}\n@media all and (min-width: 1264px) {\n  .flex.lg1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-lg1 {\n    order: 1;\n  }\n  .flex.lg2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-lg2 {\n    order: 2;\n  }\n  .flex.lg3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-lg3 {\n    order: 3;\n  }\n  .flex.lg4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-lg4 {\n    order: 4;\n  }\n  .flex.lg5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-lg5 {\n    order: 5;\n  }\n  .flex.lg6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-lg6 {\n    order: 6;\n  }\n  .flex.lg7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-lg7 {\n    order: 7;\n  }\n  .flex.lg8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-lg8 {\n    order: 8;\n  }\n  .flex.lg9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-lg9 {\n    order: 9;\n  }\n  .flex.lg10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-lg10 {\n    order: 10;\n  }\n  .flex.lg11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-lg11 {\n    order: 11;\n  }\n  .flex.lg12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-lg12 {\n    order: 12;\n  }\n  .flex.offset-lg0 {\n    margin-left: 0%;\n  }\n  .flex.offset-lg1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-lg2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-lg3 {\n    margin-left: 25%;\n  }\n  .flex.offset-lg4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-lg5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-lg6 {\n    margin-left: 50%;\n  }\n  .flex.offset-lg7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-lg8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-lg9 {\n    margin-left: 75%;\n  }\n  .flex.offset-lg10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-lg11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-lg12 {\n    margin-left: 100%;\n  }\n}\n@media all and (min-width: 1904px) {\n  .flex.xl1 {\n    flex-basis: 8.333333333333332%;\n    flex-grow: 0;\n    max-width: 8.333333333333332%;\n  }\n  .flex.order-xl1 {\n    order: 1;\n  }\n  .flex.xl2 {\n    flex-basis: 16.666666666666664%;\n    flex-grow: 0;\n    max-width: 16.666666666666664%;\n  }\n  .flex.order-xl2 {\n    order: 2;\n  }\n  .flex.xl3 {\n    flex-basis: 25%;\n    flex-grow: 0;\n    max-width: 25%;\n  }\n  .flex.order-xl3 {\n    order: 3;\n  }\n  .flex.xl4 {\n    flex-basis: 33.33333333333333%;\n    flex-grow: 0;\n    max-width: 33.33333333333333%;\n  }\n  .flex.order-xl4 {\n    order: 4;\n  }\n  .flex.xl5 {\n    flex-basis: 41.66666666666667%;\n    flex-grow: 0;\n    max-width: 41.66666666666667%;\n  }\n  .flex.order-xl5 {\n    order: 5;\n  }\n  .flex.xl6 {\n    flex-basis: 50%;\n    flex-grow: 0;\n    max-width: 50%;\n  }\n  .flex.order-xl6 {\n    order: 6;\n  }\n  .flex.xl7 {\n    flex-basis: 58.333333333333336%;\n    flex-grow: 0;\n    max-width: 58.333333333333336%;\n  }\n  .flex.order-xl7 {\n    order: 7;\n  }\n  .flex.xl8 {\n    flex-basis: 66.66666666666666%;\n    flex-grow: 0;\n    max-width: 66.66666666666666%;\n  }\n  .flex.order-xl8 {\n    order: 8;\n  }\n  .flex.xl9 {\n    flex-basis: 75%;\n    flex-grow: 0;\n    max-width: 75%;\n  }\n  .flex.order-xl9 {\n    order: 9;\n  }\n  .flex.xl10 {\n    flex-basis: 83.33333333333334%;\n    flex-grow: 0;\n    max-width: 83.33333333333334%;\n  }\n  .flex.order-xl10 {\n    order: 10;\n  }\n  .flex.xl11 {\n    flex-basis: 91.66666666666666%;\n    flex-grow: 0;\n    max-width: 91.66666666666666%;\n  }\n  .flex.order-xl11 {\n    order: 11;\n  }\n  .flex.xl12 {\n    flex-basis: 100%;\n    flex-grow: 0;\n    max-width: 100%;\n  }\n  .flex.order-xl12 {\n    order: 12;\n  }\n  .flex.offset-xl0 {\n    margin-left: 0%;\n  }\n  .flex.offset-xl1 {\n    margin-left: 8.333333333333332%;\n  }\n  .flex.offset-xl2 {\n    margin-left: 16.666666666666664%;\n  }\n  .flex.offset-xl3 {\n    margin-left: 25%;\n  }\n  .flex.offset-xl4 {\n    margin-left: 33.33333333333333%;\n  }\n  .flex.offset-xl5 {\n    margin-left: 41.66666666666667%;\n  }\n  .flex.offset-xl6 {\n    margin-left: 50%;\n  }\n  .flex.offset-xl7 {\n    margin-left: 58.333333333333336%;\n  }\n  .flex.offset-xl8 {\n    margin-left: 66.66666666666666%;\n  }\n  .flex.offset-xl9 {\n    margin-left: 75%;\n  }\n  .flex.offset-xl10 {\n    margin-left: 83.33333333333334%;\n  }\n  .flex.offset-xl11 {\n    margin-left: 91.66666666666666%;\n  }\n  .flex.offset-xl12 {\n    margin-left: 100%;\n  }\n}\n\n.v-content {\n  transition: none;\n  display: flex;\n  flex: 1 0 auto;\n  max-width: 100%;\n}\n.v-content[data-booted=\"true\"] {\n  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-content__wrap {\n  flex: 1 1 auto;\n  max-width: 100%;\n  position: relative;\n}\n@-moz-document url-prefix() {\n}\n@media print {\n  @-moz-document url-prefix() {\n    .v-content {\n      display: block;\n    }\n  }\n}\n\n.theme--light.v-jumbotron .v-jumbotron__content {\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-jumbotron .v-jumbotron__content {\n  color: #fff;\n}\n.v-jumbotron {\n  display: block;\n  top: 0;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 100%;\n}\n.v-jumbotron__wrapper {\n  height: 100%;\n  overflow: hidden;\n  position: relative;\n  transition: inherit;\n  width: 100%;\n}\n.v-jumbotron__background {\n  position: absolute;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  contain: strict;\n  transition: inherit;\n}\n.v-jumbotron__image {\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  min-width: 100%;\n  will-change: transform;\n  transition: inherit;\n}\n.v-jumbotron__content {\n  height: 100%;\n  position: relative;\n  transition: inherit;\n}\n\n.theme--light.v-navigation-drawer {\n  background-color: #fff;\n}\n.theme--light.v-navigation-drawer:not(.v-navigation-drawer--floating) .v-navigation-drawer__border {\n  background-color: rgba(0,0,0,0.12);\n}\n.theme--light.v-navigation-drawer .v-divider {\n  border-color: rgba(0,0,0,0.12);\n}\n.theme--dark.v-navigation-drawer {\n  background-color: #424242;\n}\n.theme--dark.v-navigation-drawer:not(.v-navigation-drawer--floating) .v-navigation-drawer__border {\n  background-color: rgba(255,255,255,0.12);\n}\n.theme--dark.v-navigation-drawer .v-divider {\n  border-color: rgba(255,255,255,0.12);\n}\n.v-navigation-drawer {\n  transition: none;\n  display: block;\n  left: 0;\n  max-width: 100%;\n  overflow-y: auto;\n  overflow-x: hidden;\n  pointer-events: auto;\n  top: 0;\n  will-change: transform;\n  z-index: 3;\n  -webkit-overflow-scrolling: touch;\n}\n.v-navigation-drawer[data-booted=\"true\"] {\n  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-navigation-drawer[data-booted=\"true\"] {\n  transition-property: width, -webkit-transform;\n  transition-property: transform, width;\n  transition-property: transform, width, -webkit-transform;\n}\n.v-navigation-drawer__border {\n  position: absolute;\n  right: 0;\n  top: 0;\n  height: 100%;\n  width: 1px;\n}\n.v-navigation-drawer.v-navigation-drawer--right:after {\n  left: 0;\n  right: initial;\n}\n.v-navigation-drawer--right {\n  left: auto;\n  right: 0;\n}\n.v-navigation-drawer--right > .v-navigation-drawer__border {\n  right: auto;\n  left: 0;\n}\n.v-navigation-drawer--absolute {\n  position: absolute;\n}\n.v-navigation-drawer--fixed {\n  position: fixed;\n}\n.v-navigation-drawer--floating:after {\n  display: none;\n}\n.v-navigation-drawer--mini-variant {\n  overflow: hidden;\n}\n.v-navigation-drawer--mini-variant .v-list__group__header__prepend-icon {\n  flex: 1 0 auto;\n  justify-content: center;\n  width: 100%;\n}\n.v-navigation-drawer--mini-variant .v-list__tile__action,\n.v-navigation-drawer--mini-variant .v-list__tile__avatar {\n  justify-content: center;\n  min-width: 48px;\n}\n.v-navigation-drawer--mini-variant .v-list__tile__content,\n.v-navigation-drawer--mini-variant .v-list__tile:after {\n  opacity: 0;\n}\n.v-navigation-drawer--mini-variant .v-subheader,\n.v-navigation-drawer--mini-variant .v-divider,\n.v-navigation-drawer--mini-variant .v-list--group {\n  display: none !important;\n}\n.v-navigation-drawer--temporary,\n.v-navigation-drawer--is-mobile {\n  z-index: 6;\n}\n.v-navigation-drawer--temporary:not(.v-navigation-drawer--close),\n.v-navigation-drawer--is-mobile:not(.v-navigation-drawer--close) {\n  box-shadow: 0px 8px 10px -5px rgba(0,0,0,0.2), 0px 16px 24px 2px rgba(0,0,0,0.14), 0px 6px 30px 5px rgba(0,0,0,0.12);\n}\n.v-navigation-drawer .v-list {\n  background: inherit;\n}\n.v-navigation-drawer > .v-list .v-list__tile {\n  transition: none;\n  font-weight: 500;\n}\n.v-navigation-drawer > .v-list .v-list__tile--active .v-list__tile__title {\n  color: inherit;\n}\n.v-navigation-drawer > .v-list .v-list--group .v-list__tile {\n  font-weight: 400;\n}\n.v-navigation-drawer > .v-list .v-list--group__header--active:after {\n  background: transparent;\n}\n.v-navigation-drawer > .v-list:not(.v-list--dense) .v-list__tile {\n  font-size: 14px;\n}\n\n.theme--light.v-pagination .v-pagination__item {\n  background: #fff;\n  color: #000;\n  width: auto;\n  min-width: 34px;\n  padding: 0 5px;\n}\n.theme--light.v-pagination .v-pagination__item--active {\n  color: #fff;\n}\n.theme--light.v-pagination .v-pagination__navigation {\n  background: #fff;\n}\n.theme--light.v-pagination .v-pagination__navigation .v-icon {\n  color: rgba(0,0,0,0.54);\n}\n.theme--dark.v-pagination .v-pagination__item {\n  background: #424242;\n  color: #fff;\n  width: auto;\n  min-width: 34px;\n  padding: 0 5px;\n}\n.theme--dark.v-pagination .v-pagination__item--active {\n  color: #fff;\n}\n.theme--dark.v-pagination .v-pagination__navigation {\n  background: #424242;\n}\n.theme--dark.v-pagination .v-pagination__navigation .v-icon {\n  color: #fff;\n}\n.v-pagination {\n  align-items: center;\n  display: inline-flex;\n  list-style-type: none;\n  margin: 0;\n  max-width: 100%;\n  padding: 0;\n}\n.v-pagination > li {\n  align-items: center;\n  display: flex;\n}\n.v-pagination--circle .v-pagination__item,\n.v-pagination--circle .v-pagination__more,\n.v-pagination--circle .v-pagination__navigation {\n  border-radius: 50%;\n}\n.v-pagination--disabled {\n  pointer-events: none;\n  opacity: 0.6;\n}\n.v-pagination__item {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n  border-radius: 4px;\n  font-size: 14px;\n  background: transparent;\n  height: 34px;\n  width: 34px;\n  margin: 0.3rem;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0, 0, 0.2, 1);\n}\n.v-pagination__item--active {\n  box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);\n}\n.v-pagination__navigation {\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n  display: inline-flex;\n  justify-content: center;\n  align-items: center;\n  text-decoration: none;\n  height: 2rem;\n  border-radius: 4px;\n  width: 2rem;\n  margin: 0.3rem 10px;\n}\n.v-pagination__navigation .v-icon {\n  font-size: 2rem;\n  transition: 0.2s cubic-bezier(0.4, 0, 0.6, 1);\n  vertical-align: middle;\n}\n.v-pagination__navigation--disabled {\n  opacity: 0.6;\n  pointer-events: none;\n}\n.v-pagination__more {\n  margin: 0.3rem;\n  display: inline-flex;\n  align-items: flex-end;\n  justify-content: center;\n  height: 2rem;\n  width: 2rem;\n}\n\n.v-parallax {\n  position: relative;\n  overflow: hidden;\n  z-index: 0;\n}\n.v-parallax__image-container {\n  position: absolute;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  z-index: 1;\n  contain: strict;\n}\n.v-parallax__image {\n  position: absolute;\n  bottom: 0;\n  left: 50%;\n  min-width: 100%;\n  min-height: 100%;\n  display: none;\n  -webkit-transform: translate(-50%, 0);\n          transform: translate(-50%, 0);\n  will-change: transform;\n  transition: 0.3s opacity cubic-bezier(0.25, 0.8, 0.5, 1);\n  z-index: 1;\n}\n.v-parallax__content {\n  color: #fff;\n  height: 100%;\n  z-index: 2;\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  padding: 0 1rem;\n}\n\n.v-input--radio-group__input {\n  display: flex;\n  width: 100%;\n}\n.v-input--radio-group--column .v-input--radio-group__input > .v-label {\n  padding-bottom: 8px;\n}\n.v-input--radio-group--row .v-input--radio-group__input > .v-label {\n  padding-right: 8px;\n}\n.v-input--radio-group--row .v-input--radio-group__input {\n  flex-direction: row;\n  flex-wrap: wrap;\n}\n.v-input--radio-group--column .v-radio:not(:last-child):not(:only-child) {\n  margin-bottom: 8px;\n}\n.v-input--radio-group--column .v-input--radio-group__input {\n  flex-direction: column;\n}\n\n.theme--light.v-radio--is-disabled label {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-radio--is-disabled .v-icon {\n  color: rgba(0,0,0,0.26) !important;\n}\n.theme--dark.v-radio--is-disabled label {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-radio--is-disabled .v-icon {\n  color: rgba(255,255,255,0.3) !important;\n}\n.v-radio {\n  align-items: center;\n  display: flex;\n  height: auto;\n  margin-right: 16px;\n  outline: none;\n}\n.v-radio--is-disabled {\n  pointer-events: none;\n}\n\n/* Theme */\n.theme--light.v-input--range-slider.v-input--slider.v-input--is-disabled .v-slider.v-slider .v-slider__thumb {\n  background: #bdbdbd;\n}\n.theme--dark.v-input--range-slider.v-input--slider.v-input--is-disabled .v-slider.v-slider .v-slider__thumb {\n  background: #424242;\n}\n/** Input Group */\n.v-input--range-slider.v-input--is-disabled .v-slider__track-fill {\n  display: none;\n}\n.v-input--range-slider.v-input--is-disabled.v-input--slider .v-slider.v-slider .v-slider__thumb {\n  border-color: transparent;\n}\n\n/* Theme */\n.theme--light.v-input--slider .v-slider__track,\n.theme--light.v-input--slider .v-slider__track-fill {\n  background: rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider .v-slider__track__container:after {\n  border: 1px solid rgba(0,0,0,0.87);\n}\n.theme--light.v-input--slider .v-slider__ticks {\n  border-color: rgba(0,0,0,0.87);\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-input--slider:not(.v-input--is-dirty) .v-slider__thumb-label {\n  background: rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider:not(.v-input--is-dirty) .v-slider__thumb {\n  border: 3px solid rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider:not(.v-input--is-dirty).v-input--slider--is-active .v-slider__thumb {\n  border: 3px solid rgba(0,0,0,0.38);\n}\n.theme--light.v-input--slider.v-input--is-disabled .v-slider__thumb {\n  border: 5px solid rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider.v-input--is-disabled.v-input--is-dirty .v-slider__thumb {\n  background: rgba(0,0,0,0.26);\n}\n.theme--light.v-input--slider.v-input--slider--is-active .v-slider__track {\n  background: rgba(0,0,0,0.38);\n}\n.theme--dark.v-input--slider .v-slider__track,\n.theme--dark.v-input--slider .v-slider__track-fill {\n  background: rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider .v-slider__track__container:after {\n  border: 1px solid #fff;\n}\n.theme--dark.v-input--slider .v-slider__ticks {\n  border-color: #fff;\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-input--slider:not(.v-input--is-dirty) .v-slider__thumb-label {\n  background: rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider:not(.v-input--is-dirty) .v-slider__thumb {\n  border: 3px solid rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider:not(.v-input--is-dirty).v-input--slider--is-active .v-slider__thumb {\n  border: 3px solid rgba(255,255,255,0.3);\n}\n.theme--dark.v-input--slider.v-input--is-disabled .v-slider__thumb {\n  border: 5px solid rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider.v-input--is-disabled.v-input--is-dirty .v-slider__thumb {\n  background: rgba(255,255,255,0.2);\n}\n.theme--dark.v-input--slider.v-input--slider--is-active .v-slider__track {\n  background: rgba(255,255,255,0.3);\n}\n.application--is-rtl .v-input--slider .v-label {\n  margin-left: 16px;\n  margin-right: 0;\n}\n/** Input Group */\n.v-input--slider {\n  margin-top: 16px;\n}\n.v-input--slider.v-input--is-focused .v-slider__thumb-container--is-active:not(.v-slider__thumb-container--show-label):before {\n  opacity: 0.2;\n  -webkit-transform: scale(1);\n          transform: scale(1);\n}\n.v-input--slider.v-input--is-focused .v-slider__track {\n  transition: none;\n}\n.v-input--slider.v-input--is-focused.v-input--slider--ticks .v-slider__track__container:after,\n.v-input--slider.v-input--is-focused.v-input--slider--ticks .v-slider .v-slider__tick {\n  opacity: 1;\n}\n.v-input--slider.v-input--slider--ticks .v-slider__ticks.v-slider__ticks--always-show {\n  opacity: 1;\n}\n.v-input--slider.v-input--slider--ticks-labels .v-input__slot {\n  margin-bottom: 16px;\n}\n.v-input--slider.v-input--is-readonly .v-input__control {\n  pointer-events: none;\n}\n.v-input--slider.v-input--is-disabled .v-slider__thumb {\n  -webkit-transform: translateY(-50%) scale(0.45);\n          transform: translateY(-50%) scale(0.45);\n}\n.v-input--slider.v-input--is-disabled.v-input--is-dirty .v-slider__thumb {\n  border: 0px solid transparent;\n}\n.v-input--slider .v-input__slot > *:first-child:not(:only-child) {\n  margin-right: 16px;\n}\n/** Slider */\n.v-slider {\n  cursor: default;\n  display: flex;\n  align-items: center;\n  position: relative;\n  height: 32px;\n  flex: 1;\n  outline: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-slider input {\n  cursor: default;\n  opacity: 0;\n  padding: 0;\n  width: 100%;\n}\n/** Thumb/Track/Ticks */\n.v-slider__track__container {\n  height: 2px;\n  left: 0;\n  overflow: hidden;\n  pointer-events: none;\n  position: absolute;\n  top: 50%;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  width: 100%;\n}\n.v-slider__track__container:after {\n  content: '';\n  position: absolute;\n  right: 0;\n  top: 0;\n  height: 2px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 2px;\n  opacity: 0;\n}\n.v-slider__track,\n.v-slider__thumb,\n.v-slider__ticks {\n  position: absolute;\n  top: 0;\n}\n.v-slider__track {\n  height: 2px;\n  left: 0;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-transform-origin: right;\n          transform-origin: right;\n  overflow: hidden;\n  width: 100%;\n}\n.v-slider__track-fill {\n  position: absolute;\n  left: 0;\n  height: 2px;\n  -webkit-transform-origin: left;\n          transform-origin: left;\n  width: 100%;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-slider__ticks-container {\n  position: absolute;\n  left: 0;\n  height: 2px;\n  width: 100%;\n  top: 50%;\n  -webkit-transform: translate(0, -50%);\n          transform: translate(0, -50%);\n}\n.v-slider__ticks {\n  opacity: 0;\n  border-style: solid;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-slider__ticks > span {\n  position: absolute;\n  top: 8px;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  white-space: nowrap;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-slider__ticks:first-child > span {\n  -webkit-transform: translateX(0);\n          transform: translateX(0);\n}\n.v-slider__ticks:last-child > span {\n  -webkit-transform: translateX(-100%);\n          transform: translateX(-100%);\n}\n.v-slider:not(.v-input--is-dirty) .v-slider__ticks:first-child {\n  border-color: transparent;\n}\n.v-slider__thumb-container {\n  position: absolute;\n  top: 50%;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-slider__thumb-container:before {\n  content: '';\n  color: inherit;\n  border-radius: 50%;\n  background: currentColor;\n  height: 32px;\n  left: -16px;\n  opacity: 0;\n  overflow: hidden;\n  pointer-events: none;\n  position: absolute;\n  top: -16px;\n  -webkit-transform: scale(0.2);\n          transform: scale(0.2);\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  width: 32px;\n  will-change: transform, opacity;\n}\n.v-slider__thumb {\n  width: 24px;\n  height: 24px;\n  left: -12px;\n  top: 50%;\n  border-radius: 50%;\n  background: transparent;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-transform: translateY(-50%) scale(0.6);\n          transform: translateY(-50%) scale(0.6);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n/** Thumb Label */\n.v-slider--is-active .v-slider__thumb-container--is-active .v-slider__thumb {\n  -webkit-transform: translateY(-50%) scale(1);\n          transform: translateY(-50%) scale(1);\n}\n.v-slider--is-active .v-slider__thumb-container--is-active.v-slider__thumb-container--show-label .v-slider__thumb {\n  -webkit-transform: translateY(-50%) scale(0);\n          transform: translateY(-50%) scale(0);\n}\n.v-slider--is-active .v-slider__ticks-container .v-slider__ticks {\n  opacity: 1;\n}\n.v-slider__thumb-label__container {\n  position: absolute;\n  left: 0;\n  top: 0;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-slider__thumb-label {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  font-size: 12px;\n  color: #fff;\n  width: 32px;\n  height: 32px;\n  border-radius: 50% 50% 0;\n  position: absolute;\n  left: 0;\n  bottom: 100%;\n  -webkit-transform: translateY(-20%) translateY(-12px) translateX(-50%) rotate(45deg);\n          transform: translateY(-20%) translateY(-12px) translateX(-50%) rotate(45deg);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-slider__thumb-label > * {\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n.v-slider__track,\n.v-slider__track-fill {\n  position: absolute;\n}\n\n.v-rating .v-icon {\n  padding: 0.5rem;\n  border-radius: 50%;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-rating--readonly .v-icon {\n  pointer-events: none;\n}\n.v-rating--dense .v-icon {\n  padding: 0.1rem;\n}\n\n.application--is-rtl .v-snack__content .v-btn {\n  margin: 0 24px 0 0;\n}\n.v-snack {\n  position: fixed;\n  display: flex;\n  align-items: center;\n  color: #fff;\n  pointer-events: none;\n  z-index: 1000;\n  font-size: 14px;\n  left: 0;\n  right: 0;\n}\n.v-snack--absolute {\n  position: absolute;\n}\n.v-snack--top {\n  top: 0;\n}\n.v-snack--bottom {\n  bottom: 0;\n}\n.v-snack__wrapper {\n  display: flex;\n  align-items: center;\n  background-color: #323232;\n  pointer-events: auto;\n  width: 100%;\n  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12);\n}\n.v-snack__content {\n  width: 100%;\n  height: 48px;\n  padding: 14px 24px;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  overflow: hidden;\n}\n.v-snack__content .v-btn {\n  color: #fff;\n  flex: 0 0 auto;\n  padding: 8px;\n  margin: 0 0 0 24px;\n  height: auto;\n  min-width: auto;\n  width: auto;\n}\n.v-snack__content .v-btn__content {\n  margin: -2px;\n}\n.v-snack__content .v-btn::before {\n  display: none;\n}\n.v-snack--multi-line .v-snack__content {\n  height: 80px;\n  padding: 24px;\n}\n.v-snack--vertical .v-snack__content {\n  height: 112px;\n  padding: 24px 24px 14px;\n  flex-direction: column;\n  align-items: stretch;\n}\n.v-snack--vertical .v-snack__content .v-btn.v-btn {\n  justify-content: flex-end;\n  padding: 0;\n  margin-left: 0;\n  margin-top: 24px;\n}\n.v-snack--vertical .v-snack__content .v-btn__content {\n  flex: 0 0 auto;\n  margin: 0;\n}\n.v-snack--auto-height .v-snack__content {\n  height: auto;\n}\n.v-snack-transition-enter-active,\n.v-snack-transition-leave-active {\n  transition: -webkit-transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1), -webkit-transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-snack-transition-enter-active .v-snack__content,\n.v-snack-transition-leave-active .v-snack__content {\n  transition: opacity 0.3s linear 0.1s;\n}\n.v-snack-transition-enter .v-snack__content {\n  opacity: 0;\n}\n.v-snack-transition-enter-to .v-snack__content,\n.v-snack-transition-leave .v-snack__content {\n  opacity: 1;\n}\n.v-snack-transition-enter.v-snack.v-snack--top,\n.v-snack-transition-leave-to.v-snack.v-snack--top {\n  -webkit-transform: translateY(calc(-100% - 8px));\n          transform: translateY(calc(-100% - 8px));\n}\n.v-snack-transition-enter.v-snack.v-snack--bottom,\n.v-snack-transition-leave-to.v-snack.v-snack--bottom {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n@media only screen and (min-width: 600px) {\n  .application--is-rtl .v-snack__content .v-btn:first-of-type {\n    margin-left: 0;\n    margin-right: 42px;\n  }\n  .v-snack__wrapper {\n    width: auto;\n    max-width: 568px;\n    min-width: 288px;\n    margin: 0 auto;\n    border-radius: 2px;\n  }\n  .v-snack--left .v-snack__wrapper {\n    margin-left: 0;\n  }\n  .v-snack--right .v-snack__wrapper {\n    margin-right: 0;\n  }\n  .v-snack--left,\n  .v-snack--right {\n    margin: 0 24px;\n  }\n  .v-snack--left.v-snack--top,\n  .v-snack--right.v-snack--top {\n    -webkit-transform: translateY(24px);\n            transform: translateY(24px);\n  }\n  .v-snack--left.v-snack--bottom,\n  .v-snack--right.v-snack--bottom {\n    -webkit-transform: translateY(-24px);\n            transform: translateY(-24px);\n  }\n  .v-snack__content .v-btn:first-of-type {\n    margin-left: 42px;\n  }\n}\n\n.v-speed-dial {\n  position: relative;\n}\n.v-speed-dial--absolute {\n  position: absolute;\n}\n.v-speed-dial--fixed {\n  position: fixed;\n}\n.v-speed-dial--fixed,\n.v-speed-dial--absolute {\n  z-index: 4;\n}\n.v-speed-dial--fixed > .v-btn--floating,\n.v-speed-dial--absolute > .v-btn--floating {\n  margin: 0;\n}\n.v-speed-dial--top:not(.v-speed-dial--absolute) {\n  top: 16px;\n}\n.v-speed-dial--top.v-speed-dial--absolute {\n  top: 50%;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n}\n.v-speed-dial--bottom:not(.v-speed-dial--absolute) {\n  bottom: 16px;\n}\n.v-speed-dial--bottom.v-speed-dial--absolute {\n  bottom: 50%;\n  -webkit-transform: translateY(50%);\n          transform: translateY(50%);\n}\n.v-speed-dial--left {\n  left: 16px;\n}\n.v-speed-dial--right {\n  right: 16px;\n}\n.v-speed-dial--direction-left .v-speed-dial__list,\n.v-speed-dial--direction-right .v-speed-dial__list {\n  height: 100%;\n  top: 0;\n}\n.v-speed-dial--direction-top .v-speed-dial__list,\n.v-speed-dial--direction-bottom .v-speed-dial__list {\n  left: 0;\n  width: 100%;\n}\n.v-speed-dial--direction-top .v-speed-dial__list {\n  flex-direction: column-reverse;\n  bottom: 100%;\n}\n.v-speed-dial--direction-right .v-speed-dial__list {\n  flex-direction: row;\n  left: 100%;\n}\n.v-speed-dial--direction-bottom .v-speed-dial__list {\n  flex-direction: column;\n  top: 100%;\n}\n.v-speed-dial--direction-left .v-speed-dial__list {\n  flex-direction: row-reverse;\n  right: 100%;\n}\n/** Elements */\n.v-speed-dial__list {\n  align-items: center;\n  display: flex;\n  justify-content: center;\n  position: absolute;\n}\n\n.theme--light.v-stepper {\n  background: #fff;\n}\n.theme--light.v-stepper .v-stepper__step:not(.v-stepper__step--active):not(.v-stepper__step--complete):not(.v-stepper__step--error) .v-stepper__step__step {\n  background: rgba(0,0,0,0.38);\n}\n.theme--light.v-stepper .v-stepper__step__step {\n  color: #fff;\n}\n.theme--light.v-stepper .v-stepper__step__step .v-icon {\n  color: #fff;\n}\n.theme--light.v-stepper .v-stepper__header .v-divider {\n  border-color: rgba(0,0,0,0.12);\n}\n.theme--light.v-stepper .v-stepper__step--active .v-stepper__label {\n  text-shadow: 0px 0px 0px #000;\n}\n.theme--light.v-stepper .v-stepper__step--editable:hover {\n  background: rgba(0,0,0,0.06);\n}\n.theme--light.v-stepper .v-stepper__step--editable:hover .v-stepper__label {\n  text-shadow: 0px 0px 0px #000;\n}\n.theme--light.v-stepper .v-stepper__step--complete .v-stepper__label {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-stepper .v-stepper__step--inactive.v-stepper__step--editable:not(.v-stepper__step--error):hover .v-stepper__step__step {\n  background: rgba(0,0,0,0.54);\n}\n.theme--light.v-stepper .v-stepper__label {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-stepper .v-stepper__label small {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-stepper--non-linear .v-stepper__step:not(.v-stepper__step--complete):not(.v-stepper__step--error) .v-stepper__label {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-stepper--vertical .v-stepper__content:not(:last-child) {\n  border-left: 1px solid rgba(0,0,0,0.12);\n}\n.theme--dark.v-stepper {\n  background: #303030;\n}\n.theme--dark.v-stepper .v-stepper__step:not(.v-stepper__step--active):not(.v-stepper__step--complete):not(.v-stepper__step--error) .v-stepper__step__step {\n  background: rgba(255,255,255,0.5);\n}\n.theme--dark.v-stepper .v-stepper__step__step {\n  color: #fff;\n}\n.theme--dark.v-stepper .v-stepper__step__step .v-icon {\n  color: #fff;\n}\n.theme--dark.v-stepper .v-stepper__header .v-divider {\n  border-color: rgba(255,255,255,0.12);\n}\n.theme--dark.v-stepper .v-stepper__step--active .v-stepper__label {\n  text-shadow: 0px 0px 0px #fff;\n}\n.theme--dark.v-stepper .v-stepper__step--editable:hover {\n  background: rgba(255,255,255,0.06);\n}\n.theme--dark.v-stepper .v-stepper__step--editable:hover .v-stepper__label {\n  text-shadow: 0px 0px 0px #fff;\n}\n.theme--dark.v-stepper .v-stepper__step--complete .v-stepper__label {\n  color: rgba(255,255,255,0.87);\n}\n.theme--dark.v-stepper .v-stepper__step--inactive.v-stepper__step--editable:not(.v-stepper__step--error):hover .v-stepper__step__step {\n  background: rgba(255,255,255,0.75);\n}\n.theme--dark.v-stepper .v-stepper__label {\n  color: rgba(255,255,255,0.5);\n}\n.theme--dark.v-stepper .v-stepper__label small {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-stepper--non-linear .v-stepper__step:not(.v-stepper__step--complete):not(.v-stepper__step--error) .v-stepper__label {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-stepper--vertical .v-stepper__content:not(:last-child) {\n  border-left: 1px solid rgba(255,255,255,0.12);\n}\n.application--is-rtl .v-stepper .v-stepper__step__step {\n  margin-right: 0;\n  margin-left: 12px;\n}\n.v-stepper {\n  overflow: hidden;\n  position: relative;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-stepper__header {\n  height: 72px;\n  align-items: stretch;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: space-between;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-stepper__header .v-divider {\n  align-self: center;\n  margin: 0 -16px;\n}\n.v-stepper__items {\n  position: relative;\n  overflow: hidden;\n}\n.v-stepper__step__step {\n  align-items: center;\n  border-radius: 50%;\n  display: inline-flex;\n  font-size: 12px;\n  justify-content: center;\n  height: 24px;\n  margin-right: 8px;\n  min-width: 24px;\n  width: 24px;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);\n}\n.v-stepper__step__step .v-icon {\n  font-size: 18px;\n}\n.v-stepper__step {\n  align-items: center;\n  display: flex;\n  flex-direction: row;\n  padding: 24px;\n  position: relative;\n}\n.v-stepper__step--active .v-stepper__label {\n  transition: 0.3s cubic-bezier(0.4, 0, 0.6, 1);\n}\n.v-stepper__step--editable {\n  cursor: pointer;\n}\n.v-stepper__step.v-stepper__step--error .v-stepper__step__step {\n  background: transparent;\n  color: inherit;\n}\n.v-stepper__step.v-stepper__step--error .v-stepper__step__step .v-icon {\n  font-size: 24px;\n  color: inherit;\n}\n.v-stepper__step.v-stepper__step--error .v-stepper__label {\n  color: inherit;\n  text-shadow: none;\n  font-weight: 500;\n}\n.v-stepper__step.v-stepper__step--error .v-stepper__label small {\n  color: inherit;\n}\n.v-stepper__label {\n  align-items: flex-start;\n  display: flex;\n  flex-direction: column;\n  text-align: left;\n}\n.v-stepper__label small {\n  font-size: 12px;\n  font-weight: 300;\n  text-shadow: none;\n}\n.v-stepper__wrapper {\n  overflow: hidden;\n  transition: none;\n}\n.v-stepper__content {\n  top: 0;\n  padding: 24px 24px 16px 24px;\n  flex: 1 0 auto;\n  width: 100%;\n}\n.v-stepper__content > .v-btn {\n  margin: 24px 8px 8px 0;\n}\n.v-stepper--is-booted .v-stepper__content,\n.v-stepper--is-booted .v-stepper__wrapper {\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n.v-stepper--vertical {\n  padding-bottom: 36px;\n}\n.v-stepper--vertical .v-stepper__content {\n  margin: -8px -36px -16px 36px;\n  padding: 16px 60px 16px 23px;\n  width: auto;\n}\n.v-stepper--vertical .v-stepper__step {\n  padding: 24px 24px 16px;\n}\n.v-stepper--vertical .v-stepper__step__step {\n  margin-right: 12px;\n}\n.v-stepper--alt-labels .v-stepper__header {\n  height: auto;\n}\n.v-stepper--alt-labels .v-stepper__header .v-divider {\n  margin: 35px -67px 0;\n  align-self: flex-start;\n}\n.v-stepper--alt-labels .v-stepper__step {\n  flex-direction: column;\n  justify-content: flex-start;\n  align-items: center;\n  flex-basis: 175px;\n}\n.v-stepper--alt-labels .v-stepper__step small {\n  align-self: center;\n}\n.v-stepper--alt-labels .v-stepper__step__step {\n  margin-right: 0;\n  margin-bottom: 11px;\n}\n@media only screen and (max-width: 959px) {\n  .v-stepper:not(.v-stepper--vertical) .v-stepper__label {\n    display: none;\n  }\n  .v-stepper:not(.v-stepper--vertical) .v-stepper__step__step {\n    margin-right: 0;\n  }\n}\n\n/** Theme */\n.theme--light.v-input--switch__thumb {\n  color: #fafafa;\n}\n.theme--light.v-input--switch__track {\n  color: rgba(0,0,0,0.38);\n}\n.theme--light.v-input--switch.v-input--is-disabled .v-input--switch__thumb {\n  color: #bdbdbd !important;\n}\n.theme--light.v-input--switch.v-input--is-disabled .v-input--switch__track {\n  color: rgba(0,0,0,0.12) !important;\n}\n.theme--dark.v-input--switch__thumb {\n  color: #bdbdbd;\n}\n.theme--dark.v-input--switch__track {\n  color: rgba(255,255,255,0.3);\n}\n.theme--dark.v-input--switch.v-input--is-disabled .v-input--switch__thumb {\n  color: #424242 !important;\n}\n.theme--dark.v-input--switch.v-input--is-disabled .v-input--switch__track {\n  color: rgba(255,255,255,0.1) !important;\n}\n.application--is-rtl .v-input--switch .v-input--selection-controls__ripple {\n  left: auto;\n  right: -14px;\n}\n.application--is-rtl .v-input--switch.v-input--is-dirty .v-input--selection-controls__ripple,\n.application--is-rtl .v-input--switch.v-input--is-dirty .v-input--switch__thumb {\n  -webkit-transform: translate(-16px, 0);\n          transform: translate(-16px, 0);\n}\n.v-input--switch__track,\n.v-input--switch__thumb {\n  background-color: currentColor;\n  pointer-events: none;\n  transition: inherit;\n}\n.v-input--switch__track {\n  border-radius: 8px;\n  height: 14px;\n  left: 2px;\n  opacity: 0.6;\n  position: absolute;\n  right: 2px;\n  top: calc(50% - 7px);\n}\n.v-input--switch__thumb {\n  border-radius: 50%;\n  top: calc(50% - 10px);\n  height: 20px;\n  position: relative;\n  width: 20px;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);\n}\n.v-input--switch .v-input--selection-controls__input {\n  width: 38px;\n}\n.v-input--switch .v-input--selection-controls__ripple {\n  left: -14px;\n  top: calc(50% - 24px);\n}\n.v-input--switch.v-input--is-dirty .v-input--selection-controls__ripple,\n.v-input--switch.v-input--is-dirty .v-input--switch__thumb {\n  -webkit-transform: translate(16px, 0);\n          transform: translate(16px, 0);\n}\n\n/* Theme */\n.theme--light.v-system-bar {\n  background-color: #e0e0e0;\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-system-bar .v-icon {\n  color: rgba(0,0,0,0.54);\n}\n.theme--light.v-system-bar--lights-out {\n  background-color: rgba(255,255,255,0.7) !important;\n}\n.theme--dark.v-system-bar {\n  background-color: #000;\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-system-bar .v-icon {\n  color: rgba(255,255,255,0.7);\n}\n.theme--dark.v-system-bar--lights-out {\n  background-color: rgba(0,0,0,0.2) !important;\n}\n.v-system-bar {\n  align-items: center;\n  display: flex;\n  font-size: 14px;\n  font-weight: 500;\n  padding: 0 8px;\n}\n.v-system-bar .v-icon {\n  font-size: 16px;\n}\n.v-system-bar--fixed,\n.v-system-bar--absolute {\n  left: 0;\n  top: 0;\n  width: 100%;\n  z-index: 3;\n}\n.v-system-bar--fixed {\n  position: fixed;\n}\n.v-system-bar--absolute {\n  position: absolute;\n}\n.v-system-bar--status .v-icon {\n  margin-right: 4px;\n}\n.v-system-bar--window .v-icon {\n  font-size: 20px;\n  margin-right: 8px;\n}\n\n/* Theme */\n.theme--light.v-tabs__bar {\n  background-color: #fff;\n}\n.theme--light.v-tabs__bar .v-tabs__div {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-tabs__bar .v-tabs__item--disabled {\n  color: rgba(0,0,0,0.26);\n}\n.theme--dark.v-tabs__bar {\n  background-color: #424242;\n}\n.theme--dark.v-tabs__bar .v-tabs__div {\n  color: #fff;\n}\n.theme--dark.v-tabs__bar .v-tabs__item--disabled {\n  color: rgba(255,255,255,0.3);\n}\n.v-tabs {\n  position: relative;\n}\n.v-tabs__bar {\n  position: relative;\n  border-radius: inherit;\n}\n.v-tabs__icon {\n  align-items: center;\n  cursor: pointer;\n  display: inline-flex;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  width: 32px;\n}\n.v-tabs__icon--prev {\n  left: 4px;\n}\n.v-tabs__icon--next {\n  right: 4px;\n}\n.v-tabs__wrapper {\n  overflow: hidden;\n  contain: content;\n  display: flex;\n}\n.v-tabs__wrapper--show-arrows {\n  margin-left: 40px;\n  margin-right: 40px;\n}\n.v-tabs__wrapper--show-arrows .v-tabs__container--align-with-title {\n  padding-left: 16px;\n}\n.v-tabs__container {\n  flex: 1 0 auto;\n  display: flex;\n  height: 48px;\n  list-style-type: none;\n  transition: -webkit-transform 0.6s cubic-bezier(0.86, 0, 0.07, 1);\n  transition: transform 0.6s cubic-bezier(0.86, 0, 0.07, 1);\n  transition: transform 0.6s cubic-bezier(0.86, 0, 0.07, 1), -webkit-transform 0.6s cubic-bezier(0.86, 0, 0.07, 1);\n  white-space: nowrap;\n  position: relative;\n}\n.v-tabs__container--overflow .v-tabs__div {\n  flex: 1 0 auto;\n}\n.v-tabs__container--grow .v-tabs__div {\n  flex: 1 0 auto;\n  max-width: none;\n}\n.v-tabs__container--icons-and-text {\n  height: 72px;\n}\n.v-tabs__container--align-with-title {\n  padding-left: 56px;\n}\n.v-tabs__container--fixed-tabs .v-tabs__div,\n.v-tabs__container--icons-and-text .v-tabs__div {\n  min-width: 72px;\n}\n.v-tabs__container--centered > .v-tabs__div:first-child,\n.v-tabs__container--fixed-tabs > .v-tabs__div:first-child,\n.v-tabs__container--right > .v-tabs__div:first-child {\n  margin-left: auto;\n}\n.v-tabs__container--centered .v-tabs__slider-wrapper + .v-tabs__div,\n.v-tabs__container--fixed-tabs .v-tabs__slider-wrapper + .v-tabs__div,\n.v-tabs__container--right .v-tabs__slider-wrapper + .v-tabs__div {\n  margin-left: auto;\n}\n.v-tabs__container--centered > .v-tabs__div:last-child,\n.v-tabs__container--fixed-tabs > .v-tabs__div:last-child {\n  margin-right: auto;\n}\n.v-tabs__container--icons-and-text .v-tabs__item {\n  flex-direction: column-reverse;\n}\n.v-tabs__container--icons-and-text .v-tabs__item .v-icon {\n  margin-bottom: 6px;\n}\n.v-tabs__div {\n  align-items: center;\n  display: inline-flex;\n  flex: 0 1 auto;\n  font-size: 14px;\n  font-weight: 500;\n  line-height: normal;\n  height: inherit;\n  max-width: 264px;\n  text-align: center;\n  text-transform: uppercase;\n  vertical-align: middle;\n}\n.v-tabs__item {\n  align-items: center;\n  color: inherit;\n  display: flex;\n  flex: 1 1 auto;\n  height: 100%;\n  justify-content: center;\n  max-width: inherit;\n  padding: 6px 12px;\n  text-decoration: none;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  white-space: normal;\n}\n.v-tabs__item:not(.v-tabs__item--active) {\n  opacity: 0.7;\n}\n.v-tabs__item--disabled {\n  pointer-events: none;\n}\n.v-tabs__slider {\n  height: 2px;\n  width: 100%;\n}\n.v-tabs__slider-wrapper {\n  bottom: 0;\n  margin: 0 !important;\n  position: absolute;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n}\n@media only screen and (max-width: 599px) {\n  .v-tabs__wrapper--show-arrows .v-tabs__container--align-with-title {\n    padding-left: 24px;\n  }\n  .v-tabs__container--fixed-tabs .v-tabs__div {\n    flex: 1 0 auto;\n  }\n}\n@media only screen and (min-width: 600px) {\n  .v-tabs__container--fixed-tabs .v-tabs__div,\n  .v-tabs__container--icons-and-text .v-tabs__div {\n    min-width: 160px;\n  }\n}\n\n.theme--light.v-textarea.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused textarea {\n  color: #fff;\n}\n.theme--dark.v-textarea.v-text-field--solo-inverted.v-text-field--solo.v-input--is-focused textarea {\n  color: rgba(0,0,0,0.87);\n}\n.application--is-rtl .v-textarea.v-text-field--enclosed .v-text-field__slot {\n  margin-right: 0;\n  margin-left: -12px;\n}\n.application--is-rtl .v-textarea.v-text-field--enclosed .v-text-field__slot textarea {\n  padding-right: 0;\n  padding-left: 12px;\n}\n.v-textarea textarea {\n  flex: 1 1 auto;\n  line-height: 18px;\n  max-width: 100%;\n  min-height: 32px;\n  outline: none;\n  padding: 7px 0 8px;\n  width: 100%;\n}\n.v-textarea .v-text-field__prefix {\n  padding-top: 4px;\n  align-self: start;\n}\n.v-textarea.v-text-field--full-width .v-text-field__slot textarea,\n.v-textarea.v-text-field--full-width.v-text-field--single-line .v-text-field__slot textarea {\n  margin-top: 0;\n}\n.v-textarea.v-text-field--full-width .v-text-field__details,\n.v-textarea.v-text-field--full-width.v-text-field--single-line .v-text-field__details {\n  bottom: 4px;\n}\n.v-textarea.v-text-field--enclosed .v-text-field__slot {\n  margin-right: -12px;\n}\n.v-textarea.v-text-field--enclosed .v-text-field__slot textarea {\n  padding-right: 12px;\n}\n.v-textarea.v-text-field--box .v-text-field__prefix,\n.v-textarea.v-text-field--enclosed .v-text-field__prefix,\n.v-textarea.v-text-field--box textarea,\n.v-textarea.v-text-field--enclosed textarea {\n  margin-top: 24px;\n}\n.v-textarea.v-text-field--box.v-text-field--single-line .v-text-field__prefix,\n.v-textarea.v-text-field--enclosed.v-text-field--single-line .v-text-field__prefix,\n.v-textarea.v-text-field--box.v-text-field--single-line textarea,\n.v-textarea.v-text-field--enclosed.v-text-field--single-line textarea {\n  margin-top: 12px;\n}\n.v-textarea.v-text-field--box.v-text-field--single-line .v-label,\n.v-textarea.v-text-field--enclosed.v-text-field--single-line .v-label {\n  top: 18px;\n}\n.v-textarea.v-text-field--box.v-text-field--single-line.v-text-field--outline .v-input__control,\n.v-textarea.v-text-field--enclosed.v-text-field--single-line.v-text-field--outline .v-input__control {\n  padding-top: 0;\n}\n.v-textarea.v-text-field--solo {\n  align-items: flex-start;\n}\n.v-textarea.v-text-field--solo .v-input__prepend-inner,\n.v-textarea.v-text-field--solo .v-input__prepend-outer,\n.v-textarea.v-text-field--solo .v-input__append-inner,\n.v-textarea.v-text-field--solo .v-input__append-outer {\n  align-self: flex-start;\n  margin-top: 16px;\n}\n.v-textarea--auto-grow textarea {\n  overflow: hidden;\n}\n.v-textarea--no-resize textarea {\n  resize: none;\n}\n\n.theme--light.v-timeline:before {\n  background: rgba(0,0,0,0.12);\n}\n.theme--light.v-timeline .v-timeline-item__dot {\n  background: #fff;\n}\n.theme--light.v-timeline .v-timeline-item .v-card:before {\n  border-right-color: rgba(0,0,0,0.12);\n}\n.theme--dark.v-timeline:before {\n  background: rgba(255,255,255,0.12);\n}\n.theme--dark.v-timeline .v-timeline-item__dot {\n  background: #424242;\n}\n.theme--dark.v-timeline .v-timeline-item .v-card:before {\n  border-right-color: rgba(0,0,0,0.12);\n}\n.v-timeline-item {\n  display: flex;\n  flex-direction: row-reverse;\n  padding-bottom: 24px;\n}\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right),\n.v-timeline-item--left {\n  flex-direction: row;\n}\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-card:before,\n.v-timeline-item--left .v-card:before,\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-card:after,\n.v-timeline-item--left .v-card:after {\n  -webkit-transform: rotate(180deg);\n          transform: rotate(180deg);\n  left: 100%;\n}\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-timeline-item__opposite,\n.v-timeline-item--left .v-timeline-item__opposite {\n  margin-left: 96px;\n  text-align: left;\n}\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-timeline-item__opposite .v-card:before,\n.v-timeline-item--left .v-timeline-item__opposite .v-card:before,\n.v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-timeline-item__opposite .v-card:after,\n.v-timeline-item--left .v-timeline-item__opposite .v-card:after {\n  -webkit-transform: rotate(0);\n          transform: rotate(0);\n  left: -10px;\n}\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-card:before,\n.v-timeline-item--right .v-card:before,\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-card:after,\n.v-timeline-item--right .v-card:after {\n  right: 100%;\n}\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-timeline-item__opposite,\n.v-timeline-item--right .v-timeline-item__opposite {\n  margin-right: 96px;\n  text-align: right;\n}\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-timeline-item__opposite .v-card:before,\n.v-timeline-item--right .v-timeline-item__opposite .v-card:before,\n.v-timeline-item:nth-child(even):not(.v-timeline-item--left) .v-timeline-item__opposite .v-card:after,\n.v-timeline-item--right .v-timeline-item__opposite .v-card:after {\n  -webkit-transform: rotate(180deg);\n          transform: rotate(180deg);\n  right: -10px;\n}\n.v-timeline-item__dot,\n.v-timeline-item__inner-dot {\n  border-radius: 50%;\n}\n.v-timeline-item__dot {\n  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);\n  align-self: center;\n  position: absolute;\n  height: 38px;\n  left: calc(50% - 19px);\n  width: 38px;\n}\n.v-timeline-item__dot .v-timeline-item__inner-dot {\n  height: 30px;\n  margin: 4px;\n  width: 30px;\n}\n.v-timeline-item__dot--small {\n  height: 24px;\n  left: calc(50% - 12px);\n  width: 24px;\n}\n.v-timeline-item__dot--small .v-timeline-item__inner-dot {\n  height: 18px;\n  margin: 3px;\n  width: 18px;\n}\n.v-timeline-item__dot--large {\n  height: 52px;\n  left: calc(50% - 26px);\n  width: 52px;\n}\n.v-timeline-item__dot--large .v-timeline-item__inner-dot {\n  height: 42px;\n  margin: 5px;\n  width: 42px;\n}\n.v-timeline-item__inner-dot {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n.v-timeline-item__body {\n  position: relative;\n  height: 100%;\n  flex: 1 1 100%;\n  max-width: calc(50% - 48px);\n}\n.v-timeline-item .v-card:before,\n.v-timeline-item .v-card:after {\n  content: '';\n  position: absolute;\n  border-top: 10px solid transparent;\n  border-bottom: 10px solid transparent;\n  border-right: 10px solid #000;\n  top: calc(50% - 10px);\n}\n.v-timeline-item .v-card:after {\n  border-right-color: inherit;\n}\n.v-timeline-item .v-card:before {\n  top: calc(50% - 10px + 2px);\n}\n.v-timeline-item__opposite {\n  flex: 1 1 auto;\n  align-self: center;\n  max-width: calc(50% - 48px);\n}\n.v-timeline-item--fill-dot .v-timeline-item__inner-dot {\n  height: inherit;\n  margin: 0;\n  width: inherit;\n}\n.v-timeline {\n  padding-top: 24px;\n  position: relative;\n}\n.v-timeline:before {\n  bottom: 0;\n  content: '';\n  height: 100%;\n  left: calc(50% - 1px);\n  position: absolute;\n  top: 0;\n  width: 2px;\n}\n.v-timeline--align-top .v-timeline-item {\n  position: relative;\n}\n.v-timeline--align-top .v-timeline-item__dot {\n  top: 6px;\n}\n.v-timeline--align-top .v-timeline-item__dot--small {\n  top: 12px;\n}\n.v-timeline--align-top .v-timeline-item__dot--large {\n  top: 0;\n}\n.v-timeline--align-top .v-timeline-item .v-card:before {\n  top: calc(0% + 10px + 2px);\n}\n.v-timeline--align-top .v-timeline-item .v-card:after {\n  top: calc(0% + 10px);\n}\n.v-timeline--dense:before {\n  left: 18px;\n}\n.v-timeline--dense .v-timeline-item:nth-child(odd):not(.v-timeline-item--right),\n.v-timeline--dense .v-timeline-item--left {\n  flex-direction: row-reverse;\n}\n.v-timeline--dense .v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-card:before,\n.v-timeline--dense .v-timeline-item--left .v-card:before,\n.v-timeline--dense .v-timeline-item:nth-child(odd):not(.v-timeline-item--right) .v-card:after,\n.v-timeline--dense .v-timeline-item--left .v-card:after {\n  right: initial;\n  left: -10px;\n  -webkit-transform: none;\n          transform: none;\n}\n.v-timeline--dense .v-timeline-item__dot {\n  left: 0;\n}\n.v-timeline--dense .v-timeline-item__dot--small {\n  left: 7px;\n}\n.v-timeline--dense .v-timeline-item__dot--large {\n  left: -7px;\n}\n.v-timeline--dense .v-timeline-item__body {\n  max-width: calc(100% - 64px);\n}\n.v-timeline--dense .v-timeline-item__opposite {\n  display: none;\n}\n\n.v-time-picker-title {\n  color: #fff;\n  display: flex;\n  line-height: 1;\n  justify-content: flex-end;\n}\n.v-time-picker-title__time {\n  white-space: nowrap;\n}\n.v-time-picker-title__time .v-picker__title__btn,\n.v-time-picker-title__time span {\n  align-items: center;\n  display: inline-flex;\n  height: 70px;\n  font-size: 70px;\n  justify-content: center;\n}\n.v-time-picker-title__ampm {\n  align-self: flex-end;\n  display: flex;\n  flex-direction: column;\n  font-size: 16px;\n  margin: 8px 0 6px 8px;\n  text-transform: uppercase;\n}\n.v-time-picker-title__ampm div:only-child {\n  flex-direction: row;\n}\n.v-picker__title--landscape .v-time-picker-title {\n  flex-direction: column;\n  justify-content: center;\n  height: 100%;\n}\n.v-picker__title--landscape .v-time-picker-title__time {\n  text-align: right;\n}\n.v-picker__title--landscape .v-time-picker-title__time .v-picker__title__btn,\n.v-picker__title--landscape .v-time-picker-title__time span {\n  height: 55px;\n  font-size: 55px;\n}\n.v-picker__title--landscape .v-time-picker-title__ampm {\n  margin: 16px 0 0;\n  align-self: initial;\n  text-align: center;\n}\n\n/** Themes */\n.theme--light.v-time-picker-clock {\n  background: #e0e0e0;\n}\n.theme--light.v-time-picker-clock .v-time-picker-clock__item--disabled {\n  color: rgba(0,0,0,0.26);\n}\n.theme--light.v-time-picker-clock .v-time-picker-clock__item--disabled.v-time-picker-clock__item--active {\n  color: rgba(255,255,255,0.3);\n}\n.theme--light.v-time-picker-clock--indeterminate .v-time-picker-clock__hand {\n  background-color: #bdbdbd;\n}\n.theme--light.v-time-picker-clock--indeterminate .v-time-picker-clock__hand:after {\n  color: #bdbdbd;\n}\n.theme--light.v-time-picker-clock--indeterminate .v-time-picker-clock__item--active {\n  background-color: #bdbdbd;\n}\n.theme--dark.v-time-picker-clock {\n  background: #616161;\n}\n.theme--dark.v-time-picker-clock .v-time-picker-clock__item--disabled {\n  color: rgba(255,255,255,0.3);\n}\n.theme--dark.v-time-picker-clock .v-time-picker-clock__item--disabled.v-time-picker-clock__item--active {\n  color: rgba(255,255,255,0.3);\n}\n.theme--dark.v-time-picker-clock--indeterminate .v-time-picker-clock__hand {\n  background-color: #757575;\n}\n.theme--dark.v-time-picker-clock--indeterminate .v-time-picker-clock__hand:after {\n  color: #757575;\n}\n.theme--dark.v-time-picker-clock--indeterminate .v-time-picker-clock__item--active {\n  background-color: #757575;\n}\n.v-time-picker-clock {\n  border-radius: 100%;\n  position: relative;\n  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  width: 100%;\n  padding-top: 100%;\n}\n.v-time-picker-clock__container {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px;\n}\n.v-time-picker-clock__hand {\n  height: calc(50% - 4px);\n  width: 2px;\n  bottom: 50%;\n  left: calc(50% - 1px);\n  -webkit-transform-origin: center bottom;\n          transform-origin: center bottom;\n  position: absolute;\n  will-change: transform;\n  z-index: 1;\n}\n.v-time-picker-clock__hand:before {\n  background: transparent;\n  border-width: 2px;\n  border-style: solid;\n  border-color: inherit;\n  border-radius: 100%;\n  width: 10px;\n  height: 10px;\n  content: '';\n  position: absolute;\n  top: -4px;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.v-time-picker-clock__hand:after {\n  content: '';\n  position: absolute;\n  height: 8px;\n  width: 8px;\n  top: 100%;\n  left: 50%;\n  border-radius: 100%;\n  border-style: solid;\n  border-color: inherit;\n  background-color: inherit;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.v-time-picker-clock__hand--inner:after {\n  height: 14px;\n}\n.v-picker--full-width .v-time-picker-clock__container {\n  max-width: 290px;\n}\n.v-time-picker-clock__inner {\n  position: absolute;\n  bottom: 27px;\n  left: 27px;\n  right: 27px;\n  top: 27px;\n}\n.v-time-picker-clock__item {\n  align-items: center;\n  border-radius: 100%;\n  cursor: default;\n  display: flex;\n  font-size: 16px;\n  justify-content: center;\n  height: 40px;\n  position: absolute;\n  text-align: center;\n  width: 40px;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.v-time-picker-clock__item > span {\n  z-index: 1;\n}\n.v-time-picker-clock__item:before,\n.v-time-picker-clock__item:after {\n  content: '';\n  border-radius: 100%;\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  height: 14px;\n  width: 14px;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.v-time-picker-clock__item:after,\n.v-time-picker-clock__item:before {\n  height: 40px;\n  width: 40px;\n}\n.v-time-picker-clock__item--active {\n  color: #fff;\n  cursor: default;\n  z-index: 2;\n}\n.v-time-picker-clock__item--disabled {\n  pointer-events: none;\n}\n\n/* Theme */\n.theme--light.v-toolbar {\n  background-color: #f5f5f5;\n  color: rgba(0,0,0,0.87);\n}\n.theme--dark.v-toolbar {\n  background-color: #212121;\n  color: #fff;\n}\n.application--is-rtl .v-toolbar__title:not(:first-child) {\n  margin-left: 0;\n  margin-right: 20px;\n}\n.v-toolbar {\n  transition: none;\n  box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12);\n  position: relative;\n  width: 100%;\n  will-change: padding-left, padding-right;\n}\n.v-toolbar[data-booted=\"true\"] {\n  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.v-toolbar .v-text-field--enclosed,\n.v-toolbar .v-text-field--box {\n  margin: 0;\n}\n.v-toolbar .v-text-field--enclosed .v-text-field__details,\n.v-toolbar .v-text-field--box .v-text-field__details {\n  display: none;\n}\n/** Children */\n.v-toolbar .v-tabs {\n  width: 100%;\n}\n.v-toolbar__title {\n  font-size: 20px;\n  font-weight: 500;\n  letter-spacing: 0.02em;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.v-toolbar__title:not(:first-child) {\n  margin-left: 20px;\n}\n.v-toolbar__content,\n.v-toolbar__extension {\n  align-items: center;\n  display: flex;\n  padding: 0 24px;\n}\n.v-toolbar__content .v-btn--icon,\n.v-toolbar__extension .v-btn--icon {\n  margin: 6px;\n}\n.v-toolbar__content > *:first-child,\n.v-toolbar__extension > *:first-child {\n  margin-left: 0;\n}\n.v-toolbar__content > *:first-child.v-btn--icon,\n.v-toolbar__extension > *:first-child.v-btn--icon {\n  margin-left: -6px;\n}\n.v-toolbar__content > *:first-child.v-menu .v-menu__activator .v-btn,\n.v-toolbar__extension > *:first-child.v-menu .v-menu__activator .v-btn,\n.v-toolbar__content > *:first-child.v-tooltip span .v-btn,\n.v-toolbar__extension > *:first-child.v-tooltip span .v-btn {\n  margin-left: 0;\n}\n.v-toolbar__content > *:first-child.v-menu .v-menu__activator .v-btn--icon,\n.v-toolbar__extension > *:first-child.v-menu .v-menu__activator .v-btn--icon,\n.v-toolbar__content > *:first-child.v-tooltip span .v-btn--icon,\n.v-toolbar__extension > *:first-child.v-tooltip span .v-btn--icon {\n  margin-left: -6px;\n}\n.v-toolbar__content > *:last-child,\n.v-toolbar__extension > *:last-child {\n  margin-right: 0;\n}\n.v-toolbar__content > *:last-child.v-btn--icon,\n.v-toolbar__extension > *:last-child.v-btn--icon {\n  margin-right: -6px;\n}\n.v-toolbar__content > *:last-child.v-menu .v-menu__activator .v-btn,\n.v-toolbar__extension > *:last-child.v-menu .v-menu__activator .v-btn,\n.v-toolbar__content > *:last-child.v-tooltip span .v-btn,\n.v-toolbar__extension > *:last-child.v-tooltip span .v-btn {\n  margin-right: 0;\n}\n.v-toolbar__content > *:last-child.v-menu .v-menu__activator .v-btn--icon,\n.v-toolbar__extension > *:last-child.v-menu .v-menu__activator .v-btn--icon,\n.v-toolbar__content > *:last-child.v-tooltip span .v-btn--icon,\n.v-toolbar__extension > *:last-child.v-tooltip span .v-btn--icon {\n  margin-right: -6px;\n}\n.v-toolbar__content > .v-list,\n.v-toolbar__extension > .v-list {\n  flex: 1 1 auto;\n  max-height: 100%;\n}\n.v-toolbar__content > .v-list:first-child,\n.v-toolbar__extension > .v-list:first-child {\n  margin-left: -24px;\n}\n.v-toolbar__content > .v-list:last-child,\n.v-toolbar__extension > .v-list:last-child {\n  margin-right: -24px;\n}\n.v-toolbar__extension > .v-toolbar__title {\n  margin-left: 72px;\n}\n.v-toolbar__items {\n  display: flex;\n  height: inherit;\n  max-width: 100%;\n  padding: 0;\n}\n.v-toolbar__items .v-btn {\n  align-items: center;\n  align-self: center;\n}\n.v-toolbar__items .v-tooltip,\n.v-toolbar__items .v-tooltip > span {\n  height: inherit;\n}\n.v-toolbar__items .v-btn:not(.v-btn--floating):not(.v-btn--icon),\n.v-toolbar__items .v-menu,\n.v-toolbar__items .v-menu__activator {\n  height: inherit;\n  margin: 0;\n}\n/** Types */\n.v-toolbar .v-overflow-btn,\n.v-toolbar .v-btn-toggle {\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);\n}\n.v-toolbar .v-input {\n  margin: 0;\n}\n.v-toolbar .v-overflow-btn .v-input__control:before,\n.v-toolbar .v-overflow-btn .v-input__slot:before {\n  display: none;\n}\n.v-toolbar--card {\n  border-radius: 2px 2px 0 0;\n  box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);\n}\n.v-toolbar--fixed {\n  position: fixed;\n  z-index: 2;\n}\n.v-toolbar--fixed,\n.v-toolbar--absolute {\n  top: 0;\n  left: 0;\n}\n.v-toolbar--absolute {\n  position: absolute;\n  z-index: 2;\n}\n.v-toolbar--floating {\n  display: inline-flex;\n  margin: 16px;\n  width: auto;\n}\n.v-toolbar--clipped {\n  z-index: 3;\n}\n@media only screen and (max-width: 959px) {\n  .v-toolbar__content,\n  .v-toolbar__extension {\n    padding: 0 16px;\n  }\n  .v-toolbar__content > .v-list:first-child,\n  .v-toolbar__extension > .v-list:first-child {\n    margin-left: -16px;\n  }\n  .v-toolbar__content > .v-list:last-child,\n  .v-toolbar__extension > .v-list:last-child {\n    margin-right: -16px;\n  }\n}\n\n.v-tooltip__content {\n  background: #616161;\n  border-radius: 2px;\n  color: #fff;\n  font-size: 12px;\n  display: inline-block;\n  padding: 5px 8px;\n  position: absolute;\n  text-transform: initial;\n  width: auto;\n  box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);\n}\n.v-tooltip__content[class*=\"-active\"] {\n  transition: 0.15s cubic-bezier(0.25, 0.8, 0.5, 1);\n  pointer-events: none;\n}\n.v-tooltip__content--fixed {\n  position: fixed;\n}\n@media only screen and (max-width: 959px) {\n  .v-tooltip .v-tooltip__content {\n    padding: 10px 16px;\n  }\n}\n\n/* Theme */\n.theme--light.v-treeview {\n  color: rgba(0,0,0,0.87);\n}\n.theme--light.v-treeview--hoverable .v-treeview-node__root:hover,\n.theme--light.v-treeview .v-treeview-node--active {\n  background: rgba(0,0,0,0.12);\n}\n.theme--dark.v-treeview {\n  color: #fff;\n}\n.theme--dark.v-treeview--hoverable .v-treeview-node__root:hover,\n.theme--dark.v-treeview .v-treeview-node--active {\n  background: rgba(255,255,255,0.12);\n}\n.application--is-rtl .v-treeview > .v-treeview-node {\n  margin-right: 0;\n}\n.application--is-rtl .v-treeview > .v-treeview-node--leaf {\n  margin-right: 24px;\n  margin-left: 0;\n}\n.application--is-rtl .v-treeview-node {\n  margin-right: 26px;\n  margin-left: 0;\n}\n.application--is-rtl .v-treeview-node--leaf {\n  margin-right: 50px;\n  margin-left: 0;\n}\n.application--is-rtl .v-treeview-node__toggle {\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.application--is-rtl .v-treeview-node__toggle--open {\n  -webkit-transform: none;\n          transform: none;\n}\n.v-treeview > .v-treeview-node {\n  margin-left: 0;\n}\n.v-treeview > .v-treeview-node--leaf {\n  margin-left: 24px;\n}\n.v-treeview-node {\n  margin-left: 26px;\n}\n.v-treeview-node--excluded {\n  display: none;\n}\n.v-treeview-node--click > .v-treeview-node__root,\n.v-treeview-node--click > .v-treeview-node__root > .v-treeview-node__content > * {\n  cursor: pointer;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-treeview-node--leaf {\n  margin-left: 50px;\n}\n.v-treeview-node__root {\n  display: flex;\n  align-items: center;\n  min-height: 34px;\n}\n.v-treeview-node__content {\n  display: flex;\n  flex-grow: 1;\n  flex-shrink: 0;\n  align-items: center;\n}\n.v-treeview-node__content .v-btn {\n  flex-grow: 0 !important;\n  flex-shrink: 1 !important;\n}\n.v-treeview-node__label {\n  font-size: 1.2rem;\n  margin-left: 6px;\n  flex-grow: 1;\n  flex-shrink: 0;\n}\n.v-treeview-node__label .v-icon {\n  padding-right: 8px;\n}\n.v-treeview-node__checkbox {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.v-treeview-node__toggle {\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  -webkit-transform: rotate(-90deg);\n          transform: rotate(-90deg);\n}\n.v-treeview-node__toggle--open {\n  -webkit-transform: none;\n          transform: none;\n}\n.v-treeview-node__toggle--loading {\n  -webkit-animation: progress-circular-rotate 1s linear infinite;\n          animation: progress-circular-rotate 1s linear infinite;\n}\n.v-treeview-node__children {\n  transition: all 0.2s cubic-bezier(0, 0, 0.2, 1);\n}", ""]);
 
 // exports
 
 
 /***/ }),
-/* 107 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -90460,7 +90414,7 @@ var singleton = null;
 var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
 
-var	fixUrls = __webpack_require__(108);
+var	fixUrls = __webpack_require__(113);
 
 module.exports = function(list, options) {
 	if (typeof DEBUG !== "undefined" && DEBUG) {
@@ -90773,7 +90727,7 @@ function updateLink (link, options, obj) {
 
 
 /***/ }),
-/* 108 */
+/* 113 */
 /***/ (function(module, exports) {
 
 
@@ -90868,24 +90822,7 @@ module.exports = function (css) {
 
 
 /***/ }),
-/* 109 */
-/***/ (function(module, exports, __webpack_require__) {
-
-!function(e,t){ true?module.exports=t():"function"==typeof define&&define.amd?define("vuetify-upload-button",[],t):"object"==typeof exports?exports["vuetify-upload-button"]=t():e["vuetify-upload-button"]=t()}(this,function(){return function(e){function t(i){if(n[i])return n[i].exports;var a=n[i]={exports:{},id:i,loaded:!1};return e[i].call(a.exports,a,a.exports,t),a.loaded=!0,a.exports}var n={};return t.m=e,t.c=n,t.p="",t(0)}([function(e,t,n){n(1);var i=n(6)(n(7),n(8),"data-v-26f644c0",null);e.exports=i.exports},function(e,t,n){var i=n(2);"string"==typeof i&&(i=[[e.id,i,""]]),i.locals&&(e.exports=i.locals);n(4)("9bbb4e68",i,!0)},function(e,t,n){t=e.exports=n(3)(!1),t.push([e.id,".upload-btn[data-v-26f644c0]{padding-left:16px;padding-right:16px}.upload-btn input[type=file][data-v-26f644c0]{position:absolute;height:.1px;width:.1px;overflow:hidden;opacity:0;z-index:-1}.upload-btn>.v-btn__content>span[data-v-26f644c0]{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.upload-btn-hover[data-v-26f644c0]{cursor:pointer}",""])},function(e,t){function n(e,t){var n=e[1]||"",a=e[3];if(!a)return n;if(t&&"function"==typeof btoa){var o=i(a),r=a.sources.map(function(e){return"/*# sourceURL="+a.sourceRoot+e+" */"});return[n].concat(r).concat([o]).join("\n")}return[n].join("\n")}function i(e){var t=btoa(unescape(encodeURIComponent(JSON.stringify(e)))),n="sourceMappingURL=data:application/json;charset=utf-8;base64,"+t;return"/*# "+n+" */"}e.exports=function(e){var t=[];return t.toString=function(){return this.map(function(t){var i=n(t,e);return t[2]?"@media "+t[2]+"{"+i+"}":i}).join("")},t.i=function(e,n){"string"==typeof e&&(e=[[null,e,""]]);for(var i={},a=0;a<this.length;a++){var o=this[a][0];"number"==typeof o&&(i[o]=!0)}for(a=0;a<e.length;a++){var r=e[a];"number"==typeof r[0]&&i[r[0]]||(n&&!r[2]?r[2]=n:n&&(r[2]="("+r[2]+") and ("+n+")"),t.push(r))}},t}},function(e,t,n){function i(e){for(var t=0;t<e.length;t++){var n=e[t],i=d[n.id];if(i){i.refs++;for(var a=0;a<i.parts.length;a++)i.parts[a](n.parts[a]);for(;a<n.parts.length;a++)i.parts.push(o(n.parts[a]));i.parts.length>n.parts.length&&(i.parts.length=n.parts.length)}else{for(var r=[],a=0;a<n.parts.length;a++)r.push(o(n.parts[a]));d[n.id]={id:n.id,refs:1,parts:r}}}}function a(){var e=document.createElement("style");return e.type="text/css",p.appendChild(e),e}function o(e){var t,n,i=document.querySelector('style[data-vue-ssr-id~="'+e.id+'"]');if(i){if(h)return v;i.parentNode.removeChild(i)}if(m){var o=c++;i=f||(f=a()),t=r.bind(null,i,o,!1),n=r.bind(null,i,o,!0)}else i=a(),t=l.bind(null,i),n=function(){i.parentNode.removeChild(i)};return t(e),function(i){if(i){if(i.css===e.css&&i.media===e.media&&i.sourceMap===e.sourceMap)return;t(e=i)}else n()}}function r(e,t,n,i){var a=n?"":i.css;if(e.styleSheet)e.styleSheet.cssText=b(t,a);else{var o=document.createTextNode(a),r=e.childNodes;r[t]&&e.removeChild(r[t]),r.length?e.insertBefore(o,r[t]):e.appendChild(o)}}function l(e,t){var n=t.css,i=t.media,a=t.sourceMap;if(i&&e.setAttribute("media",i),a&&(n+="\n/*# sourceURL="+a.sources[0]+" */",n+="\n/*# sourceMappingURL=data:application/json;base64,"+btoa(unescape(encodeURIComponent(JSON.stringify(a))))+" */"),e.styleSheet)e.styleSheet.cssText=n;else{for(;e.firstChild;)e.removeChild(e.firstChild);e.appendChild(document.createTextNode(n))}}var s="undefined"!=typeof document,u=n(5),d={},p=s&&(document.head||document.getElementsByTagName("head")[0]),f=null,c=0,h=!1,v=function(){},m="undefined"!=typeof navigator&&/msie [6-9]\b/.test(navigator.userAgent.toLowerCase());e.exports=function(e,t,n){h=n;var a=u(e,t);return i(a),function(t){for(var n=[],o=0;o<a.length;o++){var r=a[o],l=d[r.id];l.refs--,n.push(l)}t?(a=u(e,t),i(a)):a=[];for(var o=0;o<n.length;o++){var l=n[o];if(0===l.refs){for(var s=0;s<l.parts.length;s++)l.parts[s]();delete d[l.id]}}}};var b=function(){var e=[];return function(t,n){return e[t]=n,e.filter(Boolean).join("\n")}}()},function(e,t){e.exports=function(e,t){for(var n=[],i={},a=0;a<t.length;a++){var o=t[a],r=o[0],l=o[1],s=o[2],u=o[3],d={id:e+":"+a,css:l,media:s,sourceMap:u};i[r]?i[r].parts.push(d):n.push(i[r]={id:r,parts:[d]})}return n}},function(e,t){e.exports=function(e,t,n,i){var a,o=e=e||{},r=typeof e["default"];"object"!==r&&"function"!==r||(a=e,o=e["default"]);var l="function"==typeof o?o.options:o;if(t&&(l.render=t.render,l.staticRenderFns=t.staticRenderFns),n&&(l._scopeId=n),i){var s=Object.create(l.computed||null);Object.keys(i).forEach(function(e){var t=i[e];s[e]=function(){return t}}),l.computed=s}return{esModule:a,exports:o,options:l}}},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0}),t["default"]={name:"UploadBtn",props:{accept:{"default":"*",type:String},block:{"default":!1,type:Boolean},depressed:{"default":!1,type:Boolean},color:{"default":"primary",type:String},disabled:{"default":!1,type:Boolean},fixedWidth:{"default":null,type:String},flat:{"default":!1,type:Boolean},hover:{"default":!0,type:Boolean},icon:{"default":!1,type:Boolean},labelClass:{"default":"",type:String},large:{"default":!1,type:Boolean},loading:{"default":!1,type:Boolean},maxWidth:{"default":"100%",type:String},multiple:{"default":!1,type:Boolean},name:{"default":"uploadFile",type:String},outline:{"default":!1,type:Boolean},ripple:{"default":!0,type:Boolean},round:{"default":!1,type:Boolean},small:{"default":!1,type:Boolean},title:{"default":"Upload",type:String},noTitleUpdate:{"default":!1,type:Boolean}},data:function(){return{uTitle:null}},computed:{classes:function n(){var n={"v-btn--block":this.block,"v-btn--flat":this.flat,"upload-btn-hover":this.hover,"v-btn--icon":this.icon,"v-btn--large":this.large,"v-btn--loading":this.loading,"v-btn--outline v-btn--depressed":this.outline,"v-btn--round":this.round,"v-btn--small":this.small,"v-btn--disabled":this.disabled,"v-btn--depressed":this.depressed};this.flat&&(this.color="");var e="";for(var t in n)n[t]&&(e+=t+" ");return e}},methods:{fileChanged:function(e){if(e)if(e.target.files.length>0)if(this.multiple){for(var t="",n=0;n<e.target.files.length;n++)t+=e.target.files[n].name+", ";t=t.slice(0,t.length-2),this.uTitle=t,this.$emit("file-update",e.target.files)}else this.uTitle=e.target.files[0].name,this.$emit("file-update",e.target.files[0]);else this.uTitle=null,this.$emit("file-update")},clear:function(){this.$refs.uploadFile.value="",this.$emit("file-update"),this.uTitle=null}}}},function(e,t){e.exports={render:function(){var e=this,t=e.$createElement,n=e._self._c||t;return n("div",{staticClass:"upload-btn"},[n("input",{ref:"uploadFile",attrs:{id:e._uid+"uploadFile",type:"file",name:e.name,accept:e.accept,multiple:e.multiple},on:{change:e.fileChanged}}),e._v(" "),n("label",{directives:[{name:"ripple",rawName:"v-ripple",value:e.ripple,expression:"ripple"}],"class":"v-btn "+e.classes+e.color+" "+e.labelClass+" upload-btn",style:{maxWidth:e.maxWidth,width:e.fixedWidth||"auto"},attrs:{id:"label"+(e._uid+"uploadFile"),"for":e._uid+"uploadFile"}},[n("div",{staticClass:"v-btn__content",staticStyle:{"max-width":"100%"}},[e._t("icon-left"),e._v(" "),n("span",[e._v("\n        "+e._s(e.icon?"":e.noTitleUpdate?e.title:e.uTitle||e.title)+"\n      ")]),e._v(" "),e._t("icon")],2)])])},staticRenderFns:[]}}])});
-
-/***/ }),
-/* 110 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/*!
- * vue-carousel v0.18.0-alpha
- * (c) 2019 todd.beauchamp@ssense.com
- * https://github.com/ssense/vue-carousel#readme
- */
-!function(t,e){ true?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports.VueCarousel=e():t.VueCarousel=e()}(window,function(){return function(t){var e={};function n(r){if(e[r])return e[r].exports;var i=e[r]={i:r,l:!1,exports:{}};return t[r].call(i.exports,i,i.exports,n),i.l=!0,i.exports}return n.m=t,n.c=e,n.d=function(t,e,r){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:r})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var r=Object.create(null);if(n.r(r),Object.defineProperty(r,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var i in t)n.d(r,i,function(e){return t[e]}.bind(null,i));return r},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=53)}([function(t,e,n){var r=n(30)("wks"),i=n(15),o=n(3).Symbol,a="function"==typeof o;(t.exports=function(t){return r[t]||(r[t]=a&&o[t]||(a?o:i)("Symbol."+t))}).store=r},function(t,e){t.exports=function(t){try{return!!t()}catch(t){return!0}}},function(t,e,n){var r=n(3),i=n(11),o=n(6),a=n(10),s=n(29),u=function(t,e,n){var c,l,f,d,h=t&u.F,p=t&u.G,g=t&u.S,v=t&u.P,y=t&u.B,m=p?r:g?r[e]||(r[e]={}):(r[e]||{}).prototype,b=p?i:i[e]||(i[e]={}),x=b.prototype||(b.prototype={});for(c in p&&(n=e),n)f=((l=!h&&m&&void 0!==m[c])?m:n)[c],d=y&&l?s(f,r):v&&"function"==typeof f?s(Function.call,f):f,m&&a(m,c,f,t&u.U),b[c]!=f&&o(b,c,d),v&&x[c]!=f&&(x[c]=f)};r.core=i,u.F=1,u.G=2,u.S=4,u.P=8,u.B=16,u.W=32,u.U=64,u.R=128,t.exports=u},function(t,e){var n=t.exports="undefined"!=typeof window&&window.Math==Math?window:"undefined"!=typeof self&&self.Math==Math?self:Function("return this")();"number"==typeof __g&&(__g=n)},function(t,e,n){var r=n(7),i=n(40),o=n(20),a=Object.defineProperty;e.f=n(5)?Object.defineProperty:function(t,e,n){if(r(t),e=o(e,!0),r(n),i)try{return a(t,e,n)}catch(t){}if("get"in n||"set"in n)throw TypeError("Accessors not supported!");return"value"in n&&(t[e]=n.value),t}},function(t,e,n){t.exports=!n(1)(function(){return 7!=Object.defineProperty({},"a",{get:function(){return 7}}).a})},function(t,e,n){var r=n(4),i=n(14);t.exports=n(5)?function(t,e,n){return r.f(t,e,i(1,n))}:function(t,e,n){return t[e]=n,t}},function(t,e,n){var r=n(8);t.exports=function(t){if(!r(t))throw TypeError(t+" is not an object!");return t}},function(t,e){t.exports=function(t){return"object"==typeof t?null!==t:"function"==typeof t}},function(t,e){var n={}.hasOwnProperty;t.exports=function(t,e){return n.call(t,e)}},function(t,e,n){var r=n(3),i=n(6),o=n(9),a=n(15)("src"),s=Function.toString,u=(""+s).split("toString");n(11).inspectSource=function(t){return s.call(t)},(t.exports=function(t,e,n,s){var c="function"==typeof n;c&&(o(n,"name")||i(n,"name",e)),t[e]!==n&&(c&&(o(n,a)||i(n,a,t[e]?""+t[e]:u.join(String(e)))),t===r?t[e]=n:s?t[e]?t[e]=n:i(t,e,n):(delete t[e],i(t,e,n)))})(Function.prototype,"toString",function(){return"function"==typeof this&&this[a]||s.call(this)})},function(t,e){var n=t.exports={version:"2.5.7"};"number"==typeof __e&&(__e=n)},function(t,e,n){var r=n(47),i=n(17);t.exports=function(t){return r(i(t))}},function(t,e,n){var r=n(48),i=n(33);t.exports=Object.keys||function(t){return r(t,i)}},function(t,e){t.exports=function(t,e){return{enumerable:!(1&t),configurable:!(2&t),writable:!(4&t),value:e}}},function(t,e){var n=0,r=Math.random();t.exports=function(t){return"Symbol(".concat(void 0===t?"":t,")_",(++n+r).toString(36))}},function(t,e,n){var r=n(17);t.exports=function(t){return Object(r(t))}},function(t,e){t.exports=function(t){if(void 0==t)throw TypeError("Can't call method on  "+t);return t}},function(t,e){t.exports={}},function(t,e){var n={}.toString;t.exports=function(t){return n.call(t).slice(8,-1)}},function(t,e,n){var r=n(8);t.exports=function(t,e){if(!r(t))return t;var n,i;if(e&&"function"==typeof(n=t.toString)&&!r(i=n.call(t)))return i;if("function"==typeof(n=t.valueOf)&&!r(i=n.call(t)))return i;if(!e&&"function"==typeof(n=t.toString)&&!r(i=n.call(t)))return i;throw TypeError("Can't convert object to primitive value")}},function(t,e){t.exports=!1},function(t,e){e.f={}.propertyIsEnumerable},function(t,e){t.exports=function(t){var e=[];return e.toString=function(){return this.map(function(e){var n=function(t,e){var n=t[1]||"",r=t[3];if(!r)return n;if(e&&"function"==typeof btoa){var i=function(t){return"/*# sourceMappingURL=data:application/json;charset=utf-8;base64,"+btoa(unescape(encodeURIComponent(JSON.stringify(t))))+" */"}(r),o=r.sources.map(function(t){return"/*# sourceURL="+r.sourceRoot+t+" */"});return[n].concat(o).concat([i]).join("\n")}return[n].join("\n")}(e,t);return e[2]?"@media "+e[2]+"{"+n+"}":n}).join("")},e.i=function(t,n){"string"==typeof t&&(t=[[null,t,""]]);for(var r={},i=0;i<this.length;i++){var o=this[i][0];"number"==typeof o&&(r[o]=!0)}for(i=0;i<t.length;i++){var a=t[i];"number"==typeof a[0]&&r[a[0]]||(n&&!a[2]?a[2]=n:n&&(a[2]="("+a[2]+") and ("+n+")"),e.push(a))}},e}},function(t,e,n){"use strict";function r(t,e){for(var n=[],r={},i=0;i<e.length;i++){var o=e[i],a=o[0],s={id:t+":"+i,css:o[1],media:o[2],sourceMap:o[3]};r[a]?r[a].parts.push(s):n.push(r[a]={id:a,parts:[s]})}return n}n.r(e),n.d(e,"default",function(){return p});var i="undefined"!=typeof document;if("undefined"!=typeof DEBUG&&DEBUG&&!i)throw new Error("vue-style-loader cannot be used in a non-browser environment. Use { target: 'node' } in your Webpack config to indicate a server-rendering environment.");var o={},a=i&&(document.head||document.getElementsByTagName("head")[0]),s=null,u=0,c=!1,l=function(){},f=null,d="data-vue-ssr-id",h="undefined"!=typeof navigator&&/msie [6-9]\b/.test(navigator.userAgent.toLowerCase());function p(t,e,n,i){c=n,f=i||{};var a=r(t,e);return g(a),function(e){for(var n=[],i=0;i<a.length;i++){var s=a[i];(u=o[s.id]).refs--,n.push(u)}for(e?g(a=r(t,e)):a=[],i=0;i<n.length;i++){var u;if(0===(u=n[i]).refs){for(var c=0;c<u.parts.length;c++)u.parts[c]();delete o[u.id]}}}}function g(t){for(var e=0;e<t.length;e++){var n=t[e],r=o[n.id];if(r){r.refs++;for(var i=0;i<r.parts.length;i++)r.parts[i](n.parts[i]);for(;i<n.parts.length;i++)r.parts.push(y(n.parts[i]));r.parts.length>n.parts.length&&(r.parts.length=n.parts.length)}else{var a=[];for(i=0;i<n.parts.length;i++)a.push(y(n.parts[i]));o[n.id]={id:n.id,refs:1,parts:a}}}}function v(){var t=document.createElement("style");return t.type="text/css",a.appendChild(t),t}function y(t){var e,n,r=document.querySelector("style["+d+'~="'+t.id+'"]');if(r){if(c)return l;r.parentNode.removeChild(r)}if(h){var i=u++;r=s||(s=v()),e=b.bind(null,r,i,!1),n=b.bind(null,r,i,!0)}else r=v(),e=function(t,e){var n=e.css,r=e.media,i=e.sourceMap;if(r&&t.setAttribute("media",r),f.ssrId&&t.setAttribute(d,e.id),i&&(n+="\n/*# sourceURL="+i.sources[0]+" */",n+="\n/*# sourceMappingURL=data:application/json;base64,"+btoa(unescape(encodeURIComponent(JSON.stringify(i))))+" */"),t.styleSheet)t.styleSheet.cssText=n;else{for(;t.firstChild;)t.removeChild(t.firstChild);t.appendChild(document.createTextNode(n))}}.bind(null,r),n=function(){r.parentNode.removeChild(r)};return e(t),function(r){if(r){if(r.css===t.css&&r.media===t.media&&r.sourceMap===t.sourceMap)return;e(t=r)}else n()}}var m=function(){var t=[];return function(e,n){return t[e]=n,t.filter(Boolean).join("\n")}}();function b(t,e,n,r){var i=n?"":r.css;if(t.styleSheet)t.styleSheet.cssText=m(e,i);else{var o=document.createTextNode(i),a=t.childNodes;a[e]&&t.removeChild(a[e]),a.length?t.insertBefore(o,a[e]):t.appendChild(o)}}},function(t,e,n){var r=n(95);"string"==typeof r&&(r=[[t.i,r,""]]),r.locals&&(t.exports=r.locals),(0,n(24).default)("1c9d4ce3",r,!1,{})},function(t,e,n){var r=n(98);"string"==typeof r&&(r=[[t.i,r,""]]),r.locals&&(t.exports=r.locals),(0,n(24).default)("6a175419",r,!1,{})},function(t,e,n){var r=n(100);"string"==typeof r&&(r=[[t.i,r,""]]),r.locals&&(t.exports=r.locals),(0,n(24).default)("07c48036",r,!1,{})},function(t,e,n){var r=n(102);"string"==typeof r&&(r=[[t.i,r,""]]),r.locals&&(t.exports=r.locals),(0,n(24).default)("6eff00d0",r,!1,{})},function(t,e,n){var r=n(39);t.exports=function(t,e,n){if(r(t),void 0===e)return t;switch(n){case 1:return function(n){return t.call(e,n)};case 2:return function(n,r){return t.call(e,n,r)};case 3:return function(n,r,i){return t.call(e,n,r,i)}}return function(){return t.apply(e,arguments)}}},function(t,e,n){var r=n(11),i=n(3),o=i["__core-js_shared__"]||(i["__core-js_shared__"]={});(t.exports=function(t,e){return o[t]||(o[t]=void 0!==e?e:{})})("versions",[]).push({version:r.version,mode:n(21)?"pure":"global",copyright:"© 2018 Denis Pushkarev (zloirock.ru)"})},function(t,e,n){var r=n(7),i=n(67),o=n(33),a=n(32)("IE_PROTO"),s=function(){},u=function(){var t,e=n(41)("iframe"),r=o.length;for(e.style.display="none",n(69).appendChild(e),e.src="javascript:",(t=e.contentWindow.document).open(),t.write("<script>document.F=Object<\/script>"),t.close(),u=t.F;r--;)delete u.prototype[o[r]];return u()};t.exports=Object.create||function(t,e){var n;return null!==t?(s.prototype=r(t),n=new s,s.prototype=null,n[a]=t):n=u(),void 0===e?n:i(n,e)}},function(t,e,n){var r=n(30)("keys"),i=n(15);t.exports=function(t){return r[t]||(r[t]=i(t))}},function(t,e){t.exports="constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf".split(",")},function(t,e,n){var r=n(4).f,i=n(9),o=n(0)("toStringTag");t.exports=function(t,e,n){t&&!i(t=n?t:t.prototype,o)&&r(t,o,{configurable:!0,value:e})}},function(t,e){e.f=Object.getOwnPropertySymbols},function(t,e,n){var r=n(48),i=n(33).concat("length","prototype");e.f=Object.getOwnPropertyNames||function(t){return r(t,i)}},function(t,e,n){var r=n(22),i=n(14),o=n(12),a=n(20),s=n(9),u=n(40),c=Object.getOwnPropertyDescriptor;e.f=n(5)?c:function(t,e){if(t=o(t),e=a(e,!0),u)try{return c(t,e)}catch(t){}if(s(t,e))return i(!r.f.call(t,e),t[e])}},function(t,e,n){"use strict";var r=n(3),i=n(9),o=n(19),a=n(85),s=n(20),u=n(1),c=n(36).f,l=n(37).f,f=n(4).f,d=n(87).trim,h=r.Number,p=h,g=h.prototype,v="Number"==o(n(31)(g)),y="trim"in String.prototype,m=function(t){var e=s(t,!1);if("string"==typeof e&&e.length>2){var n,r,i,o=(e=y?e.trim():d(e,3)).charCodeAt(0);if(43===o||45===o){if(88===(n=e.charCodeAt(2))||120===n)return NaN}else if(48===o){switch(e.charCodeAt(1)){case 66:case 98:r=2,i=49;break;case 79:case 111:r=8,i=55;break;default:return+e}for(var a,u=e.slice(2),c=0,l=u.length;c<l;c++)if((a=u.charCodeAt(c))<48||a>i)return NaN;return parseInt(u,r)}}return+e};if(!h(" 0o1")||!h("0b1")||h("+0x1")){h=function(t){var e=arguments.length<1?0:t,n=this;return n instanceof h&&(v?u(function(){g.valueOf.call(n)}):"Number"!=o(n))?a(new p(m(e)),n,h):m(e)};for(var b,x=n(5)?c(p):"MAX_VALUE,MIN_VALUE,NaN,NEGATIVE_INFINITY,POSITIVE_INFINITY,EPSILON,isFinite,isInteger,isNaN,isSafeInteger,MAX_SAFE_INTEGER,MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger".split(","),P=0;x.length>P;P++)i(p,b=x[P])&&!i(h,b)&&f(h,b,l(p,b));h.prototype=g,g.constructor=h,n(10)(r,"Number",h)}},function(t,e){t.exports=function(t){if("function"!=typeof t)throw TypeError(t+" is not a function!");return t}},function(t,e,n){t.exports=!n(5)&&!n(1)(function(){return 7!=Object.defineProperty(n(41)("div"),"a",{get:function(){return 7}}).a})},function(t,e,n){var r=n(8),i=n(3).document,o=r(i)&&r(i.createElement);t.exports=function(t){return o?i.createElement(t):{}}},function(t,e,n){var r=n(43),i=Math.min;t.exports=function(t){return t>0?i(r(t),9007199254740991):0}},function(t,e){var n=Math.ceil,r=Math.floor;t.exports=function(t){return isNaN(t=+t)?0:(t>0?r:n)(t)}},function(t,e,n){"use strict";var r=n(7);t.exports=function(){var t=r(this),e="";return t.global&&(e+="g"),t.ignoreCase&&(e+="i"),t.multiline&&(e+="m"),t.unicode&&(e+="u"),t.sticky&&(e+="y"),e}},function(t,e,n){"use strict";var r=n(46),i=n(64),o=n(18),a=n(12);t.exports=n(65)(Array,"Array",function(t,e){this._t=a(t),this._i=0,this._k=e},function(){var t=this._t,e=this._k,n=this._i++;return!t||n>=t.length?(this._t=void 0,i(1)):i(0,"keys"==e?n:"values"==e?t[n]:[n,t[n]])},"values"),o.Arguments=o.Array,r("keys"),r("values"),r("entries")},function(t,e,n){var r=n(0)("unscopables"),i=Array.prototype;void 0==i[r]&&n(6)(i,r,{}),t.exports=function(t){i[r][t]=!0}},function(t,e,n){var r=n(19);t.exports=Object("z").propertyIsEnumerable(0)?Object:function(t){return"String"==r(t)?t.split(""):Object(t)}},function(t,e,n){var r=n(9),i=n(12),o=n(49)(!1),a=n(32)("IE_PROTO");t.exports=function(t,e){var n,s=i(t),u=0,c=[];for(n in s)n!=a&&r(s,n)&&c.push(n);for(;e.length>u;)r(s,n=e[u++])&&(~o(c,n)||c.push(n));return c}},function(t,e,n){var r=n(12),i=n(42),o=n(68);t.exports=function(t){return function(e,n,a){var s,u=r(e),c=i(u.length),l=o(a,c);if(t&&n!=n){for(;c>l;)if((s=u[l++])!=s)return!0}else for(;c>l;l++)if((t||l in u)&&u[l]===n)return t||l||0;return!t&&-1}}},function(t,e,n){var r=n(3),i=n(11),o=n(21),a=n(51),s=n(4).f;t.exports=function(t){var e=i.Symbol||(i.Symbol=o?{}:r.Symbol||{});"_"==t.charAt(0)||t in e||s(e,t,{value:a.f(t)})}},function(t,e,n){e.f=n(0)},function(t,e,n){var r=n(2);r(r.S+r.F,"Object",{assign:n(96)})},function(t,e,n){t.exports=n(103)},function(t,e,n){"use strict";var r=n(29),i=n(2),o=n(16),a=n(55),s=n(56),u=n(42),c=n(57),l=n(58);i(i.S+i.F*!n(60)(function(t){Array.from(t)}),"Array",{from:function(t){var e,n,i,f,d=o(t),h="function"==typeof this?this:Array,p=arguments.length,g=p>1?arguments[1]:void 0,v=void 0!==g,y=0,m=l(d);if(v&&(g=r(g,p>2?arguments[2]:void 0,2)),void 0==m||h==Array&&s(m))for(n=new h(e=u(d.length));e>y;y++)c(n,y,v?g(d[y],y):d[y]);else for(f=m.call(d),n=new h;!(i=f.next()).done;y++)c(n,y,v?a(f,g,[i.value,y],!0):i.value);return n.length=y,n}})},function(t,e,n){var r=n(7);t.exports=function(t,e,n,i){try{return i?e(r(n)[0],n[1]):e(n)}catch(e){var o=t.return;throw void 0!==o&&r(o.call(t)),e}}},function(t,e,n){var r=n(18),i=n(0)("iterator"),o=Array.prototype;t.exports=function(t){return void 0!==t&&(r.Array===t||o[i]===t)}},function(t,e,n){"use strict";var r=n(4),i=n(14);t.exports=function(t,e,n){e in t?r.f(t,e,i(0,n)):t[e]=n}},function(t,e,n){var r=n(59),i=n(0)("iterator"),o=n(18);t.exports=n(11).getIteratorMethod=function(t){if(void 0!=t)return t[i]||t["@@iterator"]||o[r(t)]}},function(t,e,n){var r=n(19),i=n(0)("toStringTag"),o="Arguments"==r(function(){return arguments}());t.exports=function(t){var e,n,a;return void 0===t?"Undefined":null===t?"Null":"string"==typeof(n=function(t,e){try{return t[e]}catch(t){}}(e=Object(t),i))?n:o?r(e):"Object"==(a=r(e))&&"function"==typeof e.callee?"Arguments":a}},function(t,e,n){var r=n(0)("iterator"),i=!1;try{var o=[7][r]();o.return=function(){i=!0},Array.from(o,function(){throw 2})}catch(t){}t.exports=function(t,e){if(!e&&!i)return!1;var n=!1;try{var o=[7],a=o[r]();a.next=function(){return{done:n=!0}},o[r]=function(){return a},t(o)}catch(t){}return n}},function(t,e,n){"use strict";n(62);var r=n(7),i=n(44),o=n(5),a=/./.toString,s=function(t){n(10)(RegExp.prototype,"toString",t,!0)};n(1)(function(){return"/a/b"!=a.call({source:"a",flags:"b"})})?s(function(){var t=r(this);return"/".concat(t.source,"/","flags"in t?t.flags:!o&&t instanceof RegExp?i.call(t):void 0)}):"toString"!=a.name&&s(function(){return a.call(this)})},function(t,e,n){n(5)&&"g"!=/./g.flags&&n(4).f(RegExp.prototype,"flags",{configurable:!0,get:n(44)})},function(t,e,n){for(var r=n(45),i=n(13),o=n(10),a=n(3),s=n(6),u=n(18),c=n(0),l=c("iterator"),f=c("toStringTag"),d=u.Array,h={CSSRuleList:!0,CSSStyleDeclaration:!1,CSSValueList:!1,ClientRectList:!1,DOMRectList:!1,DOMStringList:!1,DOMTokenList:!0,DataTransferItemList:!1,FileList:!1,HTMLAllCollection:!1,HTMLCollection:!1,HTMLFormElement:!1,HTMLSelectElement:!1,MediaList:!0,MimeTypeArray:!1,NamedNodeMap:!1,NodeList:!0,PaintRequestList:!1,Plugin:!1,PluginArray:!1,SVGLengthList:!1,SVGNumberList:!1,SVGPathSegList:!1,SVGPointList:!1,SVGStringList:!1,SVGTransformList:!1,SourceBufferList:!1,StyleSheetList:!0,TextTrackCueList:!1,TextTrackList:!1,TouchList:!1},p=i(h),g=0;g<p.length;g++){var v,y=p[g],m=h[y],b=a[y],x=b&&b.prototype;if(x&&(x[l]||s(x,l,d),x[f]||s(x,f,y),u[y]=d,m))for(v in r)x[v]||o(x,v,r[v],!0)}},function(t,e){t.exports=function(t,e){return{value:e,done:!!t}}},function(t,e,n){"use strict";var r=n(21),i=n(2),o=n(10),a=n(6),s=n(18),u=n(66),c=n(34),l=n(70),f=n(0)("iterator"),d=!([].keys&&"next"in[].keys()),h=function(){return this};t.exports=function(t,e,n,p,g,v,y){u(n,e,p);var m,b,x,P=function(t){if(!d&&t in O)return O[t];switch(t){case"keys":case"values":return function(){return new n(this,t)}}return function(){return new n(this,t)}},S=e+" Iterator",C="values"==g,w=!1,O=t.prototype,T=O[f]||O["@@iterator"]||g&&O[g],_=T||P(g),E=g?C?P("entries"):_:void 0,j="Array"==e&&O.entries||T;if(j&&(x=l(j.call(new t)))!==Object.prototype&&x.next&&(c(x,S,!0),r||"function"==typeof x[f]||a(x,f,h)),C&&T&&"values"!==T.name&&(w=!0,_=function(){return T.call(this)}),r&&!y||!d&&!w&&O[f]||a(O,f,_),s[e]=_,s[S]=h,g)if(m={values:C?_:P("values"),keys:v?_:P("keys"),entries:E},y)for(b in m)b in O||o(O,b,m[b]);else i(i.P+i.F*(d||w),e,m);return m}},function(t,e,n){"use strict";var r=n(31),i=n(14),o=n(34),a={};n(6)(a,n(0)("iterator"),function(){return this}),t.exports=function(t,e,n){t.prototype=r(a,{next:i(1,n)}),o(t,e+" Iterator")}},function(t,e,n){var r=n(4),i=n(7),o=n(13);t.exports=n(5)?Object.defineProperties:function(t,e){i(t);for(var n,a=o(e),s=a.length,u=0;s>u;)r.f(t,n=a[u++],e[n]);return t}},function(t,e,n){var r=n(43),i=Math.max,o=Math.min;t.exports=function(t,e){return(t=r(t))<0?i(t+e,0):o(t,e)}},function(t,e,n){var r=n(3).document;t.exports=r&&r.documentElement},function(t,e,n){var r=n(9),i=n(16),o=n(32)("IE_PROTO"),a=Object.prototype;t.exports=Object.getPrototypeOf||function(t){return t=i(t),r(t,o)?t[o]:"function"==typeof t.constructor&&t instanceof t.constructor?t.constructor.prototype:t instanceof Object?a:null}},function(t,e,n){var r=n(16),i=n(13);n(72)("keys",function(){return function(t){return i(r(t))}})},function(t,e,n){var r=n(2),i=n(11),o=n(1);t.exports=function(t,e){var n=(i.Object||{})[t]||Object[t],a={};a[t]=e(n),r(r.S+r.F*o(function(){n(1)}),"Object",a)}},function(t,e,n){n(50)("asyncIterator")},function(t,e,n){"use strict";var r=n(3),i=n(9),o=n(5),a=n(2),s=n(10),u=n(75).KEY,c=n(1),l=n(30),f=n(34),d=n(15),h=n(0),p=n(51),g=n(50),v=n(76),y=n(77),m=n(7),b=n(8),x=n(12),P=n(20),S=n(14),C=n(31),w=n(78),O=n(37),T=n(4),_=n(13),E=O.f,j=T.f,A=w.f,M=r.Symbol,N=r.JSON,k=N&&N.stringify,L=h("_hidden"),V=h("toPrimitive"),$={}.propertyIsEnumerable,I=l("symbol-registry"),D=l("symbols"),W=l("op-symbols"),F=Object.prototype,R="function"==typeof M,B=r.QObject,H=!B||!B.prototype||!B.prototype.findChild,z=o&&c(function(){return 7!=C(j({},"a",{get:function(){return j(this,"a",{value:7}).a}})).a})?function(t,e,n){var r=E(F,e);r&&delete F[e],j(t,e,n),r&&t!==F&&j(F,e,r)}:j,U=function(t){var e=D[t]=C(M.prototype);return e._k=t,e},X=R&&"symbol"==typeof M.iterator?function(t){return"symbol"==typeof t}:function(t){return t instanceof M},G=function(t,e,n){return t===F&&G(W,e,n),m(t),e=P(e,!0),m(n),i(D,e)?(n.enumerable?(i(t,L)&&t[L][e]&&(t[L][e]=!1),n=C(n,{enumerable:S(0,!1)})):(i(t,L)||j(t,L,S(1,{})),t[L][e]=!0),z(t,e,n)):j(t,e,n)},Y=function(t,e){m(t);for(var n,r=v(e=x(e)),i=0,o=r.length;o>i;)G(t,n=r[i++],e[n]);return t},q=function(t){var e=$.call(this,t=P(t,!0));return!(this===F&&i(D,t)&&!i(W,t))&&(!(e||!i(this,t)||!i(D,t)||i(this,L)&&this[L][t])||e)},J=function(t,e){if(t=x(t),e=P(e,!0),t!==F||!i(D,e)||i(W,e)){var n=E(t,e);return!n||!i(D,e)||i(t,L)&&t[L][e]||(n.enumerable=!0),n}},K=function(t){for(var e,n=A(x(t)),r=[],o=0;n.length>o;)i(D,e=n[o++])||e==L||e==u||r.push(e);return r},Q=function(t){for(var e,n=t===F,r=A(n?W:x(t)),o=[],a=0;r.length>a;)!i(D,e=r[a++])||n&&!i(F,e)||o.push(D[e]);return o};R||(s((M=function(){if(this instanceof M)throw TypeError("Symbol is not a constructor!");var t=d(arguments.length>0?arguments[0]:void 0),e=function(n){this===F&&e.call(W,n),i(this,L)&&i(this[L],t)&&(this[L][t]=!1),z(this,t,S(1,n))};return o&&H&&z(F,t,{configurable:!0,set:e}),U(t)}).prototype,"toString",function(){return this._k}),O.f=J,T.f=G,n(36).f=w.f=K,n(22).f=q,n(35).f=Q,o&&!n(21)&&s(F,"propertyIsEnumerable",q,!0),p.f=function(t){return U(h(t))}),a(a.G+a.W+a.F*!R,{Symbol:M});for(var Z="hasInstance,isConcatSpreadable,iterator,match,replace,search,species,split,toPrimitive,toStringTag,unscopables".split(","),tt=0;Z.length>tt;)h(Z[tt++]);for(var et=_(h.store),nt=0;et.length>nt;)g(et[nt++]);a(a.S+a.F*!R,"Symbol",{for:function(t){return i(I,t+="")?I[t]:I[t]=M(t)},keyFor:function(t){if(!X(t))throw TypeError(t+" is not a symbol!");for(var e in I)if(I[e]===t)return e},useSetter:function(){H=!0},useSimple:function(){H=!1}}),a(a.S+a.F*!R,"Object",{create:function(t,e){return void 0===e?C(t):Y(C(t),e)},defineProperty:G,defineProperties:Y,getOwnPropertyDescriptor:J,getOwnPropertyNames:K,getOwnPropertySymbols:Q}),N&&a(a.S+a.F*(!R||c(function(){var t=M();return"[null]"!=k([t])||"{}"!=k({a:t})||"{}"!=k(Object(t))})),"JSON",{stringify:function(t){for(var e,n,r=[t],i=1;arguments.length>i;)r.push(arguments[i++]);if(n=e=r[1],(b(e)||void 0!==t)&&!X(t))return y(e)||(e=function(t,e){if("function"==typeof n&&(e=n.call(this,t,e)),!X(e))return e}),r[1]=e,k.apply(N,r)}}),M.prototype[V]||n(6)(M.prototype,V,M.prototype.valueOf),f(M,"Symbol"),f(Math,"Math",!0),f(r.JSON,"JSON",!0)},function(t,e,n){var r=n(15)("meta"),i=n(8),o=n(9),a=n(4).f,s=0,u=Object.isExtensible||function(){return!0},c=!n(1)(function(){return u(Object.preventExtensions({}))}),l=function(t){a(t,r,{value:{i:"O"+ ++s,w:{}}})},f=t.exports={KEY:r,NEED:!1,fastKey:function(t,e){if(!i(t))return"symbol"==typeof t?t:("string"==typeof t?"S":"P")+t;if(!o(t,r)){if(!u(t))return"F";if(!e)return"E";l(t)}return t[r].i},getWeak:function(t,e){if(!o(t,r)){if(!u(t))return!0;if(!e)return!1;l(t)}return t[r].w},onFreeze:function(t){return c&&f.NEED&&u(t)&&!o(t,r)&&l(t),t}}},function(t,e,n){var r=n(13),i=n(35),o=n(22);t.exports=function(t){var e=r(t),n=i.f;if(n)for(var a,s=n(t),u=o.f,c=0;s.length>c;)u.call(t,a=s[c++])&&e.push(a);return e}},function(t,e,n){var r=n(19);t.exports=Array.isArray||function(t){return"Array"==r(t)}},function(t,e,n){var r=n(12),i=n(36).f,o={}.toString,a="object"==typeof window&&window&&Object.getOwnPropertyNames?Object.getOwnPropertyNames(window):[];t.exports.f=function(t){return a&&"[object Window]"==o.call(t)?function(t){try{return i(t)}catch(t){return a.slice()}}(t):i(r(t))}},function(t,e,n){var r=n(2);r(r.S,"Math",{sign:n(80)})},function(t,e){t.exports=Math.sign||function(t){return 0==(t=+t)||t!=t?t:t<0?-1:1}},function(t,e,n){n(82)("match",1,function(t,e,n){return[function(n){"use strict";var r=t(this),i=void 0==n?void 0:n[e];return void 0!==i?i.call(n,r):new RegExp(n)[e](String(r))},n]})},function(t,e,n){"use strict";var r=n(6),i=n(10),o=n(1),a=n(17),s=n(0);t.exports=function(t,e,n){var u=s(t),c=n(a,u,""[t]),l=c[0],f=c[1];o(function(){var e={};return e[u]=function(){return 7},7!=""[t](e)})&&(i(String.prototype,t,l),r(RegExp.prototype,u,2==e?function(t,e){return f.call(t,this,e)}:function(t){return f.call(t,this)}))}},function(t,e,n){"use strict";var r=n(2),i=n(39),o=n(16),a=n(1),s=[].sort,u=[1,2,3];r(r.P+r.F*(a(function(){u.sort(void 0)})||!a(function(){u.sort(null)})||!n(84)(s)),"Array",{sort:function(t){return void 0===t?s.call(o(this)):s.call(o(this),i(t))}})},function(t,e,n){"use strict";var r=n(1);t.exports=function(t,e){return!!t&&r(function(){e?t.call(null,function(){},1):t.call(null)})}},function(t,e,n){var r=n(8),i=n(86).set;t.exports=function(t,e,n){var o,a=e.constructor;return a!==n&&"function"==typeof a&&(o=a.prototype)!==n.prototype&&r(o)&&i&&i(t,o),t}},function(t,e,n){var r=n(8),i=n(7),o=function(t,e){if(i(t),!r(e)&&null!==e)throw TypeError(e+": can't set as prototype!")};t.exports={set:Object.setPrototypeOf||("__proto__"in{}?function(t,e,r){try{(r=n(29)(Function.call,n(37).f(Object.prototype,"__proto__").set,2))(t,[]),e=!(t instanceof Array)}catch(t){e=!0}return function(t,n){return o(t,n),e?t.__proto__=n:r(t,n),t}}({},!1):void 0),check:o}},function(t,e,n){var r=n(2),i=n(17),o=n(1),a=n(88),s="["+a+"]",u=RegExp("^"+s+s+"*"),c=RegExp(s+s+"*$"),l=function(t,e,n){var i={},s=o(function(){return!!a[t]()||"​"!="​"[t]()}),u=i[t]=s?e(f):a[t];n&&(i[n]=u),r(r.P+r.F*s,"String",i)},f=l.trim=function(t,e){return t=String(i(t)),1&e&&(t=t.replace(u,"")),2&e&&(t=t.replace(c,"")),t};t.exports=l},function(t,e){t.exports="\t\n\v\f\r   ᠎             　\u2028\u2029\ufeff"},function(t,e,n){"use strict";var r=n(2),i=n(49)(!0);r(r.P,"Array",{includes:function(t){return i(this,t,arguments.length>1?arguments[1]:void 0)}}),n(46)("includes")},function(t,e,n){"use strict";var r=n(2),i=n(91);r(r.P+r.F*n(93)("includes"),"String",{includes:function(t){return!!~i(this,t,"includes").indexOf(t,arguments.length>1?arguments[1]:void 0)}})},function(t,e,n){var r=n(92),i=n(17);t.exports=function(t,e,n){if(r(e))throw TypeError("String#"+n+" doesn't accept regex!");return String(i(t))}},function(t,e,n){var r=n(8),i=n(19),o=n(0)("match");t.exports=function(t){var e;return r(t)&&(void 0!==(e=t[o])?!!e:"RegExp"==i(t))}},function(t,e,n){var r=n(0)("match");t.exports=function(t){var e=/./;try{"/./"[t](e)}catch(n){try{return e[r]=!1,!"/./"[t](e)}catch(t){}}return!0}},function(t,e,n){"use strict";var r=n(25);n.n(r).a},function(t,e,n){(t.exports=n(23)(!1)).push([t.i,'\n.VueCarousel-navigation-button[data-v-453ad8cd] {\n  position: absolute;\n  top: 50%;\n  box-sizing: border-box;\n  color: #000;\n  text-decoration: none;\n  appearance: none;\n  border: none;\n  background-color: transparent;\n  padding: 0;\n  cursor: pointer;\n  outline: none;\n}\n.VueCarousel-navigation-button[data-v-453ad8cd]:focus {\n  outline: 1px solid lightblue;\n}\n.VueCarousel-navigation-next[data-v-453ad8cd] {\n  right: 0;\n  transform: translateY(-50%) translateX(100%);\n  font-family: "system";\n}\n.VueCarousel-navigation-prev[data-v-453ad8cd] {\n  left: 0;\n  transform: translateY(-50%) translateX(-100%);\n  font-family: "system";\n}\n.VueCarousel-navigation--disabled[data-v-453ad8cd] {\n  opacity: 0.5;\n  cursor: default;\n}\n\n/* Define the "system" font family */\n@font-face {\n  font-family: system;\n  font-style: normal;\n  font-weight: 300;\n  src: local(".SFNSText-Light"), local(".HelveticaNeueDeskInterface-Light"),\n    local(".LucidaGrandeUI"), local("Ubuntu Light"), local("Segoe UI Symbol"),\n    local("Roboto-Light"), local("DroidSans"), local("Tahoma");\n}\n',""])},function(t,e,n){"use strict";var r=n(13),i=n(35),o=n(22),a=n(16),s=n(47),u=Object.assign;t.exports=!u||n(1)(function(){var t={},e={},n=Symbol(),r="abcdefghijklmnopqrst";return t[n]=7,r.split("").forEach(function(t){e[t]=t}),7!=u({},t)[n]||Object.keys(u({},e)).join("")!=r})?function(t,e){for(var n=a(t),u=arguments.length,c=1,l=i.f,f=o.f;u>c;)for(var d,h=s(arguments[c++]),p=l?r(h).concat(l(h)):r(h),g=p.length,v=0;g>v;)f.call(h,d=p[v++])&&(n[d]=h[d]);return n}:u},function(t,e,n){"use strict";var r=n(26);n.n(r).a},function(t,e,n){(t.exports=n(23)(!1)).push([t.i,"\n.VueCarousel-pagination[data-v-438fd353] {\n  width: 100%;\n  text-align: center;\n}\n.VueCarousel-pagination--top-overlay[data-v-438fd353] {\n  position: absolute;\n  top: 0;\n}\n.VueCarousel-pagination--bottom-overlay[data-v-438fd353] {\n  position: absolute;\n  bottom: 0;\n}\n.VueCarousel-dot-container[data-v-438fd353] {\n  display: inline-block;\n  margin: 0 auto;\n  padding: 0;\n}\n.VueCarousel-dot[data-v-438fd353] {\n  display: inline-block;\n  cursor: pointer;\n  appearance: none;\n  border: none;\n  background-clip: content-box;\n  box-sizing: content-box;\n  padding: 0;\n  border-radius: 100%;\n  outline: none;\n}\n.VueCarousel-dot[data-v-438fd353]:focus {\n  outline: 1px solid lightblue;\n}\n",""])},function(t,e,n){"use strict";var r=n(27);n.n(r).a},function(t,e,n){(t.exports=n(23)(!1)).push([t.i,"\n.VueCarousel-slide {\n  flex-basis: inherit;\n  flex-grow: 0;\n  flex-shrink: 0;\n  user-select: none;\n  backface-visibility: hidden;\n  -webkit-touch-callout: none;\n  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);\n  outline: none;\n}\n.VueCarousel-slide-adjustableHeight {\n  display: table;\n  flex-basis: auto;\n  width: 100%;\n}\n",""])},function(t,e,n){"use strict";var r=n(28);n.n(r).a},function(t,e,n){(t.exports=n(23)(!1)).push([t.i,"\n.VueCarousel {\n  display: flex;\n  flex-direction: column;\n  position: relative;\n}\n.VueCarousel--reverse {\n  flex-direction: column-reverse;\n}\n.VueCarousel-wrapper {\n  width: 100%;\n  position: relative;\n  overflow: hidden;\n}\n.VueCarousel-inner {\n  display: flex;\n  flex-direction: row;\n  backface-visibility: hidden;\n}\n.VueCarousel-inner--center {\n  justify-content: center;\n}\n",""])},function(t,e,n){"use strict";n.r(e);var r=function(){var t=this,e=t.$createElement,n=t._self._c||e;return n("div",{staticClass:"VueCarousel",class:{"VueCarousel--reverse":"top"===t.paginationPosition}},[n("div",{ref:"VueCarousel-wrapper",staticClass:"VueCarousel-wrapper"},[n("div",{ref:"VueCarousel-inner",class:["VueCarousel-inner",{"VueCarousel-inner--center":t.isCenterModeEnabled}],style:{transform:"translate("+t.currentOffset+"px, 0)",transition:t.dragging?"none":t.transitionStyle,"ms-flex-preferred-size":t.slideWidth+"px","webkit-flex-basis":t.slideWidth+"px","flex-basis":t.slideWidth+"px",visibility:t.slideWidth?"visible":"hidden",height:""+t.currentHeight,"padding-left":t.padding+"px","padding-right":t.padding+"px"}},[t._t("default")],2)]),t._v(" "),t.navigationEnabled?t._t("navigation",[t.isNavigationRequired?n("navigation",{attrs:{clickTargetSize:t.navigationClickTargetSize,nextLabel:t.navigationNextLabel,prevLabel:t.navigationPrevLabel},on:{navigationclick:t.handleNavigation}}):t._e()]):t._e(),t._v(" "),t.paginationEnabled?t._t("pagination",[n("pagination",{on:{paginationclick:function(e){t.goToPage(e,"pagination")}}})]):t._e()],2)};r._withStripped=!0,n(54),n(61),n(63),n(45),n(71),n(73),n(74),n(79),n(81),n(83),n(38),n(89),n(90);var i={props:{autoplay:{type:Boolean,default:!1},autoplayTimeout:{type:Number,default:2e3},autoplayHoverPause:{type:Boolean,default:!0},autoplayDirection:{type:String,default:"forward"}},data:function(){return{autoplayInterval:null}},destroyed:function(){this.$isServer||(this.$el.removeEventListener("mouseenter",this.pauseAutoplay),this.$el.removeEventListener("mouseleave",this.startAutoplay))},methods:{pauseAutoplay:function(){this.autoplayInterval&&(this.autoplayInterval=clearInterval(this.autoplayInterval))},startAutoplay:function(){this.autoplay&&(this.autoplayInterval=setInterval(this.autoplayAdvancePage,this.autoplayTimeout))},restartAutoplay:function(){this.pauseAutoplay(),this.startAutoplay()},autoplayAdvancePage:function(){this.advancePage(this.autoplayDirection)}},mounted:function(){!this.$isServer&&this.autoplayHoverPause&&(this.$el.addEventListener("mouseenter",this.pauseAutoplay),this.$el.addEventListener("mouseleave",this.startAutoplay)),this.startAutoplay()}},o=function(){var t=this,e=t.$createElement,n=t._self._c||e;return n("div",{staticClass:"VueCarousel-navigation"},[n("button",{staticClass:"VueCarousel-navigation-button VueCarousel-navigation-prev",class:{"VueCarousel-navigation--disabled":!t.canAdvanceBackward},style:"padding: "+t.clickTargetSize+"px; margin-right: -"+t.clickTargetSize+"px;",attrs:{type:"button","aria-label":"Previous page",tabindex:t.canAdvanceBackward?0:-1},domProps:{innerHTML:t._s(t.prevLabel)},on:{click:function(e){e.preventDefault(),t.triggerPageAdvance("backward")}}}),t._v(" "),n("button",{staticClass:"VueCarousel-navigation-button VueCarousel-navigation-next",class:{"VueCarousel-navigation--disabled":!t.canAdvanceForward},style:"padding: "+t.clickTargetSize+"px; margin-left: -"+t.clickTargetSize+"px;",attrs:{type:"button","aria-label":"Next page",tabindex:t.canAdvanceForward?0:-1},domProps:{innerHTML:t._s(t.nextLabel)},on:{click:function(e){e.preventDefault(),t.triggerPageAdvance("forward")}}})])};o._withStripped=!0;var a={name:"navigation",inject:["carousel"],props:{clickTargetSize:{type:Number,default:8},nextLabel:{type:String,default:"&#9654"},prevLabel:{type:String,default:"&#9664"}},computed:{canAdvanceForward:function(){return this.carousel.canAdvanceForward||!1},canAdvanceBackward:function(){return this.carousel.canAdvanceBackward||!1}},methods:{triggerPageAdvance:function(t){this.$emit("navigationclick",t)}}};function s(t,e,n,r,i,o,a,s){var u,c="function"==typeof t?t.options:t;if(e&&(c.render=e,c.staticRenderFns=n,c._compiled=!0),r&&(c.functional=!0),o&&(c._scopeId="data-v-"+o),a?(u=function(t){(t=t||this.$vnode&&this.$vnode.ssrContext||this.parent&&this.parent.$vnode&&this.parent.$vnode.ssrContext)||"undefined"==typeof __VUE_SSR_CONTEXT__||(t=__VUE_SSR_CONTEXT__),i&&i.call(this,t),t&&t._registeredComponents&&t._registeredComponents.add(a)},c._ssrRegister=u):i&&(u=s?function(){i.call(this,this.$root.$options.shadowRoot)}:i),u)if(c.functional){c._injectStyles=u;var l=c.render;c.render=function(t,e){return u.call(e),l(t,e)}}else{var f=c.beforeCreate;c.beforeCreate=f?[].concat(f,u):[u]}return{exports:t,options:c}}n(94);var u=s(a,o,[],!1,null,"453ad8cd",null);u.options.__file="src/Navigation.vue";var c=u.exports,l=function(){var t,e=this,n=e.$createElement,r=e._self._c||n;return r("div",{directives:[{name:"show",rawName:"v-show",value:e.carousel.pageCount>1,expression:"carousel.pageCount > 1"}],staticClass:"VueCarousel-pagination",class:(t={},t["VueCarousel-pagination--"+e.paginationPositionModifierName]=e.paginationPositionModifierName,t)},[r("div",{staticClass:"VueCarousel-dot-container",style:e.dotContainerStyle,attrs:{role:"tablist"}},e._l(e.paginationCount,function(t,n){return r("button",{key:t+"_"+n,staticClass:"VueCarousel-dot",class:{"VueCarousel-dot--active":e.isCurrentDot(n)},style:e.dotStyle(n),attrs:{"aria-hidden":"false",role:"tab",title:e.getDotTitle(n),value:e.getDotTitle(n),"aria-label":e.getDotTitle(n),"aria-selected":e.isCurrentDot(n)?"true":"false"},on:{click:function(t){e.goToPage(n)}}})}))])};l._withStripped=!0,n(52);var f={name:"pagination",inject:["carousel"],computed:{paginationPositionModifierName:function(){var t=this.carousel.paginationPosition;if(!(t.indexOf("overlay")<0))return t},paginationPropertyBasedOnPosition:function(){return this.carousel.paginationPosition.indexOf("top")>=0?"bottom":"top"},paginationCount:function(){return this.carousel&&this.carousel.scrollPerPage?this.carousel.pageCount:this.carousel.slideCount||0},dotContainerStyle:function(){var t=this.carousel;if(-1===t.maxPaginationDotCount)return{"margin-top":"".concat(2*t.paginationPadding,"px")};var e=2*t.paginationPadding,n=t.maxPaginationDotCount*(t.paginationSize+e);return{"margin-top":"".concat(2*t.paginationPadding,"px"),overflow:"hidden",width:"".concat(n,"px"),margin:"0 auto","white-space":"nowrap"}}},methods:{goToPage:function(t){this.$emit("paginationclick",t)},isCurrentDot:function(t){return t===this.carousel.currentPage},getDotTitle:function(t){return this.carousel.$children[t].title?this.carousel.$children[t].title:"Item ".concat(t)},dotStyle:function(t){var e=this.carousel,n={};if(n["margin-".concat(this.paginationPropertyBasedOnPosition)]="".concat(2*e.paginationPadding,"px"),Object.assign(n,{padding:"".concat(e.paginationPadding,"px"),width:"".concat(e.paginationSize,"px"),height:"".concat(e.paginationSize,"px"),"background-color":"".concat(this.isCurrentDot(t)?e.paginationActiveColor:e.paginationColor)}),-1===e.maxPaginationDotCount)return n;var r=e.paginationSize+2*e.paginationPadding,i=e.pageCount-e.maxPaginationDotCount,o=0-r*(e.currentPage>i?i:e.currentPage<=e.maxPaginationDotCount/2?0:e.currentPage-Math.ceil(e.maxPaginationDotCount/2)+1);return Object.assign(n,{"-webkit-transform":"translate3d(".concat(o,"px,0,0)"),transform:"translate3d(".concat(o,"px,0,0)"),"-webkit-transition":"-webkit-transform ".concat(e.speed/1e3,"s"),transition:"transform ".concat(e.speed/1e3,"s")})}}},d=(n(97),s(f,l,[],!1,null,"438fd353",null));d.options.__file="src/Pagination.vue";var h=d.exports,p=function(){var t=this.$createElement;return(this._self._c||t)("div",{staticClass:"VueCarousel-slide",class:{"VueCarousel-slide-active":this.isActive,"VueCarousel-slide-center":this.isCenter,"VueCarousel-slide-adjustableHeight":this.isAdjustableHeight},attrs:{tabindex:"-1","aria-hidden":!this.isActive,role:"tabpanel"}},[this._t("default")],2)};p._withStripped=!0;var g={name:"slide",props:["title"],data:function(){return{width:null}},inject:["carousel"],mounted:function(){this.$isServer||this.$el.addEventListener("dragstart",function(t){return t.preventDefault()}),this.$el.addEventListener(this.carousel.isTouch?"touchend":"mouseup",this.onTouchEnd)},computed:{activeSlides:function(){for(var t=this.carousel,e=t.currentPage,n=t.breakpointSlidesPerPage,r=[],i=t.$children.filter(function(t){return t.$el&&t.$el.className.indexOf("VueCarousel-slide")>=0}).map(function(t){return t._uid}),o=0;o<n;){var a=i[e*n+o];r.push(a),o++}return r},isActive:function(){return this.activeSlides.indexOf(this._uid)>=0},isCenter:function(){var t=this.carousel.breakpointSlidesPerPage;return!(t%2==0||!this.isActive)&&this.activeSlides.indexOf(this._uid)===Math.floor(t/2)},isAdjustableHeight:function(){return this.carousel.adjustableHeight}},methods:{onTouchEnd:function(t){var e=this.carousel.isTouch&&t.changedTouches&&t.changedTouches.length>0?t.changedTouches[0].clientX:t.clientX,n=this.carousel.dragStartX-e;(0===this.carousel.minSwipeDistance||Math.abs(n)<this.carousel.minSwipeDistance)&&(this.$emit("slideclick",Object.assign({},t.currentTarget.dataset)),this.$emit("slide-click",Object.assign({},t.currentTarget.dataset)))}}},v=(n(99),s(g,p,[],!1,null,null,null));v.options.__file="src/Slide.vue";var y=v.exports;function m(t,e,n){return e in t?Object.defineProperty(t,e,{value:n,enumerable:!0,configurable:!0,writable:!0}):t[e]=n,t}function b(t){return(b="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}var x={onwebkittransitionend:"webkitTransitionEnd",onmoztransitionend:"transitionend",onotransitionend:"oTransitionEnd otransitionend",ontransitionend:"transitionend"},P=function(){for(var t in x)if(t in window)return x[t]},S={name:"carousel",beforeUpdate:function(){this.computeCarouselWidth()},components:{Navigation:c,Pagination:h,Slide:y},data:function(){return{browserWidth:null,carouselWidth:0,currentPage:0,dragging:!1,dragMomentum:0,dragOffset:0,dragStartY:0,dragStartX:0,isTouch:"undefined"!=typeof window&&"ontouchstart"in window,offset:0,refreshRate:16,slideCount:0,transitionstart:"transitionstart",transitionend:"transitionend",currentHeight:"auto"}},mixins:[i],provide:function(){return{carousel:this}},props:{adjustableHeight:{type:Boolean,default:!1},adjustableHeightEasing:{type:String},centerMode:{type:Boolean,default:!1},easing:{type:String,validator:function(t){return-1!==["ease","linear","ease-in","ease-out","ease-in-out"].indexOf(t)||t.includes("cubic-bezier")},default:"ease"},loop:{type:Boolean,default:!1},minSwipeDistance:{type:Number,default:8},mouseDrag:{type:Boolean,default:!0},touchDrag:{type:Boolean,default:!0},navigateTo:{type:[Number,Array],default:0},navigationClickTargetSize:{type:Number,default:8},navigationEnabled:{type:Boolean,default:!1},navigationNextLabel:{type:String,default:"&#9654"},navigationPrevLabel:{type:String,default:"&#9664"},paginationActiveColor:{type:String,default:"#000000"},paginationColor:{type:String,default:"#efefef"},paginationEnabled:{type:Boolean,default:!0},paginationPadding:{type:Number,default:10},paginationPosition:{type:String,default:"bottom"},paginationSize:{type:Number,default:10},perPage:{type:Number,default:2},perPageCustom:{type:Array},resistanceCoef:{type:Number,default:20},scrollPerPage:{type:Boolean,default:!0},spacePadding:{type:Number,default:0},spacePaddingMaxOffsetFactor:{type:Number,default:0},speed:{type:Number,default:500},tagName:{type:String,default:"slide"},value:{type:Number},maxPaginationDotCount:{type:Number,default:-1},rtl:{type:Boolean,default:!1}},watch:{value:function(t){t!==this.currentPage&&(this.goToPage(t),this.render())},navigateTo:{immediate:!0,handler:function(t){var e=this;"object"===b(t)?(0==t[1]&&(this.dragging=!0,setTimeout(function(){e.dragging=!1},this.refreshRate)),this.$nextTick(function(){e.goToPage(t[0])})):this.$nextTick(function(){e.goToPage(t)})}},currentPage:function(t){this.$emit("pageChange",t),this.$emit("page-change",t),this.$emit("input",t)},autoplay:function(t){!1===t?this.pauseAutoplay():this.restartAutoplay()}},computed:{breakpointSlidesPerPage:function(){if(!this.perPageCustom)return this.perPage;var t=this.perPageCustom,e=this.browserWidth,n=t.sort(function(t,e){return t[0]>e[0]?-1:1}).filter(function(t){return e>=t[0]});return n[0]&&n[0][1]||this.perPage},canAdvanceForward:function(){return this.loop||this.offset<this.maxOffset},canAdvanceBackward:function(){return this.loop||this.currentPage>0},currentPerPage:function(){return!this.perPageCustom||this.$isServer?this.perPage:this.breakpointSlidesPerPage},currentOffset:function(){return this.isCenterModeEnabled?0:this.rtl?1*(this.offset-this.dragOffset):-1*(this.offset+this.dragOffset)},isHidden:function(){return this.carouselWidth<=0},maxOffset:function(){return Math.max(this.slideWidth*(this.slideCount-this.currentPerPage)-this.spacePadding*this.spacePaddingMaxOffsetFactor,0)},pageCount:function(){return this.scrollPerPage?Math.ceil(this.slideCount/this.currentPerPage):this.slideCount-this.currentPerPage+1},slideWidth:function(){return(this.carouselWidth-2*this.spacePadding)/this.currentPerPage},isNavigationRequired:function(){return this.slideCount>this.currentPerPage},isCenterModeEnabled:function(){return this.centerMode&&!this.isNavigationRequired},transitionStyle:function(){var t="".concat(this.speed/1e3,"s"),e="".concat(t," ").concat(this.easing," transform");return this.adjustableHeight?"".concat(e,", height ").concat(t," ").concat(this.adjustableHeightEasing||this.easing):e},padding:function(){var t=this.spacePadding;return t>0&&t}},methods:{getNextPage:function(){return this.currentPage<this.pageCount-1?this.currentPage+1:this.loop?0:this.currentPage},getPreviousPage:function(){return this.currentPage>0?this.currentPage-1:this.loop?this.pageCount-1:this.currentPage},advancePage:function(t){t&&"backward"===t&&this.canAdvanceBackward?this.goToPage(this.getPreviousPage(),"navigation"):(!t||t&&"backward"!==t)&&this.canAdvanceForward&&this.goToPage(this.getNextPage(),"navigation")},goToLastSlide:function(){var t=this;this.dragging=!0,setTimeout(function(){t.dragging=!1},this.refreshRate),this.$nextTick(function(){t.goToPage(t.pageCount)})},attachMutationObserver:function(){var t=this,e=window.MutationObserver||window.WebKitMutationObserver||window.MozMutationObserver;if(e){var n={attributes:!0,data:!0};if(this.adjustableHeight&&(n=function(t){for(var e=1;e<arguments.length;e++){var n=null!=arguments[e]?arguments[e]:{},r=Object.keys(n);"function"==typeof Object.getOwnPropertySymbols&&(r=r.concat(Object.getOwnPropertySymbols(n).filter(function(t){return Object.getOwnPropertyDescriptor(n,t).enumerable}))),r.forEach(function(e){m(t,e,n[e])})}return t}({},n,{childList:!0,subtree:!0,characterData:!0})),this.mutationObserver=new e(function(){t.$nextTick(function(){t.computeCarouselWidth(),t.computeCarouselHeight()})}),this.$parent.$el)for(var r=this.$el.getElementsByClassName("VueCarousel-inner"),i=0;i<r.length;i++)this.mutationObserver.observe(r[i],n)}},handleNavigation:function(t){this.advancePage(t),this.pauseAutoplay(),this.$emit("navigation-click",t)},detachMutationObserver:function(){this.mutationObserver&&this.mutationObserver.disconnect()},getBrowserWidth:function(){return this.browserWidth=window.innerWidth,this.browserWidth},getCarouselWidth:function(){for(var t=this.$el.getElementsByClassName("VueCarousel-inner"),e=0;e<t.length;e++)t[e].clientWidth>0&&(this.carouselWidth=t[e].clientWidth||0);return this.carouselWidth},getCarouselHeight:function(){var t=this;if(!this.adjustableHeight)return"auto";var e=this.currentPerPage*(this.currentPage+1)-1,n=function(t){return function(t){if(Array.isArray(t)){for(var e=0,n=new Array(t.length);e<t.length;e++)n[e]=t[e];return n}}(t)||function(t){if(Symbol.iterator in Object(t)||"[object Arguments]"===Object.prototype.toString.call(t))return Array.from(t)}(t)||function(){throw new TypeError("Invalid attempt to spread non-iterable instance")}()}(Array(this.currentPerPage)).map(function(n,r){return t.getSlide(e+r)}).reduce(function(t,e){return Math.max(t,e&&e.$el.clientHeight||0)},0);return this.currentHeight=0===n?"auto":"".concat(n,"px"),this.currentHeight},getSlideCount:function(){var t=this;this.slideCount=this.$slots&&this.$slots.default&&this.$slots.default.filter(function(e){return e.tag&&null!==e.tag.match("^vue-component-\\d+-".concat(t.tagName,"$"))}).length||0},getSlide:function(t){var e=this;return this.$children.filter(function(t){return null!==t.$vnode.tag.match("^vue-component-\\d+-".concat(e.tagName,"$"))})[t]},goToPage:function(t,e){t>=0&&t<=this.pageCount&&(this.offset=this.scrollPerPage?Math.min(this.slideWidth*this.currentPerPage*t,this.maxOffset):this.slideWidth*t,this.autoplay&&!this.autoplayHoverPause&&this.restartAutoplay(),this.currentPage=t,"pagination"===e&&(this.pauseAutoplay(),this.$emit("pagination-click",t)))},onStart:function(t){2!=t.button&&(document.addEventListener(this.isTouch?"touchend":"mouseup",this.onEnd,!0),document.addEventListener(this.isTouch?"touchmove":"mousemove",this.onDrag,!0),this.startTime=t.timeStamp,this.dragging=!0,this.dragStartX=this.isTouch?t.touches[0].clientX:t.clientX,this.dragStartY=this.isTouch?t.touches[0].clientY:t.clientY)},onEnd:function(t){this.autoplay&&!this.autoplayHoverPause&&this.restartAutoplay(),this.pauseAutoplay();var e=this.isTouch?t.changedTouches[0].clientX:t.clientX,n=this.dragStartX-e;if(this.dragMomentum=n/(t.timeStamp-this.startTime),0!==this.minSwipeDistance&&Math.abs(n)>=this.minSwipeDistance){var r=this.scrollPerPage?this.slideWidth*this.currentPerPage:this.slideWidth;this.dragOffset=this.dragOffset+Math.sign(n)*(r/2)}this.rtl?this.offset-=this.dragOffset:this.offset+=this.dragOffset,this.dragOffset=0,this.dragging=!1,this.render(),document.removeEventListener(this.isTouch?"touchend":"mouseup",this.onEnd,!0),document.removeEventListener(this.isTouch?"touchmove":"mousemove",this.onDrag,!0)},onDrag:function(t){var e=this.isTouch?t.touches[0].clientX:t.clientX,n=this.isTouch?t.touches[0].clientY:t.clientY,r=this.dragStartX-e,i=this.dragStartY-n;if(!(this.isTouch&&Math.abs(r)<Math.abs(i))){t.stopImmediatePropagation(),this.dragOffset=r;var o=this.offset+this.dragOffset;this.rtl?0==this.offset&&this.dragOffset>0?this.dragOffset=Math.sqrt(this.resistanceCoef*this.dragOffset):this.offset==this.maxOffset&&this.dragOffset<0&&(this.dragOffset=-Math.sqrt(-this.resistanceCoef*this.dragOffset)):o<0?this.dragOffset=-Math.sqrt(-this.resistanceCoef*this.dragOffset):o>this.maxOffset&&(this.dragOffset=Math.sqrt(this.resistanceCoef*this.dragOffset))}},onResize:function(){var t=this;this.computeCarouselWidth(),this.computeCarouselHeight(),this.dragging=!0,this.render(),setTimeout(function(){t.dragging=!1},this.refreshRate)},render:function(){this.rtl?this.offset-=Math.max(1-this.currentPerPage,Math.min(Math.round(this.dragMomentum),this.currentPerPage-1))*this.slideWidth:this.offset+=Math.max(1-this.currentPerPage,Math.min(Math.round(this.dragMomentum),this.currentPerPage-1))*this.slideWidth;var t=this.scrollPerPage?this.slideWidth*this.currentPerPage:this.slideWidth,e=t*Math.floor(this.slideCount/(this.currentPerPage-1)),n=e+this.slideWidth*(this.slideCount%this.currentPerPage);this.offset>(e+n)/2?this.offset=n:this.offset=t*Math.round(this.offset/t),this.offset=Math.max(0,Math.min(this.offset,this.maxOffset)),this.currentPage=this.scrollPerPage?Math.round(this.offset/this.slideWidth/this.currentPerPage):Math.round(this.offset/this.slideWidth)},computeCarouselWidth:function(){this.getSlideCount(),this.getBrowserWidth(),this.getCarouselWidth(),this.setCurrentPageInBounds()},computeCarouselHeight:function(){this.getCarouselHeight()},setCurrentPageInBounds:function(){if(!this.canAdvanceForward&&this.scrollPerPage){var t=this.pageCount-1;this.currentPage=t>=0?t:0,this.offset=Math.max(0,Math.min(this.offset,this.maxOffset))}},handleTransitionStart:function(){this.$emit("transitionStart"),this.$emit("transition-start")},handleTransitionEnd:function(){this.$emit("transitionEnd"),this.$emit("transition-end")}},mounted:function(){window.addEventListener("resize",function(t,e,n){var r;return function(){var i=n&&!r;clearTimeout(r),r=setTimeout(function(){r=null,n||t.apply(void 0)},e),i&&t.apply(void 0)}}(this.onResize,this.refreshRate)),(this.isTouch&&this.touchDrag||this.mouseDrag)&&this.$refs["VueCarousel-wrapper"].addEventListener(this.isTouch?"touchstart":"mousedown",this.onStart),this.attachMutationObserver(),this.computeCarouselWidth(),this.computeCarouselHeight(),this.transitionstart=P(),this.$refs["VueCarousel-inner"].addEventListener(this.transitionstart,this.handleTransitionStart),this.transitionend=P(),this.$refs["VueCarousel-inner"].addEventListener(this.transitionend,this.handleTransitionEnd),this.$emit("mounted"),"backward"===this.autoplayDirection&&this.goToLastSlide()},beforeDestroy:function(){this.detachMutationObserver(),window.removeEventListener("resize",this.getBrowserWidth),this.$refs["VueCarousel-inner"].removeEventListener(this.transitionstart,this.handleTransitionStart),this.$refs["VueCarousel-inner"].removeEventListener(this.transitionend,this.handleTransitionEnd),this.$refs["VueCarousel-wrapper"].removeEventListener(this.isTouch?"touchstart":"mousedown",this.onStart)}},C=(n(101),s(S,r,[],!1,null,null,null));C.options.__file="src/Carousel.vue";var w=C.exports;n.d(e,"Carousel",function(){return w}),n.d(e,"Slide",function(){return y}),e.default={install:function(t){t.component("carousel",w),t.component("slide",y)}}}])});
-
-/***/ }),
-/* 111 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -90894,640 +90831,74 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c(
     "div",
-    { attrs: { id: "data" } },
     [
       _c(
         "v-form",
-        { ref: "form" },
+        { ref: "form", staticClass: "data" },
         [
           _c(
             "v-container",
-            { attrs: { fluid: "" } },
+            { attrs: { fluid: "", id: "cont" } },
             [
-              _c(
-                "v-layout",
-                { attrs: { row: "" } },
-                [
-                  _c("v-flex", { attrs: { xs3: "" } }, [
-                    _c("input", {
-                      attrs: {
-                        type: "file",
-                        id: "files",
-                        name: "files[]",
-                        multiple: ""
-                      }
-                    })
-                  ]),
-                  _vm._v(" "),
-                  _c("v-flex", { attrs: { xs5: "" } })
-                ],
-                1
-              ),
+              _c("h2", [_vm._v(_vm._s(_vm.prodID))]),
+              _vm._v(" "),
+              _c("TemplateRow", {
+                ref: "trow1",
+                attrs: {
+                  getTemplate: _vm.getTemplateAxios,
+                  setRatSize: _vm.setRatSize,
+                  dataChange: _vm.dataChange
+                }
+              }),
               _vm._v(" "),
               _c(
                 "v-layout",
-                { attrs: { row: "" } },
+                { attrs: { row: "", id: "selection" } },
                 [
-                  _c("v-flex", { attrs: { xs1: "" } }, [
-                    _c(
-                      "select",
-                      {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.size,
-                            expression: "size"
-                          }
-                        ],
-                        staticStyle: { border: "2px inset darkgrey" },
-                        on: {
-                          change: [
-                            function($event) {
-                              var $$selectedVal = Array.prototype.filter
-                                .call($event.target.options, function(o) {
-                                  return o.selected
-                                })
-                                .map(function(o) {
-                                  var val = "_value" in o ? o._value : o.value
-                                  return val
-                                })
-                              _vm.size = $event.target.multiple
-                                ? $$selectedVal
-                                : $$selectedVal[0]
-                            },
-                            _vm.getTemplateAxios
-                          ]
-                        }
-                      },
-                      [
-                        _c("option", { attrs: { value: "XS" } }, [
-                          _vm._v("XS")
-                        ]),
-                        _vm._v(" "),
-                        _c("option", { attrs: { value: "S" } }, [_vm._v("S")]),
-                        _vm._v(" "),
-                        _c("option", { attrs: { value: "M" } }, [_vm._v("M")]),
-                        _vm._v(" "),
-                        _c("option", { attrs: { value: "L" } }, [_vm._v("L")]),
-                        _vm._v(" "),
-                        _c("option", { attrs: { value: "XL" } }, [
-                          _vm._v("XL")
-                        ]),
-                        _vm._v(" "),
-                        _c("option", { attrs: { value: "2XL" } }, [
-                          _vm._v("2XL")
-                        ]),
-                        _vm._v(" "),
-                        _c("option", { attrs: { value: "3XL" } }, [
-                          _vm._v("3XL")
-                        ]),
-                        _vm._v(" "),
-                        _c("option", { attrs: { value: "4XL" } }, [
-                          _vm._v("4XL")
-                        ])
-                      ]
-                    )
-                  ]),
+                  _c("h4", [_vm._v("Template: " + _vm._s(_vm.librarySelect))]),
                   _vm._v(" "),
-                  _c("v-flex", { attrs: { xs7: "" } }, [
-                    _c("input", {
-                      directives: [
-                        {
-                          name: "model",
-                          rawName: "v-model",
-                          value: _vm.mode,
-                          expression: "mode"
-                        }
-                      ],
-                      attrs: { type: "checkbox", name: "mode" },
-                      domProps: {
-                        checked: Array.isArray(_vm.mode)
-                          ? _vm._i(_vm.mode, null) > -1
-                          : _vm.mode
-                      },
+                  _c(
+                    "v-btn",
+                    {
+                      attrs: { fab: "", color: "white" },
+                      on: { click: _vm.addRow }
+                    },
+                    [_c("v-icon", [_vm._v("+")])],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      attrs: { type: "button" },
                       on: {
-                        change: function($event) {
-                          var $$a = _vm.mode,
-                            $$el = $event.target,
-                            $$c = $$el.checked ? true : false
-                          if (Array.isArray($$a)) {
-                            var $$v = null,
-                              $$i = _vm._i($$a, $$v)
-                            if ($$el.checked) {
-                              $$i < 0 && (_vm.mode = $$a.concat([$$v]))
-                            } else {
-                              $$i > -1 &&
-                                (_vm.mode = $$a
-                                  .slice(0, $$i)
-                                  .concat($$a.slice($$i + 1)))
-                            }
-                          } else {
-                            _vm.mode = $$c
-                          }
+                        click: function($event) {
+                          return _vm.selectRadio(1)
                         }
                       }
-                    }),
-                    _vm._v(" "),
-                    _c("label", { attrs: { for: "mode" } }, [
-                      _vm._v(": Template Mode")
-                    ])
-                  ])
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "v-layout",
-                { attrs: { row: "" } },
-                [
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        staticClass: "inputNumber",
-                        attrs: {
-                          type: "number",
-                          label: "X: Art",
-                          required: ""
-                        },
-                        model: {
-                          value: _vm.Xart,
-                          callback: function($$v) {
-                            _vm.Xart = $$v
-                          },
-                          expression: "Xart"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        staticClass: "inputNumber",
-                        attrs: {
-                          type: "number",
-                          label: "Y: Art",
-                          required: ""
-                        },
-                        model: {
-                          value: _vm.Yart,
-                          callback: function($$v) {
-                            _vm.Yart = $$v
-                          },
-                          expression: "Yart"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        staticClass: "inputNumber",
-                        attrs: { type: "number", label: "Width", required: "" },
-                        model: {
-                          value: _vm.Wart,
-                          callback: function($$v) {
-                            _vm.Wart = $$v
-                          },
-                          expression: "Wart"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        staticClass: "inputNumber",
-                        attrs: {
-                          type: "number",
-                          label: "Height",
-                          pattern: "\\d+",
-                          required: ""
-                        },
-                        model: {
-                          value: _vm.Hart,
-                          callback: function($$v) {
-                            _vm.Hart = $$v
-                          },
-                          expression: "Hart"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [_c("v-text-field", { attrs: { disabled: "" } })],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "ratio", disabled: !_vm.mode },
-                        model: {
-                          value: _vm.ratio,
-                          callback: function($$v) {
-                            _vm.ratio = $$v
-                          },
-                          expression: "ratio"
-                        }
-                      })
-                    ],
-                    1
+                    },
+                    [_vm._v("Select 1")]
                   )
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "v-layout",
-                { attrs: { row: "" } },
-                [
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        staticClass: "inputNumber",
-                        attrs: {
-                          type: "number",
-                          label: "X inches",
-                          disabled: ""
-                        },
-                        model: {
-                          value: _vm.inchesXart,
-                          callback: function($$v) {
-                            _vm.inchesXart = $$v
-                          },
-                          expression: "inchesXart"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        staticClass: "inputNumber",
-                        attrs: {
-                          type: "number",
-                          label: "Y inches",
-                          disabled: ""
-                        },
-                        model: {
-                          value: _vm.inchesYart,
-                          callback: function($$v) {
-                            _vm.inchesYart = $$v
-                          },
-                          expression: "inchesYart"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        staticClass: "inputNumber",
-                        attrs: {
-                          type: "number",
-                          label: "width in.",
-                          disabled: ""
-                        },
-                        model: {
-                          value: _vm.inchesWart,
-                          callback: function($$v) {
-                            _vm.inchesWart = $$v
-                          },
-                          expression: "inchesWart"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        staticClass: "inputNumber",
-                        attrs: {
-                          type: "number",
-                          label: "height in.",
-                          disabled: ""
-                        },
-                        model: {
-                          value: _vm.inchesHart,
-                          callback: function($$v) {
-                            _vm.inchesHart = $$v
-                          },
-                          expression: "inchesHart"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [_c("v-text-field", { attrs: { disabled: "" } })],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "aspect", disabled: "" },
-                        model: {
-                          value: _vm.artOriginalAspect,
-                          callback: function($$v) {
-                            _vm.artOriginalAspect = $$v
-                          },
-                          expression: "artOriginalAspect"
-                        }
-                      })
-                    ],
-                    1
-                  )
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "v-layout",
-                { attrs: { row: "" } },
-                [
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "X", disabled: !_vm.mode },
-                        on: { change: _vm.changeDraw },
-                        model: {
-                          value: _vm.drawArea.x,
-                          callback: function($$v) {
-                            _vm.$set(_vm.drawArea, "x", $$v)
-                          },
-                          expression: "drawArea.x"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "Y", disabled: !_vm.mode },
-                        on: { change: _vm.changeDraw },
-                        model: {
-                          value: _vm.drawArea.y,
-                          callback: function($$v) {
-                            _vm.$set(_vm.drawArea, "y", $$v)
-                          },
-                          expression: "drawArea.y"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "width", disabled: !_vm.mode },
-                        on: { change: _vm.changeDraw },
-                        model: {
-                          value: _vm.drawArea.width,
-                          callback: function($$v) {
-                            _vm.$set(_vm.drawArea, "width", $$v)
-                          },
-                          expression: "drawArea.width"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "height", disabled: !_vm.mode },
-                        on: { change: _vm.changeDraw },
-                        model: {
-                          value: _vm.drawArea.height,
-                          callback: function($$v) {
-                            _vm.$set(_vm.drawArea, "height", $$v)
-                          },
-                          expression: "drawArea.height"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [_c("v-text-field", { attrs: { disabled: "" } })],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "ratio", disabled: !_vm.mode },
-                        model: {
-                          value: _vm.ratio,
-                          callback: function($$v) {
-                            _vm.ratio = $$v
-                          },
-                          expression: "ratio"
-                        }
-                      })
-                    ],
-                    1
-                  )
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "v-layout",
-                { attrs: { row: "" } },
-                [
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "X inches", disabled: "" },
-                        model: {
-                          value: _vm.drawArea.x / _vm.ratio,
-                          callback: function($$v) {
-                            _vm.$set(_vm.drawArea, "x / ratio", $$v)
-                          },
-                          expression: "drawArea.x / ratio"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "Y inches", disabled: "" },
-                        model: {
-                          value: _vm.drawArea.x / _vm.ratio,
-                          callback: function($$v) {
-                            _vm.$set(_vm.drawArea, "x / ratio", $$v)
-                          },
-                          expression: "drawArea.x / ratio"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "width in.", disabled: !_vm.mode },
-                        model: {
-                          value: _vm.inchesWtemp,
-                          callback: function($$v) {
-                            _vm.inchesWtemp = $$v
-                          },
-                          expression: "inchesWtemp"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [
-                      _c("v-text-field", {
-                        attrs: { label: "height in.", disabled: !_vm.mode },
-                        model: {
-                          value: _vm.inchesHtemp,
-                          callback: function($$v) {
-                            _vm.inchesHtemp = $$v
-                          },
-                          expression: "inchesHtemp"
-                        }
-                      })
-                    ],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [_c("v-text-field", { attrs: { disabled: "" } })],
-                    1
-                  ),
-                  _vm._v(" "),
-                  _c(
-                    "v-flex",
-                    { attrs: { xs1: "" } },
-                    [_c("v-text-field", { attrs: { disabled: "" } })],
-                    1
-                  )
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "v-layout",
-                { attrs: { row: "", "fill-height": "" } },
-                [
-                  _c("v-flex", { attrs: { pa1: "", shrink: "", id: "care" } }, [
-                    _vm._v("\n          Art Library\n          "),
-                    _c("br"),
-                    _vm._v(" "),
-                    _c("output", { attrs: { id: "list" } })
-                  ])
                 ],
                 1
               )
             ],
             1
           ),
-          _vm._v(
-            "\n    Sprites.length:" + _vm._s(_vm.sprites.length) + "\n    "
-          ),
-          _c("br"),
-          _vm._v("\n    LibraryNum:" + _vm._s(_vm.libraryNum) + "\n    "),
-          _c("br"),
-          _vm._v("\n    LibrarySelect:" + _vm._s(_vm.librarySelect) + "\n    "),
-          _c("br"),
-          _vm._v(
-            "\n    LibraryCurrent:" + _vm._s(_vm.libraryCurrent) + "\n    "
-          ),
-          _c("br"),
           _vm._v(" "),
           _c(
-            "v-btn",
-            { attrs: { color: "green" }, on: { click: _vm.savePrint } },
-            [_vm._v("Save")]
-          ),
-          _vm._v(" "),
-          _c(
-            "v-btn",
-            {
-              attrs: { color: "orange", hidden: !_vm.mode },
-              on: { click: _vm.saveTemplate }
-            },
-            [_vm._v("Template")]
-          ),
-          _vm._v(" "),
-          _c("v-btn", { attrs: { color: "red" } }, [_vm._v("Cancel")])
+            "button",
+            { attrs: { type: "button" }, on: { click: _vm.saveTemplate } },
+            [
+              _vm._v(
+                "Save Template (" +
+                  _vm._s(_vm.prodID) +
+                  " - " +
+                  _vm._s(_vm.size) +
+                  ")"
+              )
+            ]
+          )
         ],
         1
       )
@@ -91541,12 +90912,12 @@ module.exports = { render: render, staticRenderFns: staticRenderFns }
 if (false) {
   module.hot.accept()
   if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-6c9d2357", module.exports)
+    require("vue-hot-reload-api")      .rerender("data-v-510ff42e", module.exports)
   }
 }
 
 /***/ }),
-/* 112 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -91556,7 +90927,7 @@ var render = function() {
   return _c(
     "div",
     { attrs: { id: "app" } },
-    [_c("HelloWorld", { attrs: { prodID: _vm.prodid } })],
+    [_c("TemplateTool", { attrs: { prodID: _vm.prodid } })],
     1
   )
 }
@@ -91571,12 +90942,12 @@ if (false) {
 }
 
 /***/ }),
-/* 113 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(true)
-		module.exports = factory(__webpack_require__(16));
+		module.exports = factory(__webpack_require__(15));
 	else if(typeof define === 'function' && define.amd)
 		define(["vue"], factory);
 	else if(typeof exports === 'object')
@@ -117550,19 +116921,19 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_vue__;
 //# sourceMappingURL=vuetify.js.map
 
 /***/ }),
-/* 114 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(115)
+  __webpack_require__(118)
 }
-var normalizeComponent = __webpack_require__(12)
+var normalizeComponent = __webpack_require__(10)
 /* script */
-var __vue_script__ = __webpack_require__(117)
+var __vue_script__ = __webpack_require__(120)
 /* template */
-var __vue_template__ = __webpack_require__(118)
+var __vue_template__ = __webpack_require__(121)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -117601,17 +116972,17 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 115 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(116);
+var content = __webpack_require__(119);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(11)("ab0289ee", content, false, {});
+var update = __webpack_require__(9)("545d66a9", content, false, {});
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
@@ -117627,7 +116998,7 @@ if(false) {
 }
 
 /***/ }),
-/* 116 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(8)(false);
@@ -117635,13 +117006,13 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n*[data-v-1836121a] {\r\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\r\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\r\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\r\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\r\n    \"Liberation Mono\", \"Courier New\", monospace;\r\n  /* font-family: sans-serif; */\n}\n.container[data-v-1836121a] {\r\n  padding-top: 100px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -ms-flex-pack: distribute;\r\n      justify-content: space-around;\n}\n.pannel[data-v-1836121a] {\r\n  background-image: url(https://loftcinema.org/files/2015/06/const.jpg);\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-orient: vertical;\r\n  -webkit-box-direction: normal;\r\n      -ms-flex-direction: column;\r\n          flex-direction: column;\n}\n.row[data-v-1836121a] {\r\n  -webkit-box-pack: justify;\r\n      -ms-flex-pack: justify;\r\n          justify-content: space-between;\n}\n.pannel-heading[data-v-1836121a] {\r\n  position: relative;\r\n  top: -30px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-pack: center;\r\n      -ms-flex-pack: center;\r\n          justify-content: center;\r\n  -webkit-box-align: center;\r\n      -ms-flex-align: center;\r\n          align-items: center;\r\n  font-weight: 700;\r\n  height: calc(20pt + 10px);\r\n  width: 300px;\r\n  padding-top: 20px;\r\n  font-size: 20pt;\r\n  color: white;\r\n  text-shadow: 0px 0px 10px yellow;\r\n  background-color: rgba(0, 0, 0, 0.5);\r\n  border: 2px inset #555;\r\n  border-bottom: 0px;\n}\n.pannel-body[data-v-1836121a] {\r\n  text-align: center;\r\n  position: relative;\r\n  top: -30px;\r\n  padding: 0 50px 0 50px;\r\n  margin-bottom: -20px;\r\n  border: 2px inset #555;\r\n  border-top: 0px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-orient: vertical;\r\n  -webkit-box-direction: normal;\r\n      -ms-flex-direction: column;\r\n          flex-direction: column;\r\n  -webkit-box-pack: center;\r\n      -ms-flex-pack: center;\r\n          justify-content: center;\r\n  -webkit-box-align: center;\r\n      -ms-flex-align: center;\r\n          align-items: center;\r\n  font-size: 12pt;\r\n  color: white;\r\n  background-color: rgba(0, 0, 0, 0.5);\n}\n#fineprint[data-v-1836121a] {\r\n  font-size: 8pt;\r\n  color: rgba(255, 255, 255, 0.8);\r\n  text-shadow: 0px 0px 10px yellow;\r\n  /* text-shadow: none; */\n}\n#logo[data-v-1836121a] {\r\n  border: 3px outset goldenrod;\r\n  position: relative;\r\n  left: -20px;\n}\nimg[data-v-1836121a] {\r\n  border-radius: 10px;\n}\r\n", ""]);
+exports.push([module.i, "\n*[data-v-1836121a] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-1836121a] {\n  padding-top: 100px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-pack: distribute;\n      justify-content: space-around;\n}\n.pannel[data-v-1836121a] {\n  background-image: url(https://loftcinema.org/files/2015/06/const.jpg);\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.row[data-v-1836121a] {\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n}\n.pannel-heading[data-v-1836121a] {\n  position: relative;\n  top: -30px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  font-weight: 700;\n  height: calc(20pt + 10px);\n  width: 300px;\n  padding-top: 20px;\n  font-size: 20pt;\n  color: white;\n  text-shadow: 0px 0px 10px yellow;\n  background-color: rgba(0, 0, 0, 0.5);\n  border: 2px inset #555;\n  border-bottom: 0px;\n}\n.pannel-body[data-v-1836121a] {\n  text-align: center;\n  position: relative;\n  top: -30px;\n  padding: 0 50px 0 50px;\n  margin-bottom: -20px;\n  border: 2px inset #555;\n  border-top: 0px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  font-size: 12pt;\n  color: white;\n  background-color: rgba(0, 0, 0, 0.5);\n}\n#fineprint[data-v-1836121a] {\n  font-size: 8pt;\n  color: rgba(255, 255, 255, 0.8);\n  text-shadow: 0px 0px 10px yellow;\n  /* text-shadow: none; */\n}\n#logo[data-v-1836121a] {\n  border: 3px outset goldenrod;\n  position: relative;\n  left: -20px;\n}\nimg[data-v-1836121a] {\n  border-radius: 10px;\n}\n", ""]);
 
 // exports
 
 
 /***/ }),
-/* 117 */
+/* 120 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -117690,7 +117061,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 118 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -117775,19 +117146,19 @@ if (false) {
 }
 
 /***/ }),
-/* 119 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(120)
+  __webpack_require__(123)
 }
-var normalizeComponent = __webpack_require__(12)
+var normalizeComponent = __webpack_require__(10)
 /* script */
-var __vue_script__ = __webpack_require__(122)
+var __vue_script__ = __webpack_require__(125)
 /* template */
-var __vue_template__ = __webpack_require__(123)
+var __vue_template__ = __webpack_require__(126)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -117826,17 +117197,17 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 120 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(121);
+var content = __webpack_require__(124);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(11)("74fc9b73", content, false, {});
+var update = __webpack_require__(9)("9132d85a", content, false, {});
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
@@ -117852,7 +117223,7 @@ if(false) {
 }
 
 /***/ }),
-/* 121 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(8)(false);
@@ -117860,13 +117231,13 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n*[data-v-650f2efa] {\r\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\r\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\r\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\r\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\r\n    \"Liberation Mono\", \"Courier New\", monospace;\r\n  /* font-family: sans-serif; */\n}\n.container[data-v-650f2efa] {\r\n  margin: 0 0 0 0;\r\n  padding: 0 0 0 0;\r\n  background-color: #f7bf22;\r\n  width: 100vw;\n}\n.row[data-v-650f2efa] {\r\n  width: calc(100vw - 115px);\n}\n.panel-heading[data-v-650f2efa] {\r\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\r\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\r\n  /* box-shadow: 0px 0px 5px 4px black; */\r\n  border-top: 2px outset grey;\r\n  font-weight: 500;\r\n  text-shadow: 0px 0px 1px lightgrey;\r\n  color: lightgrey;\r\n  background-color: #444;\r\n  width: 100vw;\r\n  height: 115px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-pack: center;\r\n      -ms-flex-pack: center;\r\n          justify-content: center;\r\n  -webkit-box-align: center;\r\n      -ms-flex-align: center;\r\n          align-items: center;\n}\n.panel-body[data-v-650f2efa] {\r\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\r\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\r\n  /* box-shadow: 0px 0px 5px 4px black; */\r\n  border-top: 2px outset yellow;\r\n  background-color: #f7bf22;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-orient: vertical;\r\n  -webkit-box-direction: normal;\r\n      -ms-flex-direction: column;\r\n          flex-direction: column;\r\n  -webkit-box-pack: left;\r\n      -ms-flex-pack: left;\r\n          justify-content: left;\r\n  text-shadow: 0px 0px 2px rgba(0, 0, 0, 80%);\r\n  font-size: 12pt;\r\n  padding-left: 115px;\r\n  color: black;\r\n  font-weight: 650;\r\n  width: 100vw;\r\n  height: 300px;\n}\n.panel-body > div[data-v-650f2efa] {\r\n  /* display: inline-block; */\r\n  /* position: relative; */\r\n  /* top: 0px; */\n}\n#col-1[data-v-650f2efa] {\r\n  white-space: nowrap;\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 16%;\r\n          flex: 0 16%;\n}\n#col-1-bottom[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 30%;\r\n          flex: 0 30%;\n}\n#col-2[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 12%;\r\n          flex: 0 12%;\n}\n#col-3[data-v-650f2efa] {\r\n  white-space: nowrap;\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 19%;\r\n          flex: 0 19%;\n}\n#col-2-bottom[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 13%;\r\n          flex: 0 13%;\n}\n#col-4[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 28%;\r\n          flex: 0 28%;\r\n  -webkit-box-orient: vertical;\r\n  -webkit-box-direction: normal;\r\n      -ms-flex-direction: column;\r\n          flex-direction: column;\r\n  padding-top: 15px;\n}\n#col-3-bottom[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 12%;\r\n          flex: 0 12%;\n}\n#row-filler[data-v-650f2efa] {\r\n  -webkit-box-flex: 1;\r\n      -ms-flex: 1;\r\n          flex: 1;\n}\n#col-4-bottom[data-v-650f2efa] {\r\n  position: relative;\r\n  right: 10px;\n}\n#logo[data-v-650f2efa] {\r\n  border: 3px outset goldenrod;\n}\nimg[data-v-650f2efa] {\r\n  border-radius: 10px;\n}\n#email[data-v-650f2efa] {\r\n  font-size: 14pt;\r\n  width: 375px;\n}\n.vl[data-v-650f2efa] {\r\n  margin: 0px 75px 0px 75px;\r\n  border-left: 1px solid grey;\r\n  height: 75px;\n}\nul[data-v-650f2efa] {\r\n  padding: 10px 0 0 0;\n}\nli[data-v-650f2efa] {\r\n  font-weight: 100;\r\n  font-size: 9pt;\r\n  padding: 0px 0px 3px 5px;\n}\nnotset[data-v-650f2efa] {\r\n  -webkit-text-decoration-line: line-through;\r\n          text-decoration-line: line-through;\n}\nli a[data-v-650f2efa] {\r\n  color: black;\r\n  -webkit-text-decoration-line: none;\r\n          text-decoration-line: none;\n}\r\n", ""]);
+exports.push([module.i, "\n*[data-v-650f2efa] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-650f2efa] {\n  margin: 0 0 0 0;\n  padding: 0 0 0 0;\n  background-color: #f7bf22;\n  width: 100vw;\n}\n.row[data-v-650f2efa] {\n  width: calc(100vw - 115px);\n}\n.panel-heading[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset grey;\n  font-weight: 500;\n  text-shadow: 0px 0px 1px lightgrey;\n  color: lightgrey;\n  background-color: #444;\n  width: 100vw;\n  height: 115px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.panel-body[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset yellow;\n  background-color: #f7bf22;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: left;\n      -ms-flex-pack: left;\n          justify-content: left;\n  text-shadow: 0px 0px 2px rgba(0, 0, 0, 80%);\n  font-size: 12pt;\n  padding-left: 115px;\n  color: black;\n  font-weight: 650;\n  width: 100vw;\n  height: 300px;\n}\n.panel-body > div[data-v-650f2efa] {\n  /* display: inline-block; */\n  /* position: relative; */\n  /* top: 0px; */\n}\n#col-1[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 16%;\n          flex: 0 16%;\n}\n#col-1-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 30%;\n          flex: 0 30%;\n}\n#col-2[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#col-3[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 19%;\n          flex: 0 19%;\n}\n#col-2-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 13%;\n          flex: 0 13%;\n}\n#col-4[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 28%;\n          flex: 0 28%;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  padding-top: 15px;\n}\n#col-3-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#row-filler[data-v-650f2efa] {\n  -webkit-box-flex: 1;\n      -ms-flex: 1;\n          flex: 1;\n}\n#col-4-bottom[data-v-650f2efa] {\n  position: relative;\n  right: 10px;\n}\n#logo[data-v-650f2efa] {\n  border: 3px outset goldenrod;\n}\nimg[data-v-650f2efa] {\n  border-radius: 10px;\n}\n#email[data-v-650f2efa] {\n  font-size: 14pt;\n  width: 375px;\n}\n.vl[data-v-650f2efa] {\n  margin: 0px 75px 0px 75px;\n  border-left: 1px solid grey;\n  height: 75px;\n}\nul[data-v-650f2efa] {\n  padding: 10px 0 0 0;\n}\nli[data-v-650f2efa] {\n  font-weight: 100;\n  font-size: 9pt;\n  padding: 0px 0px 3px 5px;\n}\nnotset[data-v-650f2efa] {\n  -webkit-text-decoration-line: line-through;\n          text-decoration-line: line-through;\n}\nli a[data-v-650f2efa] {\n  color: black;\n  -webkit-text-decoration-line: none;\n          text-decoration-line: none;\n}\n", ""]);
 
 // exports
 
 
 /***/ }),
-/* 122 */
+/* 125 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -117980,7 +117351,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 123 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -118178,19 +117549,19 @@ if (false) {
 }
 
 /***/ }),
-/* 124 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(125)
+  __webpack_require__(128)
 }
-var normalizeComponent = __webpack_require__(12)
+var normalizeComponent = __webpack_require__(10)
 /* script */
-var __vue_script__ = __webpack_require__(127)
+var __vue_script__ = __webpack_require__(130)
 /* template */
-var __vue_template__ = __webpack_require__(128)
+var __vue_template__ = __webpack_require__(131)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -118229,17 +117600,17 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 125 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(126);
+var content = __webpack_require__(129);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(11)("fda56e56", content, false, {});
+var update = __webpack_require__(9)("0772c475", content, false, {});
 // Hot Module Replacement
 if(false) {
  // When the styles change, update the <style> tags
@@ -118255,7 +117626,7 @@ if(false) {
 }
 
 /***/ }),
-/* 126 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(8)(false);
@@ -118263,18 +117634,18 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n*[data-v-7cdae69f] {\r\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\r\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\r\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\r\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\r\n    \"Liberation Mono\", \"Courier New\", monospace;\r\n  /* font-family: sans-serif; */\n}\n.container[data-v-7cdae69f] {\r\n  padding-top: 100px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -ms-flex-pack: distribute;\r\n      justify-content: space-around;\n}\r\n", ""]);
+exports.push([module.i, "\n*[data-v-7cdae69f] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-7cdae69f] {\n  padding-top: 100px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-pack: distribute;\n      justify-content: space-around;\n}\n", ""]);
 
 // exports
 
 
 /***/ }),
-/* 127 */
+/* 130 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_axios__);
 //
 //
@@ -118316,7 +117687,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 128 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -118384,10 +117755,427 @@ if (false) {
 }
 
 /***/ }),
-/* 129 */
+/* 132 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 133 */,
+/* 134 */,
+/* 135 */,
+/* 136 */,
+/* 137 */,
+/* 138 */,
+/* 139 */,
+/* 140 */,
+/* 141 */,
+/* 142 */,
+/* 143 */,
+/* 144 */,
+/* 145 */,
+/* 146 */,
+/* 147 */,
+/* 148 */,
+/* 149 */,
+/* 150 */,
+/* 151 */,
+/* 152 */,
+/* 153 */,
+/* 154 */,
+/* 155 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(156);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(9)("3f4efa6f", content, false, {});
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 156 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(8)(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n.constant[data-v-e60f42ce] {\n  background-color: lightcoral;\n}\n.variable[data-v-e60f42ce] {\n  background-color: lightgreen;\n}\n#size[data-v-e60f42ce] {\n  margin-top: 8px;\n  padding-left: 14px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 157 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      _c(
+        "v-layout",
+        { attrs: { row: "" } },
+        [
+          _c("v-flex", { staticClass: "variable", attrs: { xs1: "" } }, [
+            _c(
+              "select",
+              {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.template.geo.shape,
+                    expression: "template.geo.shape"
+                  }
+                ],
+                staticStyle: {
+                  marginTop: "14px",
+                  padding: "10px 5px 10px 5px"
+                },
+                on: {
+                  change: [
+                    function($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function(o) {
+                          return o.selected
+                        })
+                        .map(function(o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.$set(
+                        _vm.template.geo,
+                        "shape",
+                        $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      )
+                    },
+                    function() {
+                      _vm.dataChange(_vm.template.geo, 4)
+                    }
+                  ]
+                }
+              },
+              [
+                _c("option", { attrs: { selected: "", value: "4" } }, [
+                  _vm._v("Rectangle")
+                ]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "1" } }, [_vm._v("Circle")])
+              ]
+            )
+          ]),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "X", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo, 1)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.x,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "x", $$v)
+                  },
+                  expression: "template.geo.x"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Y", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo, 2)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.y,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "y", $$v)
+                  },
+                  expression: "template.geo.y"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Width", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo, 3)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.width,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "width", $$v)
+                  },
+                  expression: "template.geo.width"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Height", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo, 3)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.height,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "height", $$v)
+                  },
+                  expression: "template.geo.height"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "constant", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Ratio" },
+                on: {
+                  change: function() {
+                    _vm.setRatSize(_vm.template.ratio, _vm.template.size)
+                  }
+                },
+                model: {
+                  value: _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template, "ratio", $$v)
+                  },
+                  expression: "template.ratio"
+                }
+              })
+            ],
+            1
+          )
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "v-layout",
+        { attrs: { row: "" } },
+        [
+          _c("v-flex", { staticClass: "constant", attrs: { xs1: "" } }, [
+            _c(
+              "select",
+              {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.template.size,
+                    expression: "template.size"
+                  }
+                ],
+                staticStyle: { fontSize: "24pt" },
+                attrs: { id: "size" },
+                on: {
+                  change: [
+                    function($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function(o) {
+                          return o.selected
+                        })
+                        .map(function(o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.$set(
+                        _vm.template,
+                        "size",
+                        $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      )
+                    },
+                    _vm.getTemplateAxios
+                  ]
+                }
+              },
+              [
+                _c("option", { attrs: { value: "XS" } }, [_vm._v("XS")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "S" } }, [_vm._v("S")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "M" } }, [_vm._v("M")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "L" } }, [_vm._v("L")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "XL" } }, [_vm._v("XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "2XL" } }, [_vm._v("2XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "3XL" } }, [_vm._v("3XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "4XL" } }, [_vm._v("4XL")])
+              ]
+            )
+          ]),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "X inches", disabled: "" },
+                model: {
+                  value: _vm.template.geo.x / _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo.x / _vm.template, "ratio", $$v)
+                  },
+                  expression: "template.geo.x / template.ratio"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Y inches", disabled: "" },
+                model: {
+                  value: _vm.template.geo.x / _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo.x / _vm.template, "ratio", $$v)
+                  },
+                  expression: "template.geo.x / template.ratio"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Width in." },
+                model: {
+                  value: _vm.inchesWtemp,
+                  callback: function($$v) {
+                    _vm.inchesWtemp = $$v
+                  },
+                  expression: "inchesWtemp"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Height in." },
+                model: {
+                  value: _vm.inchesHtemp,
+                  callback: function($$v) {
+                    _vm.inchesHtemp = $$v
+                  },
+                  expression: "inchesHtemp"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "constant", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Ratio", disabled: "" },
+                model: {
+                  value: _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template, "ratio", $$v)
+                  },
+                  expression: "template.ratio"
+                }
+              })
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-e60f42ce", module.exports)
+  }
+}
 
 /***/ })
 /******/ ]);
