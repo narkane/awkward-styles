@@ -438,10 +438,15 @@ export default {
     },
     saveTemplate: function() {
       var templateObj = {
-        x: this.drawArea.x,
-        y: this.drawArea.y,
-        width: this.drawArea.width,
-        height: this.drawArea.height,
+        temps: [
+          {
+            shape: null,
+            x: this.drawArea.x,
+            y: this.drawArea.y,
+            width: this.drawArea.width,
+            height: this.drawArea.height
+          }
+        ],
         dpi: this.ratio,
         pid: this.prodID,
         size: this.size

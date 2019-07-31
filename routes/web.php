@@ -52,7 +52,7 @@ Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
 Route::get('/products/{category}/{type}', 'ProductsController@index')->name('products');
-Route::get('/products/{category}/', 'Productscontroller@index')->name('productNoType');
+Route::get('/products/{category}/', 'ProductsController@index')->name('productNoType');
 Route::get('/products', 'ProductsController@home')->name('producthome');
 
 Route::get('/contact', 'ContactController@index')->name('contact us');

@@ -81945,7 +81945,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  top: 125px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#selection {\n  border: 1px solid black;\n  width: 140px;\n  padding: 10px;\n  border-radius: 30%;\n  margin-left: 500px;\n}\n#productImage {\n  margin: 122px 0px;\n  left: 0px;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
+exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  top: 125px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#productImage {\n  margin: 122px 0px;\n  left: 0px;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
 
 // exports
 
@@ -81963,6 +81963,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__ = __webpack_require__(110);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__);
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -82075,8 +82082,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
         // that.alpha = 0.5;
         var newPosition = this.data.getLocalPosition(this.parent);
-        that.shapes[that.librarySelect].x = newPosition.x;
-        that.shapes[that.librarySelect].y = newPosition.y;
+        that.shapes[that.librarySelect].x = Math.round(newPosition.x);
+        that.shapes[that.librarySelect].y = Math.round(newPosition.y);
         that.shapes[that.librarySelect].width = 0;
         that.shapes[that.librarySelect].height = 0;
         // that.$refs.trow1.setX(newPosition.x);
@@ -82099,8 +82106,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
           var newPosition = this.data.getLocalPosition(this.parent);
 
-          that.shapes[that.librarySelect].width = newPosition.x - that.shapes[that.librarySelect].x;
-          that.shapes[that.librarySelect].height = newPosition.y - that.shapes[that.librarySelect].y;
+          that.shapes[that.librarySelect].width = Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
+          that.shapes[that.librarySelect].height = Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
           // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
           // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
           // draw a rectangle
@@ -82115,7 +82122,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             // that.$refs.trow1.setH(10);
             // draw a rectangle
             // alert(that.shapes[that.librarySelect]);
-            that.geo[that.librarySelect].drawCircle(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, Math.sqrt(Math.pow(that.shapes[that.librarySelect].width, 2) + Math.pow(that.shapes[that.librarySelect].height, 2)) / Math.sqrt(2) / 2);
+            that.geo[that.librarySelect].drawCircle(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, Math.sqrt(Math.pow(that.shapes[that.librarySelect].width, 2) + Math.pow(that.shapes[that.librarySelect].height, 2)) / Math.sqrt(2));
           }
           that.geo[that.librarySelect].alpha = 0.1;
 
@@ -82137,7 +82144,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       if (data.shape == 4) {
         this.geo[this.librarySelect].drawRect(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, this.shapes[this.librarySelect].width, this.shapes[this.librarySelect].height);
       } else {
-        this.geo[this.librarySelect].drawCircle(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2) / 2);
+        this.geo[this.librarySelect].drawCircle(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
       }
       this.app.stage.addChild(this.geo[this.librarySelect]);
     },
@@ -82184,7 +82191,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       switch (shape) {
         case 1:
           this.shapes[this.libraryCurrent].shape = 1;
-          this.geo[this.libraryCurrent].drawCircle(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2) / 2);
+          this.geo[this.libraryCurrent].drawCircle(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
           break;
         // case 3:
         // this.geo[this.libraryCurrent].draw;
@@ -82257,7 +82264,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       };
     },
     createRadioElement: function createRadioElement(name) {
-      var radioHtml = "<button value='" + name + "'>Select " + name + "</button>";
+      var radioHtml = "<button type='button' value='" + name + "'>Select " + name + "</button>";
       // if (checked) {
       //   radioHtml += ' checked="checked"';
       // }
@@ -82275,6 +82282,46 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         ratio: this.ratio,
         size: this.size
       };
+    },
+    saveTemplate: function saveTemplate() {
+      // let ts = [];
+      // for(let i=1; i<=this.shapes.length; i++)
+      // {
+      //   console.log("SWOOP! "+i);
+      //   ts[i] = this.shapes[i];
+      // }
+      var templateObj = {
+        temps: this.shapes,
+        dpi: this.ratio,
+        pid: this.prodID,
+        size: this.size
+      };
+      this.saveTemplateAxios(templateObj);
+    },
+    saveTemplateAxios: function saveTemplateAxios(template) {
+      axios.post("/api/template", template).then(function (response) {
+        console.log(response);
+      }).catch(function (error) {
+        console.log(error);
+      });
+    },
+    getTemplateAxios: function getTemplateAxios() {
+      var that = this;
+      // alert("pulling from database HEER" + this.prodID);
+
+      axios.get("/api/template/" + this.prodID + "/" + this.size).then(function (response) {
+        console.log(response);
+        if (response.data.pid === 0) {
+          that.mode = true;
+        } else {
+          that.mode = false;
+        }
+        that.shapes = response.data.temps;
+        that.ratio = response.data.dpi;
+        that.changeDraw();
+      }).catch(function (error) {
+        console.log(error);
+      });
     }
   },
   props: {
@@ -90233,13 +90280,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       return this.template.geo.shape;
     },
     getTemplateAxios: function getTemplateAxios() {
-      alert("pulling off database discreetly ;))");
       this.setRatSize(this.template.ratio, this.template.size);
+      this.getTemplate();
     }
   },
   props: {
     setRatSize: Function,
-    dataChange: Function
+    dataChange: Function,
+    getTemplate: Function
   },
   computed: {
     inchesWtemp: {
@@ -90792,44 +90840,68 @@ var render = function() {
             "v-container",
             { attrs: { fluid: "", id: "cont" } },
             [
+              _c("h2", [_vm._v(_vm._s(_vm.prodID))]),
+              _vm._v(" "),
               _c("TemplateRow", {
                 ref: "trow1",
                 attrs: {
+                  getTemplate: _vm.getTemplateAxios,
                   setRatSize: _vm.setRatSize,
                   dataChange: _vm.dataChange
                 }
-              })
+              }),
+              _vm._v(" "),
+              _c(
+                "v-layout",
+                { attrs: { row: "", id: "selection" } },
+                [
+                  _c("h4", [_vm._v("Template: " + _vm._s(_vm.librarySelect))]),
+                  _vm._v(" "),
+                  _c(
+                    "v-btn",
+                    {
+                      attrs: { fab: "", color: "white" },
+                      on: { click: _vm.addRow }
+                    },
+                    [_c("v-icon", [_vm._v("+")])],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "button",
+                    {
+                      attrs: { type: "button" },
+                      on: {
+                        click: function($event) {
+                          return _vm.selectRadio(1)
+                        }
+                      }
+                    },
+                    [_vm._v("Select 1")]
+                  )
+                ],
+                1
+              )
             ],
             1
           ),
           _vm._v(" "),
           _c(
-            "v-btn",
-            { attrs: { fab: "", color: "white" }, on: { click: _vm.addRow } },
-            [_c("v-icon", [_vm._v("+")])],
-            1
+            "button",
+            { attrs: { type: "button" }, on: { click: _vm.saveTemplate } },
+            [
+              _vm._v(
+                "Save Template (" +
+                  _vm._s(_vm.prodID) +
+                  " - " +
+                  _vm._s(_vm.size) +
+                  ")"
+              )
+            ]
           )
         ],
         1
-      ),
-      _vm._v(" "),
-      _c("div", { attrs: { id: "selection" } }, [
-        _c("h3", [_vm._v("Template: " + _vm._s(_vm.librarySelect))]),
-        _vm._v(" "),
-        _c("h2", [_vm._v("Next: " + _vm._s(_vm.libraryCurrent))]),
-        _vm._v(" "),
-        _c(
-          "button",
-          {
-            on: {
-              click: function($event) {
-                return _vm.selectRadio(1)
-              }
-            }
-          },
-          [_vm._v("Select 1")]
-        )
-      ])
+      )
     ],
     1
   )
@@ -90855,7 +90927,7 @@ var render = function() {
   return _c(
     "div",
     { attrs: { id: "app" } },
-    [_c("TemplateTool", { attrs: { productID: _vm.prodid } })],
+    [_c("TemplateTool", { attrs: { prodID: _vm.prodid } })],
     1
   )
 }
@@ -117745,7 +117817,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n.constant[data-v-e60f42ce] {\n  background-color: lightcoral;\n}\n.variable[data-v-e60f42ce] {\n  background-color: lightgreen;\n}\n#area1[data-v-e60f42ce] {\n  border: 3px outset gray;\n  border-radius: 15px 15px 0px 0px;\n}\n#area2[data-v-e60f42ce] {\n  border: 3px outset gray;\n  border-radius: 0px 0px 15px 15px;\n}\n#size[data-v-e60f42ce] {\n  margin-top: 8px;\n  padding-left: 14px;\n}\n", ""]);
+exports.push([module.i, "\n.constant[data-v-e60f42ce] {\n  background-color: lightcoral;\n}\n.variable[data-v-e60f42ce] {\n  background-color: lightgreen;\n}\n#size[data-v-e60f42ce] {\n  margin-top: 8px;\n  padding-left: 14px;\n}\n", ""]);
 
 // exports
 

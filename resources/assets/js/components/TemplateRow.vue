@@ -120,13 +120,14 @@ export default {
       return this.template.geo.shape;
     },
     getTemplateAxios: function() {
-      alert("pulling off database discreetly ;))");
       this.setRatSize(this.template.ratio, this.template.size);
+      this.getTemplate();
     }
   },
   props: {
     setRatSize: Function,
-    dataChange: Function
+    dataChange: Function,
+    getTemplate: Function
   },
   computed: {
     inchesWtemp: {
@@ -161,14 +162,6 @@ export default {
 }
 .variable {
   background-color: lightgreen;
-}
-#area1 {
-  border: 3px outset gray;
-  border-radius: 15px 15px 0px 0px;
-}
-#area2 {
-  border: 3px outset gray;
-  border-radius: 0px 0px 15px 15px;
 }
 #size {
   margin-top: 8px;

@@ -2,17 +2,24 @@
   <div>
     <v-form ref="form" class="data">
       <v-container fluid id="cont">
-        <TemplateRow ref="trow1" :setRatSize="setRatSize" :dataChange="dataChange"></TemplateRow>
+        <h2>{{prodID}}</h2>
+        <TemplateRow
+          ref="trow1"
+          :getTemplate="getTemplateAxios"
+          :setRatSize="setRatSize"
+          :dataChange="dataChange"
+        ></TemplateRow>
+        <v-layout row id="selection">
+          <h4>Template: {{librarySelect}}</h4>
+          <v-btn fab @click="addRow" color="white">
+            <v-icon>+</v-icon>
+          </v-btn>
+          <!-- <h5>Next: {{libraryCurrent}}</!-->
+          <button type="button" @click="selectRadio(1)">Select 1</button>
+        </v-layout>
       </v-container>
-      <v-btn fab @click="addRow" color="white">
-        <v-icon>+</v-icon>
-      </v-btn>
+      <button type="button" @click="saveTemplate">Save Template ({{prodID}} - {{size}})</button>
     </v-form>
-    <div id="selection">
-      <h3>Template: {{librarySelect}}</h3>
-      <h2>Next: {{libraryCurrent}}</h2>
-      <button @click="selectRadio(1)">Select 1</button>
-    </div>
   </div>
 </template>
 
@@ -115,8 +122,8 @@ export default {
 
         // that.alpha = 0.5;
         var newPosition = this.data.getLocalPosition(this.parent);
-        that.shapes[that.librarySelect].x = newPosition.x;
-        that.shapes[that.librarySelect].y = newPosition.y;
+        that.shapes[that.librarySelect].x = Math.round(newPosition.x);
+        that.shapes[that.librarySelect].y = Math.round(newPosition.y);
         that.shapes[that.librarySelect].width = 0;
         that.shapes[that.librarySelect].height = 0;
         // that.$refs.trow1.setX(newPosition.x);
@@ -140,9 +147,9 @@ export default {
           var newPosition = this.data.getLocalPosition(this.parent);
 
           that.shapes[that.librarySelect].width =
-            newPosition.x - that.shapes[that.librarySelect].x;
+            Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
           that.shapes[that.librarySelect].height =
-            newPosition.y - that.shapes[that.librarySelect].y;
+            Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
           // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
           // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
           // draw a rectangle
@@ -168,9 +175,7 @@ export default {
               Math.sqrt(
                 Math.pow(that.shapes[that.librarySelect].width, 2) +
                   Math.pow(that.shapes[that.librarySelect].height, 2)
-              ) /
-                Math.sqrt(2) /
-                2
+              ) / Math.sqrt(2)
             );
           }
           that.geo[that.librarySelect].alpha = 0.1;
@@ -204,9 +209,7 @@ export default {
           Math.sqrt(
             Math.pow(this.shapes[this.librarySelect].width, 2) +
               Math.pow(this.shapes[this.librarySelect].height, 2)
-          ) /
-            Math.sqrt(2) /
-            2
+          ) / Math.sqrt(2)
         );
       }
       this.app.stage.addChild(this.geo[this.librarySelect]);
@@ -258,9 +261,7 @@ export default {
             Math.sqrt(
               Math.pow(this.shapes[this.librarySelect].width, 2) +
                 Math.pow(this.shapes[this.librarySelect].height, 2)
-            ) /
-              Math.sqrt(2) /
-              2
+            ) / Math.sqrt(2)
           );
           break;
         // case 3:
@@ -343,7 +344,11 @@ export default {
     },
     createRadioElement: function(name) {
       var radioHtml =
-        "<button value='" + name + "'>Select " + name + "</button>";
+        "<button type='button' value='" +
+        name +
+        "'>Select " +
+        name +
+        "</button>";
       // if (checked) {
       //   radioHtml += ' checked="checked"';
       // }
@@ -361,6 +366,52 @@ export default {
         ratio: this.ratio,
         size: this.size
       };
+    },
+    saveTemplate: function() {
+      // let ts = [];
+      // for(let i=1; i<=this.shapes.length; i++)
+      // {
+      //   console.log("SWOOP! "+i);
+      //   ts[i] = this.shapes[i];
+      // }
+      var templateObj = {
+        temps: this.shapes,
+        dpi: this.ratio,
+        pid: this.prodID,
+        size: this.size
+      };
+      this.saveTemplateAxios(templateObj);
+    },
+    saveTemplateAxios: function(template) {
+      axios
+        .post("/api/template", template)
+        .then(function(response) {
+          console.log(response);
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    },
+    getTemplateAxios: function() {
+      var that = this;
+      // alert("pulling from database HEER" + this.prodID);
+
+      axios
+        .get("/api/template/" + this.prodID + "/" + this.size)
+        .then(function(response) {
+          console.log(response);
+          if (response.data.pid === 0) {
+            that.mode = true;
+          } else {
+            that.mode = false;
+          }
+          that.shapes = response.data.temps;
+          that.ratio = response.data.dpi;
+          that.changeDraw();
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
     }
   },
   props: {
@@ -382,13 +433,7 @@ export default {
   left: 138px;
   border: 1px yellow outset;
 }
-#selection {
-  border: 1px solid black;
-  width: 140px;
-  padding: 10px;
-  border-radius: 30%;
-  margin-left: 500px;
-}
+
 #productImage {
   margin: 122px 0px;
   left: 0px;
