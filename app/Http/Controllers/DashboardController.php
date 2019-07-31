@@ -27,58 +27,50 @@ class DashboardController extends Controller
     {
         $user_id = Auth::user()->id;
         $storefronts = DB::SELECT('select id,name from tbl_store_front where user_id=? order by id DESC LIMIT 4',[$user_id]);
-        return view('dashboard',['storefronts'=>$storefronts]);
+        return view('createstore',['storefronts'=>$storefronts]);
     }
 
-    public function myAccount() {
+    public function myAccount(Request $request) {
+
+        if($request->isMethod('POST')){
+            if(!$this->updateAccount($request)) {
+                session()->flash('error', 'There was an error updating your account details.');
+            }
+        }
 
         $user_id = Auth::user()->id;
-        
-        $data = array("privateKey" => "password");                                                                    
-        $data_string = json_encode($data);                                                                                   
+        $result = DB::table('users')
+            ->where('id', '=', $user_id)->first();
                                                                                                                      
-        $ch = curl_init(env('API_URL')."token");                                             
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                                                                     
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);                                                                  
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
-        'Content-Type: application/json',                                                                                
-        'Content-Length: ' . strlen($data_string))                                                                       
-        );                                                                                                                   
-                                                                                                                     
-        $result = curl_exec($ch);
-        $result = json_decode($result,true);
-        //echo var_dump($result);
-        if($result['operationCode'] == 200) {
-            $token = $result['token']; 
-            $data = array("Authorization" => "Bearer ".$token);                                                                    
-        $data_string = json_encode($data);                                                                                   
-                                                                                                                     
-        $ch = curl_init(env('API_URL')."api/users/getUserDetailsById/".$user_id);                                             
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");                                                                     
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);                                                                  
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $token,                                                                                
-        'Content-Length: ' . strlen($data_string))                                                                       
-        );   
+        return view('account',['menu'=>'account','menuitem'=>'myaccount','user_details' => $result, 'token'=>$this->getToken()]);
+    }
 
-        $result = curl_exec($ch);
-        $result = json_decode($result,true);
-        //var_dump($result);
+    /**
+     * Update the Users Account Details
+     * @param Request $request
+     * @return mixed
+     */
+    private function updateAccount(Request $request){
+        $request->validate([
+            'firstname' => 'required',
+            'lastname' => 'required',
+            //'email' => 'required'
+        ]);
 
-        if($result['operationCode'] == 200) { 
-            return view('account',['menu'=>'account','menuitem'=>'myaccount','user_details' => $result, 'token'=>$token]);  
-            //echo $result['properties']['userName'];  
-        } else {
-            //error 
-        }
-
-        } else {
-            //error or redirection
-        }
-        
-        //
+        return DB::table('users')
+            ->where('id', '=', Auth::user()->id)
+            ->update([
+                'firstname' => $request->input('firstname'),
+                'lastname' => $request->input('lastname'),
+                'business_name' => ($request->has('businessname')) ? $request->input('businessname') : null,
+                'city' => ($request->has('city')) ? $request->input('city') : null,
+                'country' => ($request->has('country')) ? $request->input('country') : null,
+                'about_you' => ($request->has('about_you')) ? $request->input('about_you') : null,
+                'facebook' => ($request->has('facebook')) ? $request->input('facebook') : null,
+                'twitter' => ($request->has('twitter')) ? $request->input('twitter') : null,
+                'instagram' => ($request->has('instagram')) ? $request->input('instagram') : null,
+                'pinterest' => ($request->has('pinterest')) ? $request->input('pinterest') : null,
+                'youtube' => ($request->has('youtube')) ? $request->input('youtube') : null
+            ]);
     }
 }

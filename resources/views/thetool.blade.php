@@ -2,12 +2,10 @@
 
 @section('content')
 
-<div class="row products-row" style="float:left;border:3px inset lightblue;height:100%;">
-    <div id="art-product-list">
+    <div class="container">
         <div id="app">
             <thetool prodid="{{$product_id}}"/>
         </div>
-    </div>
 
    <div  style="position:absolute;z-index:-20;padding:0px 150px;">
             <div class="product-image">
@@ -24,5 +22,6 @@
             </div>
         </div>
 </div>
+    </div>
 
 @endsection

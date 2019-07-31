@@ -14,9 +14,9 @@
                 <img height="100" width="100" src="{{ url($storefront->logo_path) ?  url($storefront->logo_path) :  url('/').'/images/artist-defult.png' }}" alt="" class="artistpicimg">
                 <a href="#" class="artist-socialshare"><span class="icon-share-alt"></span></a>
             </div>
-            <h3 class="artistname">{{ $storefront->name }}</h3>
-            <p><strong>ID 00712 Member Since 2016</strong> </p>
-            <p><span class="icon-map-marker-alt"></span> Newyork, US</p>
+            <h3 class="artistname">{{ $owner_data[0]->name }}</h3>
+            <p><strong>ID {{ $owner_data[0]->id }} Member Since {{ date("m / Y",strtotime($owner_data[0]->created_at)) }}</strong> </p>
+            <p><span class="icon-map-marker-alt"></span> {{ $owner_data[0]->city }}, US</p>
             <div>
                 <button type="button" class="btn btn-primary btn-lg">Follow</button>
             </div>
@@ -44,10 +44,10 @@
         <div class="row">
             <div class="col-xl-9 col-lg-9">
                 <div class="media mb-4">
-                    <img src="{{ url('images/artist-defult.png') }}" style="width:200px" class="img-fluid rounded-circle mr-3" alt="Generic placeholder image">
+                    <img src="{{ url($storefront->logo_path) ?  url($storefront->logo_path) :  url('/').'/images/artist-defult.png' }}" style="width:200px" class="img-fluid rounded-circle mr-3" alt="Generic placeholder image">
                     <div class="media-body">
                         <h4 class="mt-0">About @if(count($owner_data)>0){{ $owner_data[0]->name }} @else John Thummel @endif</h4>
-                        Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.
+                        {{ $owner_data[0]->about_you }}
                     </div>
                 </div>
                 <div class="project-tab">
