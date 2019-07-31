@@ -2,7 +2,7 @@
 
 @section('content')
 
-    <div class="container">
+    <!-- <div class="container"> -->
         <div class="row products-row" style="float:left;border:3px inset lightblue;height:100%;">
             <div id="art-product-list">
                 <div id="app">
@@ -25,6 +25,6 @@
                 </div>
             </div>
         </div>
-    </div>
+    <!-- </div> -->
 
 @endsection
