@@ -4,7 +4,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb bg-white border">
                 <li class="breadcrumb-item"><a href="/list">Home</a></li>
-                <li class="breadcrumb-item"><a href="/products">Library</a></li>
+                <li class="breadcrumb-item"><a href="/product">Library</a></li>
                 <li class="breadcrumb-item active" aria-current="page"
                     id="current_product">{{ $product[0]->label }}</li>
             </ol>
@@ -600,7 +600,7 @@
                                     </div>
                                     @endforeach
 
-                                    <a href="/products/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
+                                    <a href="/product/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
                             </div>
                         </div>
 
@@ -617,7 +617,7 @@
                                     </div>
                                 @endforeach
 
-                                <a href="/products/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
+                                <a href="/product/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
                             </div>
                         </div>
 
@@ -634,7 +634,7 @@
                                     </div>
                                 @endforeach
 
-                                <a href="/products/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
+                                <a href="/product/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
                             </div>
                         </div>
 
@@ -651,7 +651,7 @@
                                     </div>
                                 @endforeach
 
-                                <a href="/products/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
+                                <a href="/product/designer/awkwardstyles" title="See More" class="pl-3">See More</a>
                             </div>
                         </div>
 

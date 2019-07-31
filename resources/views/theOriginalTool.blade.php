@@ -135,7 +135,7 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/products">
+                        <a class="nav-link" href="/product">
                             SHOP
                             <span>Custom design products</span>
                         </a>

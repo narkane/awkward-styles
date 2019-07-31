@@ -9,7 +9,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb bg-white">
                     <li class="breadcrumb-item"><a href="/list">Home</a></li>
-                    <li class="breadcrumb-item"><a href="/products">Shop</a></li>
+                    <li class="breadcrumb-item"><a href="/product">Shop</a></li>
                     <li class="breadcrumb-item active" aria-current="page"
                         id="current_category">{{ $category }}</li>
                 </ol>
@@ -23,25 +23,25 @@
                         @if(in_array($category,$cloth_cats))
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/shirt?count={{$take}}" title="T-Shirts">T-Shirts</a></h4>
+                                <h4><a href="/product/{{$category}}/shirt?count={{$take}}" title="T-Shirts">T-Shirts</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/tank?count={{$take}}" title="TankTops">Tank Tops</a></h4>
+                                <h4><a href="/product/{{$category}}/tank?count={{$take}}" title="TankTops">Tank Tops</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/hoodie?count={{$take}}" title="Hoodies">Hoodies</a></h4>
+                                <h4><a href="/product/{{$category}}/hoodie?count={{$take}}" title="Hoodies">Hoodies</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/jacket?count={{$take}}" title="Jackets">Jackets</a></h4>
+                                <h4><a href="/product/{{$category}}/jacket?count={{$take}}" title="Jackets">Jackets</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/sweatshirt?count={{$take}}" title="SweatShirt">Sweat Shirts</a></h4>
+                                <h4><a href="/product/{{$category}}/sweatshirt?count={{$take}}" title="SweatShirt">Sweat Shirts</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/pants?count={{$take}}" title="Pants">Pants</a></h4>
+                                <h4><a href="/product/{{$category}}/pants?count={{$take}}" title="Pants">Pants</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/shorts?count={{$take}}" title="Shorts">Shorts</a></h4>
+                                <h4><a href="/product/{{$category}}/shorts?count={{$take}}" title="Shorts">Shorts</a></h4>
                             </li>
                         </ul>
                         @endif
@@ -56,11 +56,11 @@
                                 </li>
                                 @elseif(in_array($cats,$cloth_cats))
                                 <li class="list-group-item">
-                                    <h5><a href="/products/{{$cats}}/@if($type!=null){{$type}}@endif" title="{{$cats}}">{{$cats}}</a></h5>
+                                    <h5><a href="/product/{{$cats}}/@if($type!=null){{$type}}@endif" title="{{$cats}}">{{$cats}}</a></h5>
                                 </li>
                                 @else
                                     <li class="list-group-item">
-                                        <h5><a href="/products/{{$cats}}/" title="{{$cats}}">{{$cats}}</a></h5>
+                                        <h5><a href="/product/{{$cats}}/" title="{{$cats}}">{{$cats}}</a></h5>
                                     </li>
                                 @endif
 

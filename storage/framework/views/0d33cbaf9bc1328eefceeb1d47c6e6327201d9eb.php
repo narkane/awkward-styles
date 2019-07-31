@@ -42,10 +42,10 @@
                             STORE
                             <ul style="list-style: none;">
                                 <!-- FIX LINKS TO APPROXIMATE LOCATIONS -->
-                                <li><a href="/products/womens" title="WOMEN">WOMEN</a></li>
-                                <li><a href="/products/mens" title="MEN">MEN</a></li>
-                                <li><a href="/products/boys" title="BOYS">BOYS</a></li>
-                                <li><a href="/products/girls" title="GIRLS">GIRLS</a></li>
+                                <li><a href="/product/womens" title="WOMEN">WOMEN</a></li>
+                                <li><a href="/product/mens" title="MEN">MEN</a></li>
+                                <li><a href="/product/boys" title="BOYS">BOYS</a></li>
+                                <li><a href="/product/girls" title="GIRLS">GIRLS</a></li>
                                 <li><a href="/search/wholesale" title="WHOLESALE">WHOLESALE</a></li>
                             </ul>
                         </div>

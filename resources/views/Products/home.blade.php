@@ -148,7 +148,7 @@
     </style>
     <script>
         function redirect(page){
-            window.location.href = "{{ url("/products") }}/"+page;
+            window.location.href = "{{ url("/product") }}/"+page;
         }
     </script>
 

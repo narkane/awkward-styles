@@ -7,7 +7,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb bg-white">
                     <li class="breadcrumb-item"><a href="/list">Home</a></li>
-                    <li class="breadcrumb-item"><a href="/products">Shop</a></li>
+                    <li class="breadcrumb-item"><a href="/product">Shop</a></li>
                     <li class="breadcrumb-item active" aria-current="page"
                         id="current_category"><?php echo e($category); ?></li>
                 </ol>
@@ -21,25 +21,25 @@
                         <?php if(in_array($category,$cloth_cats)): ?>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <h4><a href="/products/<?php echo e($category); ?>/shirt?count=<?php echo e($take); ?>" title="T-Shirts">T-Shirts</a></h4>
+                                <h4><a href="/product/<?php echo e($category); ?>/shirt?count=<?php echo e($take); ?>" title="T-Shirts">T-Shirts</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/<?php echo e($category); ?>/tank?count=<?php echo e($take); ?>" title="TankTops">Tank Tops</a></h4>
+                                <h4><a href="/product/<?php echo e($category); ?>/tank?count=<?php echo e($take); ?>" title="TankTops">Tank Tops</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/<?php echo e($category); ?>/hoodie?count=<?php echo e($take); ?>" title="Hoodies">Hoodies</a></h4>
+                                <h4><a href="/product/<?php echo e($category); ?>/hoodie?count=<?php echo e($take); ?>" title="Hoodies">Hoodies</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/<?php echo e($category); ?>/jacket?count=<?php echo e($take); ?>" title="Jackets">Jackets</a></h4>
+                                <h4><a href="/product/<?php echo e($category); ?>/jacket?count=<?php echo e($take); ?>" title="Jackets">Jackets</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/<?php echo e($category); ?>/sweatshirt?count=<?php echo e($take); ?>" title="SweatShirt">Sweat Shirts</a></h4>
+                                <h4><a href="/product/<?php echo e($category); ?>/sweatshirt?count=<?php echo e($take); ?>" title="SweatShirt">Sweat Shirts</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/<?php echo e($category); ?>/pants?count=<?php echo e($take); ?>" title="Pants">Pants</a></h4>
+                                <h4><a href="/product/<?php echo e($category); ?>/pants?count=<?php echo e($take); ?>" title="Pants">Pants</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/<?php echo e($category); ?>/shorts?count=<?php echo e($take); ?>" title="Shorts">Shorts</a></h4>
+                                <h4><a href="/product/<?php echo e($category); ?>/shorts?count=<?php echo e($take); ?>" title="Shorts">Shorts</a></h4>
                             </li>
                         </ul>
                         <?php endif; ?>
@@ -55,11 +55,11 @@
                                 </li>
                                 <?php elseif(in_array($cats,$cloth_cats)): ?>
                                 <li class="list-group-item">
-                                    <h5><a href="/products/<?php echo e($cats); ?>/<?php if($type!=null): ?><?php echo e($type); ?><?php endif; ?>" title="<?php echo e($cats); ?>"><?php echo e($cats); ?></a></h5>
+                                    <h5><a href="/product/<?php echo e($cats); ?>/<?php if($type!=null): ?><?php echo e($type); ?><?php endif; ?>" title="<?php echo e($cats); ?>"><?php echo e($cats); ?></a></h5>
                                 </li>
                                 <?php else: ?>
                                     <li class="list-group-item">
-                                        <h5><a href="/products/<?php echo e($cats); ?>/" title="<?php echo e($cats); ?>"><?php echo e($cats); ?></a></h5>
+                                        <h5><a href="/product/<?php echo e($cats); ?>/" title="<?php echo e($cats); ?>"><?php echo e($cats); ?></a></h5>
                                     </li>
                                 <?php endif; ?>
 
