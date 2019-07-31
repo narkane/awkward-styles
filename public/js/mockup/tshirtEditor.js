@@ -9,7 +9,22 @@ var line1;
 var line2;
 var line3;
 var line4;
+
+/**
+ * JSON 0 always empty
+ *
+ * type = nothing
+ *
+ * SHAPE: (by sides)
+ * 		1: circle
+ * 		4: rectangle
+ */
+
  	$(document).ready(function() {
+
+ 		var circleShape = 1;
+ 		var rectShape = 4;
+
 		//setup front side canvas 
  		canvas = new fabric.Canvas('tcanvas', {
 		  hoverCursor: 'pointer',
