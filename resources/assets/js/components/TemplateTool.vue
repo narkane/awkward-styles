@@ -186,7 +186,8 @@ export default {
         }
       }
     },
-    dataChange: function(data, xORy) {
+    dataChange: function(data) {
+      console.log("DATA CHAAAAAANGEEEEE!!!~");
       this.geo[this.librarySelect].clear();
 
       this.shapes[this.librarySelect].x = parseFloat(data.x);
@@ -332,7 +333,7 @@ export default {
       sel.appendChild(document.createElement("br"));
       sel.appendChild(newSel);
 
-      let lastSelection = this.librarySelect;
+      // let lastSelection = this.librarySelect;
 
       this.createGeo(this.$refs.trow1.getShape());
       this.$refs.trow1.template = {
@@ -341,6 +342,28 @@ export default {
         ratio: this.ratio,
         size: this.size
       };
+    },
+    addMultiRow: function() {
+      for (let i = 1; i <= this.shapes.length; i++) {
+        var newSel = this.createRadioElement(this.libraryCurrent);
+        newSel.onclick = event => {
+          this.selectRadio(event.target.value);
+        };
+        var sel = document.getElementById("selection");
+        sel.appendChild(document.createElement("br"));
+        sel.appendChild(newSel);
+
+        // let lastSelection = this.librarySelect;
+
+        // this.createGeo(this.shapes[this.libraryCurrent].shape);
+        // this.dataChange(this.shapes[i]);
+        this.$refs.trow1.template = {
+          // productId: 0,
+          geo: this.shapes[i],
+          ratio: this.ratio,
+          size: this.size
+        };
+      }
     },
     createRadioElement: function(name) {
       var radioHtml =
@@ -406,9 +429,9 @@ export default {
           } else {
             that.mode = false;
           }
-          that.shapes = response.data.temps;
+          that.shapes = response.data.templates;
           that.ratio = response.data.dpi;
-          that.changeDraw();
+          that.addMultiRow();
         })
         .catch(function(error) {
           console.log(error);

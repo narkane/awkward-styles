@@ -5,7 +5,7 @@
         <select
           v-model="template.geo.shape"
           style="marginTop:14px;padding:10px 5px 10px 5px;"
-          @change="()=>{dataChange(template.geo, 4);}"
+          @change="()=>{dataChange(template.geo);}"
         >
           <option selected value="4">Rectangle</option>
           <option value="1">Circle</option>
@@ -17,7 +17,7 @@
           class="inputNumber"
           type="number"
           label="X"
-          @change="()=>{dataChange(template.geo, 1);}"
+          @change="()=>{dataChange(template.geo);}"
           pattern="\d+"
         ></v-text-field>
       </v-flex>
@@ -27,7 +27,7 @@
           class="inputNumber"
           type="number"
           label="Y"
-          @change="()=>{dataChange(template.geo, 2);}"
+          @change="()=>{dataChange(template.geo);}"
           pattern="\d+"
         ></v-text-field>
       </v-flex>
@@ -37,7 +37,7 @@
           class="inputNumber"
           type="number"
           label="Width"
-          @change="()=>{dataChange(template.geo, 3);}"
+          @change="()=>{dataChange(template.geo);}"
           pattern="\d+"
         ></v-text-field>
       </v-flex>
@@ -47,7 +47,7 @@
           class="inputNumber"
           type="number"
           label="Height"
-          @change="()=>{dataChange(template.geo, 3);}"
+          @change="()=>{dataChange(template.geo);}"
           pattern="\d+"
         ></v-text-field>
       </v-flex>

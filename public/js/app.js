@@ -82132,7 +82132,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         }
       }
     },
-    dataChange: function dataChange(data, xORy) {
+    dataChange: function dataChange(data) {
+      console.log("DATA CHAAAAAANGEEEEE!!!~");
       this.geo[this.librarySelect].clear();
 
       this.shapes[this.librarySelect].x = parseFloat(data.x);
@@ -82253,7 +82254,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       sel.appendChild(document.createElement("br"));
       sel.appendChild(newSel);
 
-      var lastSelection = this.librarySelect;
+      // let lastSelection = this.librarySelect;
 
       this.createGeo(this.$refs.trow1.getShape());
       this.$refs.trow1.template = {
@@ -82262,6 +82263,30 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         ratio: this.ratio,
         size: this.size
       };
+    },
+    addMultiRow: function addMultiRow() {
+      var _this3 = this;
+
+      for (var i = 1; i <= this.shapes.length; i++) {
+        var newSel = this.createRadioElement(this.libraryCurrent);
+        newSel.onclick = function (event) {
+          _this3.selectRadio(event.target.value);
+        };
+        var sel = document.getElementById("selection");
+        sel.appendChild(document.createElement("br"));
+        sel.appendChild(newSel);
+
+        // let lastSelection = this.librarySelect;
+
+        // this.createGeo(this.shapes[this.libraryCurrent].shape);
+        // this.dataChange(this.shapes[i]);
+        this.$refs.trow1.template = {
+          // productId: 0,
+          geo: this.shapes[i],
+          ratio: this.ratio,
+          size: this.size
+        };
+      }
     },
     createRadioElement: function createRadioElement(name) {
       var radioHtml = "<button type='button' value='" + name + "'>Select " + name + "</button>";
@@ -82317,9 +82342,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         } else {
           that.mode = false;
         }
-        that.shapes = response.data.temps;
+        that.shapes = response.data.templates;
         that.ratio = response.data.dpi;
-        that.changeDraw();
+        that.addMultiRow();
       }).catch(function (error) {
         console.log(error);
       });
@@ -117874,7 +117899,7 @@ var render = function() {
                       )
                     },
                     function() {
-                      _vm.dataChange(_vm.template.geo, 4)
+                      _vm.dataChange(_vm.template.geo)
                     }
                   ]
                 }
@@ -117898,7 +117923,7 @@ var render = function() {
                 attrs: { type: "number", label: "X", pattern: "\\d+" },
                 on: {
                   change: function() {
-                    _vm.dataChange(_vm.template.geo, 1)
+                    _vm.dataChange(_vm.template.geo)
                   }
                 },
                 model: {
@@ -117922,7 +117947,7 @@ var render = function() {
                 attrs: { type: "number", label: "Y", pattern: "\\d+" },
                 on: {
                   change: function() {
-                    _vm.dataChange(_vm.template.geo, 2)
+                    _vm.dataChange(_vm.template.geo)
                   }
                 },
                 model: {
@@ -117946,7 +117971,7 @@ var render = function() {
                 attrs: { type: "number", label: "Width", pattern: "\\d+" },
                 on: {
                   change: function() {
-                    _vm.dataChange(_vm.template.geo, 3)
+                    _vm.dataChange(_vm.template.geo)
                   }
                 },
                 model: {
@@ -117970,7 +117995,7 @@ var render = function() {
                 attrs: { type: "number", label: "Height", pattern: "\\d+" },
                 on: {
                   change: function() {
-                    _vm.dataChange(_vm.template.geo, 3)
+                    _vm.dataChange(_vm.template.geo)
                   }
                 },
                 model: {
