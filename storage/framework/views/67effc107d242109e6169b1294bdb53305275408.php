@@ -37,15 +37,12 @@
 <body>
 <?php echo $__env->make('layouts.header', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>
 
+<main>
 <?php echo $__env->yieldContent('content'); ?>
-<!--
-<footer>
-    include('layouts.footer');
-</footer>
+</main>
 
- Scripts -->
+
 <script src="<?php echo e(asset('js/app.js')); ?>"></script>
 
--->
 </body>
 </html>

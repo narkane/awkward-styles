@@ -81945,7 +81945,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  top: 125px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#productImage {\n  margin: 122px 0px;\n  left: 0px;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
+exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  margin-top: 3px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#productImage {\n  /* position: absolute; */\n  /* left: 0; */\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
 
 // exports
 
@@ -82290,8 +82290,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       //   console.log("SWOOP! "+i);
       //   ts[i] = this.shapes[i];
       // }
+      console.log(JSON.stringify(this.shapes));
       var templateObj = {
-        temps: this.shapes,
+        templates: this.shapes,
         dpi: this.ratio,
         pid: this.prodID,
         size: this.size
