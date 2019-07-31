@@ -44,6 +44,12 @@ class ImageTemplateController extends Controller
             return response()->json(['missing parameters']);
         }
 
+        foreach($templates as $k => $v){
+            if($v == null){
+                unset($templates[$k]);
+            }
+        }
+
         // Create Query For Insert
         DB::table('templates')->updateOrInsert([
             'pid' => $pid,
