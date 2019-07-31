@@ -125,4 +125,7 @@ Route::group(['prefix' => 'api/'], function($app){
     $app->get('product/generate/{pid}/{size}/{art_id}/{media_id}', 'API\ProductGenController@index')->name('createProduct');
 
 
+
+    $app->get('insertproducts', 'API\InsertProductsController@index');
+
 });

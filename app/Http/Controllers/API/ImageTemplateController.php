@@ -22,10 +22,6 @@ class ImageTemplateController extends Controller
         if(!$response) {
             $response = new stdClass();
 
-            $response->x = 0;
-            $response->y = 0;
-            $response->width = 0;
-            $response->height = 0;
             $response->dpi = 0;
             $response->pid = 0;
             $response->size = 0;
