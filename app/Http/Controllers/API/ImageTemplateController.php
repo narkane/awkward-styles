@@ -33,27 +33,29 @@ class ImageTemplateController extends Controller
 
     public function insertTemplate(Request $request){
 
-        $request->validate([
-            'pid' => 'required|numeric',
-            'size' => 'required',
-            'dpi' => 'required',
-            'templates' => 'required'
-        ]);
+        $pid = $request->json('pid', null);
+        $dpi = $request->json('dpi', null);
+        $size = $request->json('size', null);
+        $templates = $request->json('templates', null);
+
+        if(is_null($pid) || is_null($dpi) || is_null($size) || is_null($templates)){
+            return response()->json(['missing parameters']);
+        }
 
         // Create Query For Insert
         DB::table('templates')->updateOrInsert([
-            'pid' => $request->input('pid'),
-            'size' => $request->input('size')
+            'pid' => $pid,
+            'size' => $size
         ],[
-           'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0,
-            'values' => ($request->has('templates')) ? $request->input('templates') : ''
+           'dpi' => $dpi,
+            'values' => json_encode($templates)
         ]);
 
         $id = DB::table('templates')
             ->where([
-                'pid' => $request->input('pid'),
-                'size' => $request->input('size'),
-                'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0
+                'pid' => $pid,
+                'size' => $size,
+                'dpi' => $dpi
             ])->first();
 
         return response()->json(['id' => ($id) ? $id->id : 0]);
