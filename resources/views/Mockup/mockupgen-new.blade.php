@@ -201,7 +201,7 @@
                         <div id="hoddieDrawingArea"
                              style="position: absolute;top: 0px;left: 0px;z-index: 10;">
                             <canvas id="tcanvas" class="hover"
-                                    style="-webkit-user-select: none;"></canvas>
+                                    style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
                         </div>
                     </div>
 
