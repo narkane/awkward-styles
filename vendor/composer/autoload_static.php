@@ -2157,6 +2157,8 @@ class ComposerStaticInitad4da69498504c5ef17aa3177451234d
         'App\\Http\\Controllers\\API\\DesignLibraryController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/DesignLibraryController.php',
         'App\\Http\\Controllers\\API\\DesignPrintsController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/DesignPrintsController.php',
         'App\\Http\\Controllers\\API\\ImageTemplateController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/ImageTemplateController.php',
+        'App\\Http\\Controllers\\API\\InsertProductsController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/InsertProductsController.php',
+        'App\\Http\\Controllers\\API\\ProductGenController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/ProductGenController.php',
         'App\\Http\\Controllers\\API\\ProductInformationController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/ProductInformationController.php',
         'App\\Http\\Controllers\\AddProductsController' => __DIR__ . '/../..' . '/app/Http/Controllers/AddProductsController.php',
         'App\\Http\\Controllers\\AffiliatesController' => __DIR__ . '/../..' . '/app/Http/Controllers/AffiliatesController.php',

@@ -14,19 +14,19 @@
           <v-btn fab @click="addRow" color="white">
             <v-icon>+</v-icon>
           </v-btn>
-          <!-- <h5>Next: {{libraryCurrent}}</!-->
-          <button type="button" @click="selectRadio(1)">Select 1</button>
-        </v-layout>
-        <v-btn
-          fab
-          @click="()=>{
+          <v-btn
+            fab
+            id="minus"
+            @click="()=>{
             geo[shapes.length - 1].clear();
             removeTemplate();
             librarySelect = shapes.length-1}"
-          color="white"
-        >
-          <v-icon>_</v-icon>
-        </v-btn>
+            color="white"
+          >
+            <v-icon>_</v-icon>
+          </v-btn>
+          <button type="button" @click="selectRadio(1)">Select 1</button>
+        </v-layout>
       </v-container>
       <button id="save" type="button" @click="saveTemplate">
         Save
@@ -563,5 +563,8 @@ button {
   position: relative;
   top: -200px;
   left: 50px;
+}
+#minus {
+  padding-bottom: 20px;
 }
 </style>

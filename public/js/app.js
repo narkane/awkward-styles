@@ -81945,7 +81945,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n.data {\n  margin-top: 18px;\n  margin-left: 550px;\n}\n#drawingboard {\n  position: absolute;\n  margin-top: 3px;\n  left: 138px;\n  border: 1px yellow outset;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 10px !important;\n  padding: 2px 4px;\n  -webkit-filter: drop-shadow(1px 1px 3px #333333);\n          filter: drop-shadow(1px 1px 3px #333333);\n}\n#hr {\n  margin: 5px;\n}\n#save {\n  position: relative;\n  top: -200px;\n  left: 50px;\n}\n", ""]);
+exports.push([module.i, "\n.data {\n  margin-top: 18px;\n  margin-left: 550px;\n}\n#drawingboard {\n  position: absolute;\n  margin-top: 3px;\n  left: 138px;\n  border: 1px yellow outset;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 10px !important;\n  padding: 2px 4px;\n  -webkit-filter: drop-shadow(1px 1px 3px #333333);\n          filter: drop-shadow(1px 1px 3px #333333);\n}\n#hr {\n  margin: 5px;\n}\n#save {\n  position: relative;\n  top: -200px;\n  left: 50px;\n}\n#minus {\n  padding-bottom: 20px;\n}\n", ""]);
 
 // exports
 
@@ -90959,6 +90959,22 @@ var render = function() {
                   ),
                   _vm._v(" "),
                   _c(
+                    "v-btn",
+                    {
+                      attrs: { fab: "", id: "minus", color: "white" },
+                      on: {
+                        click: function() {
+                          _vm.geo[_vm.shapes.length - 1].clear()
+                          _vm.removeTemplate()
+                          _vm.librarySelect = _vm.shapes.length - 1
+                        }
+                      }
+                    },
+                    [_c("v-icon", [_vm._v("_")])],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
                     "button",
                     {
                       attrs: { type: "button" },
@@ -90971,22 +90987,6 @@ var render = function() {
                     [_vm._v("Select 1")]
                   )
                 ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
-                "v-btn",
-                {
-                  attrs: { fab: "", color: "white" },
-                  on: {
-                    click: function() {
-                      _vm.geo[_vm.shapes.length - 1].clear()
-                      _vm.removeTemplate()
-                      _vm.librarySelect = _vm.shapes.length - 1
-                    }
-                  }
-                },
-                [_c("v-icon", [_vm._v("_")])],
                 1
               )
             ],

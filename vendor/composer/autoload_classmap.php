@@ -1728,6 +1728,8 @@ return array(
     'App\\Http\\Controllers\\API\\DesignLibraryController' => $baseDir . '/app/Http/Controllers/API/DesignLibraryController.php',
     'App\\Http\\Controllers\\API\\DesignPrintsController' => $baseDir . '/app/Http/Controllers/API/DesignPrintsController.php',
     'App\\Http\\Controllers\\API\\ImageTemplateController' => $baseDir . '/app/Http/Controllers/API/ImageTemplateController.php',
+    'App\\Http\\Controllers\\API\\InsertProductsController' => $baseDir . '/app/Http/Controllers/API/InsertProductsController.php',
+    'App\\Http\\Controllers\\API\\ProductGenController' => $baseDir . '/app/Http/Controllers/API/ProductGenController.php',
     'App\\Http\\Controllers\\API\\ProductInformationController' => $baseDir . '/app/Http/Controllers/API/ProductInformationController.php',
     'App\\Http\\Controllers\\AddProductsController' => $baseDir . '/app/Http/Controllers/AddProductsController.php',
     'App\\Http\\Controllers\\AffiliatesController' => $baseDir . '/app/Http/Controllers/AffiliatesController.php',
