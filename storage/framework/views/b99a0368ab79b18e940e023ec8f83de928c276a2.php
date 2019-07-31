@@ -258,8 +258,6 @@
 
                 allTags.push(txt);
 
-                console.log(JSON.stringify(allTags));
-
                 this.value = "";
                 //this.focus();
             }).on('keyup', function (e) {
@@ -269,10 +267,13 @@
 
             $('#tags').on('click', '.tag', function () {
                 var tag = $(this).text();
-                if (confirm("Delete this tag?")) $(this).remove();
-                for(var i = 0; i < allTags.length; i++){
-                    if(allTags[i] === tag){
-                        allTags.splice(i, 1);
+                if (confirm("Delete this tag?")) {
+                    $(this).remove();
+
+                    for (var i = 0; i < allTags.length; i++) {
+                        if (allTags[i] === tag) {
+                            allTags.splice(i, 1);
+                        }
                     }
                 }
                 console.log(JSON.stringify(allTags));

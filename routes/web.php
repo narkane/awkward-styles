@@ -28,14 +28,15 @@ Route::get('/thetool/{productId}', 'ToolController@index')->name('thetool');
 ###them
 Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 Route::get('/account', 'DashboardController@myAccount')->name('account');
+Route::post('/account', 'DashboardController@myAccount')->name('updateAccount');
 Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->name('artiststorefront');
-Route::get('/mockupgenerator/{productId}', 'MockupgenController@index')->name('mockupgenerator');
+Route::get('/mockupgenerator/{art_id}/{pid}', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/createstore', 'MyStoresController@createStore')->name('createstore');
 Route::get('/editstore/{id}', 'MyStoresController@editStore')->name('editStore');
 Route::post('/savestore', 'MyStoresController@saveStore')->name('savestore');
-Route::post('/saveartwork', 'MyStoresController@saveartwork')->name('saveartwork');
+Route::post('/saveartwork', 'MyStoresController@saveArtWork')->name('saveartwork');
 Route::get('/mystores', 'MyStoresController@index')->name('mystores');
 Route::get('/myearnings', 'MyEarningsController@index')->name('myearnings');
 Route::get('/addartwork', 'MyStoresController@addArtWork')->name('addartwork');
@@ -52,7 +53,7 @@ Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
 Route::get('/products/{category}/{type}', 'ProductsController@index')->name('products');
-Route::get('/products/{category}/', 'Productscontroller@index')->name('productNoType');
+Route::get('/products/{category}/', 'ProductsController@index')->name('productNoType');
 Route::get('/products', 'ProductsController@home')->name('producthome');
 
 Route::get('/contact', 'ContactController@index')->name('contact us');
@@ -120,5 +121,7 @@ Route::group(['prefix' => 'api/'], function($app){
      * ADD A PRINT/LIBRARY
      */
     $app->post('designs/print/create', 'API\DesignPrintsController@createPrint')->name('createPrint');
+
+    $app->get('product/generate/{pid}/{size}/{art_id}/{media_id}', 'API\ProductGenController@index')->name('createProduct');
 
 });

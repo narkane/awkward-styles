@@ -37,29 +37,28 @@ class ImageTemplateController extends Controller
 
     public function insertTemplate(Request $request){
 
-        if(!$request->has('pid') || !$request->has('size')){
-            return response()->json(['id' => 0]);
-        }
+        $request->validate([
+            'pid' => 'required|numeric',
+            'size' => 'required',
+            'dpi' => 'required',
+            'templates' => 'required'
+        ]);
+
+        return response()->json($request->all());
 
         // Create Query For Insert
         DB::table('templates')->updateOrInsert([
             'pid' => $request->input('pid'),
-            'size' => $request->input('size')],[
-            'x' => ($request->has('x')) ? $request->input('x') : 0,
-            'y' => ($request->has('y')) ? $request->input('y') : 0,
-            'width' => ($request->has('width')) ? $request->input('width') : 0,
-            'height' => ($request->has('height')) ? $request->input('height') : 0,
-            'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0
+            'size' => $request->input('size')
+        ],[
+           'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0,
+            'values' => ($request->has('templates')) ? $request->input('templates') : ''
         ]);
 
         $id = DB::table('templates')
             ->where([
                 'pid' => $request->input('pid'),
                 'size' => $request->input('size'),
-                'x' => ($request->has('x')) ? $request->input('x') : 0,
-                'y' => ($request->has('y')) ? $request->input('y') : 0,
-                'width' => ($request->has('width')) ? $request->input('width') : 0,
-                'height' => ($request->has('height')) ? $request->input('height') : 0,
                 'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0
             ])->first();
 

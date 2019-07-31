@@ -37,15 +37,15 @@
 <body>
 @include('layouts.header')
 
+<main>
 @yield('content')
-<!--
+</main>
+
 <footer>
-    include('layouts.footer');
+    @include('layouts.footer');
 </footer>
 
- Scripts -->
 <script src="{{asset('js/app.js')}}"></script>
 
--->
 </body>
 </html>

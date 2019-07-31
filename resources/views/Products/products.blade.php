@@ -206,7 +206,7 @@
         .product-container {
             width: 100%;
             margin: 0;
-            margin-top: 100px;
+            margin-top: 150px;
             background-color: #ffffff;
             padding: 20px;
         }
