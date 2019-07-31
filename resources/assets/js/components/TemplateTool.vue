@@ -374,8 +374,9 @@ export default {
       //   console.log("SWOOP! "+i);
       //   ts[i] = this.shapes[i];
       // }
+      console.log(JSON.stringify(this.shapes));
       var templateObj = {
-        temps: this.shapes,
+        templates: this.shapes,
         dpi: this.ratio,
         pid: this.prodID,
         size: this.size
@@ -429,14 +430,13 @@ export default {
 }
 #drawingboard {
   position: absolute;
-  top: 125px;
+  margin-top: 3px;
   left: 138px;
   border: 1px yellow outset;
 }
-
 #productImage {
-  margin: 122px 0px;
-  left: 0px;
+  /* position: absolute; */
+  /* left: 0; */
 }
 button {
   width: 80px;
