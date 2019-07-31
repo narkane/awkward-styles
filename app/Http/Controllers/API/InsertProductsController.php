@@ -18,28 +18,46 @@ class InsertProductsController extends Controller
         $d = '../public/products';
 
         $dirs = array_diff(scandir($d), array('..', '.'));
+        $images = '';
+
+        $err = [];
 
         foreach($dirs as $dir){
             $files = array_diff(scandir($d . "/" . $dir), array('..', '.'));
 
             foreach($files as $file){
                 list($title, $type) = explode(".", $file);
-                $ins = DB::table('tbl_media_library')
-                    ->insert([
-                        'thumbnail' => null,
-                        'full_url' => "/products/" . $dir . "/" . $file,
-                        'title' => $title,
-                        'position' => null,
-                        'alttext' => null,
-                        'type' => 'image',
-                        'status' => null,
-                        'mtime' => null,
-                        'ctime' => now()
-                    ]);
+
+                $image = DB::table('tbl_media_library')
+                        ->select('id')
+                        ->where('title', "=", $title)
+                        ->first();
+
+                $images .= $image->id . ",";
             }
+
+            // CREATE PRODUCT
+            $insertProduct = DB::table('tbl_products')
+                    ->insert([
+                        "image" => substr($images, 0, -1),
+                        "shortDescription" => "Describing the product and all of it's information.",
+                        "label" => "Label for product",
+                        "mtime" => now(),
+                        "ctime" => now(),
+
+                        "netWeight" => '0.00',
+                        "fullCaseOnly" => 0,
+                        "styleId" => 8
+                    ]);
+
+            if(!$insertProduct){
+                $err[] = "Error inserting product for " . $dir . ".";
+            }
+
+            $images = '';
         }
 
-        return response()->json(['Done homie!']);
+        return response()->json(((empty($err)) ? ['Success'] : $err));
     }
 
 }
