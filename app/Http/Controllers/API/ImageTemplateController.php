@@ -44,8 +44,6 @@ class ImageTemplateController extends Controller
             'templates' => 'required'
         ]);
 
-        return response()->json($request->all());
-
         // Create Query For Insert
         DB::table('templates')->updateOrInsert([
             'pid' => $request->input('pid'),
