@@ -21,7 +21,7 @@
     // reader.readAsDataURL("{{$request->full_url}}");
     // reader.onload = event => {
         const img = new Image();
-        img.src = "/products/6400/6400BLK.jpg";//"{{$request->full_url}}";
+        img.src = "{{$request->full_url}}";
         img.onload = () => {
             const elem = document.createElement('canvas');
             document.getElementById('ziggaza').appendChild(elem);
