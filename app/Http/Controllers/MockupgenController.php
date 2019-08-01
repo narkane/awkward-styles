@@ -56,6 +56,7 @@ class MockupgenController extends Controller
         return view('Mockup.mockupgen-new', [
             'art' => $art,
             'images' => $images,
+            'pid' => $pid
         ]);
     }
 }

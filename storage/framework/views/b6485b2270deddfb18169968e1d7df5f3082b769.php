@@ -2,6 +2,9 @@
     <script type="text/javascript" src="<?php echo e(asset('js/mockup/fabric.js')); ?>"></script>
     <script type="text/javascript" src="<?php echo e(asset('js/mockup/tshirtEditor.js')); ?>"></script>
     <script type="text/javascript" src="<?php echo e(asset('js/mockup/jquery.miniColors.min.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/color-picker.min.js')); ?>"></script>
+
+    <link href="<?php echo e(asset('css/color-picker.min.css')); ?>" rel="stylesheet"/>
     <style type="text/css">
         .footer {
             padding: 70px 0;
@@ -173,17 +176,61 @@
                 <div class="container edit-function" id="text-editor">
 
                     <div class="container p-2 w-50">
-                        <h4 class="fas fa-bold d-inline pr-2" id="font-bold" data-toggle="tooltip" data-placement="top" title="BOLD"></h4>
+                        <button id="text-bold" class="btn" data-toggle="tooltip" data-placement="top" title="BOLD" onclick="setBold()">
+                            <h4 class="fas fa-bold d-inline pr-2"></h4>
+                        </button>
 
-                        <h4 class="fas fa-italic d-inline pr-2" id="font-italic" data-toggle="tooltip" data-placement="top" title="ITALIC"></h4>
+                        <button id="text-italic" class="btn" data-toggle="tooltip" data-placement="top" title="ITALIC" onclick="setItalic()">
+                            <h4 class="fas fa-italic d-inline pr-2"></h4>
+                        </button>
 
-                        <h4 class="fas fa-underline d-inline pr-2" id="font-underline" data-toggle="tooltip" data-placement="top" title="UNDERLINE"></h4>
+                        <button id="text-underline" class="btn" data-toggle="tooltip" data-placement="top" title="UNDERLINE" onclick="setUnderline()">
+                            <h4 class="fas fa-underline d-inline pr-2" id="text-underline"></h4>
+                        </button>
 
-                        <h4 class="fas fa-circle d-inline pr-2 text-primary" id="font-strikethrough" data-toggle="tooltip" data-placement="top" title="STRIKETHROUGH"></h4>
+                        <button id="text-color" class="btn" data-toggle="tooltip" data-placement="top" title="COLOR">
+                            <h4 class="fas fa-circle d-inline pr-2 text-primary"></h4>
+                        </button>
+                        <script>
+                            var picker = new CP(document.querySelector('button[id="text-color"]'));
+                            picker.on("change", function(color) {
+                                setColor(color);
+                            });
+                        </script>
 
-                        <h4 class="fas fa-sort-alpha-up d-inline pr-2" id="font-size-up" data-toggle="tooltip" data-placement="top" title="FONT UP"></h4>
+                        <button id="font-family" class="btn dropdown-toggle" data-toggle="dropdown"
+                                title="Font Style"><i class="icon-font" style="width:19px;height:19px;"></i>
+                        </button>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="font-family-X">
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Arial');" class="Arial">Arial</a></li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Helvetica');" class="Helvetica">Helvetica</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Myriad Pro');" class="MyriadPro">Myriad
+                                    Pro</a></li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Delicious');" class="Delicious">Delicious</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Verdana');" class="Verdana">Verdana</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Georgia');" class="Georgia">Georgia</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Courier');" class="Courier">Courier</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Comic Sans MS');" class="ComicSansMS">Comic
+                                    Sans MS</a></li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Impact');" class="Impact">Impact</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Monaco');" class="Monaco">Monaco</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Optima');" class="Optima">Optima</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Hoefler Text');" class="Hoefler Text">Hoefler
+                                    Text</a></li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Plaster');" class="Plaster">Plaster</a>
+                            </li>
+                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Engagement');" class="Engagement">Engagement</a>
+                            </li>
+                        </ul>
 
-                        <h4 class="fas fa-sort-alpha-down d-inline pr-2" id="font-size-down" data-toggle="tooltip" data-placement="top" title="FONT DOWN"></h4>
                     </div>
 
                     <input type="text" class="form-control w-50 mx-auto" id="text-string" placeholder="Enter your text here.."/>
@@ -195,11 +242,11 @@
 
                     <div id="shirtDiv" class="page"
                          style="position: relative; background-color: rgb(255, 255, 255);">
-                        <img id="hoodieFacing" src="<?php echo e($images[0]->full_url); ?>"/>
+                        <img id="hoodieFacing" src=""/>
                         <div id="hoddieDrawingArea"
                              style="position: absolute;top: 0px;left: 0px;z-index: 10;">
                             <canvas id="tcanvas" class="hover"
-                                    style="-webkit-user-select: none;"></canvas>
+                                    style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
                         </div>
                     </div>
 
@@ -246,6 +293,7 @@
                 </div>
 
             </div>
+            <!--
             <div class="span6">
                 <div align="center" style="min-height: 32px;">
                     <div class="clearfix">
@@ -254,32 +302,32 @@
                                     title="Font Style"><i class="icon-font" style="width:19px;height:19px;"></i>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="font-family-X">
-                                <li><a tabindex="-1" href="#" onclick="setFont('Arial');" class="Arial">Arial</a></li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Helvetica');" class="Helvetica">Helvetica</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Arial');" class="Arial">Arial</a></li>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Helvetica');" class="Helvetica">Helvetica</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Myriad Pro');" class="MyriadPro">Myriad
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Myriad Pro');" class="MyriadPro">Myriad
                                         Pro</a></li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Delicious');" class="Delicious">Delicious</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Delicious');" class="Delicious">Delicious</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Verdana');" class="Verdana">Verdana</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Verdana');" class="Verdana">Verdana</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Georgia');" class="Georgia">Georgia</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Georgia');" class="Georgia">Georgia</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Courier');" class="Courier">Courier</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Courier');" class="Courier">Courier</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Comic Sans MS');" class="ComicSansMS">Comic
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Comic Sans MS');" class="ComicSansMS">Comic
                                         Sans MS</a></li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Impact');" class="Impact">Impact</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Impact');" class="Impact">Impact</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Monaco');" class="Monaco">Monaco</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Monaco');" class="Monaco">Monaco</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Optima');" class="Optima">Optima</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Optima');" class="Optima">Optima</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Hoefler Text');" class="Hoefler Text">Hoefler
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Hoefler Text');" class="Hoefler Text">Hoefler
                                         Text</a></li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Plaster');" class="Plaster">Plaster</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Plaster');" class="Plaster">Plaster</a>
                                 </li>
-                                <li><a tabindex="-1" href="#" onclick="setFont('Engagement');" class="Engagement">Engagement</a>
+                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Engagement');" class="Engagement">Engagement</a>
                                 </li>
                             </ul>
                             <button id="text-bold" class="btn" data-original-title="Bold"><img src="<?php echo e(asset('images/mockup/font_bold.png')); ?>" height="" width="">
@@ -290,13 +338,13 @@
                                         src="<?php echo e(asset('images/mockup/font_strikethrough.png')); ?>" height="" width=""></button>
                             <button id="text-underline" class="btn" title="Underline" style=""><img
                                         src="<?php echo e(asset('images/mockup/font_underline.png')); ?>"></button>
-                            <a class="btn" href="#" rel="tooltip" data-placement="top" data-original-title="Font Color"><input
+                            <a class="btn" href="javascript:void(0)" rel="tooltip" data-placement="top" data-original-title="Font Color"><input
                                         type="hidden" id="text-fontcolor" class="color-picker" size="7" value="#000000"></a>
-                            <a class="btn" href="#" rel="tooltip" data-placement="top"
+                            <a class="btn" href="javascript:void(0)" rel="tooltip" data-placement="top"
                                data-original-title="Font Border Color"><input type="hidden" id="text-strokecolor"
                                                                               class="color-picker" size="7"
                                                                               value="#000000"></a>
-                            <!--- Background <input type="hidden" id="text-bgcolor" class="color-picker" size="7" value="#ffffff"> --->
+                            --- Background <input type="hidden" id="text-bgcolor" class="color-picker" size="7" value="#ffffff"> ---
                         </div>
                         <div class="pull-right" align="" id="imageeditor" style="display:none">
                             <div class="btn-group">
@@ -311,15 +359,26 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
 
-            </div>
+            </div>-->
 
         </div>
 
     </section>
 
 </div>
+
+    <script>
+        templateVars = {
+            pid: '<?php echo e($pid); ?>',
+            size: 'XS',
+            url: null
+        };
+
+        setShirtImage('<?php echo e($images[0]->full_url); ?>');
+    </script>
 
                   <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.dashboard', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>

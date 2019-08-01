@@ -52,9 +52,15 @@ Route::get('/product-details/{productId}', 'ProductDetailsController@index')->na
 Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
-Route::get('/products/{category}/{type}', 'ProductsController@index')->name('products');
-Route::get('/products/{category}/', 'ProductsController@index')->name('productNoType');
-Route::get('/products', 'ProductsController@home')->name('producthome');
+
+/**
+ * Products Page
+ */
+Route::group(['prefix' => 'product/'], function($app){
+    $app->get('{category}/{type}', 'ProductsController@index')->name('products');
+    $app->get('{category}/', 'ProductsController@index')->name('productNoType');
+    $app->get('/', 'ProductsController@home')->name('producthome');
+});
 
 Route::get('/contact', 'ContactController@index')->name('contact us');
 

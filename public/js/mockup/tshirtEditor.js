@@ -17,6 +17,178 @@ var line4;
  *        4: rectangle
  */
 
+var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, url, pid, size;
+var upperLeft = 999;
+var upperTop = 999;
+
+var templateVars = {
+    pid: 0,
+    url: null,
+    size: 'L'
+};
+
+function setShirtImage(imgurl){
+
+    //setup front side canvas
+    canvas = new fabric.Canvas('tcanvas', {
+        hoverCursor: 'pointer',
+        selection: true,
+        selectionBorderColor: 'blue',
+        width: newWidth,
+        height: newHeight
+    });
+
+    let img = new Image();
+
+    img.onload = function(){
+
+        imageWidth = img.width;
+        imageHeight = img.height;
+
+        console.log("Width: " + imageWidth);
+        console.log("Height: " + imageHeight);
+
+        newWidth = 400;
+        newHeight = 400;
+
+        if((imageWidth/newWidth) > (imageHeight/newHeight)) {
+            newHeight = imageHeight / (imageWidth / newWidth);
+        } else {
+            newWidth = imageWidth / (imageHeight / newHeight);
+        }
+
+        $("#hoodieFacing").css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
+
+        $("#shirtDiv").css({'width': newWidth, 'height': newHeight});
+        $(".canvas-container").css({'width': newWidth, 'height': newHeight});
+        //$(".upper-canvas").css({'width': newWidth, 'height': newHeight});
+        //$(".upper-canvas").width(newWidth).height(newHeight);
+        $("#hoddieDrawingArea").css({'width': newWidth, 'height': newHeight});
+        //$("#tcanvas").css({'width': newWidth, 'height': newHeight});
+        //$("#tcanvas").width(newWidth).height(newHeight);
+
+        canvas.setHeight(newHeight);
+        canvas.setWidth(newWidth);
+
+        setTemplate();
+
+        img = null;
+
+    };
+
+    img.src = imgurl;
+}
+
+function setTemplate() {
+
+    console.log("URL : " + url + "/api/template/" + templateVars.pid + "/" + templateVars.size);
+
+    $.ajax({
+        url: "/api/template/" + templateVars.pid + "/" + templateVars.size,
+        contentType: 'application/json',
+        //dataType: 'json',
+        type: 'GET',
+        success: (result) => {
+            template = result;
+
+            var group = [];
+
+            // Run Through Template(s)
+            for (var i = 1; i < result.values.length; i++) {
+
+                // EMPTY OBJECT
+                if(result.values[i].x === 0 && result.values[i].y === 0 && result.values[i].width === 0 && result.values[i].height === 0){
+                    continue;
+                }
+
+                console.log("Value: " + JSON.stringify(result.values[i]));
+
+                if (result.values[i].shape === 1) {
+
+                    group.push(new fabric.Circle({
+                        radius: result.values[i].width / 2,
+                        height: result.values[i].height,
+                        width: result.values[i].width,
+                        top: result.values[i].y , // y - h
+                        left: result.values[i].x , // x - w
+                        fill: '#000000',
+                        originX: "left",
+                        originY: "top",
+                        stroke: "rgba(255,0,0,1)",
+                        strokeWidth: 1
+                    }));
+
+                } else if (result.values[i].shape === 4) {
+
+                    group.push(new fabric.Rect({
+                        width: result.values[i].width,
+                        height: result.values[i].height,
+                        top: result.values[i].y,
+                        left: result.values[i].x,
+                        fill: '#000000',
+                        originX: "left",
+                        originY: "top",
+                        stroke: "rgba(255,0,0,1)",
+                        strokeWidth: 1
+                    }));
+                }
+                upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
+                upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
+            }
+
+            console.log("TOP: " + upperTop + " | LEFT: " + upperLeft);
+
+            var g = new fabric.Group(group,{
+                originY: "top",
+                originX: "left",
+                left: upperLeft,
+                top: upperTop,
+                selectable: false,
+                opacity: 0.3
+            });
+
+            groupWidth = g.width;
+            groupHeight = g.height;
+
+            canvas.clipPath = g;
+
+            canvas.add(g);
+
+            $("#upper-canvas").width(newWidth).height(newHeight);
+
+        },
+        error: (err, data) => {
+            console.log("Error fetching template.");
+
+            // IF EMPTY, USE GENERIC
+            // SET TEMPLATE TO SHIRT
+            var w = newWidth / 3;
+            var h = newHeight / 3;
+
+            $("#hoddieDrawingArea").css({"top": '35%', "left": '35%', "width": w, "height": h});
+        }
+    });
+}
+
+var radius = function (a, b) {
+    let aSquared = a * a;
+    let bSquared = b * b;
+
+    return Math.sqrt(aSquared + bSquared) / Math.sqrt(2);
+};
+
+var centerX = function(){
+    var x = Math.round(upperLeft + (groupWidth/3));
+    console.log("CENTERX: " + x);
+    return x;
+};
+
+var centerY = function(){
+    var y = Math.round(upperTop + (groupHeight/2));
+    console.log("CENTERY: " + y);
+    return y;
+};
+
 $(document).ready(function () {
 
     /**
@@ -24,37 +196,6 @@ $(document).ready(function () {
      */
         //var imageWidth = $width }};
         //var imageHeight =  $height }};
-    var productImage = $("#hoodieFacing");
-    var imageWidth, imageHeight, newWidth, newHeight;
-
-    $("#hoodieFacing").one("load", function () {
-        imageWidth = productImage.width();
-        imageHeight = productImage.height();
-
-        newWidth = imageWidth;
-        newHeight = imageHeight;
-
-        console.log("Width: " + imageWidth);
-        console.log("Height: " + imageHeight);
-
-        if (imageWidth > imageHeight && imageWidth > 400) {
-            newWidth = 400;
-            newHeight = imageHeight / (imageWidth / 400);
-        } else if (imageWidth < imageHeight && imageHeight > 400) {
-            newHeight = 400;
-            newWidth = imageWidth / (imageHeight / 400);
-        }
-
-        console.log(newWidth);
-        console.log(newHeight);
-
-        productImage.css({'width': newWidth, 'height': newHeight});
-        $("#shirtDiv").css({'width': newWidth, 'height': newHeight});
-        $(".canvas-container").css({'width': newWidth, 'height': newHeight});
-        $(".upper-canvas").css({'width': newWidth, 'height': newHeight}).width(newWidth).height(newHeight);
-        $("#hoddieDrawingArea").css({'width': newWidth, 'height': newHeight});
-        $("#tcanvas").css({'width': newWidth, 'height': newHeight}).width(newWidth).height(newHeight);
-    });
 
 
     $(".mock-block").on("click", function () {
@@ -75,94 +216,16 @@ $(document).ready(function () {
      * END PAGE FUNCTIONS
      */
 
-    var clipPath = new fabric.Group();
-
-    function setTemplate(url, pid, size) {
-
-        console.log("URL : " + url + "/api/template/" + pid + "/" + size);
-
-        $.ajax({
-            url: "/api/template/" + pid + "/" + size,
-            contentType: 'application/json',
-            //dataType: 'json',
-            type: 'GET',
-            success: (result) => {
-                template = result;
-
-                var group = [];
-
-                // Run Through Template(s)
-                for (var i = 1; i < result.values.length; i++) {
-
-                    console.log("Value: " + JSON.stringify(result.values[i]));
-
-                    if (result.values[i].shape === 1) {
-                        var myRadius = radius(result.values[i].width, result.values[i].height);
-
-                        console.log("CIRCLE");
-
-                        group.push(new fabric.Circle({
-                            radius: myRadius,
-                            top: (result.values[i].y - myRadius), // y - h
-                            left: (result.values[i].x - myRadius), // x - w
-                        }));
-
-                    } else if (result.values[i].shape === 4) {
-
-                        console.log("RECTANGLE");
-
-                        group.push(new fabric.Rect({
-                            width: result.values[i].width,
-                            height: result.values[i].height,
-                            top: result.values[i].y,
-                            left: result.values[i].x
-                        }), {stroke: 1, strokeColor: "red"});
-                    }
-                }
-
-                console.log(JSON.stringify(group));
-
-                canvas.clipPath = new fabric.Group(group);
-
-            },
-            error: (err, data) => {
-                console.log("Error fetching template.");
-
-                // IF EMPTY, USE GENERIC
-                // SET TEMPLATE TO SHIRT
-                var w = newWidth / 3;
-                var h = newHeight / 3;
-
-                $("#hoddieDrawingArea").css({"top": '35%', "left": '35%', "width": w, "height": h});
-            }
-        });
-    }
-
-    var radius = function (a, b) {
-        let aSquared = a * a;
-        let bSquared = b * b;
-        return Math.sqrt(aSquared + bSquared) / Math.sqrt(2);
-    };
-
-    //setup front side canvas
-    canvas = new fabric.Canvas('tcanvas', {
-        hoverCursor: 'pointer',
-        selection: true,
-        selectionBorderColor: 'blue',
-        width: newWidth,
-        height: newHeight
-    });
-
-    setTemplate("", "1444", "XS");
+    $("#hoodieFacing").on('change',setTemplate());
 
     canvas.on({
         'object:moving': function (e) {
             e.target.opacity = 0.5;
-            percentageCalculator(canvas.getActiveObject().left, canvas.width, canvas.getActiveObject().top, canvas.height);
+            canvas.clipPath.opacity = 0.5;
         },
         'object:modified': function (e) {
             e.target.opacity = 1;
-            renderAllCanvas();
+            canvas.clipPath.opacity = 0.05;
         },
         'object:selected': onObjectSelected,
         'selection:cleared': onSelectedCleared
@@ -199,20 +262,22 @@ $(document).ready(function () {
     });
 
     canvas.on('object:out', function (e) {
-        e.target.setFill('green');
+        //e.target.setFill('green');
         canvas.renderAll();
     });
 
     document.getElementById('add-text').onclick = function () {
         var text = $("#text-string").val();
         var textSample = new fabric.IText(text, {
-            left: 75,
-            top: 100,
+            left: centerX(),
+            top: centerY(),
+            originX: 'left',
+            originY: 'top',
             fontFamily: 'helvetica',
             angle: 0,
-            fill: '#000000',
-            scaleX: 0.5,
-            scaleY: 0.5,
+            fill: 'yellow',
+            //scaleX: 0.5,
+            //scaleY: 0.5,
             fontWeight: '',
             hasRotatingPoint: true
         });
@@ -223,13 +288,14 @@ $(document).ready(function () {
         $("#imageeditor").css('display', 'block');
     };
 
-    $("#text-string").keyup(function () {
+    $("#text-string").on('keyup',function () {
         var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
-            activeObject.text = this.value;
+        if (activeObject && activeObject.type === 'i-text') {
+            activeObject.setText(this.value);
             canvas.renderAll();
         }
     });
+
     $(".img-polaroid").click(function (e) {
         var el = e.target;
         /*temp code*/
@@ -289,58 +355,10 @@ $(document).ready(function () {
             });
         }
     };
-    $("#text-bold").click(function () {
-        var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
-            activeObject.fontWeight = (activeObject.fontWeight == 'bold' ? '' : 'bold');
-            canvas.renderAll();
-        }
-    });
-    $("#text-italic").click(function () {
-        var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
-            activeObject.fontStyle = (activeObject.fontStyle == 'italic' ? '' : 'italic');
-            canvas.renderAll();
-        }
-    });
-    $("#text-strike").click(function () {
-        var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
-            activeObject.textDecoration = (activeObject.textDecoration == 'line-through' ? '' : 'line-through');
-            canvas.renderAll();
-        }
-    });
-    $("#text-underline").click(function () {
-        var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
-            activeObject.textDecoration = (activeObject.textDecoration == 'underline' ? '' : 'underline');
-            canvas.renderAll();
-        }
-    });
-    $("#text-left").click(function () {
-        var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
-            activeObject.textAlign = 'left';
-            canvas.renderAll();
-        }
-    });
-    $("#text-center").click(function () {
-        var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
-            activeObject.textAlign = 'center';
-            canvas.renderAll();
-        }
-    });
-    $("#text-right").click(function () {
-        var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
-            activeObject.textAlign = 'right';
-            canvas.renderAll();
-        }
-    });
+
     $("#font-family").change(function () {
         var activeObject = canvas.getActiveObject();
-        if (activeObject && activeObject.type === 'text') {
+        if (activeObject && activeObject.type === 'i-text') {
             activeObject.fontFamily = this.value;
             canvas.renderAll();
         }
@@ -348,7 +366,7 @@ $(document).ready(function () {
     $('#text-bgcolor').miniColors({
         change: function (hex, rgb) {
             var activeObject = canvas.getActiveObject();
-            if (activeObject && activeObject.type === 'text') {
+            if (activeObject && activeObject.type === 'i-text') {
                 activeObject.backgroundColor = this.value;
                 canvas.renderAll();
             }
@@ -363,7 +381,7 @@ $(document).ready(function () {
     $('#text-fontcolor').miniColors({
         change: function (hex, rgb) {
             var activeObject = canvas.getActiveObject();
-            if (activeObject && activeObject.type === 'text') {
+            if (activeObject && activeObject.type === 'i-text') {
                 activeObject.fill = this.value;
                 canvas.renderAll();
             }
@@ -379,7 +397,7 @@ $(document).ready(function () {
     $('#text-strokecolor').miniColors({
         change: function (hex, rgb) {
             var activeObject = canvas.getActiveObject();
-            if (activeObject && activeObject.type === 'text') {
+            if (activeObject && activeObject.type === 'i-text') {
                 activeObject.strokeStyle = this.value;
                 canvas.renderAll();
             }
@@ -489,16 +507,13 @@ function getRandomNum(min, max) {
 function onObjectSelected(e) {
     var selectedObject = e.target;
     $("#text-string").val("");
-    selectedObject.hasRotatingPoint = true
-    if (selectedObject && selectedObject.type === 'text') {
-        //display text editor
-        $("#show-text-editor").click();
+    selectedObject.hasRotatingPoint = true;
+    if (selectedObject && selectedObject.isType('i-text')) {
 
         $("#text-string").val(selectedObject.getText());
 
-        $('#text-fontcolor').miniColors('value', selectedObject.fill);
-
-        $('#text-strokecolor').miniColors('value', selectedObject.strokeStyle);
+        //display text editor
+        $("#show-text-editor").click();
 
     } else if (selectedObject && selectedObject.type === 'image') {
         //display image editor
@@ -511,15 +526,56 @@ function onSelectedCleared(e) {
     $("#texteditor").css('display', 'none');
     $("#text-string").val("");
     $("#imageeditor").css('display', 'none');
+    $(".mock-block").click();
+}
+
+/**
+ * START TEXT FUNCTIONALITY
+ */
+function setBold(){
+    let activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        activeObject.fontWeight = (activeObject.fontWeight === 'bold' ? '' : 'bold');
+        canvas.renderAll();
+    }
+}
+
+function setItalic() {
+    var activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        activeObject.fontStyle = (activeObject.fontStyle === 'italic' ? '' : 'italic');
+        canvas.renderAll();
+    }
 }
 
 function setFont(font) {
     var activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'text') {
+    if (activeObject && activeObject.type === 'i-text') {
         activeObject.fontFamily = font;
         canvas.renderAll();
     }
 }
+
+function setUnderline(){
+    var activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        console.log(activeObject.getUnderline());
+        activeObject.setUnderline((!activeObject.getUnderline()));
+        canvas.renderAll();
+    }
+}
+
+function setColor(color) {
+    var activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        activeObject.setFill("#" + color);
+        canvas.renderAll();
+    }
+}
+
+/**
+ * END TEXT FUNCTIONALITY
+ */
 
 function removeWhite() {
     var activeObject = canvas.getActiveObject();
