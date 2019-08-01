@@ -40,7 +40,7 @@
 
             <div class="collapse navbar-collapse" id="mega-menu">
                 <ul class="navbar-nav mr-auto">
-                    <li class="nav-item nav-home">
+                    <li class="nav-item nav-home" style="z-index: 20;">
                         <a href="/list" class="nav-link">
                             <span class="icon-home" style="borderRadius:20px;"></span>
 
