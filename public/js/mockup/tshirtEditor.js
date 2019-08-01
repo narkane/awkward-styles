@@ -82,7 +82,7 @@ $(document).ready(function () {
         console.log("URL : " + url + "/api/template/" + pid + "/" + size);
 
         $.ajax({
-            url: url + "/api/template/" + pid + "/" + size,
+            url: "/api/template/" + pid + "/" + size,
             contentType: 'application/json',
             //dataType: 'json',
             type: 'GET',
@@ -105,8 +105,6 @@ $(document).ready(function () {
                             radius: myRadius,
                             top: (result.values[i].y - myRadius), // y - h
                             left: (result.values[i].x - myRadius), // x - w
-
-                            fill: 'blue'
                         }));
 
                     } else if (result.values[i].shape === 4) {
@@ -117,14 +115,14 @@ $(document).ready(function () {
                             width: result.values[i].width,
                             height: result.values[i].height,
                             top: result.values[i].y,
-                            left: result.values[i].x,
-                            fill: 'blue'
-                        }));
+                            left: result.values[i].x
+                        }), {stroke: 1, strokeColor: "red"});
                     }
                 }
 
-                clipPath.addWithUpdate(group);
-                canvas.clipPath = clipPath;
+                console.log(JSON.stringify(group));
+
+                canvas.clipPath = new fabric.Group(group);
 
             },
             error: (err, data) => {
@@ -155,7 +153,7 @@ $(document).ready(function () {
         height: newHeight
     });
 
-    setTemplate("http://127.0.0.1:8000", "1444", "XS");
+    setTemplate("", "1444", "XS");
 
     canvas.on({
         'object:moving': function (e) {
