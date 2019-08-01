@@ -14,18 +14,11 @@
           <v-btn fab @click="addRow" color="white">
             <v-icon>+</v-icon>
           </v-btn>
-          <v-btn
-            fab
-            id="minus"
-            @click="()=>{
-            geo[shapes.length - 1].clear();
-            removeTemplate();
-            librarySelect = shapes.length-1}"
-            color="white"
-          >
+          <v-btn fab id="minus" @click="()=>{
+            removeTemplate();}" color="white">
             <v-icon>_</v-icon>
           </v-btn>
-          <button type="button" @click="selectRadio(1)">Select 1</button>
+          <button id="button1" type="button" @click="selectRadio(1)">Select 1</button>
         </v-layout>
       </v-container>
       <button id="save" type="button" @click="saveTemplate">
@@ -39,6 +32,10 @@
     <v-btn fab @click="getTempNewSize" color="white">
       <v-icon>NEW</v-icon>
     </v-btn>
+    <hr />
+    Shapes length(+1): {{shapes.length}}
+    <hr />
+    Geo length(+1): {{geo.length}}
   </div>
 </template>
 
@@ -60,7 +57,7 @@ export default {
       app: new PIXI.Application({
         width: 400,
         height: 400,
-        backgroundColor: 0x1099bb,
+        //backgroundColor: 0x1099bb,
         transparent: 1
       }),
       // drawArea: new PIXI.Rectangle(0, 0, 200, 300),
@@ -119,20 +116,24 @@ export default {
         .on("mousemove", onDragMove)
         .on("touchmove", onDragMove);
 
-      // this.createSprite(blob);
-      // this.sprites[1].width = 0;
-      // this.sprties[1].transparent;
-      // this.sprites[1].alpha = 0.1;
+      // this.libraryCurrent = 1;
+      console.log(that.libraryCurrent);
       try {
-        that.createGeo(that.$refs.trow1.getShape());
+        this.createShape(this.libraryCurrent);
       } catch (e) {
-        that.createGeo(4);
+        console.log("NO GEO!!!! BREAKY: " + e);
       }
 
       that.app.ticker.add(function(delta) {
+        // that.doAll(i => {
+        //   that.shapes[i].y *= Math.sin(delta);
+        // });
         // that.sprites[that.librarySelect].rotation += 0.1 * delta;
       });
       function onDragStart(event) {
+        if (that.libraryCurrent == 1) {
+          that.addRow();
+        }
         that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
         that.geo[that.librarySelect].clear();
         // store a reference to the data
@@ -141,13 +142,13 @@ export default {
         this.data = event.data;
 
         // that.alpha = 0.5;
+        that.geo[that.librarySelect].alpha = 0.5;
         var newPosition = this.data.getLocalPosition(this.parent);
         that.shapes[that.librarySelect].x = Math.round(newPosition.x);
         that.shapes[that.librarySelect].y = Math.round(newPosition.y);
         that.shapes[that.librarySelect].width = 0;
         that.shapes[that.librarySelect].height = 0;
-        // that.$refs.trow1.setX(newPosition.x);
-        // that.$refs.trow1.setY(newPosition.y);
+
         this.dragging = true;
       }
       function onDragEnd() {
@@ -158,7 +159,7 @@ export default {
         // set the interaction data to null
         this.data = null;
 
-        // that.geo[that.librarySelect].alpha = 0.1;
+        that.geo[that.librarySelect].alpha = 1;
       }
       function onDragMove() {
         if (this.dragging) {
@@ -166,41 +167,19 @@ export default {
 
           var newPosition = this.data.getLocalPosition(this.parent);
 
-          that.shapes[that.librarySelect].width =
-            Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
-          that.shapes[that.librarySelect].height =
-            Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
+          let avg =
+            (Math.round(newPosition.x) -
+              that.shapes[that.librarySelect].x +
+              (Math.round(newPosition.y) - that.shapes[that.librarySelect].y)) /
+            2;
+
+          that.shapes[that.librarySelect].width = avg;
+          that.shapes[that.librarySelect].height = avg;
+
           // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
           // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
           // draw a rectangle
-          if (that.$refs.trow1.template.geo.shape == 4) {
-            that.geo[that.librarySelect].drawRect(
-              that.shapes[that.librarySelect].x,
-              that.shapes[that.librarySelect].y,
-              that.shapes[that.librarySelect].width,
-              that.shapes[that.librarySelect].height
-            );
-          } else {
-            // that.shapes[that.librarySelect].width = Math.sqrt(
-            // Math.pow(newPosition.x - that.shapes[that.librarySelect].x, 2) +
-            //   Math.pow(newPosition.y - that.shapes[that.librarySelect].y, 2)
-            // );
-            // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
-            // that.$refs.trow1.setH(10);
-            // draw a rectangle
-            // alert(that.shapes[that.librarySelect]);
-            that.geo[that.librarySelect].drawCircle(
-              that.shapes[that.librarySelect].x,
-              that.shapes[that.librarySelect].y,
-              Math.sqrt(
-                Math.pow(that.shapes[that.librarySelect].width, 2) +
-                  Math.pow(that.shapes[that.librarySelect].height, 2)
-              ) / Math.sqrt(2)
-            );
-          }
-          that.geo[that.librarySelect].alpha = 0.1;
-
-          // set the line style to have a width of 5 and set the color to red
+          that.dataDraw(that.librarySelect);
 
           that.app.stage.addChild(that.geo[that.librarySelect]);
         }
@@ -216,53 +195,64 @@ export default {
       this.shapes[this.librarySelect].height = parseFloat(data.height);
       this.shapes[this.librarySelect].shape = parseInt(data.shape);
 
-      if (data.shape == 4) {
-        this.geo[this.librarySelect].drawRect(
-          this.shapes[this.librarySelect].x,
-          this.shapes[this.librarySelect].y,
-          this.shapes[this.librarySelect].width,
-          this.shapes[this.librarySelect].height
-        );
-      } else {
-        this.geo[this.librarySelect].drawCircle(
-          this.shapes[this.librarySelect].x,
-          this.shapes[this.librarySelect].y,
-          Math.sqrt(
-            Math.pow(this.shapes[this.librarySelect].width, 2) +
-              Math.pow(this.shapes[this.librarySelect].height, 2)
-          ) / Math.sqrt(2)
-        );
-      }
-      this.app.stage.addChild(this.geo[this.librarySelect]);
+      this.dataDraw(this.librarySelect);
     },
-    dataDraw: function() {
+    doAll: function(cbFunc) {
       for (let i = 1; i < this.shapes.length; i++) {
-        this.geo[i] = new PIXI.Graphics();
+        cbFunc(i);
+      }
+      this.libraryCurrent = this.shapes.length;
+      this.select(this.libraryCurrent - 1);
+    },
+    dataDraw: function(i) {
+      // this.geo[i] = new PIXI.Graphics();
 
-        this.geo[i].lineStyle(1, 0x0000ff);
-        this.geo[i].transparent = 1;
-        this.geo[i].alpha = 0.1;
-        // this.geo[i].clear();
+      // this.geo[i].lineStyle(2, 0xffffff);
+      // this.geo[i].beginFill(0x44aaff, 0.25);
+      // this.geo[i].transparent = 1;
+      // this.geo[i].alpha = 0.1;
+      // this.geo[i].clear();
 
-        if (this.shapes[i].shape == 4) {
+      // console.log(this.shapes);
+      switch (this.shapes[i].shape) {
+        case 1:
+          //Set width and height to actual width and height
+          let w = this.shapes[i].width / 2;
+          let h = this.shapes[i].height / 2;
+          //Set radius from w and h
+          let radius =
+            Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2)) / Math.sqrt(2);
+          //Set x and y to left and top
+          let x = this.shapes[i].x + radius;
+          let y = this.shapes[i].y + radius;
+
+          this.geo[i].drawCircle(x, y, radius);
+          break;
+        // case 3:
+        // this.geo[i].draw;
+        // break;
+        case 4:
+          this.shapes[i].shape = 4;
           this.geo[i].drawRect(
             this.shapes[i].x,
             this.shapes[i].y,
             this.shapes[i].width,
             this.shapes[i].height
           );
-        } else {
-          this.geo[i].drawCircle(
+          break;
+        default:
+          this.shapes[i].shape = 4;
+          this.geo[i].drawRect(
             this.shapes[i].x,
             this.shapes[i].y,
-            Math.sqrt(
-              Math.pow(this.shapes[i].width, 2) +
-                Math.pow(this.shapes[i].height, 2)
-            ) / Math.sqrt(2)
+            this.shapes[i].width,
+            this.shapes[i].height
           );
-        }
-        this.app.stage.addChild(this.geo[i]);
+          break;
       }
+      this.app.stage.addChild(this.geo[i]);
+
+      this.libraryCurrent = this.shapes.length;
     },
     setRatSize: function(rat, sz) {
       this.ratio = rat;
@@ -275,118 +265,49 @@ export default {
 
       this.sprites[this.libraryCurrent].width = 0;
       this.sprites[this.libraryCurrent].transparent = 1;
-      this.sprites[this.libraryCurrent].alpha = 0.1;
+      this.sprites[this.libraryCurrent].alpha = 0;
 
       this.sprites[this.libraryCurrent].on("touchstart", () => {
-        this.librarySelect = this.libraryCurrent;
+        this.select(this.libraryCurrent);
       });
 
-      // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
-
-      // this.sprites[this.libraryCurrent].anchor.set(0.5);
-      // this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
-      // this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
 
       this.librarySelect = this.libraryCurrent;
       this.libraryCurrent++;
     },
-    createGeo: function(shape) {
-      console.log("loading into this.shapes[" + this.libraryCurrent + "]");
-      this.geo[this.libraryCurrent] = new PIXI.Graphics();
+    createShape: function(i) {
+      console.log("loading into this.shapes[" + i + "]");
+      this.shapes[i] = new PIXI.Rectangle();
+      this.shapes[i].width = 0;
 
-      this.geo[this.libraryCurrent].lineStyle(1, 0x0000ff);
-      this.geo[this.libraryCurrent].transparent = 1;
-      this.geo[this.libraryCurrent].alpha = 0.1;
-      // this.geo[this.libraryCurrent].beginFill(0x22ff88);
-      this.shapes[this.libraryCurrent] = new PIXI.Rectangle();
-      this.shapes[this.libraryCurrent].width = 0;
+      this.createGeo(i);
 
-      switch (shape) {
-        case 1:
-          this.shapes[this.libraryCurrent].shape = 1;
-          this.geo[this.libraryCurrent].drawCircle(
-            this.shapes[this.libraryCurrent].x,
-            this.shapes[this.libraryCurrent].y,
-            Math.sqrt(
-              Math.pow(this.shapes[this.librarySelect].width, 2) +
-                Math.pow(this.shapes[this.librarySelect].height, 2)
-            ) / Math.sqrt(2)
-          );
-          break;
-        // case 3:
-        // this.geo[this.libraryCurrent].draw;
-        // break;
-        case 4:
-          this.shapes[this.libraryCurrent].shape = 4;
-          this.geo[this.libraryCurrent].drawRect(
-            this.shapes[this.libraryCurrent].x,
-            this.shapes[this.libraryCurrent].y,
-            this.shapes[this.libraryCurrent].width,
-            this.shapes[this.libraryCurrent].height
-          );
-          break;
-        default:
-          this.shapes[this.libraryCurrent].shape = 4;
-          this.geo[this.libraryCurrent].drawRect(
-            this.shapes[this.libraryCurrent].x,
-            this.shapes[this.libraryCurrent].y,
-            this.shapes[this.libraryCurrent].width,
-            this.shapes[this.libraryCurrent].height
-          );
-          break;
-      }
+      this.libraryCurrent = this.shapes.length;
+      console.log("CHECKING LIBRARY CURRENT(next): " + this.libraryCurrent);
+      this.select(i);
+    },
+    createGeo: function(i) {
+      this.geo[i] = new PIXI.Graphics();
+      this.geo[i].lineStyle(2, 0xffffff);
+      this.geo[i].beginFill(0x44aaff, 0.25);
+      // console.log("GEOS: ");
+      // console.log(this.geo);
 
-      // this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
-
-      this.app.stage.addChild(this.geo[this.libraryCurrent]);
-      // this.shapes[this.libraryCurrent].on("touchstart", () => {
-      //   this.librarySelect = this.libraryCurrent;
-      // });
-
-      // this.app.stage.addChild(this.shapes[this.libraryCurrent]);
-
-      // this.shapes[this.libraryCurrent].anchor.set(0.5);
-      // this.shapes[this.libraryCurrent].x = this.app.screen.width / 2;
-      // this.shapes[this.libraryCurrent].y = this.app.screen.height / 2;
-
-      this.librarySelect = this.libraryCurrent;
-      this.libraryCurrent++;
+      this.dataDraw(i);
     },
     addRow: function() {
-      // var RowClass = Vue.extend(TemplateRow);
-      // var row = new RowClass();
-      // row.$mount();
-      // this.$refs["row"] = row.$el;
-
-      // row.$el.ref = "trow" + this.libraryCurrent;
-      // console.log(row.$el);
-      // var rowEl = row.$el;
-      // row.$el.setAttribute(":ref", "trow" + this.libraryCurrent);
-      // var container = document.getElementById("cont");
-      // container.appendChild(row.$el);
-      // row.$el.setAttribute("ref", "trow" + this.libraryCurrent);
-      // var rowEle = container.lastElementChild;
-      // rowEle.setAttribute("ref", "trow" + this.libraryCurrent);
-      // container.lastElementChild = rowEle;
-      // console.log(row.$el);
-      // row.innerHTML = "<TemplateRow ref='trow" + this.libraryCurrent + "' />";
-
-      // alert(this.libraryCurrent);
-      // var newSel = this.createRadioElement(this.libraryCurrent);
+      this.libraryCurrent = this.shapes.length;
       var newSel = this.createRadioElement(this.libraryCurrent);
       newSel.onclick = event => {
         this.selectRadio(event.target.value);
       };
       var sel = document.getElementById("selection");
-      sel.appendChild(document.createElement("br"));
+      // sel.appendChild(document.createElement("br"));
       sel.appendChild(newSel);
 
-      // let lastSelection = this.librarySelect;
-
-      this.createGeo(this.$refs.trow1.getShape());
+      this.createShape(this.libraryCurrent);
       this.$refs.trow1.template = {
-        // productId: 0,
         geo: this.shapes[this.libraryCurrent - 1],
         ratio: this.ratio,
         size: this.size
@@ -394,6 +315,7 @@ export default {
     },
     addMultiRow: function() {
       for (let i = 1; i < this.shapes.length - 1; i++) {
+        this.libraryCurrent = i + 1;
         var newSel = this.createRadioElement(this.libraryCurrent);
         newSel.onclick = event => {
           this.selectRadio(event.target.value);
@@ -403,25 +325,23 @@ export default {
         sel.appendChild(newSel);
       }
       this.$refs.trow1.template = {
-        // productId: 0,
         geo: this.shapes[this.shapes.length - 1],
         ratio: this.ratio,
         size: this.size
       };
-      this.dataDraw();
-      this.librarySelect = this.shapes.length - 1;
+      this.doAll(this.createGeo);
+      // this.doAll(this.dataDraw);
+      this.select(this.shapes.length - 1);
     },
     createRadioElement: function(name) {
       var radioHtml =
-        "<button type='button' value='" +
+        "<button id='button" +
+        name +
+        "' type='button' value='" +
         name +
         "'>Select " +
         name +
         "</button>";
-      // if (checked) {
-      //   radioHtml += ' checked="checked"';
-      // }
-      // radioHtml += "/>";
 
       var radioFragment = document.createElement("div");
       radioFragment.innerHTML = radioHtml;
@@ -429,36 +349,41 @@ export default {
       return radioFragment.firstChild;
     },
     selectRadio: function(current) {
-      this.librarySelect = current;
+      this.select(current);
       this.$refs.trow1.template = {
         geo: this.shapes[current],
         ratio: this.ratio,
         size: this.size
       };
     },
-    getTempNewSize: function() {
-      let dog = this.shapes.length;
-      for (let i = 1; i < dog; i++) {
-        this.geo[this.shapes.length - 1].clear();
-        this.removeTemplate();
+    select: function(i) {
+      this.librarySelect = i;
+      if (this.$refs.trow1) {
+        this.$refs.trow1.template.geo = this.shapes[i];
       }
-      this.librarySelect = 1;
+    },
+    getTempNewSize: function() {
+      this.libraryCurrent = this.shapes.length;
+      for (let i = this.libraryCurrent - 1; i > 0; i--) {
+        console.log(i);
+        this.removeTemplate();
+        console.log(i + " was removed successfully!");
+      }
       this.$refs.trow1.template.geo = { shape: 4 };
     },
     removeTemplate: function() {
-      this.shapes.pop();
-      this.geo.pop();
-      document
-        .getElementById("selection")
-        .removeChild(document.getElementById("selection").lastElementChild);
+      console.log("REMOVING: " + this.libraryCurrent - 1);
+      if (this.libraryCurrent != 1) {
+        this.geo[this.libraryCurrent - 1].clear();
+        this.shapes.pop();
+        this.geo.pop();
+        document.getElementById("button" + (this.libraryCurrent - 1)).remove();
+        // document.getElementById("selection").getElementsByTagName("br");
+        this.libraryCurrent = this.shapes.length;
+        this.librarySelect = this.libraryCurrent - 1;
+      }
     },
     saveTemplate: function() {
-      // let ts = [];
-      // for(let i=1; i<=this.shapes.length; i++)
-      // {
-      //   console.log("SWOOP! "+i);
-      //   ts[i] = this.shapes[i];
-      // }
       if (this.ratio && this.shapes[1]) {
         var templateObj = {
           templates: this.shapes,
@@ -500,12 +425,14 @@ export default {
           // response.data.values.unshift(null);
           console.log(response.data.values);
           console.log("DATA ^^^");
+          console.log("clearing all current local temps (if any)");
+          that.doAll(that.removeTemplate());
+          that.addRow();
           if (response.data.values) {
             that.shapes = Array.from(response.data.values); //response.data.values.unshift(null);
-            // that.shapes.unshift(null);
             that.ratio = response.data.dpi;
+            console.log("RECEIVED SHAPES FROM DB:");
             console.log(that.shapes);
-            console.log(typeof that.shapes);
             that.addMultiRow();
           } else {
             console.log(

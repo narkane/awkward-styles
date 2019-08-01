@@ -33,7 +33,7 @@
       </v-flex>
       <v-flex xs1 class="variable">
         <v-text-field
-          v-model="template.geo.width"
+          v-model="width"
           class="inputNumber"
           type="number"
           label="Width"
@@ -43,7 +43,7 @@
       </v-flex>
       <v-flex xs1 class="variable">
         <v-text-field
-          v-model="template.geo.height"
+          v-model="height"
           class="inputNumber"
           type="number"
           label="Height"
@@ -149,11 +149,45 @@ export default {
         this.template.ratio = this.template.geo.height / value;
         // this.template.geo.height = value * this.template.template.ratio;
       }
+    },
+    width: {
+      get() {
+        if (this.template.geo.shape == 1) {
+          let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = avg;
+          this.template.geo.height = avg;
+        }
+        return this.template.geo.width;
+      },
+      set(value) {
+        this.template.geo.width = value;
+        if (this.template.geo.shape == 1) {
+          this.template.geo.height = value;
+        }
+      }
+    },
+    height: {
+      get() {
+        if (this.template.geo.shape == 1) {
+          let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = avg;
+          this.template.geo.height = avg;
+        }
+        return this.template.geo.height;
+      },
+      set(value) {
+        this.template.geo.height = value;
+        if (this.template.geo.shape == 1) {
+          this.template.geo.width = value;
+        }
+      }
     }
   },
   mounted() {
     this.setRatSize(this.template.ratio, this.template.size);
-    this.dataChange(this.template.geo);
+    if (this.template.geo) {
+      this.dataChange(this.template.geo);
+    }
   }
 };
 </script>

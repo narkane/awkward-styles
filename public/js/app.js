@@ -81965,11 +81965,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css__ = __webpack_require__(110);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css__);
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-//
-//
-//
 //
 //
 //
@@ -82029,7 +82024,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       app: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["a" /* Application */]({
         width: 400,
         height: 400,
-        backgroundColor: 0x1099bb,
+        //backgroundColor: 0x1099bb,
         transparent: 1
       }),
       // drawArea: new PIXI.Rectangle(0, 0, 200, 300),
@@ -82083,20 +82078,24 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       // events for drag move
       .on("mousemove", onDragMove).on("touchmove", onDragMove);
 
-      // this.createSprite(blob);
-      // this.sprites[1].width = 0;
-      // this.sprties[1].transparent;
-      // this.sprites[1].alpha = 0.1;
+      // this.libraryCurrent = 1;
+      console.log(that.libraryCurrent);
       try {
-        that.createGeo(that.$refs.trow1.getShape());
+        this.createShape(this.libraryCurrent);
       } catch (e) {
-        that.createGeo(4);
+        console.log("NO GEO!!!! BREAKY: " + e);
       }
 
       that.app.ticker.add(function (delta) {
+        // that.doAll(i => {
+        //   that.shapes[i].y *= Math.sin(delta);
+        // });
         // that.sprites[that.librarySelect].rotation += 0.1 * delta;
       });
       function onDragStart(event) {
+        if (that.libraryCurrent == 1) {
+          that.addRow();
+        }
         that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
         that.geo[that.librarySelect].clear();
         // store a reference to the data
@@ -82105,13 +82104,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         this.data = event.data;
 
         // that.alpha = 0.5;
+        that.geo[that.librarySelect].alpha = 0.5;
         var newPosition = this.data.getLocalPosition(this.parent);
         that.shapes[that.librarySelect].x = Math.round(newPosition.x);
         that.shapes[that.librarySelect].y = Math.round(newPosition.y);
         that.shapes[that.librarySelect].width = 0;
         that.shapes[that.librarySelect].height = 0;
-        // that.$refs.trow1.setX(newPosition.x);
-        // that.$refs.trow1.setY(newPosition.y);
+
         this.dragging = true;
       }
       function onDragEnd() {
@@ -82122,7 +82121,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         // set the interaction data to null
         this.data = null;
 
-        // that.geo[that.librarySelect].alpha = 0.1;
+        that.geo[that.librarySelect].alpha = 1;
       }
       function onDragMove() {
         if (this.dragging) {
@@ -82130,27 +82129,15 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
           var newPosition = this.data.getLocalPosition(this.parent);
 
-          that.shapes[that.librarySelect].width = Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
-          that.shapes[that.librarySelect].height = Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
+          var avg = (Math.round(newPosition.x) - that.shapes[that.librarySelect].x + (Math.round(newPosition.y) - that.shapes[that.librarySelect].y)) / 2;
+
+          that.shapes[that.librarySelect].width = avg;
+          that.shapes[that.librarySelect].height = avg;
+
           // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
           // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
           // draw a rectangle
-          if (that.$refs.trow1.template.geo.shape == 4) {
-            that.geo[that.librarySelect].drawRect(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, that.shapes[that.librarySelect].width, that.shapes[that.librarySelect].height);
-          } else {
-            // that.shapes[that.librarySelect].width = Math.sqrt(
-            // Math.pow(newPosition.x - that.shapes[that.librarySelect].x, 2) +
-            //   Math.pow(newPosition.y - that.shapes[that.librarySelect].y, 2)
-            // );
-            // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
-            // that.$refs.trow1.setH(10);
-            // draw a rectangle
-            // alert(that.shapes[that.librarySelect]);
-            that.geo[that.librarySelect].drawCircle(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, Math.sqrt(Math.pow(that.shapes[that.librarySelect].width, 2) + Math.pow(that.shapes[that.librarySelect].height, 2)) / Math.sqrt(2));
-          }
-          that.geo[that.librarySelect].alpha = 0.1;
-
-          // set the line style to have a width of 5 and set the color to red
+          that.dataDraw(that.librarySelect);
 
           that.app.stage.addChild(that.geo[that.librarySelect]);
         }
@@ -82166,29 +82153,53 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       this.shapes[this.librarySelect].height = parseFloat(data.height);
       this.shapes[this.librarySelect].shape = parseInt(data.shape);
 
-      if (data.shape == 4) {
-        this.geo[this.librarySelect].drawRect(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, this.shapes[this.librarySelect].width, this.shapes[this.librarySelect].height);
-      } else {
-        this.geo[this.librarySelect].drawCircle(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
-      }
-      this.app.stage.addChild(this.geo[this.librarySelect]);
+      this.dataDraw(this.librarySelect);
     },
-    dataDraw: function dataDraw() {
+    doAll: function doAll(cbFunc) {
       for (var i = 1; i < this.shapes.length; i++) {
-        this.geo[i] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
-
-        this.geo[i].lineStyle(1, 0x0000ff);
-        this.geo[i].transparent = 1;
-        this.geo[i].alpha = 0.1;
-        // this.geo[i].clear();
-
-        if (this.shapes[i].shape == 4) {
-          this.geo[i].drawRect(this.shapes[i].x, this.shapes[i].y, this.shapes[i].width, this.shapes[i].height);
-        } else {
-          this.geo[i].drawCircle(this.shapes[i].x, this.shapes[i].y, Math.sqrt(Math.pow(this.shapes[i].width, 2) + Math.pow(this.shapes[i].height, 2)) / Math.sqrt(2));
-        }
-        this.app.stage.addChild(this.geo[i]);
+        cbFunc(i);
       }
+      this.libraryCurrent = this.shapes.length;
+      this.select(this.libraryCurrent - 1);
+    },
+    dataDraw: function dataDraw(i) {
+      // this.geo[i] = new PIXI.Graphics();
+
+      // this.geo[i].lineStyle(2, 0xffffff);
+      // this.geo[i].beginFill(0x44aaff, 0.25);
+      // this.geo[i].transparent = 1;
+      // this.geo[i].alpha = 0.1;
+      // this.geo[i].clear();
+
+      // console.log(this.shapes);
+      switch (this.shapes[i].shape) {
+        case 1:
+          //Set width and height to actual width and height
+          var w = this.shapes[i].width / 2;
+          var h = this.shapes[i].height / 2;
+          //Set radius from w and h
+          var radius = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2)) / Math.sqrt(2);
+          //Set x and y to left and top
+          var x = this.shapes[i].x + radius;
+          var y = this.shapes[i].y + radius;
+
+          this.geo[i].drawCircle(x, y, radius);
+          break;
+        // case 3:
+        // this.geo[i].draw;
+        // break;
+        case 4:
+          this.shapes[i].shape = 4;
+          this.geo[i].drawRect(this.shapes[i].x, this.shapes[i].y, this.shapes[i].width, this.shapes[i].height);
+          break;
+        default:
+          this.shapes[i].shape = 4;
+          this.geo[i].drawRect(this.shapes[i].x, this.shapes[i].y, this.shapes[i].width, this.shapes[i].height);
+          break;
+      }
+      this.app.stage.addChild(this.geo[i]);
+
+      this.libraryCurrent = this.shapes.length;
     },
     setRatSize: function setRatSize(rat, sz) {
       this.ratio = rat;
@@ -82203,103 +82214,51 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
       this.sprites[this.libraryCurrent].width = 0;
       this.sprites[this.libraryCurrent].transparent = 1;
-      this.sprites[this.libraryCurrent].alpha = 0.1;
+      this.sprites[this.libraryCurrent].alpha = 0;
 
       this.sprites[this.libraryCurrent].on("touchstart", function () {
-        _this.librarySelect = _this.libraryCurrent;
+        _this.select(_this.libraryCurrent);
       });
 
-      // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
-
-      // this.sprites[this.libraryCurrent].anchor.set(0.5);
-      // this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
-      // this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
 
       this.librarySelect = this.libraryCurrent;
       this.libraryCurrent++;
     },
-    createGeo: function createGeo(shape) {
-      console.log("loading into this.shapes[" + this.libraryCurrent + "]");
-      this.geo[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
+    createShape: function createShape(i) {
+      console.log("loading into this.shapes[" + i + "]");
+      this.shapes[i] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["c" /* Rectangle */]();
+      this.shapes[i].width = 0;
 
-      this.geo[this.libraryCurrent].lineStyle(1, 0x0000ff);
-      this.geo[this.libraryCurrent].transparent = 1;
-      this.geo[this.libraryCurrent].alpha = 0.1;
-      // this.geo[this.libraryCurrent].beginFill(0x22ff88);
-      this.shapes[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["c" /* Rectangle */]();
-      this.shapes[this.libraryCurrent].width = 0;
+      this.createGeo(i);
 
-      switch (shape) {
-        case 1:
-          this.shapes[this.libraryCurrent].shape = 1;
-          this.geo[this.libraryCurrent].drawCircle(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
-          break;
-        // case 3:
-        // this.geo[this.libraryCurrent].draw;
-        // break;
-        case 4:
-          this.shapes[this.libraryCurrent].shape = 4;
-          this.geo[this.libraryCurrent].drawRect(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, this.shapes[this.libraryCurrent].width, this.shapes[this.libraryCurrent].height);
-          break;
-        default:
-          this.shapes[this.libraryCurrent].shape = 4;
-          this.geo[this.libraryCurrent].drawRect(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, this.shapes[this.libraryCurrent].width, this.shapes[this.libraryCurrent].height);
-          break;
-      }
+      this.libraryCurrent = this.shapes.length;
+      console.log("CHECKING LIBRARY CURRENT(next): " + this.libraryCurrent);
+      this.select(i);
+    },
+    createGeo: function createGeo(i) {
+      this.geo[i] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
+      this.geo[i].lineStyle(2, 0xffffff);
+      this.geo[i].beginFill(0x44aaff, 0.25);
+      // console.log("GEOS: ");
+      // console.log(this.geo);
 
-      // this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
-
-      this.app.stage.addChild(this.geo[this.libraryCurrent]);
-      // this.shapes[this.libraryCurrent].on("touchstart", () => {
-      //   this.librarySelect = this.libraryCurrent;
-      // });
-
-      // this.app.stage.addChild(this.shapes[this.libraryCurrent]);
-
-      // this.shapes[this.libraryCurrent].anchor.set(0.5);
-      // this.shapes[this.libraryCurrent].x = this.app.screen.width / 2;
-      // this.shapes[this.libraryCurrent].y = this.app.screen.height / 2;
-
-      this.librarySelect = this.libraryCurrent;
-      this.libraryCurrent++;
+      this.dataDraw(i);
     },
     addRow: function addRow() {
       var _this2 = this;
 
-      // var RowClass = Vue.extend(TemplateRow);
-      // var row = new RowClass();
-      // row.$mount();
-      // this.$refs["row"] = row.$el;
-
-      // row.$el.ref = "trow" + this.libraryCurrent;
-      // console.log(row.$el);
-      // var rowEl = row.$el;
-      // row.$el.setAttribute(":ref", "trow" + this.libraryCurrent);
-      // var container = document.getElementById("cont");
-      // container.appendChild(row.$el);
-      // row.$el.setAttribute("ref", "trow" + this.libraryCurrent);
-      // var rowEle = container.lastElementChild;
-      // rowEle.setAttribute("ref", "trow" + this.libraryCurrent);
-      // container.lastElementChild = rowEle;
-      // console.log(row.$el);
-      // row.innerHTML = "<TemplateRow ref='trow" + this.libraryCurrent + "' />";
-
-      // alert(this.libraryCurrent);
-      // var newSel = this.createRadioElement(this.libraryCurrent);
+      this.libraryCurrent = this.shapes.length;
       var newSel = this.createRadioElement(this.libraryCurrent);
       newSel.onclick = function (event) {
         _this2.selectRadio(event.target.value);
       };
       var sel = document.getElementById("selection");
-      sel.appendChild(document.createElement("br"));
+      // sel.appendChild(document.createElement("br"));
       sel.appendChild(newSel);
 
-      // let lastSelection = this.librarySelect;
-
-      this.createGeo(this.$refs.trow1.getShape());
+      this.createShape(this.libraryCurrent);
       this.$refs.trow1.template = {
-        // productId: 0,
         geo: this.shapes[this.libraryCurrent - 1],
         ratio: this.ratio,
         size: this.size
@@ -82309,6 +82268,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       var _this3 = this;
 
       for (var i = 1; i < this.shapes.length - 1; i++) {
+        this.libraryCurrent = i + 1;
         var newSel = this.createRadioElement(this.libraryCurrent);
         newSel.onclick = function (event) {
           _this3.selectRadio(event.target.value);
@@ -82318,20 +82278,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         sel.appendChild(newSel);
       }
       this.$refs.trow1.template = {
-        // productId: 0,
         geo: this.shapes[this.shapes.length - 1],
         ratio: this.ratio,
         size: this.size
       };
-      this.dataDraw();
-      this.librarySelect = this.shapes.length - 1;
+      this.doAll(this.createGeo);
+      // this.doAll(this.dataDraw);
+      this.select(this.shapes.length - 1);
     },
     createRadioElement: function createRadioElement(name) {
-      var radioHtml = "<button type='button' value='" + name + "'>Select " + name + "</button>";
-      // if (checked) {
-      //   radioHtml += ' checked="checked"';
-      // }
-      // radioHtml += "/>";
+      var radioHtml = "<button id='button" + name + "' type='button' value='" + name + "'>Select " + name + "</button>";
 
       var radioFragment = document.createElement("div");
       radioFragment.innerHTML = radioHtml;
@@ -82339,34 +82295,41 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       return radioFragment.firstChild;
     },
     selectRadio: function selectRadio(current) {
-      this.librarySelect = current;
+      this.select(current);
       this.$refs.trow1.template = {
         geo: this.shapes[current],
         ratio: this.ratio,
         size: this.size
       };
     },
-    getTempNewSize: function getTempNewSize() {
-      var dog = this.shapes.length;
-      for (var i = 1; i < dog; i++) {
-        this.geo[this.shapes.length - 1].clear();
-        this.removeTemplate();
+    select: function select(i) {
+      this.librarySelect = i;
+      if (this.$refs.trow1) {
+        this.$refs.trow1.template.geo = this.shapes[i];
       }
-      this.librarySelect = 1;
+    },
+    getTempNewSize: function getTempNewSize() {
+      this.libraryCurrent = this.shapes.length;
+      for (var i = this.libraryCurrent - 1; i > 0; i--) {
+        console.log(i);
+        this.removeTemplate();
+        console.log(i + " was removed successfully!");
+      }
       this.$refs.trow1.template.geo = { shape: 4 };
     },
     removeTemplate: function removeTemplate() {
-      this.shapes.pop();
-      this.geo.pop();
-      document.getElementById("selection").removeChild(document.getElementById("selection").lastElementChild);
+      console.log("REMOVING: " + this.libraryCurrent - 1);
+      if (this.libraryCurrent != 1) {
+        this.geo[this.libraryCurrent - 1].clear();
+        this.shapes.pop();
+        this.geo.pop();
+        document.getElementById("button" + (this.libraryCurrent - 1)).remove();
+        // document.getElementById("selection").getElementsByTagName("br");
+        this.libraryCurrent = this.shapes.length;
+        this.librarySelect = this.libraryCurrent - 1;
+      }
     },
     saveTemplate: function saveTemplate() {
-      // let ts = [];
-      // for(let i=1; i<=this.shapes.length; i++)
-      // {
-      //   console.log("SWOOP! "+i);
-      //   ts[i] = this.shapes[i];
-      // }
       if (this.ratio && this.shapes[1]) {
         var templateObj = {
           templates: this.shapes,
@@ -82397,12 +82360,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         // response.data.values.unshift(null);
         console.log(response.data.values);
         console.log("DATA ^^^");
+        console.log("clearing all current local temps (if any)");
+        that.doAll(that.removeTemplate());
+        that.addRow();
         if (response.data.values) {
           that.shapes = Array.from(response.data.values); //response.data.values.unshift(null);
-          // that.shapes.unshift(null);
           that.ratio = response.data.dpi;
+          console.log("RECEIVED SHAPES FROM DB:");
           console.log(that.shapes);
-          console.log(_typeof(that.shapes));
           that.addMultiRow();
         } else {
           console.log("NO TEMPLATES ARRAY FROM SERVER FOR: " + that.prodID + " - " + that.size);
@@ -90399,11 +90364,45 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         this.template.ratio = this.template.geo.height / value;
         // this.template.geo.height = value * this.template.template.ratio;
       }
+    },
+    width: {
+      get: function get() {
+        if (this.template.geo.shape == 1) {
+          var avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = avg;
+          this.template.geo.height = avg;
+        }
+        return this.template.geo.width;
+      },
+      set: function set(value) {
+        this.template.geo.width = value;
+        if (this.template.geo.shape == 1) {
+          this.template.geo.height = value;
+        }
+      }
+    },
+    height: {
+      get: function get() {
+        if (this.template.geo.shape == 1) {
+          var avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = avg;
+          this.template.geo.height = avg;
+        }
+        return this.template.geo.height;
+      },
+      set: function set(value) {
+        this.template.geo.height = value;
+        if (this.template.geo.shape == 1) {
+          this.template.geo.width = value;
+        }
+      }
     }
   },
   mounted: function mounted() {
     this.setRatSize(this.template.ratio, this.template.size);
-    this.dataChange(this.template.geo);
+    if (this.template.geo) {
+      this.dataChange(this.template.geo);
+    }
   }
 });
 
@@ -90964,9 +90963,7 @@ var render = function() {
                       attrs: { fab: "", id: "minus", color: "white" },
                       on: {
                         click: function() {
-                          _vm.geo[_vm.shapes.length - 1].clear()
                           _vm.removeTemplate()
-                          _vm.librarySelect = _vm.shapes.length - 1
                         }
                       }
                     },
@@ -90977,7 +90974,7 @@ var render = function() {
                   _c(
                     "button",
                     {
-                      attrs: { type: "button" },
+                      attrs: { id: "button1", type: "button" },
                       on: {
                         click: function($event) {
                           return _vm.selectRadio(1)
@@ -91019,7 +91016,12 @@ var render = function() {
         },
         [_c("v-icon", [_vm._v("NEW")])],
         1
-      )
+      ),
+      _vm._v(" "),
+      _c("hr"),
+      _vm._v("\n  Shapes length(+1): " + _vm._s(_vm.shapes.length) + "\n  "),
+      _c("hr"),
+      _vm._v("\n  Geo length(+1): " + _vm._s(_vm.geo.length) + "\n")
     ],
     1
   )
@@ -118067,11 +118069,11 @@ var render = function() {
                   }
                 },
                 model: {
-                  value: _vm.template.geo.width,
+                  value: _vm.width,
                   callback: function($$v) {
-                    _vm.$set(_vm.template.geo, "width", $$v)
+                    _vm.width = $$v
                   },
-                  expression: "template.geo.width"
+                  expression: "width"
                 }
               })
             ],
@@ -118091,11 +118093,11 @@ var render = function() {
                   }
                 },
                 model: {
-                  value: _vm.template.geo.height,
+                  value: _vm.height,
                   callback: function($$v) {
-                    _vm.$set(_vm.template.geo, "height", $$v)
+                    _vm.height = $$v
                   },
-                  expression: "template.geo.height"
+                  expression: "height"
                 }
               })
             ],
