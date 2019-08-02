@@ -17,9 +17,7 @@
     var width = 400;
     var height = 400;
     const fileName = "{{$request->id}}";
-    // const reader = new FileReader();
-    // reader.readAsDataURL("{{$request->full_url}}");
-    // reader.onload = event => {
+
         const img = new Image();
         img.src = "{{$request->full_url}}";
         img.onload = () => {

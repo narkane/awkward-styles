@@ -516,16 +516,23 @@ iframe {
 
 .header-product-menu {
   top: 65px;
-  min-width:100%;
+  min-width: 100%;
   position: absolute;
 
   z-index: 10;
 
-  background-color: rgba(255,255,255,0.7);
+  background-color: rgba(255, 255, 255, 0.7);
 
   left: 0;
 
   padding-left: 100px;
 
   padding-right: 100px;
+}
+
+#add-images {
+  position: relative;
+  left: -50px;
+  max-width: 533px;
+  max-height: 533px;
 }

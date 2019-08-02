@@ -167,14 +167,19 @@ export default {
 
           var newPosition = this.data.getLocalPosition(this.parent);
 
-          let avg =
-            (Math.round(newPosition.x) -
-              that.shapes[that.librarySelect].x +
-              (Math.round(newPosition.y) - that.shapes[that.librarySelect].y)) /
-            2;
+          var offX =
+            Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
+          var offY =
+            Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
 
-          that.shapes[that.librarySelect].width = avg;
-          that.shapes[that.librarySelect].height = avg;
+          if (that.shapes[that.librarySelect].shape == 1) {
+            let avg = (offX + offY) / 2;
+            that.shapes[that.librarySelect].width = avg;
+            that.shapes[that.librarySelect].height = avg;
+          } else {
+            that.shapes[that.librarySelect].width = offX;
+            that.shapes[that.librarySelect].height = offY;
+          }
 
           // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
           // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);

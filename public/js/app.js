@@ -21407,6 +21407,12 @@ var LoaderResource = __WEBPACK_IMPORTED_MODULE_0_resource_loader__["Resource"];
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
+module.exports = __webpack_require__(51);
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
@@ -21504,7 +21510,7 @@ module.exports = defaults;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(19)))
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 if (false) {
@@ -21515,7 +21521,7 @@ if (false) {
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -21541,12 +21547,6 @@ module.exports = function(module) {
 	return module;
 };
 
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(51);
 
 /***/ }),
 /* 18 */
@@ -38347,7 +38347,7 @@ module.exports = __webpack_require__(132);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__App_vue__);
@@ -38361,7 +38361,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 __webpack_require__(47);
 
-window.Vue = __webpack_require__(15);
+window.Vue = __webpack_require__(16);
 
 
 
@@ -38411,7 +38411,7 @@ try {
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
 
-window.axios = __webpack_require__(17);
+window.axios = __webpack_require__(14);
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -55557,7 +55557,7 @@ if (token) {
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(16)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(17)(module)))
 
 /***/ }),
 /* 49 */
@@ -68760,7 +68760,7 @@ if (typeof jQuery === 'undefined') {
 var utils = __webpack_require__(5);
 var bind = __webpack_require__(18);
 var Axios = __webpack_require__(53);
-var defaults = __webpack_require__(14);
+var defaults = __webpack_require__(15);
 
 /**
  * Create an instance of Axios
@@ -68843,7 +68843,7 @@ function isSlowBuffer (obj) {
 "use strict";
 
 
-var defaults = __webpack_require__(14);
+var defaults = __webpack_require__(15);
 var utils = __webpack_require__(5);
 var InterceptorManager = __webpack_require__(62);
 var dispatchRequest = __webpack_require__(63);
@@ -69375,7 +69375,7 @@ module.exports = InterceptorManager;
 var utils = __webpack_require__(5);
 var transformData = __webpack_require__(64);
 var isCancel = __webpack_require__(22);
-var defaults = __webpack_require__(14);
+var defaults = __webpack_require__(15);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -81957,7 +81957,7 @@ exports.push([module.i, "\n.data {\n  margin-top: 18px;\n  margin-left: 550px;\n
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_pixi_js__ = __webpack_require__(79);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_axios__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue__ = __webpack_require__(104);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue__);
@@ -82129,10 +82129,17 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
           var newPosition = this.data.getLocalPosition(this.parent);
 
-          var avg = (Math.round(newPosition.x) - that.shapes[that.librarySelect].x + (Math.round(newPosition.y) - that.shapes[that.librarySelect].y)) / 2;
+          var offX = Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
+          var offY = Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
 
-          that.shapes[that.librarySelect].width = avg;
-          that.shapes[that.librarySelect].height = avg;
+          if (that.shapes[that.librarySelect].shape == 1) {
+            var avg = (offX + offY) / 2;
+            that.shapes[that.librarySelect].width = avg;
+            that.shapes[that.librarySelect].height = avg;
+          } else {
+            that.shapes[that.librarySelect].width = offX;
+            that.shapes[that.librarySelect].height = offY;
+          }
 
           // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
           // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
@@ -85851,7 +85858,7 @@ earcut.flatten = function (data) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16)(module), __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17)(module), __webpack_require__(7)))
 
 /***/ }),
 /* 86 */
@@ -90160,13 +90167,13 @@ var AnimatedSprite = /*@__PURE__*/(function (Sprite) {
 var disposed = false
 function injectStyle (ssrContext) {
   if (disposed) return
-  __webpack_require__(155)
+  __webpack_require__(105)
 }
 var normalizeComponent = __webpack_require__(10)
 /* script */
 var __vue_script__ = __webpack_require__(107)
 /* template */
-var __vue_template__ = __webpack_require__(157)
+var __vue_template__ = __webpack_require__(108)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
@@ -90205,8 +90212,46 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 105 */,
-/* 106 */,
+/* 105 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(106);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(9)("3f4efa6f", content, false, {});
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue", function() {
+     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 106 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(8)(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n.constant[data-v-e60f42ce] {\n  background-color: lightcoral;\n}\n.variable[data-v-e60f42ce] {\n  background-color: lightgreen;\n}\n#size[data-v-e60f42ce] {\n  margin-top: 8px;\n  padding-left: 14px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
 /* 107 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -90367,10 +90412,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     width: {
       get: function get() {
-        if (this.template.geo.shape == 1) {
-          var avg = (this.template.geo.height + this.template.geo.width) / 2;
-          this.template.geo.width = avg;
-          this.template.geo.height = avg;
+        if (this.template.geo.shape == 1 && this.template.geo.width != this.template.geo.height) {
+          // let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = 50;
+          this.template.geo.height = 50;
         }
         return this.template.geo.width;
       },
@@ -90383,10 +90428,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     height: {
       get: function get() {
-        if (this.template.geo.shape == 1) {
-          var avg = (this.template.geo.height + this.template.geo.width) / 2;
-          this.template.geo.width = avg;
-          this.template.geo.height = avg;
+        if (this.template.geo.shape == 1 && this.template.geo.width != this.template.geo.height) {
+          // let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = 50;
+          this.template.geo.height = 50;
         }
         return this.template.geo.height;
       },
@@ -90407,7 +90452,361 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 108 */,
+/* 108 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    [
+      _c(
+        "v-layout",
+        { attrs: { row: "" } },
+        [
+          _c("v-flex", { staticClass: "variable", attrs: { xs1: "" } }, [
+            _c(
+              "select",
+              {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.template.geo.shape,
+                    expression: "template.geo.shape"
+                  }
+                ],
+                staticStyle: {
+                  marginTop: "14px",
+                  padding: "10px 5px 10px 5px"
+                },
+                on: {
+                  change: [
+                    function($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function(o) {
+                          return o.selected
+                        })
+                        .map(function(o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.$set(
+                        _vm.template.geo,
+                        "shape",
+                        $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      )
+                    },
+                    function() {
+                      _vm.dataChange(_vm.template.geo)
+                    }
+                  ]
+                }
+              },
+              [
+                _c("option", { attrs: { selected: "", value: "4" } }, [
+                  _vm._v("Rectangle")
+                ]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "1" } }, [_vm._v("Circle")])
+              ]
+            )
+          ]),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "X", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.x,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "x", $$v)
+                  },
+                  expression: "template.geo.x"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Y", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo)
+                  }
+                },
+                model: {
+                  value: _vm.template.geo.y,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo, "y", $$v)
+                  },
+                  expression: "template.geo.y"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Width", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo)
+                  }
+                },
+                model: {
+                  value: _vm.width,
+                  callback: function($$v) {
+                    _vm.width = $$v
+                  },
+                  expression: "width"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                staticClass: "inputNumber",
+                attrs: { type: "number", label: "Height", pattern: "\\d+" },
+                on: {
+                  change: function() {
+                    _vm.dataChange(_vm.template.geo)
+                  }
+                },
+                model: {
+                  value: _vm.height,
+                  callback: function($$v) {
+                    _vm.height = $$v
+                  },
+                  expression: "height"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "constant", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Ratio" },
+                on: {
+                  change: function() {
+                    _vm.setRatSize(_vm.template.ratio, _vm.template.size)
+                  }
+                },
+                model: {
+                  value: _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template, "ratio", $$v)
+                  },
+                  expression: "template.ratio"
+                }
+              })
+            ],
+            1
+          )
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "v-layout",
+        { attrs: { row: "" } },
+        [
+          _c("v-flex", { staticClass: "constant", attrs: { xs1: "" } }, [
+            _c(
+              "select",
+              {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.template.size,
+                    expression: "template.size"
+                  }
+                ],
+                staticStyle: { fontSize: "24pt" },
+                attrs: { id: "size" },
+                on: {
+                  change: [
+                    function($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function(o) {
+                          return o.selected
+                        })
+                        .map(function(o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return val
+                        })
+                      _vm.$set(
+                        _vm.template,
+                        "size",
+                        $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      )
+                    },
+                    _vm.getTemplateAxios
+                  ]
+                }
+              },
+              [
+                _c("option", { attrs: { value: "XS" } }, [_vm._v("XS")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "S" } }, [_vm._v("S")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "M" } }, [_vm._v("M")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "L" } }, [_vm._v("L")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "XL" } }, [_vm._v("XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "2XL" } }, [_vm._v("2XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "3XL" } }, [_vm._v("3XL")]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "4XL" } }, [_vm._v("4XL")])
+              ]
+            )
+          ]),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "X inches", disabled: "" },
+                model: {
+                  value: _vm.template.geo.x / _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo.x / _vm.template, "ratio", $$v)
+                  },
+                  expression: "template.geo.x / template.ratio"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Y inches", disabled: "" },
+                model: {
+                  value: _vm.template.geo.x / _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template.geo.x / _vm.template, "ratio", $$v)
+                  },
+                  expression: "template.geo.x / template.ratio"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Width in." },
+                model: {
+                  value: _vm.inchesWtemp,
+                  callback: function($$v) {
+                    _vm.inchesWtemp = $$v
+                  },
+                  expression: "inchesWtemp"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "variable", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Height in." },
+                model: {
+                  value: _vm.inchesHtemp,
+                  callback: function($$v) {
+                    _vm.inchesHtemp = $$v
+                  },
+                  expression: "inchesHtemp"
+                }
+              })
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "v-flex",
+            { staticClass: "constant", attrs: { xs1: "" } },
+            [
+              _c("v-text-field", {
+                attrs: { label: "Ratio", disabled: "" },
+                model: {
+                  value: _vm.template.ratio,
+                  callback: function($$v) {
+                    _vm.$set(_vm.template, "ratio", $$v)
+                  },
+                  expression: "template.ratio"
+                }
+              })
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-e60f42ce", module.exports)
+  }
+}
+
+/***/ }),
 /* 109 */
 /***/ (function(module, exports) {
 
@@ -91067,7 +91466,7 @@ if (false) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(true)
-		module.exports = factory(__webpack_require__(15));
+		module.exports = factory(__webpack_require__(16));
 	else if(typeof define === 'function' && define.amd)
 		define(["vue"], factory);
 	else if(typeof exports === 'object')
@@ -117765,7 +118164,7 @@ exports.push([module.i, "\n*[data-v-7cdae69f] {\n  --font-family-sans-serif: -ap
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_axios__);
 //
 //
@@ -117879,423 +118278,6 @@ if (false) {
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 133 */,
-/* 134 */,
-/* 135 */,
-/* 136 */,
-/* 137 */,
-/* 138 */,
-/* 139 */,
-/* 140 */,
-/* 141 */,
-/* 142 */,
-/* 143 */,
-/* 144 */,
-/* 145 */,
-/* 146 */,
-/* 147 */,
-/* 148 */,
-/* 149 */,
-/* 150 */,
-/* 151 */,
-/* 152 */,
-/* 153 */,
-/* 154 */,
-/* 155 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(156);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var update = __webpack_require__(9)("3f4efa6f", content, false, {});
-// Hot Module Replacement
-if(false) {
- // When the styles change, update the <style> tags
- if(!content.locals) {
-   module.hot.accept("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue", function() {
-     var newContent = require("!!../../../../node_modules/css-loader/index.js!../../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-e60f42ce\",\"scoped\":true,\"hasInlineConfig\":true}!../../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./TemplateRow.vue");
-     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-     update(newContent);
-   });
- }
- // When the module is disposed, remove the <style> tags
- module.hot.dispose(function() { update(); });
-}
-
-/***/ }),
-/* 156 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(8)(false);
-// imports
-
-
-// module
-exports.push([module.i, "\n.constant[data-v-e60f42ce] {\n  background-color: lightcoral;\n}\n.variable[data-v-e60f42ce] {\n  background-color: lightgreen;\n}\n#size[data-v-e60f42ce] {\n  margin-top: 8px;\n  padding-left: 14px;\n}\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 157 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "div",
-    [
-      _c(
-        "v-layout",
-        { attrs: { row: "" } },
-        [
-          _c("v-flex", { staticClass: "variable", attrs: { xs1: "" } }, [
-            _c(
-              "select",
-              {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.template.geo.shape,
-                    expression: "template.geo.shape"
-                  }
-                ],
-                staticStyle: {
-                  marginTop: "14px",
-                  padding: "10px 5px 10px 5px"
-                },
-                on: {
-                  change: [
-                    function($event) {
-                      var $$selectedVal = Array.prototype.filter
-                        .call($event.target.options, function(o) {
-                          return o.selected
-                        })
-                        .map(function(o) {
-                          var val = "_value" in o ? o._value : o.value
-                          return val
-                        })
-                      _vm.$set(
-                        _vm.template.geo,
-                        "shape",
-                        $event.target.multiple
-                          ? $$selectedVal
-                          : $$selectedVal[0]
-                      )
-                    },
-                    function() {
-                      _vm.dataChange(_vm.template.geo)
-                    }
-                  ]
-                }
-              },
-              [
-                _c("option", { attrs: { selected: "", value: "4" } }, [
-                  _vm._v("Rectangle")
-                ]),
-                _vm._v(" "),
-                _c("option", { attrs: { value: "1" } }, [_vm._v("Circle")])
-              ]
-            )
-          ]),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "variable", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                staticClass: "inputNumber",
-                attrs: { type: "number", label: "X", pattern: "\\d+" },
-                on: {
-                  change: function() {
-                    _vm.dataChange(_vm.template.geo)
-                  }
-                },
-                model: {
-                  value: _vm.template.geo.x,
-                  callback: function($$v) {
-                    _vm.$set(_vm.template.geo, "x", $$v)
-                  },
-                  expression: "template.geo.x"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "variable", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                staticClass: "inputNumber",
-                attrs: { type: "number", label: "Y", pattern: "\\d+" },
-                on: {
-                  change: function() {
-                    _vm.dataChange(_vm.template.geo)
-                  }
-                },
-                model: {
-                  value: _vm.template.geo.y,
-                  callback: function($$v) {
-                    _vm.$set(_vm.template.geo, "y", $$v)
-                  },
-                  expression: "template.geo.y"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "variable", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                staticClass: "inputNumber",
-                attrs: { type: "number", label: "Width", pattern: "\\d+" },
-                on: {
-                  change: function() {
-                    _vm.dataChange(_vm.template.geo)
-                  }
-                },
-                model: {
-                  value: _vm.width,
-                  callback: function($$v) {
-                    _vm.width = $$v
-                  },
-                  expression: "width"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "variable", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                staticClass: "inputNumber",
-                attrs: { type: "number", label: "Height", pattern: "\\d+" },
-                on: {
-                  change: function() {
-                    _vm.dataChange(_vm.template.geo)
-                  }
-                },
-                model: {
-                  value: _vm.height,
-                  callback: function($$v) {
-                    _vm.height = $$v
-                  },
-                  expression: "height"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "constant", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                attrs: { label: "Ratio" },
-                on: {
-                  change: function() {
-                    _vm.setRatSize(_vm.template.ratio, _vm.template.size)
-                  }
-                },
-                model: {
-                  value: _vm.template.ratio,
-                  callback: function($$v) {
-                    _vm.$set(_vm.template, "ratio", $$v)
-                  },
-                  expression: "template.ratio"
-                }
-              })
-            ],
-            1
-          )
-        ],
-        1
-      ),
-      _vm._v(" "),
-      _c(
-        "v-layout",
-        { attrs: { row: "" } },
-        [
-          _c("v-flex", { staticClass: "constant", attrs: { xs1: "" } }, [
-            _c(
-              "select",
-              {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.template.size,
-                    expression: "template.size"
-                  }
-                ],
-                staticStyle: { fontSize: "24pt" },
-                attrs: { id: "size" },
-                on: {
-                  change: [
-                    function($event) {
-                      var $$selectedVal = Array.prototype.filter
-                        .call($event.target.options, function(o) {
-                          return o.selected
-                        })
-                        .map(function(o) {
-                          var val = "_value" in o ? o._value : o.value
-                          return val
-                        })
-                      _vm.$set(
-                        _vm.template,
-                        "size",
-                        $event.target.multiple
-                          ? $$selectedVal
-                          : $$selectedVal[0]
-                      )
-                    },
-                    _vm.getTemplateAxios
-                  ]
-                }
-              },
-              [
-                _c("option", { attrs: { value: "XS" } }, [_vm._v("XS")]),
-                _vm._v(" "),
-                _c("option", { attrs: { value: "S" } }, [_vm._v("S")]),
-                _vm._v(" "),
-                _c("option", { attrs: { value: "M" } }, [_vm._v("M")]),
-                _vm._v(" "),
-                _c("option", { attrs: { value: "L" } }, [_vm._v("L")]),
-                _vm._v(" "),
-                _c("option", { attrs: { value: "XL" } }, [_vm._v("XL")]),
-                _vm._v(" "),
-                _c("option", { attrs: { value: "2XL" } }, [_vm._v("2XL")]),
-                _vm._v(" "),
-                _c("option", { attrs: { value: "3XL" } }, [_vm._v("3XL")]),
-                _vm._v(" "),
-                _c("option", { attrs: { value: "4XL" } }, [_vm._v("4XL")])
-              ]
-            )
-          ]),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "variable", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                attrs: { label: "X inches", disabled: "" },
-                model: {
-                  value: _vm.template.geo.x / _vm.template.ratio,
-                  callback: function($$v) {
-                    _vm.$set(_vm.template.geo.x / _vm.template, "ratio", $$v)
-                  },
-                  expression: "template.geo.x / template.ratio"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "variable", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                attrs: { label: "Y inches", disabled: "" },
-                model: {
-                  value: _vm.template.geo.x / _vm.template.ratio,
-                  callback: function($$v) {
-                    _vm.$set(_vm.template.geo.x / _vm.template, "ratio", $$v)
-                  },
-                  expression: "template.geo.x / template.ratio"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "variable", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                attrs: { label: "Width in." },
-                model: {
-                  value: _vm.inchesWtemp,
-                  callback: function($$v) {
-                    _vm.inchesWtemp = $$v
-                  },
-                  expression: "inchesWtemp"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "variable", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                attrs: { label: "Height in." },
-                model: {
-                  value: _vm.inchesHtemp,
-                  callback: function($$v) {
-                    _vm.inchesHtemp = $$v
-                  },
-                  expression: "inchesHtemp"
-                }
-              })
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _c(
-            "v-flex",
-            { staticClass: "constant", attrs: { xs1: "" } },
-            [
-              _c("v-text-field", {
-                attrs: { label: "Ratio", disabled: "" },
-                model: {
-                  value: _vm.template.ratio,
-                  callback: function($$v) {
-                    _vm.$set(_vm.template, "ratio", $$v)
-                  },
-                  expression: "template.ratio"
-                }
-              })
-            ],
-            1
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-e60f42ce", module.exports)
-  }
-}
 
 /***/ })
 /******/ ]);

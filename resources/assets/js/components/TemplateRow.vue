@@ -152,10 +152,13 @@ export default {
     },
     width: {
       get() {
-        if (this.template.geo.shape == 1) {
-          let avg = (this.template.geo.height + this.template.geo.width) / 2;
-          this.template.geo.width = avg;
-          this.template.geo.height = avg;
+        if (
+          this.template.geo.shape == 1 &&
+          this.template.geo.width != this.template.geo.height
+        ) {
+          // let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = 50;
+          this.template.geo.height = 50;
         }
         return this.template.geo.width;
       },
@@ -168,10 +171,13 @@ export default {
     },
     height: {
       get() {
-        if (this.template.geo.shape == 1) {
-          let avg = (this.template.geo.height + this.template.geo.width) / 2;
-          this.template.geo.width = avg;
-          this.template.geo.height = avg;
+        if (
+          this.template.geo.shape == 1 &&
+          this.template.geo.width != this.template.geo.height
+        ) {
+          // let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = 50;
+          this.template.geo.height = 50;
         }
         return this.template.geo.height;
       },

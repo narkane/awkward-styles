@@ -34,7 +34,42 @@
                         <div class="col-sm-9 bg-white" id="previewHolder">
                             <div class="catalog-detail-image pt-5">
                                 <div class="image-single" id="add-images" data-pswp="{bgOpacity: 0.75, shareButtons: false}">
-                                    <img id="image-0" src="{{ $media[0]->full_url }}" alt="{{ $product[0]->label }}"/>
+                                 <script>
+                    // compress(e) {
+    var width = 533;
+    var height = 533;
+    const fileName = "{{ $media[0]->full_url}}";
+    
+        const img = new Image();
+        img.src = "{{ $media[0]->full_url }}";
+        img.onload = () => {
+            const elem = document.createElement('canvas');
+            elem.id="image-0";
+            document.getElementById('add-images').appendChild(elem);
+            if(img.naturalWidth/width > img.naturalHeight/height){
+                height = img.naturalHeight / (img.naturalWidth / width);
+            }else{
+                width = img.naturalWidth / (img.naturalHeight / height);
+            }
+            elem.width = width;
+            elem.height = height;
+            const ctx = elem.getContext('2d');
+            // img.naturalWidth and img.naturalHeight will contain the original dimensions
+            ctx.drawImage(img, 0, 0, width, height);
+            try{
+                ctx.canvas.toBlob((blob) => {
+                    const file = new File([blob], fileName, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                }, 'image/jpeg', 1);
+            }catch(e){
+                console.log("CANVAS TO BLOB BROKE! IMG TOO SMALL?? Tainted canvas.");
+                console.log(e);
+            }
+        };
+</script>
+                                    <!-- <img id="image-0" src="{{ $media[0]->full_url }}" alt="{{ $product[0]->label }}"/> -->
                                 </div>
                             </div>
                             <div id="imagePreview"></div>
@@ -763,7 +798,43 @@
              */
             $(".thumbnails").on('click', function (e) {
 
-                $("#add-images").html('<img id="image-0" src="' + $(this).attr('src') + '" alt="{{ $product[0]->label }}"/>');
+
+            var width = 533;
+            var height = 533;
+            const fileName = $(this).attr('src');
+            
+                const img = new Image();
+                img.src = $(this).attr('src');
+                img.onload = () => {
+                    const elem = document.getElementById('image-0');
+                    const result = document.getElementById("imagePreview");
+                    result.style.backgroundImage = "url('" + $(this).attr('src') + "')";
+                    // elem.id="image-0";
+                    // document.getElementById('add-images').appendChild(elem);
+                    if(img.naturalWidth/width > img.naturalHeight/height){
+                        height = img.naturalHeight / (img.naturalWidth / width);
+                    }else{
+                        width = img.naturalWidth / (img.naturalHeight / height);
+                    }
+                    elem.width = width;
+                    elem.height = height;
+                    const ctx = elem.getContext('2d');
+                    // img.naturalWidth and img.naturalHeight will contain the original dimensions
+                    ctx.drawImage(img, 0, 0, width, height);
+                    try{
+                        ctx.canvas.toBlob((blob) => {
+                            const file = new File([blob], fileName, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                        }, 'image/jpeg', 1);
+                    }catch(e){
+                        console.log("CANVAS TO BLOB BROKE! IMG TOO SMALL?? Tainted canvas.");
+                        console.log(e);
+                    }
+                };
+
+
 
                 $("#imagePreview").remove();
 
@@ -836,7 +907,46 @@
                     },
                     type: 'GET',
                     success: function (images) {
-                        $("#add-images").html('<img id="image-0" src="' + images.properties.full_url + '" alt="{{ $product[0]->label }}"/><div id="imagePreview"></div>');
+
+                    var width = 533;
+                    var height = 533;
+                    const fileName = images.properties.full_url;
+                    
+                        const img = new Image();
+                        img.src = images.properties.full_url;
+                        img.onload = () => {
+                            const elem = document.getElementById('image-0');
+                            const result = document.getElementById("imagePreview");
+                            result.style.backgroundImage = "url('" + images.properties.full_url + "')";
+                            // elem.id="image-0";
+                            // document.getElementById('add-images').appendChild(elem);
+                            if(img.naturalWidth/width > img.naturalHeight/height){
+                                height = img.naturalHeight / (img.naturalWidth / width);
+                            }else{
+                                width = img.naturalWidth / (img.naturalHeight / height);
+                            }
+                            elem.width = width;
+                            elem.height = height;
+                            const ctx = elem.getContext('2d');
+                            // img.naturalWidth and img.naturalHeight will contain the original dimensions
+                            ctx.drawImage(img, 0, 0, width, height);
+                            try{
+                                ctx.canvas.toBlob((blob) => {
+                                    const file = new File([blob], fileName, {
+                                        type: 'image/jpeg',
+                                        lastModified: Date.now()
+                                    });
+                                }, 'image/jpeg', 1);
+                            }catch(e){
+                                console.log("CANVAS TO BLOB BROKE! IMG TOO SMALL?? Tainted canvas.");
+                                console.log(e);
+                            }
+                        };
+                        
+                        $("#imagePreview").remove();
+
+                        $("#previewHolder").append("<div id=\"imagePreview\"></div>");
+                                
                         imagePreviewer();
                     }
                 });
@@ -985,7 +1095,7 @@
                 cx = (result.offsetWidth / lens.offsetWidth) / 1.5;
                 cy = (result.offsetHeight / lens.offsetHeight) / 1.5;
 
-                result.style.backgroundImage = "url('" + img.src + "')";
+                result.style.backgroundImage = "url('" + "{{ $media[0]->full_url}}" + "')";
 
                 var im = new Image();
                 im.src = img.src;
