@@ -5,7 +5,7 @@
     <script type="text/javascript" src="{{ asset('js/mockup/tshirtEditor.js')}}"></script>
     <script type="text/javascript" src="{{ asset('js/mockup/jquery.miniColors.min.js')}}"></script>
     <script type="text/javascript" src="{{ asset('js/mockup/color-picker.min.js') }}"></script>
-
+    <link type="text/css" rel="stylesheet" href="{{ url('/') }}/packages/aimeos/shop/themes/elegance/aimeos.css">
     <link href="{{ asset('css/color-picker.min.css') }}" rel="stylesheet"/>
     <style type="text/css">
         .footer {
@@ -132,8 +132,29 @@
             background-color: #ffffff;
         }
 
+        .design-images {
+            cursor: pointer;
+        }
+
+        .select-entry-color {
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        label.select-label {
+            cursor: pointer;
+        }
+
+        ul.select-list-color {
+            padding: 0;
+        }
+
+        label.select-label.active {
+            border: solid 3px #ea972ef7 !important;
+        }
+
     </style>
-<div class="container"> <!-- mt-0 pt-0 w-75"> -->
+<div class="container w-75"> <!-- mt-0 pt-0 w-75"> -->
 
     <section id="typography">
         <div class="page-header">
@@ -150,7 +171,7 @@
                         <p>Add Text</p>
                     </div>
                 </div>
-                <div class="mock-block border-primary">
+                <div type="button" class="mock-block border-primary" data-toggle="modal" data-target="#designModal">
                     <div class="mock-block-contents">
                         <h2 class="fas fa-palette"></h2>
                         <p>Designs</p>
@@ -173,72 +194,7 @@
 
             </div>
 
-            <div class="col-md-10">
-
-                <div class="container edit-function" id="text-editor">
-
-                    <div class="container p-2 w-50">
-                        <button id="text-bold" class="btn" data-toggle="tooltip" data-placement="top" title="BOLD" onclick="setBold()">
-                            <h4 class="fas fa-bold d-inline pr-2"></h4>
-                        </button>
-
-                        <button id="text-italic" class="btn" data-toggle="tooltip" data-placement="top" title="ITALIC" onclick="setItalic()">
-                            <h4 class="fas fa-italic d-inline pr-2"></h4>
-                        </button>
-
-                        <button id="text-underline" class="btn" data-toggle="tooltip" data-placement="top" title="UNDERLINE" onclick="setUnderline()">
-                            <h4 class="fas fa-underline d-inline pr-2" id="text-underline"></h4>
-                        </button>
-
-                        <button id="text-color" class="btn" data-toggle="tooltip" data-placement="top" title="COLOR">
-                            <h4 class="fas fa-circle d-inline pr-2 text-primary"></h4>
-                        </button>
-                        <script>
-                            var picker = new CP(document.querySelector('button[id="text-color"]'));
-                            picker.on("change", function(color) {
-                                setColor(color);
-                            });
-                        </script>
-
-                        <button id="font-family" class="btn dropdown-toggle" data-toggle="dropdown"
-                                title="Font Style"><i class="icon-font" style="width:19px;height:19px;"></i>
-                        </button>
-                        <ul class="dropdown-menu" role="menu" aria-labelledby="font-family-X">
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Arial');" class="Arial">Arial</a></li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Helvetica');" class="Helvetica">Helvetica</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Myriad Pro');" class="MyriadPro">Myriad
-                                    Pro</a></li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Delicious');" class="Delicious">Delicious</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Verdana');" class="Verdana">Verdana</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Georgia');" class="Georgia">Georgia</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Courier');" class="Courier">Courier</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Comic Sans MS');" class="ComicSansMS">Comic
-                                    Sans MS</a></li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Impact');" class="Impact">Impact</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Monaco');" class="Monaco">Monaco</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Optima');" class="Optima">Optima</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Hoefler Text');" class="Hoefler Text">Hoefler
-                                    Text</a></li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Plaster');" class="Plaster">Plaster</a>
-                            </li>
-                            <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Engagement');" class="Engagement">Engagement</a>
-                            </li>
-                        </ul>
-
-                    </div>
-
-                    <input type="text" class="form-control w-50 mx-auto" id="text-string" placeholder="Enter your text here.."/>
-                    <input type="button" class="btn d-inline" id="add-text" value="Add/Edit Text"/>
-
-                </div>
+            <div class="col-md-7">
 
                 <div class="container shirt-block">
 
@@ -254,52 +210,95 @@
 
                 </div>
 
-                <div class="container">
+                <div class="catalog-detail-basket p-5">
+                    <div class="catalog-detail-basket-selection" id="product-color-size">
 
-                <div class="well">
-                    <ul class="nav">
-                        <li class="color-preview" title="White" style="background-color:#ffffff;"></li>
-                        <li class="color-preview" title="Dark Heather"
-                            style="background-color:#616161;"></li>
-                        <li class="color-preview" title="Gray" style="background-color:#f0f0f0;"></li>
-                        <li class="color-preview" title="Charcoal" style="background-color:#5b5b5b;"></li>
-                        <li class="color-preview" title="Black" style="background-color:#222222;"></li>
-                        <li class="color-preview" title="Heather Orange"
-                            style="background-color:#fc8d74;"></li>
-                        <li class="color-preview" title="Heather Dark Chocolate"
-                            style="background-color:#432d26;"></li>
-                        <li class="color-preview" title="Salmon" style="background-color:#eead91;"></li>
-                        <li class="color-preview" title="Chesnut" style="background-color:#806355;"></li>
-                        <li class="color-preview" title="Dark Chocolate"
-                            style="background-color:#382d21;"></li>
-                        <li class="color-preview" title="Citrus Yellow"
-                            style="background-color:#faef93;"></li>
-                        <li class="color-preview" title="Avocado" style="background-color:#aeba5e;"></li>
-                        <li class="color-preview" title="Kiwi" style="background-color:#8aa140;"></li>
-                        <li class="color-preview" title="Irish Green"
-                            style="background-color:#1f6522;"></li>
-                        <li class="color-preview" title="Scrub Green"
-                            style="background-color:#13afa2;"></li>
-                        <li class="color-preview" title="Teal Ice" style="background-color:#b8d5d7;"></li>
-                        <li class="color-preview" title="Heather Sapphire"
-                            style="background-color:#15aeda;"></li>
-                        <li class="color-preview" title="Sky" style="background-color:#a5def8;"></li>
-                        <li class="color-preview" title="Antique Sapphire"
-                            style="background-color:#0f77c0;"></li>
-                        <li class="color-preview" title="Heather Navy"
-                            style="background-color:#3469b7;"></li>
-                        <li class="color-preview" title="Cherry Red" style="background-color:#c50404;"></li>
-                    </ul>
-                </div>
+                        <ul class="selection"
+                            data-proddeps="{&quot;117&quot;:[118,130],&quot;119&quot;:[131,100],&quot;120&quot;:[132,99],&quot;126&quot;:[118,99],&quot;127&quot;:[118,100],&quot;128&quot;:[131,130],&quot;129&quot;:[131,99],&quot;130&quot;:[132,130],&quot;131&quot;:[132,100],&quot;118&quot;:[141,130],&quot;147&quot;:[141,99],&quot;148&quot;:[141,100]}"
+                            data-attrdeps="{&quot;118&quot;:[117,126,127],&quot;130&quot;:[117,128,130,118],&quot;131&quot;:[119,128,129],&quot;100&quot;:[119,127,131,148],&quot;132&quot;:[120,130,131],&quot;99&quot;:[120,126,129,147],&quot;141&quot;:[118,147,148]}">
 
+
+                            <li class="select-item radio color">
+                                <div class="select-name">Color</div>
+
+
+                                <div class="select-value">
+
+                                    <ul class="select-list-color" id="varient-color" data-index="0"
+                                        data-type="color">
+
+                                        @foreach($attributes as $attr)
+
+                                            @if($attr->attribute_label == 'color')
+
+                                                <li class="select-entry-color">
+                                                    <input class="select-option" type="radio"
+                                                           id="option-{{ $attr->code1 }}"
+                                                           name="{{ $attr->value }}" value="{{ $attr->code1 }}">
+                                                    <label class="select-label" name="{{ $attr->value }}"
+                                                           for="{{ $attr->code1 }}"
+                                                           style="background-color:{{ $attr->code1 }}; width:30px;height:30px;"></label>
+
+                                                </li>
+                                            @endif
+                                        @endforeach
+                                    </ul>
+
+                                </div>
+                            </li>
+
+                        </ul>
+
+                    </div>
                 </div>
 
             </div>
-            <!--
-            <div class="span6">
-                <div align="center" style="min-height: 32px;">
-                    <div class="clearfix">
-                        <div class="btn-group inline pull-left" id="texteditor" style="display:none">
+            <div class="col-md-3">
+
+                <div class="card mb-3" id="objectContainer">
+                    <div class="card-header">
+                        Custom Item Editing
+                    </div>
+                    <div class="card-body">
+
+                        <ul class="list-group" id="objectHolder">
+                        </ul>
+
+                    </div>
+                </div>
+
+                <div class="card edit-function" style="display:none" id="text-editor">
+
+                    <div class="card-header">
+
+                        <textarea class="form-control w-100" id="text-string" placeholder="Enter your text here.."></textarea>
+                        <input type="button" class="btn mx-auto" id="add-text" value="Add/Edit Text"/>
+
+                    </div>
+
+                        <div class="card-body">
+                            <button id="text-bold" class="btn" data-toggle="tooltip" data-placement="top" title="BOLD" onclick="setBold()">
+                                <h4 class="fas fa-bold d-inline pr-2"></h4>
+                            </button>
+
+                            <button id="text-italic" class="btn" data-toggle="tooltip" data-placement="top" title="ITALIC" onclick="setItalic()">
+                                <h4 class="fas fa-italic d-inline pr-2"></h4>
+                            </button>
+
+                            <button id="text-underline" class="btn" data-toggle="tooltip" data-placement="top" title="UNDERLINE" onclick="setUnderline()">
+                                <h4 class="fas fa-underline d-inline pr-2" id="text-underline"></h4>
+                            </button>
+
+                            <button id="text-color" class="btn" data-toggle="tooltip" data-placement="top" title="COLOR">
+                                <h4 class="fas fa-circle d-inline pr-2" style="color: #000;"></h4>
+                            </button>
+                            <script>
+                                var picker = new CP(document.querySelector('button[id="text-color"]'));
+                                picker.on("change", function(color) {
+                                    setColor(color);
+                                });
+                            </script>
+
                             <button id="font-family" class="btn dropdown-toggle" data-toggle="dropdown"
                                     title="Font Style"><i class="icon-font" style="width:19px;height:19px;"></i>
                             </button>
@@ -332,45 +331,41 @@
                                 <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Engagement');" class="Engagement">Engagement</a>
                                 </li>
                             </ul>
-                            <button id="text-bold" class="btn" data-original-title="Bold"><img src="{{ asset('images/mockup/font_bold.png') }}" height="" width="">
-                            </button>
-                            <button id="text-italic" class="btn" data-original-title="Italic"><img
-                                        src="{{ asset('images/mockup/font_italic.png') }}" height="" width=""></button>
-                            <button id="text-strike" class="btn" title="Strike" style=""><img
-                                        src="{{ asset('images/mockup/font_strikethrough.png') }}" height="" width=""></button>
-                            <button id="text-underline" class="btn" title="Underline" style=""><img
-                                        src="{{ asset('images/mockup/font_underline.png') }}"></button>
-                            <a class="btn" href="javascript:void(0)" rel="tooltip" data-placement="top" data-original-title="Font Color"><input
-                                        type="hidden" id="text-fontcolor" class="color-picker" size="7" value="#000000"></a>
-                            <a class="btn" href="javascript:void(0)" rel="tooltip" data-placement="top"
-                               data-original-title="Font Border Color"><input type="hidden" id="text-strokecolor"
-                                                                              class="color-picker" size="7"
-                                                                              value="#000000"></a>
-                            --- Background <input type="hidden" id="text-bgcolor" class="color-picker" size="7" value="#ffffff"> ---
+
                         </div>
-                        <div class="pull-right" align="" id="imageeditor" style="display:none">
-                            <div class="btn-group">
-                                <button class="btn" id="bring-to-front" title="Bring to Front"><i
-                                            class="icon-fast-backward rotate" style="height:19px;"></i></button>
-                                <button class="btn" id="send-to-back" title="Send to Back"><i
-                                            class="icon-fast-forward rotate" style="height:19px;"></i></button>
-                                <button id="flip" type="button" class="btn" title="Show Back View"><i
-                                            class="icon-retweet" style="height:19px;"></i></button>
-                                <button id="remove-selected" class="btn" title="Delete selected item"><i
-                                            class="icon-trash" style="height:19px;"></i></button>
-                            </div>
-                        </div>
+
                     </div>
 
                 </div>
 
-            </div>-->
-
-        </div>
-
+            </div>
     </section>
-
 </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="designModal" tabindex="-1" role="document" aria-labelledby="designModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered w-75 mw-100" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="designModalLabel">Choose A Design</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-sm-12 p-3">
+                                @foreach($artwork as $a)
+                                    <img src="{{ $a->full_url }}" width="200" class="design-images d-inline p-2" data-dismiss="modal"/>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         templateVars = {
@@ -380,6 +375,55 @@
         };
 
         setShirtImage('{{ $images[0]->full_url }}');
+
+        $(document).ready(function(){
+            $(".select-entry-color label").first().addClass("active");
+
+            let variants = {!! json_encode($variants) !!};
+
+            $(".select-entry-color label").on('click', function (e) {
+                $(".select-entry-color label.active")
+                    .removeClass('active');
+                $(this).addClass('active');
+
+                let newVariant = variants.filter(function (el) {
+                    return el.color_code_1 == $(
+                        '.select-entry-color label.active'
+                        ).attr('for'); //&& el.size_code == $('#varient-size').val();
+                });
+
+                $('.product_sku').text(newVariant[0].sku);
+
+                $('.product_price').text("$" + newVariant[0]
+                    .salePrice);
+
+                $('#selected-color').text($(
+                    '.select-entry-color label.active')
+                    .attr('name'));
+
+                $('#selected-size').text($(
+                    '#varient-size option:selected')
+                    .text());
+
+
+                $.ajax({
+                    url: "{{env('API_URL')}}api/media/getById/" +
+                        newVariant[0].image.split(",")[
+                            0],
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    headers: {
+                        "Authorization": "Bearer {{ $token }}",
+                        "Content-Type": "application/json"
+                    },
+                    type: 'GET',
+                    success: function (images) {
+                        $("#hoodieFacing").attr('src', images.properties.full_url);
+                    }
+                });
+                e.preventDefault();
+            });
+        });
     </script>
 
                   @endsection

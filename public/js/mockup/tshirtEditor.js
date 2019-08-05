@@ -27,6 +27,31 @@ var templateVars = {
     size: 'L'
 };
 
+var sessionInfo = function(item){
+    let storage = (sessionStorage.getItem('canvas')) ? JSON.parse(sessionStorage.getItem('canvas')) : {};
+
+    storage.objects = (storage.objects) ? storage.objects : [];
+    var itemObject = item.toObject();
+
+    // Check for name
+    let itemExists = false;
+    for(var a in storage){
+        if(a.name && a.name === itemObject.name){
+            itemExists = a;
+        }
+    }
+
+    if(itemExists){
+        storage.objects[a] = itemObject;
+    } else {
+        storage.objects[(storage.objects.length) ? storage.length : 0] = itemObject;
+    }
+
+    console.log(itemObject);
+
+    sessionStorage.setItem('canvas',JSON.stringify(storage));
+};
+
 function setShirtImage(imgurl){
 
     //setup front side canvas
@@ -70,7 +95,7 @@ function setShirtImage(imgurl){
         canvas.setHeight(newHeight);
         canvas.setWidth(newWidth);
 
-        setTemplate();
+        //setTemplate();
 
         img = null;
 
@@ -80,8 +105,6 @@ function setShirtImage(imgurl){
 }
 
 function setTemplate() {
-
-    console.log("URL : " + url + "/api/template/" + templateVars.pid + "/" + templateVars.size);
 
     $.ajax({
         url: "/api/template/" + templateVars.pid + "/" + templateVars.size,
@@ -100,8 +123,6 @@ function setTemplate() {
                 if(result.values[i].x === 0 && result.values[i].y === 0 && result.values[i].width === 0 && result.values[i].height === 0){
                     continue;
                 }
-
-                console.log("Value: " + JSON.stringify(result.values[i]));
 
                 if (result.values[i].shape === 1) {
 
@@ -136,25 +157,49 @@ function setTemplate() {
                 upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
             }
 
-            console.log("TOP: " + upperTop + " | LEFT: " + upperLeft);
+            if(group.length > 0) {
+                var g = new fabric.Group(group, {
+                    originY: "top",
+                    originX: "left",
+                    left: upperLeft,
+                    top: upperTop,
+                    selectable: false,
+                    opacity: 0.3
+                });
 
-            var g = new fabric.Group(group,{
-                originY: "top",
-                originX: "left",
-                left: upperLeft,
-                top: upperTop,
-                selectable: false,
-                opacity: 0.3
-            });
+                groupWidth = g.width;
+                groupHeight = g.height;
 
-            groupWidth = g.width;
-            groupHeight = g.height;
+                canvas.clipPath = g;
 
-            canvas.clipPath = g;
+                canvas.add(g);
 
-            canvas.add(g);
+                $("#upper-canvas").width(newWidth).height(newHeight);
 
-            $("#upper-canvas").width(newWidth).height(newHeight);
+            }
+
+            if(sessionStorage.getItem('canvas')){
+                let cv = JSON.parse(sessionStorage.getItem('canvas'));
+
+                /*
+                fabric.util.enlivenObjects(cv, function(objects) {
+                    var origRenderOnAddremove = canvas.renderOnAddRemove;
+                    canvas.renderOnAddRemove = false;
+
+                    objects.forEach(function(o){ canvas.add(o); });
+
+                    canvas.renderOnAddRemove = origRenderOnAddremove;
+                    canvas.renderAll();
+                });
+
+                 */
+
+
+                canvas.loadFromJSON(cv, canvas.renderAll.bind(canvas), function(o, object) {
+                    fabric.log(o,object);});
+
+                console.log(JSON.parse(sessionStorage.getItem('canvas')));
+            }
 
         },
         error: (err, data) => {
@@ -201,7 +246,9 @@ $(document).ready(function () {
     $(".mock-block").on("click", function () {
         var block = this;
         $(".edit-function").each(function () {
+
             var editor = $(block).attr('data-toggle');
+
             if (editor === $(this).attr('id')) {
                 $(this).fadeIn('slow');
             } else {
@@ -210,7 +257,16 @@ $(document).ready(function () {
         });
     });
 
-    $(".mock-block").click();
+    $(".design-images").on('click', function(){
+        console.log($(this).attr('src'));
+    });
+
+    $(document).on("click", ".remove-art", function(){
+        let id = $(this).parent().parent().attr('id');
+        removeListItem(id);
+        removeSessionItem(id);
+        removeItemByName(id);
+    });
 
     /**
      * END PAGE FUNCTIONS
@@ -226,6 +282,7 @@ $(document).ready(function () {
         'object:modified': function (e) {
             e.target.opacity = 1;
             canvas.clipPath.opacity = 0.05;
+            sessionInfo(e.target);
         },
         'object:selected': onObjectSelected,
         'selection:cleared': onSelectedCleared
@@ -267,20 +324,33 @@ $(document).ready(function () {
     });
 
     document.getElementById('add-text').onclick = function () {
-        var text = $("#text-string").val();
+        let textString = $("#text-string");
+        var text = textString.val();
+        let name = randomString();
         var textSample = new fabric.IText(text, {
             left: centerX(),
             top: centerY(),
             originX: 'left',
             originY: 'top',
-            fontFamily: 'helvetica',
             angle: 0,
-            fill: 'yellow',
-            //scaleX: 0.5,
-            //scaleY: 0.5,
-            fontWeight: '',
-            hasRotatingPoint: true
+            fill: textString.css('color'),
+            fontFamily: textString.css('font-family'),
+            underline: (textString.css('text-decoration') === 'underline'),
+            hasRotatingPoint: true,
+            name: name
         });
+
+        textSample.toObject = (function (toObject) {
+            return function() {
+                return fabric.util.object.extend(toObject.call(this),{
+                        name : name
+                    });
+            }
+        })(textSample.toObject);
+        textSample.fontStyle = textString.css('font-style');
+        textSample.fontWeight = (textString.css('font-weight') > 400) ? 'bold' : '';
+
+        createListItem(name, 'Text');
 
         canvas.add(textSample);
         canvas.item(canvas.item.length - 1).hasRotatingPoint = true;
@@ -296,39 +366,45 @@ $(document).ready(function () {
         }
     });
 
-    $(".img-polaroid").click(function (e) {
+    $(".design-images").click(function (e) {
         var el = e.target;
-        /*temp code*/
-        var offset = 50;
-        var left = fabric.util.getRandomInt(0 + offset, 200 - offset);
-        var top = fabric.util.getRandomInt(0 + offset, 400 - offset);
-        var angle = fabric.util.getRandomInt(-20, 40);
-        var width = fabric.util.getRandomInt(30, 50);
         var opacity = (function (min, max) {
             return Math.random() * (max - min) + min;
         })(0.5, 1);
 
+        let name = randomString();
+
         fabric.Image.fromURL(el.src, function (image) {
             image.set({
-                left: left,
-                top: top,
+                left: (newWidth / 3),
+                top: (newHeight / 3),
                 angle: 0,
                 padding: 10,
                 cornersize: 10,
                 hasRotatingPoint: true,
-                crossOrigin: "Anonymous"
+                crossOrigin: "Anonymous",
+                name: name
             });
+
+            image.toObject = (function (toObject) {
+                return function() {
+                    return fabric.util.object.extend(toObject.call(this),{
+                        name : name
+                    });
+                }
+            })(image.toObject);
+
+            createListItem(name, 'Image');
+
+            image.scaleToWidth(newWidth);
             //image.scale(getRandomNum(0.1, 0.25)).setCoords();
             canvas.add(image);
         });
+
+        // HIDE DESIGN
+       //$("#designModal")
+
     });
-    document.getElementById('remove-selected').onclick = function () {
-        var activeObject = canvas.getActiveObject();
-        if (activeObject) {
-            canvas.remove(activeObject);
-            $("#text-string").val("");
-        }
-    };
     document.getElementById('bring-to-front').onclick = function () {
         var activeObject = canvas.getActiveObject(),
             activeGroup = canvas.getActiveGroup();
@@ -510,7 +586,14 @@ function onObjectSelected(e) {
     selectedObject.hasRotatingPoint = true;
     if (selectedObject && selectedObject.isType('i-text')) {
 
-        $("#text-string").val(selectedObject.getText());
+        let textString = $("#text-string");
+        textString.val(selectedObject.getText());
+
+        setBold(selectedObject.fontWeight);
+        setItalic(selectedObject.fontStyle);
+        setUnderline(selectedObject.underline);
+        setFont(selectedObject.fontFamily);
+        setColor(selectedObject.fill, true);
 
         //display text editor
         $("#show-text-editor").click();
@@ -524,53 +607,67 @@ function onObjectSelected(e) {
 
 function onSelectedCleared(e) {
     $("#texteditor").css('display', 'none');
-    $("#text-string").val("");
+    $("#text-string").val("").removeAttr('style');
     $("#imageeditor").css('display', 'none');
-    $(".mock-block").click();
 }
 
 /**
  * START TEXT FUNCTIONALITY
  */
-function setBold(){
+function setBold(style = false){
     let activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'i-text') {
+    if (activeObject && activeObject.type === 'i-text' && !style) {
         activeObject.fontWeight = (activeObject.fontWeight === 'bold' ? '' : 'bold');
         canvas.renderAll();
     }
+
+    let fw = parseInt($("#text-string").css('font-weight'));
+    $("#text-string").css('font-weight',((style) ? style : (fw > 400) ? "" : "bold"));
+
 }
 
-function setItalic() {
+function setItalic(style = false) {
     var activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'i-text') {
+    if (activeObject && activeObject.type === 'i-text' && !style) {
         activeObject.fontStyle = (activeObject.fontStyle === 'italic' ? '' : 'italic');
         canvas.renderAll();
     }
+
+    let textString = $("#text-string");
+    textString.css('font-style', ((style) ? style : (textString.css('font-style') === 'normal') ? 'italic' : 'normal'));
 }
 
-function setFont(font) {
+function setFont(font, style = false) {
     var activeObject = canvas.getActiveObject();
     if (activeObject && activeObject.type === 'i-text') {
         activeObject.fontFamily = font;
         canvas.renderAll();
     }
+    let textString = $("#text-string");
+    textString.css('font-family', font);
 }
 
-function setUnderline(){
+function setUnderline(style = null){
     var activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'i-text') {
+    if (activeObject && activeObject.type === 'i-text' && style === null) {
         console.log(activeObject.getUnderline());
         activeObject.setUnderline((!activeObject.getUnderline()));
         canvas.renderAll();
     }
+    let textString = $("#text-string");
+    let fd = (textString.css('text-decoration') === 'none') ? 'underline' : "none";
+    textString.css('text-decoration', ((style !== null) ? ((style) ? 'underline' : 'none') : fd));
 }
 
-function setColor(color) {
+function setColor(color, style = false) {
     var activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.type === 'i-text') {
+    if (activeObject && activeObject.type === 'i-text' && !style) {
         activeObject.setFill("#" + color);
         canvas.renderAll();
     }
+
+    $("#text-string").css('color', ((!style) ? '#' : '') + color);
+    $(".fa-circle").css('color', ((!style) ? '#' : '') + color);
 }
 
 /**
@@ -588,4 +685,45 @@ function removeWhite() {
 function percentageCalculator(x, w, y, h) {
     $("#xCoord").html(((x / w) * 100).toFixed(2) + "%");
     $("#yCoord").html(((y / h) * 100).toFixed(2) + "%");
+}
+
+function randomString(){
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+        + Math.random().toString(36).substring(2, 15);
+}
+
+function createListItem(id, type){
+    // CREATE LIST ITEM
+    $("#objectHolder").append('<li class="list-group-item" id="'+id+'">' +
+        type + ' <span style="float:right; text-space: 5px;">' +
+        '<span type="button" class="fa fa-arrow-up"></span> ' +
+        '<span type="button" class="fa fa-arrow-down"></span> ' +
+        '<span type="button" class="fa fa-trash-alt remove-art"></span>' +
+        '</span>' +
+        '</li>');
+}
+
+function removeListItem(id){
+    $("#"+id).remove();
+}
+
+function removeSessionItem(id){
+    let storage = (sessionStorage.getItem('canvas')) ? JSON.parse(sessionStorage.getItem('canvas')) : {};
+
+    // Check for name
+    for(var a in storage){
+        if(a.name && a.name === id){
+            delete storage[a];
+        }
+    }
+    sessionStorage.setItem('canvas',JSON.stringify(storage));
+}
+
+function removeItemByName(name){
+    let objs = canvas.getObjects();
+    for(var i in objs){
+        if(objs[i]['name'] === name){
+            canvas.remove(objs[i]);
+        }
+    }
 }
