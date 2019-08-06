@@ -396,7 +396,7 @@
                                     </div>
 
                                     <p id="mockgen-url">
-                                        <a href="/mockupgenerator/0/{{ $product_id }}" class="Customize text-peach"><span
+                                        <a href="/mockupgenerator/{{ $product_id }}" class="Customize text-peach"><span
                                                     class="icon-paint-brush"></span> <span class="OpenSans-Semibold"> Customize
                                                                                                     </span><span
                                                     class="font-italic">Change Artwork or Add Text</span></a>

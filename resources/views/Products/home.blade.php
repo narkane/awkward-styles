@@ -18,10 +18,10 @@
                 <div class="row">
                     <div class="col-6 m-0 p-0">
                         <div class="girls-bg bg-orange" onclick="redirect('girls')">
-                            <div class="inner-msg p-5 text-white">
+                            <div class="inner-msg p-5 text-white" style="padding-left: 50px !important">
                                 <h1>Girls</h1>
                                 <h4>
-                                    From infants to teenagers, we have you covered for your children.
+                                    Designs and clothes for girls.
                                 </h4>
                             </div>
                         </div>
@@ -31,7 +31,7 @@
                             <div class="inner-msg p-5 text-white">
                                 <h1>Boys</h1>
                                 <h4>
-                                    From infants to teenagers, we have you covered for your children.
+                                    Find the best items for boys.
                                 </h4>
                             </div>
                         </div>

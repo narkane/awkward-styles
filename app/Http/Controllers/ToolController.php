@@ -24,7 +24,7 @@ class ToolController extends Controller
     
     public function index($productId)
     {
-              $user_id = Auth::user()->id;
+         $user_id = Auth::user()->id;
         /*$artwork_id = '';
         $artwork_name = '';
         if(isset($artwork_id)) { $artwork_id = $request->artwork_id; }

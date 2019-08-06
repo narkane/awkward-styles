@@ -1,12 +1,10 @@
-@extends('layouts.toolHead')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 
     <!-- <div class="container"> -->
         <div class="row products-row" style="float:left;border:3px inset lightblue;height:100%;">
             <div id="art-product-list">
                 <div id="app">
-                    <thetool prodid="{{$product_id}}"/>
+                    <thetool prodid="<?php echo e($product_id); ?>"/>
                 </div>
             </div>
 
@@ -16,10 +14,10 @@
                     // compress(e) {
     var width = 400;
     var height = 400;
-    const fileName = "{{$request->id}}";
+    const fileName = "<?php echo e($request->id); ?>";
 
         const img = new Image();
-        img.src = "{{$request->full_url}}";
+        img.src = "<?php echo e($request->full_url); ?>";
         img.onload = () => {
             const elem = document.createElement('canvas');
             document.getElementById('ziggaza').appendChild(elem);
@@ -46,17 +44,21 @@
             }
         };
 </script>
-                        <!-- <img id="productImage" src="{{ $request->full_url }}" style="border:1px solid black;"/> -->
+                        <!-- <img id="productImage" src="<?php echo e($request->full_url); ?>" style="border:1px solid black;"/> -->
                     </div>
-                    <br/>{{$request->id}}
+                    <br/><?php echo e($request->id); ?>
+
                 <div class="product-content">
-                    <h5 class="title">{{ $request->label }}</h5>
+                    <h5 class="title"><?php echo e($request->label); ?></h5>
                     <div class="price">
-                        {{ $request->salePrice }}
+                        <?php echo e($request->salePrice); ?>
+
                     </div>
                 </div>
             </div>
         </div>
     <!-- </div> -->
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.toolHead', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>
