@@ -1228,3 +1228,9 @@ section {
 }
 
 /* navbar css end */
+
+
+.container .contact {
+  max-width:100%;
+  width: 100%;
+}

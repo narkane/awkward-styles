@@ -193,23 +193,28 @@
 }
 
 .store-fronts-list {
-}
-
-.store-fronts-list a {
   display: inline-block;
   padding: 10px 15px;
   background: #fff;
   border-radius: 15px;
-  color: #5d5b62;
   font-size: 13px;
   font-weight: 600;
   margin-right: 4px;
   margin-bottom: 8px;
 }
 
-.store-fronts-list a span {
+.store-fronts-list a {
+  color: #5d5b62;
+}
+
+.store-fronts-list span {
   padding-left: 5px;
   color: #82a501;
+}
+
+.store-fronts-list span:hover {
+  color: #efb402;
+  cursor: pointer;
 }
 
 .store-title {
@@ -348,7 +353,6 @@
   justify-content: space-between;
 }
 .nav-logo {
-  padding-top: 4px;
   margin: 0 auto;
 }
 .nav-logo img {
@@ -508,4 +512,20 @@ iframe {
   width: 100%;
   border-radius: 20px;
   overflow-y: hidden;
+}
+
+.header-product-menu {
+  top: 65px;
+  min-width:100%;
+  position: absolute;
+
+  z-index: 10;
+
+  background-color: rgba(255,255,255,0.7);
+
+  left: 0;
+
+  padding-left: 100px;
+
+  padding-right: 100px;
 }

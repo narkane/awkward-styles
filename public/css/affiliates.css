@@ -1,3 +1,8 @@
+
+header {
+  padding-bottom: 0px;
+}
+
 .pannel {
   height: 500px;
   padding: 0px;
@@ -9,6 +14,7 @@
   background-image: url("../images/clothingbackdrop.jpg");
   /* opacity: 0.5; */
   background-blend-mode: multiply;
+  background-repeat: repeat-x;
 }
 .pannel .color button {
   position: absolute;
@@ -49,4 +55,9 @@
   font-weight: 1000;
   font-size: 42pt;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.img-100 {
+  border: 0px;
+  box-shadow: 0px 0px 0px 0px;
 }

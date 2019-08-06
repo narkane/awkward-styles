@@ -28,7 +28,8 @@
                     </div>
                     <div class="col-md-10">
                         <h5>
-                            <div id="carouselPaginationContainer" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left" data-ride="carousel">
+                            <div id="carouselPaginationContainer" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left"
+                                 data-ride="carousel" data-interval="false">
 
                                 <div class="carousel-inner px-3">
                                     @foreach($paginator as $area => $links)
@@ -101,7 +102,8 @@
                             <a href="{{ $url }}page={{ $currentPage - 1 }}" title="Previous">Previous Page</a>
                         @endif
 
-                        <div id="carouselPaginationContainerTwo" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left" data-ride="carousel">
+                        <div id="carouselPaginationContainerTwo" class="carousel slide badge badge-pill badge-light rounded-border py-2 px-4 border border-dark w-25 text-left"
+                             data-ride="carousel" data-interval="false">
 
                             <div class="carousel-inner px-5">
                                 @foreach($paginator as $area => $links)
@@ -146,14 +148,6 @@
     </div>
     @endsection
     @section('footer_scripts')
-        <script>
-            $("#carouselPaginationContainer").carousel({
-                interval: false
-            });
-            $("#carouselPaginationContainerTwo").carousel({
-                interval: false
-            });
-        </script>
     <script type="text/javascript">
     $(document).ready(function() {
         $("#collections-slider").owlCarousel({

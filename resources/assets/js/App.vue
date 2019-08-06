@@ -2,17 +2,19 @@
   <div id="app">
     <!-- USE FOLLOWING TWO LINES TO PASS IN PRODUCT IMG AND ID FOR CREATING TEMPLATE -->
     <!-- <img src="./assets/t-shirts-1.jpg" id="shirt" /> -->
-    <HelloWorld :prodID="prodid" />
+    <!-- <HelloWorld :prodID="prodid" /> -->
+    <TemplateTool :prodID="prodid" />
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
+// import HelloWorld from "./components/HelloWorld.vue";
+import TemplateTool from "./components/TemplateTool.vue";
 
 export default {
   name: "app",
   components: {
-    HelloWorld
+    TemplateTool
   },
   props: { prodid: String }
 };

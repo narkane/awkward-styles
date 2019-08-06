@@ -22,13 +22,11 @@ class ImageTemplateController extends Controller
         if(!$response) {
             $response = new stdClass();
 
-            $response->x = 0;
-            $response->y = 0;
-            $response->width = 0;
-            $response->height = 0;
             $response->dpi = 0;
             $response->pid = 0;
             $response->size = 0;
+        } else {
+            $response->values = json_decode($response->values);
         }
 
         return response()->json($response);
@@ -37,30 +35,29 @@ class ImageTemplateController extends Controller
 
     public function insertTemplate(Request $request){
 
-        if(!$request->has('pid') || !$request->has('size')){
-            return response()->json(['id' => 0]);
+        $pid = $request->json('pid', null);
+        $dpi = $request->json('dpi', null);
+        $size = $request->json('size', null);
+        $templates = $request->json('templates', null);
+
+        if(is_null($pid) || is_null($dpi) || is_null($size) || is_null($templates)){
+            return response()->json(['missing parameters']);
         }
 
         // Create Query For Insert
         DB::table('templates')->updateOrInsert([
-            'pid' => $request->input('pid'),
-            'size' => $request->input('size')],[
-            'x' => ($request->has('x')) ? $request->input('x') : 0,
-            'y' => ($request->has('y')) ? $request->input('y') : 0,
-            'width' => ($request->has('width')) ? $request->input('width') : 0,
-            'height' => ($request->has('height')) ? $request->input('height') : 0,
-            'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0
+            'pid' => $pid,
+            'size' => $size
+        ],[
+           'dpi' => $dpi,
+            'values' => json_encode($templates)
         ]);
 
         $id = DB::table('templates')
             ->where([
-                'pid' => $request->input('pid'),
-                'size' => $request->input('size'),
-                'x' => ($request->has('x')) ? $request->input('x') : 0,
-                'y' => ($request->has('y')) ? $request->input('y') : 0,
-                'width' => ($request->has('width')) ? $request->input('width') : 0,
-                'height' => ($request->has('height')) ? $request->input('height') : 0,
-                'dpi' => ($request->has('dpi')) ? $request->input('dpi') : 0
+                'pid' => $pid,
+                'size' => $size,
+                'dpi' => $dpi
             ])->first();
 
         return response()->json(['id' => ($id) ? $id->id : 0]);

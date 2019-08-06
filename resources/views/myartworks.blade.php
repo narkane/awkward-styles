@@ -31,24 +31,33 @@
 
 </style>
 <div class="container">
-    
+
       <div class="row">
          <div class="col-md-3">
         @include('menu');
-     
-     </div>
+
+             <div class="bg-white p-3 pt-1">
+                 <h4 class="mt-4">Your Artworks</h4>
+
+                 <div class="art-works">
+                     <div class="art-works-list">
+                         <ul id="artWorkProduct">
+                         </ul>
+                     </div>
+                 </div>
+             </div>
+
+         </div>
          
-         <div class="col-md-6">
+         <div class="col-md-9">
            
            <div class="container p-4">
              
-             <div class="row">
-               <div class="col-md-12">
+             <div class="container-fluid">
                  <ul class="my-account-nav">
                    <li> <a href="#">My Stores</a> <span class="icon-caret-right"></span></li>
                    <li> <a href="#">My Artworks</a></li>
                  </ul>
-               </div>
              </div>
            
              <div class="row bg-white mt-4 my-accont-forms p-4">
@@ -88,7 +97,7 @@
                                     </label>
                                     <div class="col-sm-7">
                                         <div class="custom-file">
-                                            <input type="file" class="custom-file-input" id="updated_artwork" name="updated_artwork" required>
+                                            <input type="file" class="custom-file-input" id="updated_artwork" name="updated_artwork" accept="image/*" required>
                                             <input class="" type="checkbox" name="remember" required>
                                             <span>By uploading the Artwork, i confirm that i hold the copyrights for the Artwork or a license to use it.</span>
                                             <label class="custom-file-label" for="customFile">Choose file</label>
@@ -188,17 +197,6 @@
          
          
          </div>
-
-  <div class="col-md-3 bg-white">
-       <h4 class="mt-4">Your Artworks</h4>
-       
-       <div class="art-works">
-          <div class="art-works-list">
-            <ul id="artWorkProduct">
-            </ul>
-        </div>
-       </div>     
-     </div>       
   </div>
 </div>
 <script>
@@ -216,34 +214,7 @@ $(document).ready(function() {
       $(".hide-when-private").show();
     } else {
       $(".hide-when-private").hide();
-    } 
-
-  $("#submitBtn").click(function(e){
-      event.preventDefault();
-      let isPrivate = $("input[name='private_artwork']:checked").val();
-      if(isPrivate==0) {
-        let checked1 = $(".channels:checked").length;
-        let checked2 = $("input[name='suitable_audience']:checked").length;
-        let checked3 = $("input[name='remember']:checked").length;       
-        if(!checked1 || !checked2 || !checked3 || $("#royalty_fees").val() == '' || $("#artwork_name").val() == '') {
-          alert("Please check the required fields...");
-          return false;
-        } else if(isNaN($('#royalty_fees').val())) {
-          alert("Royalty fee allows only number...");
-          return false;
-        } else {
-          $("#submit_artwork").submit();
-        }        
-      } else {
-        let checked = $("input[name='remember']:checked").length;
-        if(!checked || $("#artwork_name").val() == '') {
-          alert("Please check the required fields...");
-          return false;
-        } else {
-          $("#submit_artwork").submit();
-        }
-      }       
-  });
+    }
 
   $("input[name='private_artwork']").change(function(){
     let isPrivate = $("input[name='private_artwork']:checked").val();
@@ -253,7 +224,8 @@ $(document).ready(function() {
       $(".hide-when-private").hide();
     }
   });
-  console.log("TOEKN:","{{$token}}");
+
+  console.log("TOKEN:","{{$token}}");
   $.ajax({
       url: "{{env('API_URL')}}api/artwork/getAllArtworks",
       contentType: 'application/json',
@@ -290,11 +262,23 @@ $(document).ready(function() {
 
 });
 
+var allTags = [];
+
+$("form").submit(function(e){
+   // e.preventDefault();
+
+    $("#tag-suggestions").val(JSON.stringify(allTags)).hide();
+
+
+    return true;
+});
+
 $(function(){
 
   $('#tags input').on('focusout', function(){    
     var txt= this.value.replace(/[^a-zA-Z0-9\+\-\.\#]/g,''); // allowed characters list
     if(txt) $(this).after('<span class="tag">'+ txt +'</span>');
+      allTags.push(txt);
     this.value="";
     //this.focus();
   }).on('keyup',function( e ){
@@ -303,7 +287,14 @@ $(function(){
   });
   
   $('#tags').on('click','.tag',function(){
-     if( confirm("Delete this tag?") ) $(this).remove(); 
+     if( confirm("Delete this tag?") ) {
+         for(var i = 0; i < allTags.length; i++){
+             if(allTags[i] === $(this).text()){
+                 allTags.splice(i, 1);
+             }
+         }
+         $(this).remove();
+     }
   });
 
 });
@@ -311,6 +302,7 @@ $(function(){
 /* Image preview on select start*/
 function readURL(input,v) {
    if (input.files && input.files[0]) {
+
             var reader = new FileReader();
             reader.onload = function (e) {
                 $(v).attr('src', e.target.result);
@@ -319,7 +311,17 @@ function readURL(input,v) {
         }
       }
       $("#updated_artwork").change(function(){
-        readURL(this,'#artwork_image');
+          if(this.files[0].size > 10000000){
+              if(!$("#file_err").length) {
+                  $(this).after("<div class='bg-danger p-3 text-white' id='file_err'>File too large</div>");
+              }
+
+          } else {
+              if($("#file_err")){
+                  $("#file_err").remove();
+              }
+              readURL(this,'#artwork_image');
+          }
         });
 /* Image preview on select end*/              
 </script>            
