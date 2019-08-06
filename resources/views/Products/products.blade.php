@@ -23,25 +23,25 @@
                         @if(in_array($category,$cloth_cats))
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/shirt?count={{$take}}" title="T-Shirts">T-Shirts</a></h4>
+                                <h4><a href="/product/{{$category}}/shirt?count={{$take}}" title="T-Shirts">T-Shirts</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/tank?count={{$take}}" title="TankTops">Tank Tops</a></h4>
+                                <h4><a href="/product/{{$category}}/tank?count={{$take}}" title="TankTops">Tank Tops</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/hoodie?count={{$take}}" title="Hoodies">Hoodies</a></h4>
+                                <h4><a href="/product/{{$category}}/hoodie?count={{$take}}" title="Hoodies">Hoodies</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/jacket?count={{$take}}" title="Jackets">Jackets</a></h4>
+                                <h4><a href="/product/{{$category}}/jacket?count={{$take}}" title="Jackets">Jackets</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/sweatshirt?count={{$take}}" title="SweatShirt">Sweat Shirts</a></h4>
+                                <h4><a href="/product/{{$category}}/sweatshirt?count={{$take}}" title="SweatShirt">Sweat Shirts</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/pants?count={{$take}}" title="Pants">Pants</a></h4>
+                                <h4><a href="/product/{{$category}}/pants?count={{$take}}" title="Pants">Pants</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/shorts?count={{$take}}" title="Shorts">Shorts</a></h4>
+                                <h4><a href="/product/{{$category}}/shorts?count={{$take}}" title="Shorts">Shorts</a></h4>
                             </li>
                         </ul>
                         @endif
@@ -56,11 +56,11 @@
                                 </li>
                                 @elseif(in_array($cats,$cloth_cats))
                                 <li class="list-group-item">
-                                    <h5><a href="/products/{{$cats}}/@if($type!=null){{$type}}@endif" title="{{$cats}}">{{$cats}}</a></h5>
+                                    <h5><a href="/product/{{$cats}}/@if($type!=null){{$type}}@endif" title="{{$cats}}">{{$cats}}</a></h5>
                                 </li>
                                 @else
                                     <li class="list-group-item">
-                                        <h5><a href="/products/{{$cats}}/" title="{{$cats}}">{{$cats}}</a></h5>
+                                        <h5><a href="/product/{{$cats}}/" title="{{$cats}}">{{$cats}}</a></h5>
                                     </li>
                                 @endif
 
@@ -141,7 +141,7 @@
                             @foreach($request as $prod)
                                 @if(!empty($prod->full_url))
                                 <a class="product-content p-2 text-center d-block" href="/mockupgenerator/{{ $prod->id }}">
-                                    <img src="{{$prod->full_url}}" class="product-image">
+                                    <img src="{{$prod->full_url}}" class="product-image" style="max-width: 400; max-height: 400;">
                                     <h6 class="product-detals">{{$prod->label}}</h6>
                                     <h4 class="product-price">$ {{number_format((float)$prod->salePrice, 2, '.', '')}}</h4>
                                 </a>
