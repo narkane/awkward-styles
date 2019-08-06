@@ -176,20 +176,24 @@
                     </div>
                 </div>
 
-                <div class="mock-block border-primary">
+                <div class="mock-block border-primary" id="imageUpload" data-target="#fileUpload">
                     <div class="mock-block-contents">
                         <h1 class="fas fa-upload"></h1>
                         <p>Upload Image</p>
                     </div>
                 </div>
 
-                <div class="mock-block border-primary">
+                <div class="mock-block border-primary" id="productSearch">
                     <div class="mock-block-contents">
                         <h2 class="fas fa-tshirt"></h2>
                         <p>Products</p>
                     </div>
                 </div>
 
+            </div>
+
+            <div style="display:none;">
+                <input type="file" accept="image/*" id="fileUpload"/>
             </div>
 
             <div class="col-md-7">
@@ -259,8 +263,26 @@
                     </div>
                     <div class="card-body">
 
+                        <button type="button" class="btn btn-primary d-block m-2 mx-auto" id="clearAll">
+                            Clean Slate
+                        </button>
+
+                        <span class="text-danger">
+                            WARNING: Any images processed but not uploaded, may be lost.
+                        </span>
+
                         <ul class="list-group" id="objectHolder">
                         </ul>
+
+                    </div>
+                </div>
+
+                <div class="card mb-3" id="design-editor">
+                    <div class="card-header">
+                        Opacity <span class="text-sm-right" id="opacityLabel"></span>
+                    </div>
+                    <div class="card-body">
+                        <input type="range" class="form-control" min="0" max="100" id="imageOpacity" value="100"/>
 
                     </div>
                 </div>
@@ -421,6 +443,11 @@
                 });
                 e.preventDefault();
             });
+
+            $("#imageOpacity").on('input',function(){
+                $("#opacityLabel").html($(this).val());
+            });
+
         });
     </script>
 

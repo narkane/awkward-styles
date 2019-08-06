@@ -1,6 +1,4 @@
-@extends('layouts.dashboard')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="product-container bg-white p-5">
 
     <div class="row">
@@ -11,60 +9,61 @@
                     <li class="breadcrumb-item"><a href="/list">Home</a></li>
                     <li class="breadcrumb-item"><a href="/products">Shop</a></li>
                     <li class="breadcrumb-item active" aria-current="page"
-                        id="current_category">{{ $category }}</li>
+                        id="current_category"><?php echo e($category); ?></li>
                 </ol>
             </nav>
 
                 <div class="row">
                     <div class="col-2 p-3 border-right">
 
-                        <h2>{{ $category }}</h2>
+                        <h2><?php echo e($category); ?></h2>
 
-                        @if(in_array($category,$cloth_cats))
+                        <?php if(in_array($category,$cloth_cats)): ?>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/shirt?count={{$take}}" title="T-Shirts">T-Shirts</a></h4>
+                                <h4><a href="/products/<?php echo e($category); ?>/shirt?count=<?php echo e($take); ?>" title="T-Shirts">T-Shirts</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/tank?count={{$take}}" title="TankTops">Tank Tops</a></h4>
+                                <h4><a href="/products/<?php echo e($category); ?>/tank?count=<?php echo e($take); ?>" title="TankTops">Tank Tops</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/hoodie?count={{$take}}" title="Hoodies">Hoodies</a></h4>
+                                <h4><a href="/products/<?php echo e($category); ?>/hoodie?count=<?php echo e($take); ?>" title="Hoodies">Hoodies</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/jacket?count={{$take}}" title="Jackets">Jackets</a></h4>
+                                <h4><a href="/products/<?php echo e($category); ?>/jacket?count=<?php echo e($take); ?>" title="Jackets">Jackets</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/sweatshirt?count={{$take}}" title="SweatShirt">Sweat Shirts</a></h4>
+                                <h4><a href="/products/<?php echo e($category); ?>/sweatshirt?count=<?php echo e($take); ?>" title="SweatShirt">Sweat Shirts</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/pants?count={{$take}}" title="Pants">Pants</a></h4>
+                                <h4><a href="/products/<?php echo e($category); ?>/pants?count=<?php echo e($take); ?>" title="Pants">Pants</a></h4>
                             </li>
                             <li class="list-group-item">
-                                <h4><a href="/products/{{$category}}/shorts?count={{$take}}" title="Shorts">Shorts</a></h4>
+                                <h4><a href="/products/<?php echo e($category); ?>/shorts?count=<?php echo e($take); ?>" title="Shorts">Shorts</a></h4>
                             </li>
                         </ul>
-                        @endif
+                        <?php endif; ?>
 
                         <h3>Categories</h3>
                         <ul class="list-group list-group-flush">
-                            @foreach($category_list as $cats)
+                            <?php $__currentLoopData = $category_list; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cats): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                @if($cats == $category)
+                                <?php if($cats == $category): ?>
                                 <li class="list-group-item active">
-                                    {{ $cats }}
-                                </li>
-                                @elseif(in_array($cats,$cloth_cats))
-                                <li class="list-group-item">
-                                    <h5><a href="/products/{{$cats}}/@if($type!=null){{$type}}@endif" title="{{$cats}}">{{$cats}}</a></h5>
-                                </li>
-                                @else
-                                    <li class="list-group-item">
-                                        <h5><a href="/products/{{$cats}}/" title="{{$cats}}">{{$cats}}</a></h5>
-                                    </li>
-                                @endif
+                                    <?php echo e($cats); ?>
 
-                            @endforeach
+                                </li>
+                                <?php elseif(in_array($cats,$cloth_cats)): ?>
+                                <li class="list-group-item">
+                                    <h5><a href="/products/<?php echo e($cats); ?>/<?php if($type!=null): ?><?php echo e($type); ?><?php endif; ?>" title="<?php echo e($cats); ?>"><?php echo e($cats); ?></a></h5>
+                                </li>
+                                <?php else: ?>
+                                    <li class="list-group-item">
+                                        <h5><a href="/products/<?php echo e($cats); ?>/" title="<?php echo e($cats); ?>"><?php echo e($cats); ?></a></h5>
+                                    </li>
+                                <?php endif; ?>
+
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </ul>
 
                     </div>
@@ -77,24 +76,25 @@
                                          data-ride="carousel" data-interval="false">
 
                                         <div class="carousel-inner px-3">
-                                            @foreach($paginator as $area => $links)
+                                            <?php $__currentLoopData = $paginator; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $area => $links): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                                <div class="carousel-item @if($area == $paginatorArea) active @endif">
+                                                <div class="carousel-item <?php if($area == $paginatorArea): ?> active <?php endif; ?>">
                                                     Page(s):
 
-                                                    @foreach($links as $page)
+                                                    <?php $__currentLoopData = $links; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                                        @if($page == $currentPage)
-                                                            {{$page}}
-                                                        @else
-                                                            <a href="{{ $url }}page={{$page}}" title="Page {{$page}}">{{$page}}</a>
-                                                        @endif
+                                                        <?php if($page == $currentPage): ?>
+                                                            <?php echo e($page); ?>
 
-                                                    @endforeach
+                                                        <?php else: ?>
+                                                            <a href="<?php echo e($url); ?>page=<?php echo e($page); ?>" title="Page <?php echo e($page); ?>"><?php echo e($page); ?></a>
+                                                        <?php endif; ?>
+
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                                                 </div>
 
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
 
                                         </div>
@@ -115,19 +115,19 @@
                                     <div class="col-6">
                                         <label for="totalCount" class="d-inline">Filter Items Per Page</label>
                                         <select class="form-control w-25 d-inline" id="totalCount">
-                                            @for($i = 25; $i <= 100; $i+=25)
-                                                @if($i == $take)
-                                                    <option value="{{$i}}"selected>{{$i}}</option>
-                                                @else
-                                                    <option value="{{$i}}">{{$i}}</option>
-                                                @endif
-                                            @endfor
+                                            <?php for($i = 25; $i <= 100; $i+=25): ?>
+                                                <?php if($i == $take): ?>
+                                                    <option value="<?php echo e($i); ?>"selected><?php echo e($i); ?></option>
+                                                <?php else: ?>
+                                                    <option value="<?php echo e($i); ?>"><?php echo e($i); ?></option>
+                                                <?php endif; ?>
+                                            <?php endfor; ?>
                                         </select>
                                     </div>
                                     <div class="col-6">
                                         <h5>
                                             <span class="badge badge-pill badge-light rounded-border py-2 px-5 border border-dark">
-                                                Found <u>{{$totalFound}}</u> results
+                                                Found <u><?php echo e($totalFound); ?></u> results
                                             </span>
                                         </h5>
                                     </div>
@@ -138,15 +138,15 @@
 
                         <div class="row products-row" id="art-product-list">
 
-                            @foreach($request as $prod)
-                                @if(!empty($prod->full_url))
-                                <a class="product-content p-2 text-center d-block" href="/mockupgenerator/{{ $prod->id }}">
-                                    <img src="{{$prod->full_url}}" class="product-image">
-                                    <h6 class="product-detals">{{$prod->label}}</h6>
-                                    <h4 class="product-price">$ {{number_format((float)$prod->salePrice, 2, '.', '')}}</h4>
+                            <?php $__currentLoopData = $request; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php if(!empty($prod->full_url)): ?>
+                                <a class="product-content p-2 text-center d-block" href="/mockupgenerator/<?php echo e($prod->id); ?>">
+                                    <img src="<?php echo e($prod->full_url); ?>" class="product-image">
+                                    <h6 class="product-detals"><?php echo e($prod->label); ?></h6>
+                                    <h4 class="product-price">$ <?php echo e(number_format((float)$prod->salePrice, 2, '.', '')); ?></h4>
                                 </a>
-                                @endif
-                            @endforeach
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                         </div>
 
@@ -157,24 +157,25 @@
                                          data-ride="carousel" data-interval="false">
 
                                         <div class="carousel-inner px-3">
-                                            @foreach($paginator as $area => $links)
+                                            <?php $__currentLoopData = $paginator; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $area => $links): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                                <div class="carousel-item @if($area == $paginatorArea) active @endif">
+                                                <div class="carousel-item <?php if($area == $paginatorArea): ?> active <?php endif; ?>">
                                                     Page(s):
 
-                                                    @foreach($links as $page)
+                                                    <?php $__currentLoopData = $links; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                                        @if($page == $currentPage)
-                                                            {{$page}}
-                                                        @else
-                                                            <a href="{{ $url }}page={{$page}}" title="Page {{$page}}">{{$page}}</a>
-                                                        @endif
+                                                        <?php if($page == $currentPage): ?>
+                                                            <?php echo e($page); ?>
 
-                                                    @endforeach
+                                                        <?php else: ?>
+                                                            <a href="<?php echo e($url); ?>page=<?php echo e($page); ?>" title="Page <?php echo e($page); ?>"><?php echo e($page); ?></a>
+                                                        <?php endif; ?>
+
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                                                 </div>
 
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
 
                                         </div>
@@ -192,7 +193,7 @@
                             </div>
                             <div class="col-sm-1 text-right">
                                 <h5><span class="badge badge-pill badge-light rounded-border py-2 px-5 border border-dark">
-                                        Found <u>{{$totalFound}}</u> results
+                                        Found <u><?php echo e($totalFound); ?></u> results
                                     </span></h5>
                             </div>
                             <div class="col-sm-2"></div>
@@ -211,7 +212,7 @@
             padding: 20px;
         }
     </style>
-    @section('footer_scripts')
+    <?php $__env->startSection('footer_scripts'); ?>
         <script>
             $(document).ready(function(){
                 $("#totalCount").on('change', function(){
@@ -220,5 +221,7 @@
                 });
             });
         </script>
-    @endsection
+    <?php $__env->stopSection(); ?>
 </div>
+
+<?php echo $__env->make('layouts.dashboard', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>

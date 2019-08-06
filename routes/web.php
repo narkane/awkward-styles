@@ -30,7 +30,7 @@ Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 Route::get('/account', 'DashboardController@myAccount')->name('account');
 Route::post('/account', 'DashboardController@myAccount')->name('updateAccount');
 Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->name('artiststorefront');
-Route::get('/mockupgenerator/{art_id}/{pid}', 'MockupgenController@index')->name('mockupgenerator');
+Route::get('/mockupgenerator/{pid}', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/createstore', 'MyStoresController@createStore')->name('createstore');
@@ -131,7 +131,10 @@ Route::group(['prefix' => 'api/'], function($app){
     $app->get('product/generate/{pid}/{size}/{art_id}/{media_id}', 'API\ProductGenController@index')->name('createProduct');
 
 
-
+    $app->post('mockgen', 'API\MockgenController@setSession');
+    $app->get('mockgen', 'API\MockgenController@getSession');
+    $app->get('mockgen/flush', 'API\MockgenController@flushSession');
+    $app->get('mockgen/remove/{name}', 'API\MockgenController@removeObject');
     //$app->get('insertproducts', 'API\InsertProductsController@index');
 
 });

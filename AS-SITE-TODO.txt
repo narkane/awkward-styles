@@ -35,3 +35,9 @@ Broken Links:
 
 Lorem Ipsum Pages:
 	To be populated...
+
+PHP.INI requires changes to
+
+        post_max_size=25M
+
+        upload_max_filesize=25M

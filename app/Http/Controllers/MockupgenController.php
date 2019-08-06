@@ -26,8 +26,10 @@ class MockupgenController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $art_id, $pid)
+    public function index(Request $request, $pid)
     {
+
+        $art_id = ($request->has('art_id')) ? $request->input('art_id') : 0;
 
         $product = DB::table('tbl_products')
             ->select('image')
@@ -49,7 +51,7 @@ class MockupgenController extends Controller
             ->get();
 
         $artwork = DB::table(DB::raw("tbl_art_work as art"))
-            ->select(DB::raw("media.full_url"))
+            ->select(DB::raw("DISTINCT media.full_url"))
             ->leftJoin(DB::raw("tbl_media_library as media"), function($j) {
                 $j->on(DB::raw("media.id"), "=", DB::raw("art.mediaid"));
             })
