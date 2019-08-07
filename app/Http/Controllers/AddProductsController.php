@@ -37,7 +37,7 @@ class AddProductsController extends Controller
         $data = array("privateKey" => "password");
         $data_string = json_encode($data);
 
-        $ch = curl_init(env('API_URL').'token');
+        $ch = curl_init(env('API_URL') . 'token');
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -45,17 +45,17 @@ class AddProductsController extends Controller
                 'Content-Type: application/json',
                 'Content-Length: ' . strlen($data_string))
         );
-        $styles['operationCode']   = "";
-        $brands['operationCode']   = "";
+        $styles['operationCode'] = "";
+        $brands['operationCode'] = "";
         $artworks['operationCode'] = "";
         $result = curl_exec($ch);
-        $result = json_decode($result,true);
+        $result = json_decode($result, true);
 //      echo var_dump($result);die;
-        if($result['operationCode'] == 200) {
+        if ($result['operationCode'] == 200) {
             $token = $result['token'];
-            $data = array("Authorization" => "Bearer ".$token);
+            $data = array("Authorization" => "Bearer " . $token);
             $data_string = json_encode($data);
-            $ch1 = curl_init(env('API_URL').'api/master/getAllStyles');
+            $ch1 = curl_init(env('API_URL') . 'api/master/getAllStyles');
             curl_setopt($ch1, CURLOPT_CUSTOMREQUEST, "GET");
             curl_setopt($ch1, CURLOPT_POSTFIELDS, $data_string);
             curl_setopt($ch1, CURLOPT_RETURNTRANSFER, true);
@@ -66,8 +66,8 @@ class AddProductsController extends Controller
             );
 
             $styles = curl_exec($ch1);
-            $styles = json_decode($styles,true);
-            $ch2 = curl_init(env('API_URL').'api/master/getAllBrands');
+            $styles = json_decode($styles, true);
+            $ch2 = curl_init(env('API_URL') . 'api/master/getAllBrands');
             curl_setopt($ch2, CURLOPT_CUSTOMREQUEST, "GET");
             curl_setopt($ch2, CURLOPT_POSTFIELDS, $data_string);
             curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
@@ -78,8 +78,8 @@ class AddProductsController extends Controller
             );
 
             $brands = curl_exec($ch2);
-            $brands = json_decode($brands,true);
-            $ch3 = curl_init(env('API_URL').'api/artwork/getAllArtworks');
+            $brands = json_decode($brands, true);
+            $ch3 = curl_init(env('API_URL') . 'api/artwork/getAllArtworks');
             curl_setopt($ch3, CURLOPT_CUSTOMREQUEST, "GET");
             curl_setopt($ch3, CURLOPT_POSTFIELDS, $data_string);
             curl_setopt($ch3, CURLOPT_RETURNTRANSFER, true);
@@ -90,16 +90,16 @@ class AddProductsController extends Controller
             );
 
             $artworks = curl_exec($ch3);
-            $artworks = json_decode($artworks,true);
+            $artworks = json_decode($artworks, true);
 
-            if(isset($brands['status'])){
+            if (isset($brands['status'])) {
                 $brands = array();
             }
-            if(isset($styles['status'])){
+            if (isset($styles['status'])) {
                 //$styles['operationCode'] == 500;
                 $styles = array();
             }
-            if(isset($artworks['status'])){
+            if (isset($artworks['status'])) {
                 //$artworks['operationCode'] == 500;
                 $artworks = array();
             }
@@ -110,7 +110,22 @@ class AddProductsController extends Controller
 //       echo '</pre>';
 //       die;
 
-            return view('addproducts',['menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
+            /*$productStyles = DB::table(DB::raw("tbl_style_m as styles"))
+                ->select(DB::raw("styles.*, media.full_url as url"))
+                ->leftJoin(DB::raw("tbl_media_library as media"), function ($join) {
+                    $join->on(DB::raw("media.id"), "=", DB::raw("styles.image"));
+                })
+                ->get();
+            */
+
+            return view('addproducts', [
+                'menu' => 'stores',
+                'menuitem' => 'products',
+                'styles' => $styles,
+                'brands' => $brands,
+                'artworks' => $artworks, 'token' => $token,
+                'user' => $user_id
+            ]);
 
         } else {
             //error or redirection
@@ -119,10 +134,13 @@ class AddProductsController extends Controller
 
         //
     }
+
     public function setPricing(Request $request)
     {
         $selectedproducts = array();
-        if($request->has('selectedproducts')) { $selectedproducts = explode(',',$request->selectedproducts);  }
-        return view('setpricing',['selectedproducts'=>$selectedproducts]);
+        if ($request->has('selectedproducts')) {
+            $selectedproducts = explode(',', $request->selectedproducts);
+        }
+        return view('setpricing', ['selectedproducts' => $selectedproducts]);
     }
 }

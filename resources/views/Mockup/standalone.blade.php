@@ -162,12 +162,12 @@
 
 <div class="container shirt-block">
 
-    <div id="shirtDiv" class="page"
+    <div id="{{ $pid }}_div" class="page"
          style="position: relative; background-color: rgb(255, 255, 255);">
-        <img id="hoodieFacing" src=""/>
-        <div id="hoddieDrawingArea"
+        <img id="{{ $pid }}_image" src=""/>
+        <div id="{{ $pid }}_area"
              style="position: absolute;top: 0px;left: 0px;z-index: 10;">
-            <canvas id="tcanvas" class="hover"
+            <canvas id="{{ $pid }}_canvas" class="hover"
                     style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
         </div>
     </div>
@@ -182,7 +182,238 @@
     };
 
     // MAIN IMAGE
-    setShirtImage('{{ $images[0]->full_url }}');
+    setTimeout(
+    setShirtImage('{{ $images[0]->full_url }}'),
+    5000);
+
+    var myCanvas;
+
+    function setShirtImage(imgurl){
+
+        //setup front side canvas
+        myCanvas = new fabric.Canvas('{{ $pid }}_canvas', {
+            hoverCursor: 'pointer',
+            selection: false,
+            selectionBorderColor: 'blue',
+            width: newWidth,
+            height: newHeight,
+            preserveObjectStacking: true
+        });
+
+        let img = new Image();
+
+        img.onload = function(){
+
+            imageWidth = img.width;
+            imageHeight = img.height;
+
+            console.log("Width: " + imageWidth);
+            console.log("Height: " + imageHeight);
+
+            newWidth = 400;
+            newHeight = 400;
+
+            if((imageWidth/newWidth) > (imageHeight/newHeight)) {
+                newHeight = imageHeight / (imageWidth / newWidth);
+            } else {
+                newWidth = imageWidth / (imageHeight / newHeight);
+            }
+
+            $("#{{ $pid }}_image").css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
+
+            $("#{{ $pid }}_div").css({'width': newWidth, 'height': newHeight});
+            //$(".canvas-container").css({'width': newWidth, 'height': newHeight});
+            $("#{{ $pid }}_area").css({'width': newWidth, 'height': newHeight});
+
+            myCanvas.setHeight(newHeight);
+            myCanvas.setWidth(newWidth);
+
+            //setTemplate();
+
+            img = null;
+
+        };
+
+        img.src = imgurl;
+    }
+
+    function setTemplate() {
+
+        $.ajax({
+            url: "/api/template/" + templateVars.pid + "/" + templateVars.size,
+            contentType: 'application/json',
+            //dataType: 'json',
+            type: 'GET',
+            success: (result) => {
+                template = result;
+
+                var group = [];
+
+                // Run Through Template(s)
+                for (var i = 1; i < result.values.length; i++) {
+
+                    // EMPTY OBJECT
+                    if(result.values[i].x === 0 && result.values[i].y === 0 && result.values[i].width === 0 && result.values[i].height === 0){
+                        continue;
+                    }
+
+                    if (result.values[i].shape === 1) {
+
+                        group.push(new fabric.Circle({
+                            radius: result.values[i].width / 2,
+                            height: result.values[i].height,
+                            width: result.values[i].width,
+                            top: result.values[i].y , // y - h
+                            left: result.values[i].x , // x - w
+                            fill: '#000000',
+                            originX: "left",
+                            originY: "top",
+                            stroke: "rgba(255,0,0,1)",
+                            strokeWidth: 1
+                        }));
+
+                    } else if (result.values[i].shape === 4) {
+
+                        group.push(new fabric.Rect({
+                            width: result.values[i].width,
+                            height: result.values[i].height,
+                            top: result.values[i].y,
+                            left: result.values[i].x,
+                            fill: '#000000',
+                            originX: "left",
+                            originY: "top",
+                            stroke: "rgba(255,0,0,1)",
+                            strokeWidth: 1
+                        }));
+                    }
+                    upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
+                    upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
+                }
+
+                if(group.length > 0) {
+                    var g = new fabric.Group(group, {
+                        originY: "top",
+                        originX: "left",
+                        left: upperLeft,
+                        top: upperTop,
+                        selectable: false,
+                        opacity: 0.3
+                    });
+
+                    groupWidth = g.width;
+                    groupHeight = g.height;
+
+                    myCanvas.clipPath = g;
+
+                    myCanvas.add(g);
+
+                    myCanvas.moveTo(g, 0);
+
+                    $("#upper-canvas").width(newWidth).height(newHeight);
+
+                }
+
+                $.ajax({
+                    url: "/api/mockgen",
+                    type: 'GET',
+                    method: 'GET',
+                    cache: false,
+                    contentType: 'application/json',
+                    processData: false,
+                    success: (result) => {
+
+                        fromStorage(result);
+
+                    },
+                    error: (error, data) => {
+                        console.log(error);
+
+                        fromStorage();
+                    }
+                });
+
+            },
+            error: (err, data) => {
+                console.log("Error fetching template.");
+
+                // IF EMPTY, USE GENERIC
+                // SET TEMPLATE TO SHIRT
+                var w = newWidth / 3;
+                var h = newHeight / 3;
+
+                $("#hoddieDrawingArea").css({"top": '35%', "left": '35%', "width": w, "height": h});
+            }
+        });
+    }
+
+    function fromStorage(result = null){
+        let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
+
+        // Merge
+        if(result != null && Object.keys(result).length){
+
+            // If downloaded, remove from site session
+            if(!cv.objects) { cv.objects = []; }
+            for(var i in result){
+                let l = Object.keys(cv.objects).length;
+                if(result[i]) {
+                    cv.objects[l] = result[i];
+                    console.log(result[i]);
+                    removeSessionItem(result[i].objectName, true);
+                }
+            }
+        }
+
+        if(cv.objects && Object.keys(cv.objects).length > 0){
+
+            let totalObjs = Object.keys(cv.objects).length;
+            let count = 0;
+
+            let listItems = [];
+
+            if(totalObjs > 0) {
+
+                myCanvas.loadFromJSON(cv,myCanvas.renderAll.bind(myCanvas), function (o, object) {
+
+                    count++;
+
+                    if(listItems[object.objectIndex]){
+                        listItems[object.objectIndex].push(object)
+                    } else {
+                        listItems[object.objectIndex] = [object];
+                    }
+
+                    // fabric.log(object, o);
+
+                });
+
+                myCanvas.selectable = false;
+                myCanvas.renderAll();
+
+            }
+        }
+    }
+
+    var radius = function (a, b) {
+        let aSquared = a * a;
+        let bSquared = b * b;
+
+        return Math.sqrt(aSquared + bSquared) / Math.sqrt(2);
+    };
+
+    var centerX = function(){
+        var x = Math.round(upperLeft + (groupWidth/3));
+        console.log("CENTERX: " + x);
+        return x;
+    };
+
+    var centerY = function(){
+        var y = Math.round(upperTop + (groupHeight/2));
+        console.log("CENTERY: " + y);
+        return y;
+    };
+
+    prevCanvas.push(myCanvas);
 
 </script>
 

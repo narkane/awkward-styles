@@ -73,7 +73,7 @@ console.log($('#storeBrands').val());
        @include('menu')      
        </div>
      
-     <div class="col-md-9 bg-white">
+     <div class="col-md-9">
         
      <div class="progressbar">
 
@@ -108,7 +108,7 @@ console.log($('#storeBrands').val());
 
                 <div class="tab-content" id="progressbar-tabContent">
                     <div class="tab-pane show active" id="progressbar-1" role="tabpanel" aria-labelledby="progressbar-1-tab">
-                        <div class="">
+                        <div>
                         <div class="col-md-12 pricing-product-list">
 
                                     <h5 class="pricing-product-title2">Artworks</h5>
@@ -171,7 +171,7 @@ $("input:checkbox").on('click', function() {
 });
 </script>
                     <div class="tab-pane" id="progressbar-2" role="tabpanel" aria-labelledby="progressbar-2-tab">
-                        <div class="">
+                        <div>
                             <div class="row">
 
 
@@ -439,7 +439,7 @@ $("input:checkbox").on('click', function() {
 
                     </div>
                     <div class="tab-pane" id="progressbar-3" role="tabpanel" aria-labelledby="progressbar-3-tab">
-                        <div class="">
+                        <div>
                             <div class="row">
                                 <div class="col-md-3">
                                     <h5 class="pricing-product-title2">Filters</h5>
@@ -531,7 +531,7 @@ $("input:checkbox").on('click', function() {
                         </div>
                     </div>
                     <div class="tab-pane" id="progressbar-4" role="tabpanel" aria-labelledby="progressbar-4-tab">
-                        <div class="">
+                        <div>
 
                             <table class="table table-bordered ">
                                 <thead>

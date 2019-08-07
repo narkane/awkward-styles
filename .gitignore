@@ -1,7 +1,7 @@
 /node_modules
 /ext
 /vendor
-
+/public/storage
 /nbproject
 libreadline.7.dylib
 /nbproject/private/

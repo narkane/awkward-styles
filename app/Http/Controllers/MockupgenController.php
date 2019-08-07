@@ -99,7 +99,7 @@ class MockupgenController extends Controller
             'attributes' => $attributes,
             'variants' => $variants,
             'token' => $this->getToken(),
-            'canvasUrls' => json_encode($this->standInImageUrls())
+            'canvasUrls' => $this->standInImageUrls()
         ]);
     }
 
@@ -116,11 +116,11 @@ class MockupgenController extends Controller
         $urls = [];
 
         // Get some URLS and TEMPLATES
-        $urls['shirt'] = ProductInformation::mediaById(112)[0]->url;
-        $urls['hoodie'] = ProductInformation::mediaById(111)[0]->url;
-        $urls['cap'] = ProductInformation::mediaById(1402)[0]->url;
-        $urls['bag'] = ProductInformation::mediaById(333)[0]->url;
-        $urls['cup'] = "/images/mug.jpg";
+        $urls['0'] = ProductInformation::mediaById(111)[0]->url;
+        $urls['1'] = ProductInformation::mediaById(112)[0]->url;
+        $urls['2'] = ProductInformation::mediaById(1402)[0]->url;
+        $urls['3'] = ProductInformation::mediaById(333)[0]->url;
+        //$urls['cup'] = "/images/mug.jpg";
 
         return $urls;
 

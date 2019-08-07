@@ -9,6 +9,22 @@ var line4;
 var objectIndex = 1;
 var timer;
 
+var hoodieCanvas, shirtCanvas, hatCanvas, bagCanvas;
+
+/**
+ * 0: hoodie
+ * 1: shirt
+ * 2: hat
+ * 4: bag
+ */
+
+var prevCanvas = [
+    hoodieCanvas,
+    shirtCanvas,
+    hatCanvas,
+    bagCanvas
+];
+
 /**
  * JSON 0 always empty
  *
@@ -28,8 +44,6 @@ var templateVars = {
     url: null,
     size: 'L'
 };
-
-
 
 var sessionInfo = function(item, file = null){
 
@@ -96,17 +110,41 @@ var sessionInfo = function(item, file = null){
 
 };
 
-function setShirtImage(imgurl){
+function setShirtImage(imgurl, canvasType = "canvas"){
+
+    var canvasToUse = null;
+
+    var tag = false;
+
+    switch(canvasType) {
+        default: tag = "main"; break;
+        case 0: tag = 111; break;
+        case 1: tag = 112; break;
+        case 2: tag = 1402; break;
+        case 3: tag = 333; break;
+    }
 
     //setup front side canvas
-    canvas = new fabric.Canvas('tcanvas', {
-        hoverCursor: 'pointer',
-        selection: true,
-        selectionBorderColor: 'blue',
-        width: newWidth,
-        height: newHeight,
-        preserveObjectStacking: true
-    });
+    if(isNaN(canvasType)) {
+        canvas = canvasToUse = new fabric.Canvas('tcanvas', {
+            hoverCursor: 'pointer',
+            selection: true,
+            selectionBorderColor: 'blue',
+            width: newWidth,
+            height: newHeight,
+            preserveObjectStacking: true
+        });
+
+    } else {
+        canvasToUse = prevCanvas[canvasType] = new fabric.Canvas(tag + '_canvas', {
+            hoverCursor: 'pointer',
+            selection: true,
+            selectionBorderColor: 'blue',
+            width: 400,
+            height: 400,
+            preserveObjectStacking: true
+        })
+    }
 
     let img = new Image();
 
@@ -127,20 +165,18 @@ function setShirtImage(imgurl){
             newWidth = imageWidth / (imageHeight / newHeight);
         }
 
-        $("#hoodieFacing").css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
+        $("#" + ((!isNaN(tag)) ? tag + "_image" : "shirtFacing")).css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
 
-        $("#shirtDiv").css({'width': newWidth, 'height': newHeight});
-        $(".canvas-container").css({'width': newWidth, 'height': newHeight});
-        //$(".upper-canvas").css({'width': newWidth, 'height': newHeight});
-        //$(".upper-canvas").width(newWidth).height(newHeight);
-        $("#hoddieDrawingArea").css({'width': newWidth, 'height': newHeight});
-        //$("#tcanvas").css({'width': newWidth, 'height': newHeight});
-        //$("#tcanvas").width(newWidth).height(newHeight);
+        $("#" + ((!isNaN(tag)) ? tag + "_div"  : "shirtDiv")).css({'width': newWidth, 'height': newHeight});
 
-        canvas.setHeight(newHeight);
-        canvas.setWidth(newWidth);
+        var drawingArea = "#" + ((!isNaN(tag)) ? tag + "_area" : "shirtDrawingArea");
 
-        //setTemplate();
+        $(drawingArea).css({'width': newWidth, 'height': newHeight});
+        $(drawingArea).find(".canvas-container").css({'width': newWidth, 'height': newHeight});
+        canvasToUse.setHeight(newHeight);
+        canvasToUse.setWidth(newWidth);
+
+        setTemplate(tag);
 
         img = null;
 
@@ -149,10 +185,10 @@ function setShirtImage(imgurl){
     img.src = imgurl;
 }
 
-function setTemplate() {
+function setTemplate(main = "main") {
 
     $.ajax({
-        url: "/api/template/" + templateVars.pid + "/" + templateVars.size,
+        url: "/api/template/" + ((isNaN(main)) ? templateVars.pid : main) + "/" + templateVars.size,
         contentType: 'application/json',
         //dataType: 'json',
         type: 'GET',
@@ -161,53 +197,62 @@ function setTemplate() {
 
             var group = [];
 
-            // Run Through Template(s)
-            for (var i = 1; i < result.values.length; i++) {
+            var upleft = uptop = 999;
 
-                // EMPTY OBJECT
-                if(result.values[i].x === 0 && result.values[i].y === 0 && result.values[i].width === 0 && result.values[i].height === 0){
-                    continue;
+            if(result.values) {
+
+                // Run Through Template(s)
+                for (var i = 1; i < result.values.length; i++) {
+
+                    // EMPTY OBJECT
+                    if (result.values[i].x === 0 && result.values[i].y === 0 && result.values[i].width === 0 && result.values[i].height === 0) {
+                        continue;
+                    }
+
+                    if (result.values[i].shape === 1) {
+
+                        group.push(new fabric.Circle({
+                            radius: result.values[i].width / 2,
+                            height: result.values[i].height,
+                            width: result.values[i].width,
+                            top: result.values[i].y, // y - h
+                            left: result.values[i].x, // x - w
+                            fill: '#000000',
+                            originX: "left",
+                            originY: "top",
+                            stroke: "rgba(255,0,0,1)",
+                            strokeWidth: 1
+                        }));
+
+                    } else if (result.values[i].shape === 4) {
+
+                        group.push(new fabric.Rect({
+                            width: result.values[i].width,
+                            height: result.values[i].height,
+                            top: result.values[i].y,
+                            left: result.values[i].x,
+                            fill: '#000000',
+                            originX: "left",
+                            originY: "top",
+                            stroke: "rgba(255,0,0,1)",
+                            strokeWidth: 1
+                        }));
+                    }
+                    upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
+                    upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
+
+                    uptop = (result.values[i].y < uptop) ? result.values[i].y : uptop;
+                    upleft = (result.values[i].x < upleft) ? result.values[i].x : upleft;
+
                 }
-
-                if (result.values[i].shape === 1) {
-
-                    group.push(new fabric.Circle({
-                        radius: result.values[i].width / 2,
-                        height: result.values[i].height,
-                        width: result.values[i].width,
-                        top: result.values[i].y , // y - h
-                        left: result.values[i].x , // x - w
-                        fill: '#000000',
-                        originX: "left",
-                        originY: "top",
-                        stroke: "rgba(255,0,0,1)",
-                        strokeWidth: 1
-                    }));
-
-                } else if (result.values[i].shape === 4) {
-
-                    group.push(new fabric.Rect({
-                        width: result.values[i].width,
-                        height: result.values[i].height,
-                        top: result.values[i].y,
-                        left: result.values[i].x,
-                        fill: '#000000',
-                        originX: "left",
-                        originY: "top",
-                        stroke: "rgba(255,0,0,1)",
-                        strokeWidth: 1
-                    }));
-                }
-                upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
-                upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
             }
 
             if(group.length > 0) {
                 var g = new fabric.Group(group, {
                     originY: "top",
                     originX: "left",
-                    left: upperLeft,
-                    top: upperTop,
+                    left: upleft,
+                    top: uptop,
                     selectable: false,
                     opacity: 0.3
                 });
@@ -215,34 +260,49 @@ function setTemplate() {
                 groupWidth = g.width;
                 groupHeight = g.height;
 
-                canvas.clipPath = g;
+                let tag = main;
+                switch(main) {
+                    default: tag = false; break;
+                    case 111: tag = 0; break;
+                    case 112: tag = 1; break;
+                    case 1402: tag = 2; break;
+                    case 333: tag = 3; break;
+                }
 
-                canvas.add(g);
+                if(isNaN(main)){
+                    myCanvas = canvas;
+                    $("#upper-canvas").width(newWidth).height(newHeight);
+                } else {
+                    myCanvas = prevCanvas[tag];
+                }
 
-                canvas.moveTo(g, 0);
+                myCanvas.clipPath = g;
 
-                $("#upper-canvas").width(newWidth).height(newHeight);
+                myCanvas.add(g);
+
+                myCanvas.moveTo(g, 0);
 
             }
 
-            $.ajax({
-                url: "/api/mockgen",
-                type: 'GET',
-                method: 'GET',
-                cache: false,
-                contentType: 'application/json',
-                processData: false,
-                success: (result) => {
+            if(isNaN(main)) {
+                $.ajax({
+                    url: "/api/mockgen",
+                    type: 'GET',
+                    method: 'GET',
+                    cache: false,
+                    contentType: 'application/json',
+                    processData: false,
+                    success: (result) => {
 
-                    fromStorage(result);
+                        fromStorage(result);
 
-                },
-                error: (error, data) => {
-                    console.log(error);
-
-                    fromStorage();
-                }
-            });
+                    },
+                    error: (error, data) => {
+                        console.log(error);
+                        fromStorage();
+                    }
+                });
+            }
 
         },
         error: (err, data) => {
@@ -253,7 +313,7 @@ function setTemplate() {
             var w = newWidth / 3;
             var h = newHeight / 3;
 
-            $("#hoddieDrawingArea").css({"top": '35%', "left": '35%', "width": w, "height": h});
+            $("#shirtDrawingArea").css({"top": '35%', "left": '35%', "width": w, "height": h});
         }
     });
 }
@@ -295,6 +355,11 @@ function fromStorage(result = null){
                     listItems[object.objectIndex] = [object];
                 }
 
+                for(var a in prevCanvas){
+                    prevCanvas[a].add(object);
+                    prevCanvas[a].renderAll();
+                }
+
                 if(count === totalObjs){
                     for(var i in listItems){
                         for(var j in listItems[i]){
@@ -315,9 +380,7 @@ function fromStorage(result = null){
                         }
                     }
                 }
-
                 fabric.log(object, o);
-
             });
         }
     }
@@ -406,7 +469,7 @@ $(document).ready(function () {
     });
 
     $(document).on("click", ".remove-art", function(){
-        let id = $(this).parent().parent().attr('id');
+        let id = $(this).parent().parent().parent().attr('id');
         removeListItem(id);
         removeSessionItem(id);
         removeItemByName(id);
@@ -464,20 +527,30 @@ $(document).ready(function () {
 
         // Clear All Objects
         canvas.clear();
-        setTemplate();
+        setTemplate("main");
     });
 
     /**
      * END PAGE FUNCTIONS
      */
 
-    $("#hoodieFacing").on('change',setTemplate());
-
     let tmpOpacity = 0;
     canvas.on({
         'object:moving': function (e) {
             canvas.clipPath.opacity = 0.5;
-            console.log(tmpOpacity);
+            // Set objects?
+            for(var c in prevCanvas){
+                let can = prevCanvas[c].getObjects();
+                for(var obj in can){
+                    if(e.target.objectName === can[obj].objectName){
+                        can[obj].left = e.target.left;
+                        can[obj].top = e.target.top;
+                        prevCanvas[c].renderAll();
+                    }
+                }
+
+            }
+
         },
         'object:modified': function (e) {
             canvas.clipPath.opacity = 0.05;
@@ -769,6 +842,11 @@ function addAwkwardImage(src, info = false){
                 x: image.left,
                 y: image.top
             };
+        } else {
+            options = {
+                x: image.left,
+                y: image.top
+            }
         }
 
         createListItem(name, 'Image', options);
@@ -776,6 +854,12 @@ function addAwkwardImage(src, info = false){
         image.scaleToWidth(newWidth);
         //image.scale(getRandomNum(0.1, 0.25)).setCoords();
         canvas.add(image);
+
+        for(var a in prevCanvas){
+            prevCanvas[a].add(image);
+        }
+
+        console.log(prevCanvas[0].toObject());
 
         sessionInfo(image, info);
     });
@@ -1021,15 +1105,23 @@ function removeItemByName(name){
     if(obj){
         canvas.remove(obj);
     }
+    for(var a in prevCanvas){
+        obj = findItemByName(name, prevCanvas[a]);
+        if(obj) {
+            prevCanvas[a].remove(obj);
+        }
+    }
 }
 
 /**
  * Locate an item by object name
  * @param name
+ * @param theCanvas
  * @returns {boolean|*}
  */
-function findItemByName(name){
-    let objs = canvas.getObjects();
+function findItemByName(name, theCanvas = null){
+
+    let objs = (!theCanvas) ? canvas.getObjects() : theCanvas.getObjects();
     for(var i in objs){
         if(objs[i]['objectName'] === name){
             return objs[i];

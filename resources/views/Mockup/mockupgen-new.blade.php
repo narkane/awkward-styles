@@ -204,8 +204,8 @@
 
                     <div id="shirtDiv" class="page"
                          style="position: relative; background-color: rgb(255, 255, 255);">
-                        <img id="hoodieFacing" src=""/>
-                        <div id="hoddieDrawingArea"
+                        <img id="shirtFacing" src=""/>
+                        <div id="shirtDrawingArea"
                              style="position: absolute;top: 0px;left: 0px;z-index: 10;">
                             <canvas id="tcanvas" class="hover"
                                     style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
@@ -378,8 +378,70 @@
 
             </div>
     </section>
-
 </div>
+    <div class="row" id="abcde">
+        <div class="col-md-3">
+            <div class="container shirt-block">
+
+                <div id="111_div" class="page"
+                     style="position: relative; background-color: rgb(255, 255, 255);">
+                    <img id="111_image" src=""/>
+                    <div id="111_area"
+                         style="position: absolute;top: 0px;left: 0px;z-index: 10;">
+                        <canvas id="111_canvas" class="hover"
+                                style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="container shirt-block">
+
+                <div id="112_div" class="page"
+                     style="position: relative; background-color: rgb(255, 255, 255);">
+                    <img id="112_image" src=""/>
+                    <div id="112_area"
+                         style="position: absolute;top: 0px;left: 0px;z-index: 10;">
+                        <canvas id="112_canvas" class="hover"
+                                style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="container shirt-block">
+
+                <div id="1402_div" class="page"
+                     style="position: relative; background-color: rgb(255, 255, 255);">
+                    <img id="1402_image" src=""/>
+                    <div id="1402_area"
+                         style="position: absolute;top: 0px;left: 0px;z-index: 10;">
+                        <canvas id="1402_canvas" class="hover"
+                                style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="container shirt-block">
+
+                <div id="333_div" class="page"
+                     style="position: relative; background-color: rgb(255, 255, 255);">
+                    <img id="333_image" src=""/>
+                    <div id="333_area"
+                         style="position: absolute;top: 0px;left: 0px;z-index: 10;">
+                        <canvas id="333_canvas" class="hover"
+                                style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 
     <!-- Modal -->
     <div class="modal" id="designModal" tabindex="-1" role="document" aria-labelledby="designModalLabel" aria-hidden="true">
@@ -412,6 +474,10 @@
             size: 'XS',
             url: null
         };
+
+        @foreach($canvasUrls as $k => $urls)
+            setShirtImage('{{ $urls }}', {{ $k }});
+        @endforeach
 
         // MAIN IMAGE
         setShirtImage('{{ $images[0]->full_url }}');
