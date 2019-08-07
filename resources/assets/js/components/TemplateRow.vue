@@ -3,59 +3,60 @@
     <v-layout row>
       <v-flex xs1 class="variable">
         <select
-                v-model="template.geo.shape"
-                style="marginTop:14px;padding:10px 5px 10px 5px;"
-                @change="()=>{dataChange(template.geo);}"
+          v-model="template.geo.shape"
+          style="marginTop:14px;padding:10px 5px 10px 5px;"
+          @change="()=>{dataChange(template.geo);}"
         >
           <option selected value="4">Rectangle</option>
+          <option value="2">Custom</option>
           <option value="1">Circle</option>
         </select>
       </v-flex>
       <v-flex xs1 class="variable">
         <v-text-field
-                v-model="template.geo.x"
-                class="inputNumber"
-                type="number"
-                label="X"
-                @change="()=>{dataChange(template.geo);}"
-                pattern="\d+"
+          v-model="template.geo.x"
+          class="inputNumber"
+          type="number"
+          label="X"
+          @change="()=>{dataChange(template.geo);}"
+          pattern="\d+"
         ></v-text-field>
       </v-flex>
       <v-flex xs1 class="variable">
         <v-text-field
-                v-model="template.geo.y"
-                class="inputNumber"
-                type="number"
-                label="Y"
-                @change="()=>{dataChange(template.geo);}"
-                pattern="\d+"
+          v-model="template.geo.y"
+          class="inputNumber"
+          type="number"
+          label="Y"
+          @change="()=>{dataChange(template.geo);}"
+          pattern="\d+"
         ></v-text-field>
       </v-flex>
       <v-flex xs1 class="variable">
         <v-text-field
-                v-model="template.geo.width"
-                class="inputNumber"
-                type="number"
-                label="Width"
-                @change="()=>{dataChange(template.geo);}"
-                pattern="\d+"
+          v-model="width"
+          class="inputNumber"
+          type="number"
+          label="Width"
+          @change="()=>{dataChange(template.geo);}"
+          pattern="\d+"
         ></v-text-field>
       </v-flex>
       <v-flex xs1 class="variable">
         <v-text-field
-                v-model="template.geo.height"
-                class="inputNumber"
-                type="number"
-                label="Height"
-                @change="()=>{dataChange(template.geo);}"
-                pattern="\d+"
+          v-model="height"
+          class="inputNumber"
+          type="number"
+          label="Height"
+          @change="()=>{dataChange(template.geo);}"
+          pattern="\d+"
         ></v-text-field>
       </v-flex>
       <v-flex xs1 class="constant">
         <v-text-field
-                v-model="template.ratio"
-                @change="()=>{setRatSize(template.ratio, template.size);}"
-                label="Ratio"
+          v-model="template.ratio"
+          @change="()=>{setRatSize(template.ratio, template.size);}"
+          label="Ratio"
         />
       </v-flex>
     </v-layout>
@@ -92,81 +93,121 @@
 </template>
 
 <script>
-  export default {
-    name: "TemplateRow",
-    data() {
-      return {
-        template: {
-          geo: { shape: 4 },
-          ratio: 0,
-          size: "XS"
-        }
-      };
-    },
-    methods: {
-      setX: function(x) {
-        this.template.geo.x = x;
-      },
-      setY: function(y) {
-        this.template.geo.y = y;
-      },
-      setW: function(w) {
-        this.template.geo.width = w;
-      },
-      setH: function(h) {
-        this.template.geo.height = h;
-      },
-      getShape: function() {
-        return this.template.geo.shape;
-      },
-      getTemplateAxios: function() {
-        this.setRatSize(this.template.ratio, this.template.size);
-        this.rt();
-        this.getTemplate();
+export default {
+  name: "TemplateRow",
+  data() {
+    return {
+      template: {
+        geo: { shape: 4, polyArr: [] },
+        ratio: 0,
+        size: "XS"
       }
+    };
+  },
+  methods: {
+    setX: function(x) {
+      this.template.geo.x = x;
     },
-    props: {
-      setRatSize: Function,
-      dataChange: Function,
-      getTemplate: Function,
-      rt: Function
+    setY: function(y) {
+      this.template.geo.y = y;
     },
-    computed: {
-      inchesWtemp: {
-        get() {
-          return this.template.geo.width / this.template.ratio;
-        },
-        set(value) {
-          this.template.ratio = this.template.geo.width / value;
-          // this.template.geo.width = value * this.template.ratio;
-        }
-      },
-      inchesHtemp: {
-        get() {
-          return this.template.geo.height / this.template.ratio;
-        },
-        set(value) {
-          this.template.ratio = this.template.geo.height / value;
-          // this.template.geo.height = value * this.template.template.ratio;
-        }
-      }
+    setW: function(w) {
+      this.template.geo.width = w;
     },
-    mounted() {
+    setH: function(h) {
+      this.template.geo.height = h;
+    },
+    getShape: function() {
+      return this.template.geo.shape;
+    },
+    getTemplateAxios: function() {
       this.setRatSize(this.template.ratio, this.template.size);
+      this.rt();
+      this.getTemplate();
+    }
+  },
+  props: {
+    setRatSize: Function,
+    dataChange: Function,
+    getTemplate: Function,
+    rt: Function
+  },
+  computed: {
+    inchesWtemp: {
+      get() {
+        return this.template.geo.width / this.template.ratio;
+      },
+      set(value) {
+        this.template.ratio = this.template.geo.width / value;
+        // this.template.geo.width = value * this.template.ratio;
+      }
+    },
+    inchesHtemp: {
+      get() {
+        return this.template.geo.height / this.template.ratio;
+      },
+      set(value) {
+        this.template.ratio = this.template.geo.height / value;
+        // this.template.geo.height = value * this.template.template.ratio;
+      }
+    },
+    width: {
+      get() {
+        if (
+          this.template.geo.shape == 1 &&
+          this.template.geo.width != this.template.geo.height
+        ) {
+          // let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = 50;
+          this.template.geo.height = 50;
+        }
+        return this.template.geo.width;
+      },
+      set(value) {
+        this.template.geo.width = value;
+        if (this.template.geo.shape == 1) {
+          this.template.geo.height = value;
+        }
+      }
+    },
+    height: {
+      get() {
+        if (
+          this.template.geo.shape == 1 &&
+          this.template.geo.width != this.template.geo.height
+        ) {
+          // let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = 50;
+          this.template.geo.height = 50;
+        }
+        return this.template.geo.height;
+      },
+      set(value) {
+        this.template.geo.height = value;
+        if (this.template.geo.shape == 1) {
+          this.template.geo.width = value;
+        }
+      }
+    }
+  },
+  mounted() {
+    this.setRatSize(this.template.ratio, this.template.size);
+    if (this.template.geo) {
       this.dataChange(this.template.geo);
     }
-  };
+  }
+};
 </script>
 
 <style scoped>
-  .constant {
-    background-color: lightcoral;
-  }
-  .variable {
-    background-color: lightgreen;
-  }
-  #size {
-    margin-top: 8px;
-    padding-left: 14px;
-  }
+.constant {
+  background-color: lightcoral;
+}
+.variable {
+  background-color: lightgreen;
+}
+#size {
+  margin-top: 8px;
+  padding-left: 14px;
+}
 </style>
