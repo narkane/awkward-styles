@@ -146,7 +146,7 @@
     </style>
     <script>
         function redirect(page){
-            window.location.href = "<?php echo e(url("/products")); ?>/"+page;
+            window.location.href = "<?php echo e(url("/product")); ?>/"+page;
         }
     </script>
 

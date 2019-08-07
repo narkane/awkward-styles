@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use Aimeos\Controller\Frontend\Exception;
+use Aimeos\Shop\Base\Aimeos;
+use Aimeos\Shop\Controller\BasketController;
+use App\ProductInformation;
 use Illuminate\Http\Request;
 use App\Http\Services\MockupgenService;
 use DB;
 use Illuminate\Support\Facades\URL;
+use Aimeos\MShop\Order\Item\Base\Product\Iface;
 
 class MockupgenController extends Controller
 {
@@ -86,14 +91,54 @@ class MockupgenController extends Controller
         //list($w,$h) = getimagesize((strpos($images[0]->full_url, "http://") ? $images[0]->full_url :
         //URL::to("/") . $images[0]->full_url));
 
-        return view('Mockup.mockupgen-new', [
+        return view('Mockup.' . ($request->has('standAlone') ? 'standalone' : 'mockupgen-new'), [
             'art' => $art,
             'images' => $images,
             'pid' => $pid,
             'artwork' => $artwork,
             'attributes' => $attributes,
             'variants' => $variants,
-            'token' => $this->getToken()
+            'token' => $this->getToken(),
+            'canvasUrls' => json_encode($this->standInImageUrls())
         ]);
     }
+
+    private function standInImageUrls(){
+
+        /*
+        // hat 1402
+        // shirt 112
+        // hoodie 111
+        // bag 333
+        // cup
+        */
+
+        $urls = [];
+
+        // Get some URLS and TEMPLATES
+        $urls['shirt'] = ProductInformation::mediaById(112)[0]->url;
+        $urls['hoodie'] = ProductInformation::mediaById(111)[0]->url;
+        $urls['cap'] = ProductInformation::mediaById(1402)[0]->url;
+        $urls['bag'] = ProductInformation::mediaById(333)[0]->url;
+        $urls['cup'] = "/images/mug.jpg";
+
+        return $urls;
+
+    }
+
+    /*
+    public function addProduct(Request $request){
+        $ct = app( 'Aimeos\Shop\Base\Context')->get();
+        try {
+
+            $basket = \Aimeos\Controller\Frontend\Factory::createController($ct, 'basket')->get();
+            $basket->addProduct($request->input('pid'));
+        } catch (Exception $e) {
+            die($e->getMessage());
+        }
+
+    }
+    */
+
+
 }

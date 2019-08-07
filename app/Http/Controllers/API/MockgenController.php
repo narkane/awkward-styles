@@ -18,8 +18,29 @@ class MockgenController extends Controller
     public function setSession(Request $request)
     {
 
+        $allowedMimeTypes = ['image/jpeg','image/gif','image/png','image/bmp','image/svg+xml'];
+
+        // TODO: Image Checks
+        $image = ($request->hasFile('file')) ? $request->file('file') : null;
+
+        if(!is_null($image) && !in_array($image->getMimeType(), $allowedMimeTypes) ){
+            return response()->json([
+                'status' => 'error',
+            'message' => 'Must be an Image',
+                'type' => $image->getMimeType()]);
+        }
+
         $name = $request->input('name',null);
         $object = $request->input('myObject', null);
+
+        // Set temporary
+        if($image != null) {
+            $image->storePubliclyAs("/public", $name . "." . $image->getClientOriginalExtension());
+
+            $object = substr($object, 0,-1) . ',"src":"'
+                . url("/storage") . "/" . $name ."."
+                . $image->getClientOriginalExtension() . '"}';
+        }
 
         // Be sure that items don't conflict
         $objects = $request->session()->get('canvas_objects', null);
@@ -34,7 +55,8 @@ class MockgenController extends Controller
             }
 
             if ($replacer) {
-                $objects[$replacer] = ($object);
+                $src = explode(",", $objects[$replacer]);
+                $objects[$replacer] = (substr($object, 0,-1) . "," . $src[count($src) - 1]);
             } else {
                 $objects[$name] = ($object);
             }
@@ -47,7 +69,9 @@ class MockgenController extends Controller
 
         } else {
             // Create New Session
-            $request->session()->put('canvas_objects', [$name => ($object)]);
+            $arr = [];
+            $arr[$name] = ($object);
+            $request->session()->put('canvas_objects', $arr);
         }
         return response()->json(['status' => 'completed']);
     }

@@ -30,19 +30,28 @@ var templateVars = {
 };
 
 
-var sessionInfo = function(item){
+
+var sessionInfo = function(item, file = null){
 
     if(item.type === 'awkward-image' && item.toObject().src.length > 200){
 
-        console.log(item.toObject().src);
-
         var data = new FormData();
+        var obj = item.toObject();
+        delete obj.src;
 
-        data.append("name",item.toObject().objectName);
-        data.append("myObject", JSON.stringify(item.toObject()));
+        obj.objectIndex = canvas.getObjects().indexOf(item);
+
+        data.append("name",obj.objectName);
+
+        if(file){
+            data.append("file", file);
+        }
+
+        data.append("myObject", JSON.stringify(obj));
+        data.append("_token", $('[name="_token"]').val());
 
         $.ajax({
-            url: "/api/mockgen/",
+            url: "/api/mockgen",
             type: 'POST',
             method: 'POST',
             enctype: 'multipart/form-data',
@@ -217,7 +226,7 @@ function setTemplate() {
             }
 
             $.ajax({
-                url: "/api/mockgen/",
+                url: "/api/mockgen",
                 type: 'GET',
                 method: 'GET',
                 cache: false,
@@ -254,11 +263,15 @@ function fromStorage(result = null){
 
     // Merge
     if(result != null && Object.keys(result).length){
-        if(Object.keys(cv.objects).length < 1) { cv.objects = []; }
+
+        // If downloaded, remove from site session
+        if(!cv.objects) { cv.objects = []; }
         for(var i in result){
             let l = Object.keys(cv.objects).length;
             if(result[i]) {
                 cv.objects[l] = result[i];
+                console.log(result[i]);
+                removeSessionItem(result[i].objectName, true);
             }
         }
     }
@@ -287,10 +300,17 @@ function fromStorage(result = null){
                         for(var j in listItems[i]){
                             createListItem(listItems[i][j].objectName,
                                 ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
-                                ((listItems[i][j].type === "awkward-image" &&
-                                    listItems[i][j].objectWidth && listItems[i][j].objectHeight) ?
-                                    { width: listItems[i][j].objectWidth, height: listItems[i][j].objectHeight } :
-                                    null )
+                                ((listItems[i][j].type === "awkward-image") ?
+                                    {
+                                        width: listItems[i][j].objectWidth,
+                                        height: listItems[i][j].objectHeight,
+                                        x: listItems[i][j].left,
+                                        y: listItems[i][j].top
+                                    } :
+                                    {
+                                        x: listItems[i][j].left,
+                                        y: listItems[i][j].top
+                                    } )
                             );
                         }
                     }
@@ -357,10 +377,8 @@ $(document).ready(function () {
             var reader = new FileReader();
 
             reader.onload = function() {
-                addAwkwardImage(reader.result, true);
+                addAwkwardImage(reader.result, e.target.files[0]);
             };
-
-
 
             reader.readAsDataURL(e.target.files[0]);
         }
@@ -395,13 +413,13 @@ $(document).ready(function () {
     });
 
     $(document).on("click", ".art-down", function(){
-        let id = $(this).parent().parent().attr('id');
-        let sibling = $(this).parent().parent().next();
+        let id = $(this).parent().parent().parent().attr('id');
+        let sibling = $(this).parent().parent().parent().next();
 
         if(sibling.length){
-            moveItemDownByName(id, $(this).parent().parent().next());
-            let existing = $(this).parent().parent()[0].outerHTML;
-            $(this).parent().parent().remove();
+            moveItemDownByName(id, $(this).parent().parent().parent().next());
+            let existing = $(this).parent().parent().parent()[0].outerHTML;
+            $(this).parent().parent().parent().remove();
             sibling.after(existing);
         }
 
@@ -409,15 +427,15 @@ $(document).ready(function () {
     });
 
     $(document).on("click", ".art-up", function(){
-        let id = $(this).parent().parent().attr('id');
-        let sibling = $(this).parent().parent().prev();
+        let id = $(this).parent().parent().parent().attr('id');
+        let sibling = $(this).parent().parent().parent().prev();
 
         if(sibling.length) {
-            moveItemUpByName(id, $(this).parent().parent().prev());
+            moveItemUpByName(id, $(this).parent().parent().parent().prev());
 
             // Move down the list if possible
-            let existing = $(this).parent().parent()[0].outerHTML;
-            $(this).parent().parent().remove();
+            let existing = $(this).parent().parent().parent()[0].outerHTML;
+            $(this).parent().parent().parent().remove();
             sibling.before(existing);
         }
 
@@ -463,6 +481,7 @@ $(document).ready(function () {
         },
         'object:modified': function (e) {
             canvas.clipPath.opacity = 0.05;
+            setCoordinates(e.target);
             if(e.target.type === 'awkward-image' && e.target.toObject().src.length > 200){
                 var startTimer = function() {
                     clearTimeout(timer);
@@ -542,7 +561,10 @@ $(document).ready(function () {
         textSample.fontStyle = textString.css('font-style');
         textSample.fontWeight = (textString.css('font-weight') > 400) ? 'bold' : '';
 
-        createListItem(name, 'Text');
+        createListItem(name, 'Text', {
+            x: textSample.left,
+            y: textSample.top
+        });
 
         canvas.add(textSample);
         canvas.item(canvas.item.length - 1).hasRotatingPoint = true;
@@ -741,7 +763,12 @@ function addAwkwardImage(src, info = false){
         })(image.toObject);
 
         if(info){
-            options = { width: w, height: h };
+            options = {
+                width: w,
+                height: h,
+                x: image.left,
+                y: image.top
+            };
         }
 
         createListItem(name, 'Image', options);
@@ -750,6 +777,7 @@ function addAwkwardImage(src, info = false){
         //image.scale(getRandomNum(0.1, 0.25)).setCoords();
         canvas.add(image);
 
+        sessionInfo(image, info);
     });
 }
 
@@ -767,6 +795,7 @@ function onObjectSelected(e) {
     selectedObject.hasRotatingPoint = true;
     $("#imageOpacity").val(selectedObject.getOpacity() * 100);
     $("#opacityLabel").html(selectedObject.getOpacity() * 100);
+    setBorder(selectedObject);
     if (selectedObject && selectedObject.isType('awkward-text')) {
 
         let textString = $("#text-string");
@@ -791,6 +820,28 @@ function onObjectSelected(e) {
 function onSelectedCleared(e) {
     $("#texteditor").css('display', 'none');
     $("#text-string").val("").removeAttr('style');
+}
+
+/**
+ * Set the X and Y for object within UL
+ * @param id
+ */
+function setCoordinates(id){
+    $("#" + id.objectName).find(".object_x").html('X: ' + id.left.toFixed(2));
+    $("#" + id.objectName).find(".object_y").html('Y: ' + id.top.toFixed(2));
+}
+
+function setBorder(id){
+
+    $("#objectHolder").children().each(function(index, item){
+        console.log(item);
+        if($(item).attr('id') === id.objectName){
+            $(item).addClass('border-danger').css("border-radius","10px");
+        } else {
+            $(item).removeClass('border-danger').css("border-radius", "0px");
+        }
+    });
+
 }
 
 /**
@@ -876,14 +927,22 @@ function randomString(){
 
 function createListItem(id, type, options = null){
 
-    var list = '<li class="list-group-item" id="'+id+'" draggable="true">' +
-    type + ' <span style="float:right; text-space: 5px;">' +
+    var list = '<li class="list-group-item mb-3" id="'+id+'" draggable="true">' +
+    '<div class="row"><div class="col-sm-6">' + type + '</div>' +
+        '<div class="col-sm-6 text-right">' +
     '<span type="button" class="fa fa-arrow-up art-up"></span> ' +
     '<span type="button" class="fa fa-arrow-down art-down"></span> ' +
     '<span type="button" class="fa fa-trash-alt remove-art"></span>' +
-    '</span>';
+    '</div></div>' +
+        '<div class="row">' +
+        '<div class="col-sm-6 object_x">X: ' + options.x + '</div>' +
+        '<div class="col-sm-6 object_y">Y: ' + options.y + '</div>' +
+        '</div>';
 
-    if(options){
+    delete options.x;
+    delete options.y;
+
+    if(Object.keys(options).length > 0){
         list += '<div class="bg-info p-3 text-light font-weight-bold">';
         for(var a in options){
             list += a + ": " + options[a] + " ";
@@ -908,14 +967,17 @@ function removeListItem(id){
 /**
  * Remove an item from the session by object name
  * @param id
+ * @param siteSession
  */
-function removeSessionItem(id){
+function removeSessionItem(id, siteSession = false){
 
     let item = findItemByName(id);
 
     console.log(item);
 
-    if(item.type === 'awkward-image' && item.toObject().src.length > 200){
+    if((item.type === 'awkward-image' && item.toObject().src.length > 200) || siteSession){
+
+        console.log("ID: " + id);
 
         $.ajax({
             url: "/api/mockgen/remove/" + id,
@@ -999,11 +1061,11 @@ function moveItemUpByName(name, sibling, full = false){
                 canvas.bringForward(obj);
             }
         }
+        console.log(canvas.getObjects().indexOf(obj));
+        obj.objectIndex = canvas.getObjects().indexOf(obj);
+        sessionInfo(obj);
+        canvas.renderAll();
     }
-    console.log(canvas.getObjects().indexOf(obj));
-    obj.objectIndex = canvas.getObjects().indexOf(obj);
-    sessionInfo(obj);
-    canvas.renderAll();
 }
 
 /**
@@ -1029,11 +1091,11 @@ function moveItemDownByName(name, sibling, full = false){
                 canvas.sendBackwards(obj);
             }
         }
+        console.log(canvas.getObjects().indexOf(obj));
+        obj.objectIndex = canvas.getObjects().indexOf(obj);
+        sessionInfo(obj);
+        canvas.renderAll();
     }
-    console.log(canvas.getObjects().indexOf(obj));
-    obj.objectIndex = canvas.getObjects().indexOf(obj);
-    sessionInfo(obj);
-    canvas.renderAll();
 }
 
 /**

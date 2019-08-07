@@ -358,14 +358,31 @@
 
                     </div>
 
+                <div class="card">
+                    <div class="card-header">
+                        Checkout
+                    </div>
+                    <div class="card-body">
+                        <form name="checkout" method="POST" action="{{ url('/basket') }}">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="b_prod[0][prodid]" value="{{ $pid }}"/>
+
+                            <button type="submit" name="submit" id="submitCheckout">
+                                Checkout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
                 </div>
 
             </div>
     </section>
+
 </div>
 
     <!-- Modal -->
-    <div class="modal fade" id="designModal" tabindex="-1" role="document" aria-labelledby="designModalLabel" aria-hidden="true">
+    <div class="modal" id="designModal" tabindex="-1" role="document" aria-labelledby="designModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered w-75 mw-100" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -396,6 +413,7 @@
             url: null
         };
 
+        // MAIN IMAGE
         setShirtImage('{{ $images[0]->full_url }}');
 
         $(document).ready(function(){
@@ -450,7 +468,13 @@
                 $("#opacityLabel").html($(this).val());
             });
 
+            /*
+            Load Other Templates
+             */
+
+
         });
+
     </script>
 
                   @endsection

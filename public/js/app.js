@@ -21407,12 +21407,6 @@ var LoaderResource = __WEBPACK_IMPORTED_MODULE_0_resource_loader__["Resource"];
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(51);
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
@@ -21510,7 +21504,7 @@ module.exports = defaults;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(19)))
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 if (false) {
@@ -21521,7 +21515,7 @@ if (false) {
 
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -21547,6 +21541,12 @@ module.exports = function(module) {
 	return module;
 };
 
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(51);
 
 /***/ }),
 /* 18 */
@@ -38347,7 +38347,7 @@ module.exports = __webpack_require__(132);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__App_vue__);
@@ -38361,7 +38361,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 __webpack_require__(47);
 
-window.Vue = __webpack_require__(16);
+window.Vue = __webpack_require__(15);
 
 
 
@@ -38411,7 +38411,7 @@ try {
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
 
-window.axios = __webpack_require__(14);
+window.axios = __webpack_require__(17);
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -55557,7 +55557,7 @@ if (token) {
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(17)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(16)(module)))
 
 /***/ }),
 /* 49 */
@@ -68760,7 +68760,7 @@ if (typeof jQuery === 'undefined') {
 var utils = __webpack_require__(5);
 var bind = __webpack_require__(18);
 var Axios = __webpack_require__(53);
-var defaults = __webpack_require__(15);
+var defaults = __webpack_require__(14);
 
 /**
  * Create an instance of Axios
@@ -68843,7 +68843,7 @@ function isSlowBuffer (obj) {
 "use strict";
 
 
-var defaults = __webpack_require__(15);
+var defaults = __webpack_require__(14);
 var utils = __webpack_require__(5);
 var InterceptorManager = __webpack_require__(62);
 var dispatchRequest = __webpack_require__(63);
@@ -69375,7 +69375,7 @@ module.exports = InterceptorManager;
 var utils = __webpack_require__(5);
 var transformData = __webpack_require__(64);
 var isCancel = __webpack_require__(22);
-var defaults = __webpack_require__(15);
+var defaults = __webpack_require__(14);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -81945,7 +81945,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n.data {\r\n  margin-left: 500px;\n}\n#drawingboard {\r\n  position: absolute;\r\n  margin-top: 3px;\r\n  left: 138px;\r\n  border: 1px yellow outset;\n}\n#productImage {\r\n  /* position: absolute; */\r\n  /* left: 0; */\n}\nbutton {\r\n  width: 80px;\r\n  background-color: lightgray;\r\n  border: 2px outset darkgray;\r\n  border-radius: 20px 20px 20px 20px !important;\r\n  padding: 2px 4px;\n}\r\n", ""]);
+exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  margin-top: 3px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#productImage {\n  /* position: absolute; */\n  /* left: 0; */\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
 
 // exports
 
@@ -82005,7 +82005,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       app: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["a" /* Application */]({
         width: 322,
         height: 385,
-        //backgroundColor: 0x1099bb,
+        backgroundColor: 0x1099bb,
         transparent: 1
       }),
       // drawArea: new PIXI.Rectangle(0, 0, 200, 300),
@@ -82181,7 +82181,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       console.log("loading into this.shapes[" + this.libraryCurrent + "]");
       this.geo[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
 
-      this.geo[this.libraryCurrent].lineStyle(3, 0x0000ff);
+      this.geo[this.libraryCurrent].lineStyle(1, 0x0000ff);
       this.geo[this.libraryCurrent].transparent = 1;
       this.geo[this.libraryCurrent].alpha = 0.1;
       // this.geo[this.libraryCurrent].beginFill(0x22ff88);
@@ -85797,7 +85797,7 @@ earcut.flatten = function (data) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17)(module), __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16)(module), __webpack_require__(7)))
 
 /***/ }),
 /* 86 */
@@ -91342,7 +91342,7 @@ if (false) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(true)
-		module.exports = factory(__webpack_require__(16));
+		module.exports = factory(__webpack_require__(15));
 	else if(typeof define === 'function' && define.amd)
 		define(["vue"], factory);
 	else if(typeof exports === 'object')
@@ -118040,7 +118040,7 @@ exports.push([module.i, "\n*[data-v-7cdae69f] {\r\n  --font-family-sans-serif: -
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_axios__);
 //
 //

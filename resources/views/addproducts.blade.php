@@ -73,7 +73,7 @@ console.log($('#storeBrands').val());
        @include('menu')      
        </div>
      
-     <div class="col-md-9">
+     <div class="col-md-9 bg-white">
         
      <div class="progressbar">
 
@@ -107,8 +107,8 @@ console.log($('#storeBrands').val());
                 </div>
 
                 <div class="tab-content" id="progressbar-tabContent">
-                    <div class="tab-pane fade show active" id="progressbar-1" role="tabpanel" aria-labelledby="progressbar-1-tab">
-                        <div class="pannel">
+                    <div class="tab-pane show active" id="progressbar-1" role="tabpanel" aria-labelledby="progressbar-1-tab">
+                        <div class="">
                         <div class="col-md-12 pricing-product-list">
 
                                     <h5 class="pricing-product-title2">Artworks</h5>
@@ -170,8 +170,8 @@ $("input:checkbox").on('click', function() {
   }
 });
 </script>
-                    <div class="tab-pane fade" id="progressbar-2" role="tabpanel" aria-labelledby="progressbar-2-tab">
-                        <div class="pannel">
+                    <div class="tab-pane" id="progressbar-2" role="tabpanel" aria-labelledby="progressbar-2-tab">
+                        <div class="">
                             <div class="row">
 
 
@@ -216,7 +216,7 @@ $("input:checkbox").on('click', function() {
                                                                         <img id="style_{{ $style['id'] }}" src="images/images/Sample-img.jpg" width="100%"> 
                                                                          
  <div class="edit"   data-toggle="modal" data-target="#myModal{{ $style['id'] }}"   >edit</div>
-<div id="myModal{{ $style['id'] }}" class="modal fade" role="dialog">
+<div id="myModal{{ $style['id'] }}" class="modal" role="dialog">
   <div class="modal-dialog"  >
 
     @if($style['id']==1)
@@ -438,8 +438,8 @@ $("input:checkbox").on('click', function() {
                         </div>
 
                     </div>
-                    <div class="tab-pane fade" id="progressbar-3" role="tabpanel" aria-labelledby="progressbar-3-tab">
-                        <div class="pannel">
+                    <div class="tab-pane" id="progressbar-3" role="tabpanel" aria-labelledby="progressbar-3-tab">
+                        <div class="">
                             <div class="row">
                                 <div class="col-md-3">
                                     <h5 class="pricing-product-title2">Filters</h5>
@@ -530,8 +530,8 @@ $("input:checkbox").on('click', function() {
                             </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="progressbar-4" role="tabpanel" aria-labelledby="progressbar-4-tab">
-                        <div class="pannel">
+                    <div class="tab-pane" id="progressbar-4" role="tabpanel" aria-labelledby="progressbar-4-tab">
+                        <div class="">
 
                             <table class="table table-bordered ">
                                 <thead>
@@ -590,7 +590,7 @@ $("input:checkbox").on('click', function() {
     </div>
 
     <!-- product images -->
-            <div class="modal markup-modal fade" id="productimages" tabindex="-1" role="dialog" aria-labelledby="availabeimagesLabel" aria-hidden="true">
+            <div class="modal markup-modal" id="productimages" tabindex="-1" role="dialog" aria-labelledby="availabeimagesLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">

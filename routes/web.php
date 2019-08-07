@@ -53,6 +53,8 @@ Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
 
+Route::post('/addtobasket', 'MockupgenController@addProduct');
+
 /**
  * Products Page
  */
