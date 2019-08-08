@@ -59,14 +59,14 @@
                                         <li>
                                             <div class="row">
                                                 <div class="col-md-3">
-                                                    <a href="/thetool/112" class="nav-l3-title">T-Shirt</a>
+                                                    <a href="/mockgenerator/112" class="nav-l3-title">T-Shirt</a>
 
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <a href="/thetool/88" class="nav-l3-title">Tank Top</a>
+                                                    <a href="/mockgenerator/88" class="nav-l3-title">Tank Top</a>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <a href="/thetool/111" class="nav-l3-title">Hoodie</a>
+                                                    <a href="/mockgenerator/111" class="nav-l3-title">Hoodie</a>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <a href="/comingsoon" class="nav-l3-title">More</a>
@@ -104,11 +104,11 @@
                                         <li>
                                             <div class="row">
                                                 <div class="col-md-3">
-                                                    <a href="/thetool/336" class="nav-l3-title">Bag</a>
+                                                    <a href="/mockgenerator/336" class="nav-l3-title">Bag</a>
 
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <a href="/thetool/684" class="nav-l3-title">Hat</a>
+                                                    <a href="/mockgenerator/684" class="nav-l3-title">Hat</a>
                                                 </div>
 
 
