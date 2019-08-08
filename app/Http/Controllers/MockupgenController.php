@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use Aimeos\Controller\Frontend\Exception;
 use Aimeos\Shop\Base\Aimeos;
 use Aimeos\Shop\Controller\BasketController;
+use App\ArtistDesigns;
 use App\ProductInformation;
 use Illuminate\Http\Request;
 use App\Http\Services\MockupgenService;
 use DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Aimeos\MShop\Order\Item\Base\Product\Iface;
 
@@ -123,6 +125,42 @@ class MockupgenController extends Controller
         //$urls['cup'] = "/images/mug.jpg";
 
         return $urls;
+
+    }
+
+    public function save(Request $request, $pid){
+
+        /**
+         * TODO: Validate User and Input
+         *
+        $validate = $request->validate([
+            'design_object' => 'required'
+        ]);
+         */
+
+        // GET USERS ID OR SET TO 0
+        $user_id = (Auth::check()) ? Auth::user()->getAuthIdentifier() : null;
+
+        // Assume object is good
+        $design_data = ($request->has('design_object')) ? $request->input('design_object') : null;
+
+        // For Artist
+        $is_public = ($request->has('is_public')) ? $request->input('is_public') : true;
+        $storefront_id = ($request->has('storefront_id')) ? $request->input('storefront_id') : null;
+        $design_id = ($request->has('design_id')) ? $request->input('design_id') : null;
+
+        // Create Object
+        $design = ArtistDesigns::createDesign(
+            $design_data, $pid, $user_id, $storefront_id, $is_public, $design_id
+        );
+
+        if($design){
+            $request->session()->put('design_id', $design);
+        } else {
+            $request->flash('warning', 'Unable to create design');
+        }
+
+        return (($design) ? redirect('/product-details/' . $pid . '/' . $design) : redirect()->route('mockupgenerator'));
 
     }
 

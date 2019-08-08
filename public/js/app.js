@@ -21407,6 +21407,12 @@ var LoaderResource = __WEBPACK_IMPORTED_MODULE_0_resource_loader__["Resource"];
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
+module.exports = __webpack_require__(51);
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
@@ -21504,7 +21510,7 @@ module.exports = defaults;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(19)))
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 if (false) {
@@ -21515,7 +21521,7 @@ if (false) {
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -21541,12 +21547,6 @@ module.exports = function(module) {
 	return module;
 };
 
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(51);
 
 /***/ }),
 /* 18 */
@@ -38347,7 +38347,7 @@ module.exports = __webpack_require__(132);
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_vue__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue__ = __webpack_require__(25);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__App_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__App_vue__);
@@ -38361,7 +38361,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 __webpack_require__(47);
 
-window.Vue = __webpack_require__(15);
+window.Vue = __webpack_require__(16);
 
 
 
@@ -38411,7 +38411,7 @@ try {
  * CSRF token as a header based on the value of the "XSRF" token cookie.
  */
 
-window.axios = __webpack_require__(17);
+window.axios = __webpack_require__(14);
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -55557,7 +55557,7 @@ if (token) {
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(16)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(17)(module)))
 
 /***/ }),
 /* 49 */
@@ -68760,7 +68760,7 @@ if (typeof jQuery === 'undefined') {
 var utils = __webpack_require__(5);
 var bind = __webpack_require__(18);
 var Axios = __webpack_require__(53);
-var defaults = __webpack_require__(14);
+var defaults = __webpack_require__(15);
 
 /**
  * Create an instance of Axios
@@ -68843,7 +68843,7 @@ function isSlowBuffer (obj) {
 "use strict";
 
 
-var defaults = __webpack_require__(14);
+var defaults = __webpack_require__(15);
 var utils = __webpack_require__(5);
 var InterceptorManager = __webpack_require__(62);
 var dispatchRequest = __webpack_require__(63);
@@ -69375,7 +69375,7 @@ module.exports = InterceptorManager;
 var utils = __webpack_require__(5);
 var transformData = __webpack_require__(64);
 var isCancel = __webpack_require__(22);
-var defaults = __webpack_require__(14);
+var defaults = __webpack_require__(15);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -81945,7 +81945,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n  position: absolute;\n  margin-top: 3px;\n  left: 138px;\n  border: 1px yellow outset;\n}\n#productImage {\n  /* position: absolute; */\n  /* left: 0; */\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 20px 20px 20px 20px !important;\n  padding: 2px 4px;\n}\n", ""]);
+exports.push([module.i, "\n.data {\n  margin-top: 18px;\n  margin-left: 550px;\n}\n#drawingboard {\n  position: absolute;\n  margin-top: 3px;\n  left: 138px;\n  border: 1px yellow outset;\n}\nbutton {\n  width: 80px;\n  background-color: lightgray;\n  border: 2px outset darkgray;\n  border-radius: 10px !important;\n  padding: 2px 4px;\n  -webkit-filter: drop-shadow(1px 1px 3px #333333);\n          filter: drop-shadow(1px 1px 3px #333333);\n}\n#hr {\n  margin: 5px;\n}\n#save {\n  position: relative;\n  top: -200px;\n  left: 50px;\n}\n#minus {\n  padding-bottom: 20px;\n}\n", ""]);
 
 // exports
 
@@ -81957,12 +81957,14 @@ exports.push([module.i, "\n.data {\n  margin-left: 500px;\n}\n#drawingboard {\n 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_pixi_js__ = __webpack_require__(79);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue__ = __webpack_require__(104);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png__ = __webpack_require__(109);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__ = __webpack_require__(110);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_vuetify_dist_vuetify_css__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_axios__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue__ = __webpack_require__(104);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png__ = __webpack_require__(109);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css__ = __webpack_require__(110);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_vuetify_dist_vuetify_css__);
 //
 //
 //
@@ -81988,6 +81990,23 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 
 
 
@@ -81997,15 +82016,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "TemplateTool",
   components: {
-    TemplateRow: __WEBPACK_IMPORTED_MODULE_1__TemplateRow_vue___default.a
+    TemplateRow: __WEBPACK_IMPORTED_MODULE_2__TemplateRow_vue___default.a
   },
   data: function data() {
     return {
       type: "WebGL",
       app: new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["a" /* Application */]({
-        width: 322,
-        height: 385,
-        backgroundColor: 0x1099bb,
+        width: 400,
+        height: 400,
+        //backgroundColor: 0x1099bb,
         transparent: 1
       }),
       // drawArea: new PIXI.Rectangle(0, 0, 200, 300),
@@ -82021,6 +82040,24 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
   },
 
   methods: {
+    drawPoly: function drawPoly() {
+      var graphics = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
+
+      // set a fill and line style
+      graphics.lineStyle(2, 0xffffff);
+      graphics.beginFill(0x44aaff, 0.25);
+
+      // draw a shape
+      graphics.moveTo(50, 50);
+      graphics.lineTo(250, 50);
+      graphics.lineTo(100, 100);
+      graphics.lineTo(250, 220);
+      graphics.lineTo(50, 220);
+      graphics.lineTo(50, 50);
+      graphics.endFill();
+
+      this.app.stage.addChild(graphics);
+    },
     returnShape: function returnShape() {
       print(this.$refs.trow1.template.geo.shape);
     },
@@ -82040,10 +82077,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       document.body.appendChild(this.app.view);
       document.body.lastElementChild.setAttribute("id", "drawingboard");
 
+      // this.drawPoly();
+      var graphics = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
+      graphics.lineStyle(2, 0xffffff);
+      graphics.beginFill(0x44aaff, 0.25);
       // this.app.stage.interactive = true;
       // this.app.stage.buttonMode = true;
 
-      this.createSprite(__WEBPACK_IMPORTED_MODULE_2__assets_3drawarea_png___default.a);
+      this.createSprite(__WEBPACK_IMPORTED_MODULE_3__assets_3drawarea_png___default.a);
       this.sprites[0].x = 0;
       this.sprites[0].y = 0;
       this.sprites.zOrder = 100;
@@ -82059,46 +82100,93 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       // events for drag move
       .on("mousemove", onDragMove).on("touchmove", onDragMove);
 
-      // this.createSprite(blob);
-      // this.sprites[1].width = 0;
-      // this.sprties[1].transparent;
-      // this.sprites[1].alpha = 0.1;
+      // this.libraryCurrent = 1;
+      console.log(that.libraryCurrent);
       try {
-        that.createGeo(that.$refs.trow1.getShape());
+        this.createShape(this.libraryCurrent);
       } catch (e) {
-        that.createGeo(4);
+        console.log("NO GEO!!!! BREAKY: " + e);
       }
+      // that.app.stage.addChild(graphics);
 
       that.app.ticker.add(function (delta) {
+        // that.doAll(i => {
+        //   that.shapes[i].y *= Math.sin(delta);
+        // });
         // that.sprites[that.librarySelect].rotation += 0.1 * delta;
       });
       function onDragStart(event) {
+        this.data = event.data;
+
+        var newPosition = this.data.getLocalPosition(this.parent);
+
+        if (that.libraryCurrent == 1) {
+          that.addRow();
+        }
+
+        if (that.shapes[that.librarySelect].shape == 2) {
+          // graphics.lineStyle(Math.random() * 30, Math.random() * 0xFFFFFF, 1);
+          if (that.shapes[that.librarySelect].polyArr.length == 0) {
+            that.shapes[that.librarySelect].polyArr.push({
+              x: newPosition.x,
+              y: newPosition.y
+            });
+            that.shapes[that.librarySelect].polyArr.push({
+              x: newPosition.x,
+              y: newPosition.y
+            });
+            that.geo[that.librarySelect].moveTo(that.shapes[that.librarySelect].polyArr[0].x, that.shapes[that.librarySelect].polyArr[0].y);
+            that.geo[that.librarySelect].lineStyle(2, 0xffffff);
+            that.geo[that.librarySelect].beginFill(0x44aaff, 0.25);
+            that.geo[that.librarySelect].lineStyle(10, 0xffd900, 1);
+          }
+          console.log("START #2");
+        }
         that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
         that.geo[that.librarySelect].clear();
         // store a reference to the data
         // the reason for this is because of multitouch
         // we want to track the movement of this particular touch
-        this.data = event.data;
 
         // that.alpha = 0.5;
-        var newPosition = this.data.getLocalPosition(this.parent);
+        that.geo[that.librarySelect].alpha = 0.5;
         that.shapes[that.librarySelect].x = Math.round(newPosition.x);
         that.shapes[that.librarySelect].y = Math.round(newPosition.y);
         that.shapes[that.librarySelect].width = 0;
         that.shapes[that.librarySelect].height = 0;
-        // that.$refs.trow1.setX(newPosition.x);
-        // that.$refs.trow1.setY(newPosition.y);
+
         this.dragging = true;
       }
       function onDragEnd() {
         // that.alpha = 1;
 
         this.dragging = false;
+        var newPosition = this.data.getLocalPosition(this.parent);
 
         // set the interaction data to null
         this.data = null;
 
-        // that.geo[that.librarySelect].alpha = 0.1;
+        that.geo[that.librarySelect].alpha = 1;
+
+        if (that.shapes[that.librarySelect].shape == 2) {
+          var fx = newPosition.x;
+          var fy = newPosition.y;
+          if (newPosition.x > that.shapes[that.librarySelect].polyArr[0].x - 10 || newPosition.x < that.shapes[that.librarySelect].polyArr[0].x + 10) {
+            if (newPosition.y > that.shapes[that.librarySelect].polyArr[0].y - 10 || newPosition.y < that.shapes[that.librarySelect].polyArr[0].y + 10) {
+              fx = that.shapes[that.librarySelect].polyArr[0].x;
+              fy = that.shapes[that.librarySelect].polyArr[0].y;
+            }
+          }
+          // that.geo[that.librarySelect].lineStyle(Math.random() * 30, Math.random() * 0xFFFFFF, 1);
+          that.shapes[that.librarySelect].polyArr.push({
+            x: fx,
+            y: fy
+          });
+
+          that.shapes[that.librarySelect].polyArr = that.shapes[that.librarySelect].polyArr;
+
+          console.log("END #2");
+        }
       }
       function onDragMove() {
         if (this.dragging) {
@@ -82106,33 +82194,46 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
           var newPosition = this.data.getLocalPosition(this.parent);
 
-          that.shapes[that.librarySelect].width = Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
-          that.shapes[that.librarySelect].height = Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
+          var offX = Math.round(newPosition.x) - that.shapes[that.librarySelect].x;
+          var offY = Math.round(newPosition.y) - that.shapes[that.librarySelect].y;
+
+          if (that.shapes[that.librarySelect].shape == 1) {
+            var avg = (offX + offY) / 2;
+            that.shapes[that.librarySelect].width = avg;
+            that.shapes[that.librarySelect].height = avg;
+          } else if (that.shapes[that.librarySelect].shape == 4) {
+            that.shapes[that.librarySelect].width = offX;
+            that.shapes[that.librarySelect].height = offY;
+          } else if (that.shapes[that.librarySelect].shape == 2) {
+            console.log("GOING #2");
+            that.geo[that.librarySelect].clear();
+            that.geo[that.librarySelect].lineStyle(2, 0xffffff);
+            that.geo[that.librarySelect].beginFill(0x44aaff, 0.25);
+            that.geo[that.librarySelect].moveTo(that.shapes[that.librarySelect].polyArr[0].x, that.shapes[that.librarySelect].polyArr[0].y);
+            that.shapes[that.librarySelect].polyArr[that.shapes[that.librarySelect].polyArr.length - 1] = {
+              x: newPosition.x,
+              y: newPosition.y
+            };
+            console.log(that.shapes[that.librarySelect].polyArr.length);
+            // that.dataDraw(that.librarySelect);
+            for (var i = 1; i < that.shapes[that.librarySelect].polyArr.length; i++) {
+              that.geo[that.librarySelect].lineTo(that.shapes[that.librarySelect].polyArr[i].x, that.shapes[that.librarySelect].polyArr[i].y);
+            }
+            that.geo[that.librarySelect].endFill();
+            that.geo[that.librarySelect].lineStyle(Math.random() * 30, Math.random() * 0xffffff, 1);
+          }
+
           // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
           // that.$refs.trow1.setH(that.shapes[that.librarySelect].height);
           // draw a rectangle
-          if (that.$refs.trow1.template.geo.shape == 4) {
-            that.geo[that.librarySelect].drawRect(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, that.shapes[that.librarySelect].width, that.shapes[that.librarySelect].height);
-          } else {
-            // that.shapes[that.librarySelect].width = Math.sqrt(
-            // Math.pow(newPosition.x - that.shapes[that.librarySelect].x, 2) +
-            //   Math.pow(newPosition.y - that.shapes[that.librarySelect].y, 2)
-            // );
-            // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
-            // that.$refs.trow1.setH(10);
-            // draw a rectangle
-            // alert(that.shapes[that.librarySelect]);
-            that.geo[that.librarySelect].drawCircle(that.shapes[that.librarySelect].x, that.shapes[that.librarySelect].y, Math.sqrt(Math.pow(that.shapes[that.librarySelect].width, 2) + Math.pow(that.shapes[that.librarySelect].height, 2)) / Math.sqrt(2));
-          }
-          that.geo[that.librarySelect].alpha = 0.1;
-
-          // set the line style to have a width of 5 and set the color to red
+          // that.dataDraw(that.librarySelect);
 
           that.app.stage.addChild(that.geo[that.librarySelect]);
         }
       }
     },
-    dataChange: function dataChange(data, xORy) {
+    dataChange: function dataChange(data) {
+      console.log("DATA CHAAAAAANGEEEEE!!!~");
       this.geo[this.librarySelect].clear();
 
       this.shapes[this.librarySelect].x = parseFloat(data.x);
@@ -82140,13 +82241,74 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       this.shapes[this.librarySelect].width = parseFloat(data.width);
       this.shapes[this.librarySelect].height = parseFloat(data.height);
       this.shapes[this.librarySelect].shape = parseInt(data.shape);
-
-      if (data.shape == 4) {
-        this.geo[this.librarySelect].drawRect(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, this.shapes[this.librarySelect].width, this.shapes[this.librarySelect].height);
+      if (this.shapes[this.librarySelect].shape == 2) {
+        if (this.shapes[this.librarySelect].polyArr == undefined) {
+          this.shapes[this.librarySelect].polyArr = [];
+        } else {
+          // HAVE TO SHIFT ALL POINTS WITH RESPECT TO EACH OTHER... OOF
+          // this.shapes[this.librarySelect].polyArr[0].x = parseFloat(data.x);
+        }
       } else {
-        this.geo[this.librarySelect].drawCircle(this.shapes[this.librarySelect].x, this.shapes[this.librarySelect].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
+        this.dataDraw(this.librarySelect);
       }
-      this.app.stage.addChild(this.geo[this.librarySelect]);
+    },
+    doAll: function doAll(cbFunc) {
+      for (var i = 1; i < this.shapes.length; i++) {
+        cbFunc(i);
+      }
+      this.libraryCurrent = this.shapes.length;
+      this.select(this.libraryCurrent - 1);
+    },
+    dataDraw: function dataDraw(i) {
+      // this.geo[i] = new PIXI.Graphics();
+
+      // this.geo[i].lineStyle(2, 0xffffff);
+      // this.geo[i].beginFill(0x44aaff, 0.25);
+      // this.geo[i].transparent = 1;
+      // this.geo[i].alpha = 0.1;
+      // this.geo[i].clear();
+
+      // console.log(this.shapes);
+      switch (this.shapes[i].shape) {
+        case 1:
+          //Set width and height to actual width and height
+          var w = this.shapes[i].width / 2;
+          var h = this.shapes[i].height / 2;
+          //Set radius from w and h
+          var radius = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2)) / Math.sqrt(2);
+          //Set x and y to left and top
+          var x = this.shapes[i].x + radius;
+          var y = this.shapes[i].y + radius;
+
+          this.geo[i].drawCircle(x, y, radius);
+          break;
+        case 2:
+          // console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH!!!!!~");
+          this.geo[i].lineStyle(2, 0xffffff);
+          this.geo[i].beginFill(0x44aaff, 0.25);
+          this.geo[i].moveTo(this.shapes[i].polyArr[0].x, this.shapes[i].polyArr[0].y);
+          // this.shapes[i].polyArr[this.shapes[i].polyArr.length - 1] = {
+          //   x: newPosition.x,
+          //   y: newPosition.y
+          // };
+          // console.log(this.shapes[i].polyArr.length);
+          for (var a = 1; a < this.shapes[i].polyArr.length; a++) {
+            this.geo[i].lineTo(this.shapes[i].polyArr[a].x, this.shapes[i].polyArr[a].y);
+          }
+          this.geo[i].endFill();
+          break;
+        case 4:
+          this.shapes[i].shape = 4;
+          this.geo[i].drawRect(this.shapes[i].x, this.shapes[i].y, this.shapes[i].width, this.shapes[i].height);
+          break;
+        default:
+          this.shapes[i].shape = 4;
+          this.geo[i].drawRect(this.shapes[i].x, this.shapes[i].y, this.shapes[i].width, this.shapes[i].height);
+          break;
+      }
+      this.app.stage.addChild(this.geo[i]);
+
+      this.libraryCurrent = this.shapes.length;
     },
     setRatSize: function setRatSize(rat, sz) {
       this.ratio = rat;
@@ -82161,114 +82323,80 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
       this.sprites[this.libraryCurrent].width = 0;
       this.sprites[this.libraryCurrent].transparent = 1;
-      this.sprites[this.libraryCurrent].alpha = 0.1;
+      this.sprites[this.libraryCurrent].alpha = 0;
 
       this.sprites[this.libraryCurrent].on("touchstart", function () {
-        _this.librarySelect = _this.libraryCurrent;
+        _this.select(_this.libraryCurrent);
       });
 
-      // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
-
-      // this.sprites[this.libraryCurrent].anchor.set(0.5);
-      // this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
-      // this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
 
       this.librarySelect = this.libraryCurrent;
       this.libraryCurrent++;
     },
-    createGeo: function createGeo(shape) {
-      console.log("loading into this.shapes[" + this.libraryCurrent + "]");
-      this.geo[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
+    createShape: function createShape(i) {
+      console.log("loading into this.shapes[" + i + "]");
+      this.shapes[i] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["c" /* Rectangle */]();
+      this.shapes[i].width = 0;
 
-      this.geo[this.libraryCurrent].lineStyle(1, 0x0000ff);
-      this.geo[this.libraryCurrent].transparent = 1;
-      this.geo[this.libraryCurrent].alpha = 0.1;
-      // this.geo[this.libraryCurrent].beginFill(0x22ff88);
-      this.shapes[this.libraryCurrent] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["c" /* Rectangle */]();
-      this.shapes[this.libraryCurrent].width = 0;
+      this.createGeo(i);
 
-      switch (shape) {
-        case 1:
-          this.shapes[this.libraryCurrent].shape = 1;
-          this.geo[this.libraryCurrent].drawCircle(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, Math.sqrt(Math.pow(this.shapes[this.librarySelect].width, 2) + Math.pow(this.shapes[this.librarySelect].height, 2)) / Math.sqrt(2));
-          break;
-        // case 3:
-        // this.geo[this.libraryCurrent].draw;
-        // break;
-        case 4:
-          this.shapes[this.libraryCurrent].shape = 4;
-          this.geo[this.libraryCurrent].drawRect(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, this.shapes[this.libraryCurrent].width, this.shapes[this.libraryCurrent].height);
-          break;
-        default:
-          this.shapes[this.libraryCurrent].shape = 4;
-          this.geo[this.libraryCurrent].drawRect(this.shapes[this.libraryCurrent].x, this.shapes[this.libraryCurrent].y, this.shapes[this.libraryCurrent].width, this.shapes[this.libraryCurrent].height);
-          break;
-      }
+      this.libraryCurrent = this.shapes.length;
+      console.log("CHECKING LIBRARY CURRENT(next): " + this.libraryCurrent);
+      this.select(i);
+    },
+    createGeo: function createGeo(i) {
+      this.geo[i] = new __WEBPACK_IMPORTED_MODULE_0_pixi_js__["b" /* Graphics */]();
+      this.geo[i].lineStyle(2, 0xffffff);
+      this.geo[i].beginFill(0x44aaff, 0.25);
+      // console.log("GEOS: ");
+      // console.log(this.geo);
 
-      // this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
-
-      this.app.stage.addChild(this.geo[this.libraryCurrent]);
-      // this.shapes[this.libraryCurrent].on("touchstart", () => {
-      //   this.librarySelect = this.libraryCurrent;
-      // });
-
-      // this.app.stage.addChild(this.shapes[this.libraryCurrent]);
-
-      // this.shapes[this.libraryCurrent].anchor.set(0.5);
-      // this.shapes[this.libraryCurrent].x = this.app.screen.width / 2;
-      // this.shapes[this.libraryCurrent].y = this.app.screen.height / 2;
-
-      this.librarySelect = this.libraryCurrent;
-      this.libraryCurrent++;
+      this.dataDraw(i);
     },
     addRow: function addRow() {
       var _this2 = this;
 
-      // var RowClass = Vue.extend(TemplateRow);
-      // var row = new RowClass();
-      // row.$mount();
-      // this.$refs["row"] = row.$el;
-
-      // row.$el.ref = "trow" + this.libraryCurrent;
-      // console.log(row.$el);
-      // var rowEl = row.$el;
-      // row.$el.setAttribute(":ref", "trow" + this.libraryCurrent);
-      // var container = document.getElementById("cont");
-      // container.appendChild(row.$el);
-      // row.$el.setAttribute("ref", "trow" + this.libraryCurrent);
-      // var rowEle = container.lastElementChild;
-      // rowEle.setAttribute("ref", "trow" + this.libraryCurrent);
-      // container.lastElementChild = rowEle;
-      // console.log(row.$el);
-      // row.innerHTML = "<TemplateRow ref='trow" + this.libraryCurrent + "' />";
-
-      // alert(this.libraryCurrent);
-      // var newSel = this.createRadioElement(this.libraryCurrent);
+      this.libraryCurrent = this.shapes.length;
       var newSel = this.createRadioElement(this.libraryCurrent);
       newSel.onclick = function (event) {
         _this2.selectRadio(event.target.value);
       };
       var sel = document.getElementById("selection");
-      sel.appendChild(document.createElement("br"));
+      // sel.appendChild(document.createElement("br"));
       sel.appendChild(newSel);
 
-      var lastSelection = this.librarySelect;
-
-      this.createGeo(this.$refs.trow1.getShape());
+      this.createShape(this.libraryCurrent);
       this.$refs.trow1.template = {
-        // productId: 0,
         geo: this.shapes[this.libraryCurrent - 1],
         ratio: this.ratio,
         size: this.size
       };
     },
+    addMultiRow: function addMultiRow() {
+      var _this3 = this;
+
+      for (var i = 1; i < this.shapes.length - 1; i++) {
+        this.libraryCurrent = i + 1;
+        var newSel = this.createRadioElement(this.libraryCurrent);
+        newSel.onclick = function (event) {
+          _this3.selectRadio(event.target.value);
+        };
+        var sel = document.getElementById("selection");
+        sel.appendChild(document.createElement("br"));
+        sel.appendChild(newSel);
+      }
+      this.$refs.trow1.template = {
+        geo: this.shapes[this.shapes.length - 1],
+        ratio: this.ratio,
+        size: this.size
+      };
+      this.doAll(this.createGeo);
+      // this.doAll(this.dataDraw);
+      this.select(this.shapes.length - 1);
+    },
     createRadioElement: function createRadioElement(name) {
-      var radioHtml = "<button type='button' value='" + name + "'>Select " + name + "</button>";
-      // if (checked) {
-      //   radioHtml += ' checked="checked"';
-      // }
-      // radioHtml += "/>";
+      var radioHtml = "<button id='button" + name + "' type='button' value='" + name + "'>Select " + name + "</button>";
 
       var radioFragment = document.createElement("div");
       radioFragment.innerHTML = radioHtml;
@@ -82276,31 +82404,57 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       return radioFragment.firstChild;
     },
     selectRadio: function selectRadio(current) {
-      this.librarySelect = current;
+      this.select(current);
       this.$refs.trow1.template = {
         geo: this.shapes[current],
         ratio: this.ratio,
         size: this.size
       };
     },
+    select: function select(i) {
+      this.librarySelect = i;
+      if (this.$refs.trow1) {
+        this.$refs.trow1.template.geo = this.shapes[i];
+      }
+    },
+    getTempNewSize: function getTempNewSize() {
+      this.libraryCurrent = this.shapes.length;
+      for (var i = this.libraryCurrent - 1; i > 0; i--) {
+        console.log(i);
+        this.removeTemplate();
+        console.log(i + " was removed successfully!");
+      }
+      this.$refs.trow1.template.geo = { shape: 4 };
+    },
+    removeTemplate: function removeTemplate() {
+      console.log("REMOVING: " + this.libraryCurrent - 1);
+      if (this.libraryCurrent != 1) {
+        this.geo[this.libraryCurrent - 1].clear();
+        this.shapes.pop();
+        this.geo.pop();
+        document.getElementById("button" + (this.libraryCurrent - 1)).remove();
+        // document.getElementById("selection").getElementsByTagName("br");
+        this.libraryCurrent = this.shapes.length;
+        this.librarySelect = this.libraryCurrent - 1;
+      }
+    },
     saveTemplate: function saveTemplate() {
-      // let ts = [];
-      // for(let i=1; i<=this.shapes.length; i++)
-      // {
-      //   console.log("SWOOP! "+i);
-      //   ts[i] = this.shapes[i];
-      // }
-      console.log(JSON.stringify(this.shapes));
-      var templateObj = {
-        templates: this.shapes,
-        dpi: this.ratio,
-        pid: this.prodID,
-        size: this.size
-      };
-      this.saveTemplateAxios(templateObj);
+      if (this.ratio && this.shapes[1]) {
+        var templateObj = {
+          templates: this.shapes,
+          dpi: this.ratio,
+          pid: this.prodID,
+          size: this.size
+        };
+        console.log(JSON.stringify(templateObj));
+        this.saveTemplateAxios(templateObj);
+      } else {
+        alert("Please setup at least one Template: " + JSON.stringify(this.shapes[1]) + ",\n and set ratio: " + this.ratio + ", to a nonzero value.\n See console if more info needed.");
+        console.log(JSON.stringify(templateObj));
+      }
     },
     saveTemplateAxios: function saveTemplateAxios(template) {
-      axios.post("/api/template", template).then(function (response) {
+      __WEBPACK_IMPORTED_MODULE_1_axios___default.a.post("/api/template", template).then(function (response) {
         console.log(response);
       }).catch(function (error) {
         console.log(error);
@@ -82310,16 +82464,24 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       var that = this;
       // alert("pulling from database HEER" + this.prodID);
 
-      axios.get("/api/template/" + this.prodID + "/" + this.size).then(function (response) {
-        console.log(response);
-        if (response.data.pid === 0) {
-          that.mode = true;
+      __WEBPACK_IMPORTED_MODULE_1_axios___default.a.get("/api/template/" + this.prodID + "/" + this.size).then(function (response) {
+        // console.log("DATA vvv");
+        // response.data.values.unshift(null);
+        console.log(response.data.values);
+        console.log("DATA ^^^");
+        console.log("clearing all current local temps (if any)");
+        that.doAll(that.removeTemplate());
+        that.addRow();
+        if (response.data.values) {
+          that.shapes = Array.from(response.data.values); //response.data.values.unshift(null);
+          that.ratio = response.data.dpi;
+          console.log("RECEIVED SHAPES FROM DB:");
+          console.log(that.shapes);
+          that.addMultiRow();
         } else {
-          that.mode = false;
+          console.log("NO TEMPLATES ARRAY FROM SERVER FOR: " + that.prodID + " - " + that.size);
+          console.log("starting with default data, save new template data for: " + that.prodID + " - " + that.size);
         }
-        that.shapes = response.data.temps;
-        that.ratio = response.data.dpi;
-        that.changeDraw();
       }).catch(function (error) {
         console.log(error);
       });
@@ -82329,6 +82491,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     prodID: String
   },
   created: function created() {
+    this.getTemplateAxios();
     this.init();
   }
 });
@@ -85797,7 +85960,7 @@ earcut.flatten = function (data) {
 
 }(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16)(module), __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(17)(module), __webpack_require__(7)))
 
 /***/ }),
 /* 86 */
@@ -90289,13 +90452,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "TemplateRow",
   data: function data() {
     return {
       template: {
-        geo: { shape: 4 },
+        geo: { shape: 4, polyArr: [] },
         ratio: 0,
         size: "XS"
       }
@@ -90348,11 +90512,45 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         this.template.ratio = this.template.geo.height / value;
         // this.template.geo.height = value * this.template.template.ratio;
       }
+    },
+    width: {
+      get: function get() {
+        if (this.template.geo.shape == 1 && this.template.geo.width != this.template.geo.height) {
+          // let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = 50;
+          this.template.geo.height = 50;
+        }
+        return this.template.geo.width;
+      },
+      set: function set(value) {
+        this.template.geo.width = value;
+        if (this.template.geo.shape == 1) {
+          this.template.geo.height = value;
+        }
+      }
+    },
+    height: {
+      get: function get() {
+        if (this.template.geo.shape == 1 && this.template.geo.width != this.template.geo.height) {
+          // let avg = (this.template.geo.height + this.template.geo.width) / 2;
+          this.template.geo.width = 50;
+          this.template.geo.height = 50;
+        }
+        return this.template.geo.height;
+      },
+      set: function set(value) {
+        this.template.geo.height = value;
+        if (this.template.geo.shape == 1) {
+          this.template.geo.width = value;
+        }
+      }
     }
   },
   mounted: function mounted() {
     this.setRatSize(this.template.ratio, this.template.size);
-    this.dataChange(this.template.geo);
+    if (this.template.geo) {
+      this.dataChange(this.template.geo);
+    }
   }
 });
 
@@ -90416,6 +90614,8 @@ var render = function() {
                 _c("option", { attrs: { selected: "", value: "4" } }, [
                   _vm._v("Rectangle")
                 ]),
+                _vm._v(" "),
+                _c("option", { attrs: { value: "2" } }, [_vm._v("Custom")]),
                 _vm._v(" "),
                 _c("option", { attrs: { value: "1" } }, [_vm._v("Circle")])
               ]
@@ -90483,11 +90683,11 @@ var render = function() {
                   }
                 },
                 model: {
-                  value: _vm.template.geo.width,
+                  value: _vm.width,
                   callback: function($$v) {
-                    _vm.$set(_vm.template.geo, "width", $$v)
+                    _vm.width = $$v
                   },
-                  expression: "template.geo.width"
+                  expression: "width"
                 }
               })
             ],
@@ -90507,11 +90707,11 @@ var render = function() {
                   }
                 },
                 model: {
-                  value: _vm.template.geo.height,
+                  value: _vm.height,
                   callback: function($$v) {
-                    _vm.$set(_vm.template.geo, "height", $$v)
+                    _vm.height = $$v
                   },
-                  expression: "template.geo.height"
+                  expression: "height"
                 }
               })
             ],
@@ -91235,14 +91435,13 @@ var render = function() {
             "v-container",
             { attrs: { fluid: "", id: "cont" } },
             [
-              _c("h2", [_vm._v(_vm._s(_vm.prodID))]),
-              _vm._v(" "),
               _c("TemplateRow", {
                 ref: "trow1",
                 attrs: {
                   getTemplate: _vm.getTemplateAxios,
                   setRatSize: _vm.setRatSize,
-                  dataChange: _vm.dataChange
+                  dataChange: _vm.dataChange,
+                  rt: _vm.getTempNewSize
                 }
               }),
               _vm._v(" "),
@@ -91263,9 +91462,23 @@ var render = function() {
                   ),
                   _vm._v(" "),
                   _c(
+                    "v-btn",
+                    {
+                      attrs: { fab: "", id: "minus", color: "white" },
+                      on: {
+                        click: function() {
+                          _vm.removeTemplate()
+                        }
+                      }
+                    },
+                    [_c("v-icon", [_vm._v("_")])],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
                     "button",
                     {
-                      attrs: { type: "button" },
+                      attrs: { id: "button1", type: "button" },
                       on: {
                         click: function($event) {
                           return _vm.selectRadio(1)
@@ -91283,20 +91496,36 @@ var render = function() {
           _vm._v(" "),
           _c(
             "button",
-            { attrs: { type: "button" }, on: { click: _vm.saveTemplate } },
+            {
+              attrs: { id: "save", type: "button" },
+              on: { click: _vm.saveTemplate }
+            },
             [
-              _vm._v(
-                "Save Template (" +
-                  _vm._s(_vm.prodID) +
-                  " - " +
-                  _vm._s(_vm.size) +
-                  ")"
-              )
+              _vm._v("\n      Save\n      "),
+              _c("hr", { attrs: { id: "hr" } }),
+              _vm._v("\n      Pid: " + _vm._s(_vm.prodID) + "\n      "),
+              _c("hr", { attrs: { id: "hr" } }),
+              _vm._v("\n      Size: " + _vm._s(_vm.size) + "\n    ")
             ]
           )
         ],
         1
-      )
+      ),
+      _vm._v(" "),
+      _c(
+        "v-btn",
+        {
+          attrs: { fab: "", color: "white" },
+          on: { click: _vm.getTempNewSize }
+        },
+        [_c("v-icon", [_vm._v("NEW")])],
+        1
+      ),
+      _vm._v(" "),
+      _c("hr"),
+      _vm._v("\n  Shapes length(+1): " + _vm._s(_vm.shapes.length) + "\n  "),
+      _c("hr"),
+      _vm._v("\n  Geo length(+1): " + _vm._s(_vm.geo.length) + "\n")
     ],
     1
   )
@@ -91342,7 +91571,7 @@ if (false) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(true)
-		module.exports = factory(__webpack_require__(15));
+		module.exports = factory(__webpack_require__(16));
 	else if(typeof define === 'function' && define.amd)
 		define(["vue"], factory);
 	else if(typeof exports === 'object')
@@ -117401,7 +117630,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n*[data-v-1836121a] {\r\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\r\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\r\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\r\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\r\n    \"Liberation Mono\", \"Courier New\", monospace;\r\n  /* font-family: sans-serif; */\n}\n.container[data-v-1836121a] {\r\n  padding-top: 100px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -ms-flex-pack: distribute;\r\n      justify-content: space-around;\n}\n.pannel[data-v-1836121a] {\r\n  background-image: url(https://loftcinema.org/files/2015/06/const.jpg);\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-orient: vertical;\r\n  -webkit-box-direction: normal;\r\n      -ms-flex-direction: column;\r\n          flex-direction: column;\n}\n.row[data-v-1836121a] {\r\n  -webkit-box-pack: justify;\r\n      -ms-flex-pack: justify;\r\n          justify-content: space-between;\n}\n.pannel-heading[data-v-1836121a] {\r\n  position: relative;\r\n  top: -30px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-pack: center;\r\n      -ms-flex-pack: center;\r\n          justify-content: center;\r\n  -webkit-box-align: center;\r\n      -ms-flex-align: center;\r\n          align-items: center;\r\n  font-weight: 700;\r\n  height: calc(20pt + 10px);\r\n  width: 300px;\r\n  padding-top: 20px;\r\n  font-size: 20pt;\r\n  color: white;\r\n  text-shadow: 0px 0px 10px yellow;\r\n  background-color: rgba(0, 0, 0, 0.5);\r\n  border: 2px inset #555;\r\n  border-bottom: 0px;\n}\n.pannel-body[data-v-1836121a] {\r\n  text-align: center;\r\n  position: relative;\r\n  top: -30px;\r\n  padding: 0 50px 0 50px;\r\n  margin-bottom: -20px;\r\n  border: 2px inset #555;\r\n  border-top: 0px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-orient: vertical;\r\n  -webkit-box-direction: normal;\r\n      -ms-flex-direction: column;\r\n          flex-direction: column;\r\n  -webkit-box-pack: center;\r\n      -ms-flex-pack: center;\r\n          justify-content: center;\r\n  -webkit-box-align: center;\r\n      -ms-flex-align: center;\r\n          align-items: center;\r\n  font-size: 12pt;\r\n  color: white;\r\n  background-color: rgba(0, 0, 0, 0.5);\n}\n#fineprint[data-v-1836121a] {\r\n  font-size: 8pt;\r\n  color: rgba(255, 255, 255, 0.8);\r\n  text-shadow: 0px 0px 10px yellow;\r\n  /* text-shadow: none; */\n}\n#logo[data-v-1836121a] {\r\n  border: 3px outset goldenrod;\r\n  position: relative;\r\n  left: -20px;\n}\nimg[data-v-1836121a] {\r\n  border-radius: 10px;\n}\r\n", ""]);
+exports.push([module.i, "\n*[data-v-1836121a] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-1836121a] {\n  padding-top: 100px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-pack: distribute;\n      justify-content: space-around;\n}\n.pannel[data-v-1836121a] {\n  background-image: url(https://loftcinema.org/files/2015/06/const.jpg);\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n}\n.row[data-v-1836121a] {\n  -webkit-box-pack: justify;\n      -ms-flex-pack: justify;\n          justify-content: space-between;\n}\n.pannel-heading[data-v-1836121a] {\n  position: relative;\n  top: -30px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  font-weight: 700;\n  height: calc(20pt + 10px);\n  width: 300px;\n  padding-top: 20px;\n  font-size: 20pt;\n  color: white;\n  text-shadow: 0px 0px 10px yellow;\n  background-color: rgba(0, 0, 0, 0.5);\n  border: 2px inset #555;\n  border-bottom: 0px;\n}\n.pannel-body[data-v-1836121a] {\n  text-align: center;\n  position: relative;\n  top: -30px;\n  padding: 0 50px 0 50px;\n  margin-bottom: -20px;\n  border: 2px inset #555;\n  border-top: 0px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  font-size: 12pt;\n  color: white;\n  background-color: rgba(0, 0, 0, 0.5);\n}\n#fineprint[data-v-1836121a] {\n  font-size: 8pt;\n  color: rgba(255, 255, 255, 0.8);\n  text-shadow: 0px 0px 10px yellow;\n  /* text-shadow: none; */\n}\n#logo[data-v-1836121a] {\n  border: 3px outset goldenrod;\n  position: relative;\n  left: -20px;\n}\nimg[data-v-1836121a] {\n  border-radius: 10px;\n}\n", ""]);
 
 // exports
 
@@ -117626,7 +117855,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n*[data-v-650f2efa] {\r\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\r\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\r\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\r\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\r\n    \"Liberation Mono\", \"Courier New\", monospace;\r\n  /* font-family: sans-serif; */\n}\n.container[data-v-650f2efa] {\r\n  margin: 0 0 0 0;\r\n  padding: 0 0 0 0;\r\n  background-color: #f7bf22;\r\n  width: 100vw;\n}\n.row[data-v-650f2efa] {\r\n  width: calc(100vw - 115px);\n}\n.panel-heading[data-v-650f2efa] {\r\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\r\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\r\n  /* box-shadow: 0px 0px 5px 4px black; */\r\n  border-top: 2px outset grey;\r\n  font-weight: 500;\r\n  text-shadow: 0px 0px 1px lightgrey;\r\n  color: lightgrey;\r\n  background-color: #444;\r\n  width: 100vw;\r\n  height: 115px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-pack: center;\r\n      -ms-flex-pack: center;\r\n          justify-content: center;\r\n  -webkit-box-align: center;\r\n      -ms-flex-align: center;\r\n          align-items: center;\n}\n.panel-body[data-v-650f2efa] {\r\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\r\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\r\n  /* box-shadow: 0px 0px 5px 4px black; */\r\n  border-top: 2px outset yellow;\r\n  background-color: #f7bf22;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -webkit-box-orient: vertical;\r\n  -webkit-box-direction: normal;\r\n      -ms-flex-direction: column;\r\n          flex-direction: column;\r\n  -webkit-box-pack: left;\r\n      -ms-flex-pack: left;\r\n          justify-content: left;\r\n  text-shadow: 0px 0px 2px rgba(0, 0, 0, 80%);\r\n  font-size: 12pt;\r\n  padding-left: 115px;\r\n  color: black;\r\n  font-weight: 650;\r\n  width: 100vw;\r\n  height: 300px;\n}\n.panel-body > div[data-v-650f2efa] {\r\n  /* display: inline-block; */\r\n  /* position: relative; */\r\n  /* top: 0px; */\n}\n#col-1[data-v-650f2efa] {\r\n  white-space: nowrap;\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 16%;\r\n          flex: 0 16%;\n}\n#col-1-bottom[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 30%;\r\n          flex: 0 30%;\n}\n#col-2[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 12%;\r\n          flex: 0 12%;\n}\n#col-3[data-v-650f2efa] {\r\n  white-space: nowrap;\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 19%;\r\n          flex: 0 19%;\n}\n#col-2-bottom[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 13%;\r\n          flex: 0 13%;\n}\n#col-4[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 28%;\r\n          flex: 0 28%;\r\n  -webkit-box-orient: vertical;\r\n  -webkit-box-direction: normal;\r\n      -ms-flex-direction: column;\r\n          flex-direction: column;\r\n  padding-top: 15px;\n}\n#col-3-bottom[data-v-650f2efa] {\r\n  -webkit-box-flex: 0;\r\n      -ms-flex: 0 12%;\r\n          flex: 0 12%;\n}\n#row-filler[data-v-650f2efa] {\r\n  -webkit-box-flex: 1;\r\n      -ms-flex: 1;\r\n          flex: 1;\n}\n#col-4-bottom[data-v-650f2efa] {\r\n  position: relative;\r\n  right: 10px;\n}\n#logo[data-v-650f2efa] {\r\n  border: 3px outset goldenrod;\n}\nimg[data-v-650f2efa] {\r\n  border-radius: 10px;\n}\n#email[data-v-650f2efa] {\r\n  font-size: 14pt;\r\n  width: 375px;\n}\n.vl[data-v-650f2efa] {\r\n  margin: 0px 75px 0px 75px;\r\n  border-left: 1px solid grey;\r\n  height: 75px;\n}\nul[data-v-650f2efa] {\r\n  padding: 10px 0 0 0;\n}\nli[data-v-650f2efa] {\r\n  font-weight: 100;\r\n  font-size: 9pt;\r\n  padding: 0px 0px 3px 5px;\n}\nnotset[data-v-650f2efa] {\r\n  -webkit-text-decoration-line: line-through;\r\n          text-decoration-line: line-through;\n}\nli a[data-v-650f2efa] {\r\n  color: black;\r\n  -webkit-text-decoration-line: none;\r\n          text-decoration-line: none;\n}\r\n", ""]);
+exports.push([module.i, "\n*[data-v-650f2efa] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-650f2efa] {\n  margin: 0 0 0 0;\n  padding: 0 0 0 0;\n  background-color: #f7bf22;\n  width: 100vw;\n}\n.row[data-v-650f2efa] {\n  width: calc(100vw - 115px);\n}\n.panel-heading[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset grey;\n  font-weight: 500;\n  text-shadow: 0px 0px 1px lightgrey;\n  color: lightgrey;\n  background-color: #444;\n  width: 100vw;\n  height: 115px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n}\n.panel-body[data-v-650f2efa] {\n  -webkit-box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n          box-shadow: 0 -2px 0.45rem 1px rgba(0, 0, 0, 0.95);\n  /* box-shadow: 0px 0px 5px 4px black; */\n  border-top: 2px outset yellow;\n  background-color: #f7bf22;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  -webkit-box-pack: left;\n      -ms-flex-pack: left;\n          justify-content: left;\n  text-shadow: 0px 0px 2px rgba(0, 0, 0, 80%);\n  font-size: 12pt;\n  padding-left: 115px;\n  color: black;\n  font-weight: 650;\n  width: 100vw;\n  height: 300px;\n}\n.panel-body > div[data-v-650f2efa] {\n  /* display: inline-block; */\n  /* position: relative; */\n  /* top: 0px; */\n}\n#col-1[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 16%;\n          flex: 0 16%;\n}\n#col-1-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 30%;\n          flex: 0 30%;\n}\n#col-2[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#col-3[data-v-650f2efa] {\n  white-space: nowrap;\n  -webkit-box-flex: 0;\n      -ms-flex: 0 19%;\n          flex: 0 19%;\n}\n#col-2-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 13%;\n          flex: 0 13%;\n}\n#col-4[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 28%;\n          flex: 0 28%;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  padding-top: 15px;\n}\n#col-3-bottom[data-v-650f2efa] {\n  -webkit-box-flex: 0;\n      -ms-flex: 0 12%;\n          flex: 0 12%;\n}\n#row-filler[data-v-650f2efa] {\n  -webkit-box-flex: 1;\n      -ms-flex: 1;\n          flex: 1;\n}\n#col-4-bottom[data-v-650f2efa] {\n  position: relative;\n  right: 10px;\n}\n#logo[data-v-650f2efa] {\n  border: 3px outset goldenrod;\n}\nimg[data-v-650f2efa] {\n  border-radius: 10px;\n}\n#email[data-v-650f2efa] {\n  font-size: 14pt;\n  width: 375px;\n}\n.vl[data-v-650f2efa] {\n  margin: 0px 75px 0px 75px;\n  border-left: 1px solid grey;\n  height: 75px;\n}\nul[data-v-650f2efa] {\n  padding: 10px 0 0 0;\n}\nli[data-v-650f2efa] {\n  font-weight: 100;\n  font-size: 9pt;\n  padding: 0px 0px 3px 5px;\n}\nnotset[data-v-650f2efa] {\n  -webkit-text-decoration-line: line-through;\n          text-decoration-line: line-through;\n}\nli a[data-v-650f2efa] {\n  color: black;\n  -webkit-text-decoration-line: none;\n          text-decoration-line: none;\n}\n", ""]);
 
 // exports
 
@@ -118029,7 +118258,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "\n*[data-v-7cdae69f] {\r\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\r\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\r\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\r\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\r\n    \"Liberation Mono\", \"Courier New\", monospace;\r\n  /* font-family: sans-serif; */\n}\n.container[data-v-7cdae69f] {\r\n  padding-top: 100px;\r\n  display: -webkit-box;\r\n  display: -ms-flexbox;\r\n  display: flex;\r\n  -ms-flex-pack: distribute;\r\n      justify-content: space-around;\n}\r\n", ""]);
+exports.push([module.i, "\n*[data-v-7cdae69f] {\n  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif,\n    \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";\n  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,\n    \"Liberation Mono\", \"Courier New\", monospace;\n  /* font-family: sans-serif; */\n}\n.container[data-v-7cdae69f] {\n  padding-top: 100px;\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-pack: distribute;\n      justify-content: space-around;\n}\n", ""]);
 
 // exports
 
@@ -118040,7 +118269,7 @@ exports.push([module.i, "\n*[data-v-7cdae69f] {\r\n  --font-family-sans-serif: -
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_axios__);
 //
 //

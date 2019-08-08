@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\ArtistDesigns;
+use App\Templates;
 use Illuminate\Http\Request;
 use App\Http\Services\ProductDetailsService;
 use App\Utility\GenerateTokenUtility;
@@ -25,9 +27,12 @@ class ProductDetailsController extends Controller
     /**
      * Show the application dashboard.
      *
+     * @param Request $request
+     * @param $productId
+     * @param $designId
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $productId)
+    public function index(Request $request, $productId, $designId = null)
     {
         // $product = $this->mockupgen->index($productId);
         //  dd($product);//[0]->image_url);
@@ -88,8 +93,14 @@ class ProductDetailsController extends Controller
             }
         }
 
+        $design = ($designId) ? ArtistDesigns::where('id',$designId)->first() : null;
+
+        $template = Templates::where('pid',$productId)->first();
+
         return view('productdetails', [
             'user_id' => (Auth::check()) ? Auth::user()->getAuthIdentifier() : false,
+            'design' => $design,
+            'template' => $template,
             'product_id' => $productId,
             'product' => $product,
             'variants' => $variants,

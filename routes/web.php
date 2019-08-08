@@ -30,7 +30,10 @@ Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 Route::get('/account', 'DashboardController@myAccount')->name('account');
 Route::post('/account', 'DashboardController@myAccount')->name('updateAccount');
 Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->name('artiststorefront');
+
 Route::get('/mockupgenerator/{pid}', 'MockupgenController@index')->name('mockupgenerator');
+Route::post('/mockupgenerator/{pid}', 'MockupgenController@save')->name('mockupPost');
+
 Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/createstore', 'MyStoresController@createStore')->name('createstore');
@@ -47,8 +50,11 @@ Route::post('/setpricing', 'AddProductsController@setPricing')->name('setpricing
 Route::get('/tagsuggestions/{id}', 'MyStoresController@tagSuggestions')->name('tagsuggestions');
 Route::get('/artworkmanagement', 'ArtworkManagementController@index')->name('artworkmanagement');
 Route::get('/updateartworkstatus', 'ArtworkManagementController@updateStatus')->name('updateartworkstatus');
-Route::get('/loadmore', 'ArtworkManagementController@loadMore')->name('loadmore'); 
+Route::get('/loadmore', 'ArtworkManagementController@loadMore')->name('loadmore');
+
 Route::get('/product-details/{productId}', 'ProductDetailsController@index')->name('productdetail');
+Route::get('/product-details/{productId}/{designId}', 'ProductDetailsController@index')->name('productdetailwithart');
+
 Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
