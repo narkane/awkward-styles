@@ -388,7 +388,7 @@
                     <img id="1456_image" src=""/>
                     <div id="1456_area"
                          style="position: absolute;top: 0px;left: 0px;z-index: 10;">
-                        <canvas id="1456_canvas" class="hover"
+                        <canvas id="1_canvas" class="hover"
                                 style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
                     </div>
                 </div>

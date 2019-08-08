@@ -116,10 +116,10 @@ class MockupgenController extends Controller
         $urls = [];
 
         // Get some URLS and TEMPLATES
-        $urls['0'] = ProductInformation::mediaById(111)[0]->url;
+        $urls['0'] = ProductInformation::mediaById(1456)[0]->url;
         $urls['1'] = ProductInformation::mediaById(112)[0]->url;
         $urls['2'] = ProductInformation::mediaById(1402)[0]->url;
-        $urls['3'] = ProductInformation::mediaById(333)[0]->url;
+        $urls['3'] = ProductInformation::mediaById(1455)[0]->url;
         //$urls['cup'] = "/images/mug.jpg";
 
         return $urls;
