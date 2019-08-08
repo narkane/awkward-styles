@@ -182,6 +182,8 @@ export default {
             that.geo[that.librarySelect].lineStyle(10, 0xffd900, 1);
           }
           console.log("START #2");
+        }else{
+          that.dataChange();
         }
         that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
         that.geo[that.librarySelect].clear();
