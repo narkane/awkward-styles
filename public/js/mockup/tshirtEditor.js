@@ -118,10 +118,10 @@ function setShirtImage(imgurl, canvasType = "canvas"){
 
     switch(canvasType) {
         default: tag = "main"; break;
-        case 0: tag = 111; break;
+        case 0: tag = 1456; break;
         case 1: tag = 112; break;
         case 2: tag = 1402; break;
-        case 3: tag = 333; break;
+        case 3: tag = 1455; break;
     }
 
     //setup front side canvas
@@ -263,10 +263,10 @@ function setTemplate(main = "main") {
                 let tag = main;
                 switch(main) {
                     default: tag = false; break;
-                    case 111: tag = 0; break;
+                    case 1456: tag = 0; break;
                     case 112: tag = 1; break;
                     case 1402: tag = 2; break;
-                    case 333: tag = 3; break;
+                    case 1455: tag = 3; break;
                 }
 
                 if(isNaN(main)){
