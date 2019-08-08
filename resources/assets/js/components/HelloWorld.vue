@@ -9,18 +9,6 @@
           <v-flex xs5 />
         </v-layout>
         <v-layout row>
-          <v-flex xs1>
-            <select v-model="size" @change="getTemplateAxios" style="border:2px inset darkgrey">
-              <option value="XS">XS</option>
-              <option value="S">S</option>
-              <option value="M">M</option>
-              <option value="L">L</option>
-              <option value="XL">XL</option>
-              <option value="2XL">2XL</option>
-              <option value="3XL">3XL</option>
-              <option value="4XL">4XL</option>
-            </select>
-          </v-flex>
           <v-flex xs7>
             <input type="checkbox" name="mode" v-model="mode" />
             <label for="mode">: Template Mode</label>
@@ -28,16 +16,23 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="Xart" label="X: Art" required></v-text-field>
+            <v-text-field v-model="Xart" class="inputNumber" type="number" label="X: Art" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="Yart" label="Y: Art" required></v-text-field>
+            <v-text-field v-model="Yart" class="inputNumber" type="number" label="Y: Art" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="Wart" label="Width" required></v-text-field>
+            <v-text-field v-model="Wart" class="inputNumber" type="number" label="Width" required></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="Hart" label="Height" required></v-text-field>
+            <v-text-field
+              v-model="Hart"
+              class="inputNumber"
+              type="number"
+              label="Height"
+              pattern="\d+"
+              required
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -48,16 +43,40 @@
         </v-layout>
         <v-layout row>
           <v-flex xs1>
-            <v-text-field v-model="inchesXart" label="X inches" disabled></v-text-field>
+            <v-text-field
+              v-model="inchesXart"
+              class="inputNumber"
+              type="number"
+              label="X inches"
+              disabled
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesYart" label="Y inches" disabled></v-text-field>
+            <v-text-field
+              v-model="inchesYart"
+              class="inputNumber"
+              type="number"
+              label="Y inches"
+              disabled
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesWart" label="width in." disabled></v-text-field>
+            <v-text-field
+              v-model="inchesWart"
+              class="inputNumber"
+              type="number"
+              label="width in."
+              disabled
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
-            <v-text-field v-model="inchesHart" label="height in." disabled></v-text-field>
+            <v-text-field
+              v-model="inchesHart"
+              class="inputNumber"
+              type="number"
+              label="height in."
+              disabled
+            ></v-text-field>
           </v-flex>
           <v-flex xs1>
             <v-text-field disabled />
@@ -116,7 +135,57 @@
             <v-text-field disabled />
           </v-flex>
         </v-layout>
-        <v-layout row fill-height>
+        <v-layout row>
+          <v-flex xs1>
+            <v-text-field v-model="template3d.x" label="3dX" :disabled="!mode"></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="template3d.y" label="3dY" :disabled="!mode"></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="template3d.width" label="3d width" :disabled="!mode"></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="template3d.height" label="3d height" :disabled="!mode"></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field disabled />
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field
+              v-model="template3d.rotation"
+              label="3d rotation"
+              @change="changeDraw"
+              :disabled="!mode"
+            ></v-text-field>
+          </v-flex>
+        </v-layout>
+        <v-layout row>
+          <v-flex xs1>
+            <v-text-field v-model="art3d.x" label="X 3d" disabled></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="art3d.y" label="Y 3d" disabled></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="art3d.width" label="width 3d" disabled></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field v-model="art3d.height" label="height 3d" disabled></v-text-field>
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field disabled />
+          </v-flex>
+          <v-flex xs1>
+            <v-text-field
+              v-model="art3d.rotation"
+              label="3d rotation"
+              @change="changeDraw"
+              :disabled="!mode"
+            ></v-text-field>
+          </v-flex>
+        </v-layout>
+        <v-layout row>
           <v-flex pa1 shrink id="care">
             Art Library
             <br />
@@ -138,11 +207,13 @@
       <v-btn color="orange" :hidden="!mode" @click="saveTemplate">Template</v-btn>
       <v-btn color="red">Cancel</v-btn>
     </v-form>
+    <threedee :template="template3d" :art="art3d" ref="threed" />
   </div>
 </template>
 
 <script>
 import * as PIXI from "pixi.js";
+import threedee from "./threedee.vue";
 import blob from "../assets/blob.png";
 import axios from "axios";
 import "vuetify/dist/vuetify.css";
@@ -152,6 +223,7 @@ import { Carousel, Slide } from "vue-carousel";
 export default {
   name: "HelloWorld",
   components: {
+    threedee: threedee,
     "upload-btn": UploadButton,
     carousel: Carousel,
     slide: Slide
@@ -162,7 +234,7 @@ export default {
       app: new PIXI.Application({
         width: 600,
         height: 800,
-        backgroundColor: 0x1099bb,
+        //backgroundColor: 0x1099bb,
         transparent: 1
       }),
       mode: false,
@@ -170,12 +242,25 @@ export default {
       libraryNum: 0,
       libraryCurrent: 0,
       librarySelect: 0,
-      currdeg: 0,
       // testTex: PIXI.utils.TextureCache["../assets/blob.png"],
       ratio: 32,
       sprites: [],
       artOriginalAspect: "pending",
-      drawArea: new PIXI.Rectangle(0, 0, 200, 300)
+      drawArea: new PIXI.Rectangle(0, 0, 200, 300),
+      template3d: {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        rotation: 0
+      },
+      art3d: {
+        artSrcArr: null,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
+      }
     };
   },
   props: {
@@ -189,32 +274,35 @@ export default {
         that.type = "canvas";
       }
       //initial changing of drawing area (renderer.view) to rect deminsions
+      that.app.renderer.view.id = "frontview";
+      // that.app.stage.anchor.set(0.5);
       that.app.renderer.view.style.left = that.drawArea.x + "px";
       that.app.renderer.view.style.top = that.drawArea.y + "px";
       that.app.renderer.resize(that.drawArea.width, that.drawArea.height);
 
-      document.body.appendChild(that.app.view);
-
       // setup sprites
       // that.createSprite(blob);
+      // let pers = document.createElement("div");
+      // pers.setAttribute("id", "perspective");
+      // document.body.appendChild(pers);
+      // pers.appendChild(that.app.view);
+      document.body.appendChild(this.app.view);
 
       that.app.ticker.add(function(delta) {
         // that.sprites[that.librarySelect].rotation += 0.1 * delta;
       });
     },
     createSprite: function(art) {
-      // var that = this;
       console.log("loading into this.sprites[" + this.libraryCurrent + "]");
+      var that = this;
+
       this.sprites[this.libraryCurrent] = PIXI.Sprite.from(art);
+
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
 
       this.sprites[this.libraryCurrent].anchor.set(0.5);
-      this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
-      this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
-      // this.sprites[this.libraryCurrent].position.set(
-      //   that.app.screen.width / 2,
-      //   that.app.screen.height / 2
-      // );
+      // this.sprites[this.libraryCurrent].x = this.app.screen.width / 2;
+      // this.sprites[this.libraryCurrent].y = this.app.screen.height / 2;
       this.sprites[this.libraryCurrent].interactive = true;
       this.sprites[this.libraryCurrent].buttonMode = true;
 
@@ -230,10 +318,8 @@ export default {
         .on("mousemove", onDragMove)
         .on("touchmove", onDragMove);
 
-      // this.sprites[this.libraryCurrent].scale.y *= 1.25;
-
-      // that.app.stage.addChild(that.drawArea);
       this.app.stage.addChild(this.sprites[this.libraryCurrent]);
+
       this.librarySelect = this.libraryCurrent;
       this.libraryCurrent++;
 
@@ -258,6 +344,8 @@ export default {
           var newPosition = this.data.getLocalPosition(this.parent);
           this.x = newPosition.x;
           this.y = newPosition.y;
+          that.art3d.x = this.x / that.drawArea.width;
+          that.art3d.y = this.y / that.drawArea.height;
         }
       }
     },
@@ -284,7 +372,6 @@ export default {
             span.onclick = () => {
               that.librarySelect = span.id;
             };
-            // span.style = that.styleCarousel(that.libraryCurrent);
             span.innerHTML = [
               '<img class="thumb" src="',
               e.target.result,
@@ -296,24 +383,14 @@ export default {
               .getElementById("list")
               .insertBefore(document.createElement("hr"), null);
             that.createSprite(e.target.result);
+            that.art3d.artSrcArr = e.target.result;
+            that.$refs.threed.loadArt();
           };
         })(f);
 
-        // Read in the image file as a data URL.
         reader.readAsDataURL(f);
       }
-      // for (var i = 0; i < that.libraryNum; i++) {
-      //   var span = document.getElementById(i);
-      //   span.style = that.styleCarousel(i);
-      // }
     },
-    addLibraryArt: function(art) {
-      // axios.post;
-    },
-    // selectLibraryArt: function(artID) {
-    //   this.librarySelect = artID;
-    //   alert(artID);
-    // },
     getTemplateAxios: function() {
       var that = this;
 
@@ -348,41 +425,36 @@ export default {
         });
     },
     changeDraw: function() {
-      // console.log("CHANGE!");
       this.app.renderer.clear();
-      // that.app.renderer.screen
-      // this.drawArea.width = value;
       this.app.renderer.view.style.left = this.drawArea.x + "px";
       this.app.renderer.view.style.top = this.drawArea.y + "px";
       this.app.renderer.resize(this.drawArea.width, this.drawArea.height);
+      this.app.stage.pivot.x = -this.drawArea.width / 2;
+      this.app.stage.pivot.y = -this.drawArea.height / 2;
+      // this.template3d.x = this.drawArea.x;
+      // this.template3d.y = this.drawArea.y;
+      this.template3d.width = this.drawArea.width * (104 / 120);
+      this.template3d.height = this.drawArea.height * (232 / 280);
     },
     saveTemplate: function() {
       var templateObj = {
-        x: this.drawArea.x,
-        y: this.drawArea.y,
-        width: this.drawArea.width,
-        height: this.drawArea.height,
+        temps: [
+          {
+            shape: null,
+            x: this.drawArea.x,
+            y: this.drawArea.y,
+            width: this.drawArea.width,
+            height: this.drawArea.height
+          }
+        ],
         dpi: this.ratio,
         pid: this.prodID,
         size: this.size
       };
       this.saveTemplateAxios(templateObj);
-      // alert(JSON.stringify(templateObj));
     },
     savePrint: function() {
       let that = this;
-
-      //capture entire printable area
-      // var graphics = new PIXI.Graphics();
-
-      // graphics.beginFill(0xffff00);
-
-      // set the line style to have a width of 5 and set the color to red
-      // graphics.lineStyle(0, 0xff0000);
-
-      // draw a rectangle
-      // graphics.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
-      // PIXI.Rectangle.this.app.stage.addChild(graphics);
 
       var lowX = this.app.stage.width;
       var lowY = this.app.stage.height;
@@ -393,75 +465,14 @@ export default {
       var xTot = 0;
       var yTot = 0;
       for (var i = 0; i < this.sprites.length; i++) {
-        // if (lowX > this.sprites[i].x) {
-        //   lowX = this.sprites[i].x;
-        // }
-        // if (lowY > this.sprites[i].y) {
-        //   lowY = this.sprites[i].y;
-        // }
-        // if (this.sprites[i].width > this.drawArea.width) {
-        //   this.sprites[i].filterArea(
-        //     new PIXI.Rectangle(
-        //       0,
-        //       0,
-        //       this.drawArea.width,
-        //       this.sprites[i].height
-        //     )
-        //   );
-        // }
-        // if (this.sprites[i].height > this.drawArea.height) {
-        //   this.sprites[i].filterArea(
-        //     new PIXI.Rectangle(
-        //       0,
-        //       0,
-        //       this.sprites[i].width,
-        //       this.drawArea.height
-        //     )
-        //   );
-        // }
         xTot += this.sprites[i].x;
         yTot += this.sprites[i].y;
-        // console.log("each x, y: " + xTot + ", " + yTot);
+
         allG.addChild(this.sprites[i]);
-        // if (totW < this.sprites[i].width) {
-        //   totW = this.sprites[i].width;
-        // }
-        // if (totH < this.sprites[i].height) {
-        //   totH = this.sprites[i].height;
-        // }
       }
       allG.x = xTot / this.sprites.length;
       allG.y = yTot / this.sprites.length;
-      // allG.anchor.set(0.5);
-      // var texture = new PIXI.BaseTexture(allG);
-      // var texture2 = new PIXI.Texture(
-      //   texture,
-      //   new PIXI.Rectangle(0, 0, this.drawArea.width, this.drawArea.height)
-      // );
-      // var sprite = new PIXI.Sprite(texture2);
-      // this.app.stage.addChild(sprite);
 
-      // if (allG.width > this.drawArea.width) {
-      //   allG.filterArea(
-      //     new PIXI.Rectangle(0, 0, this.drawArea.width, allG.height)
-      //   );
-      // }
-      // if (allG.height > this.drawArea.height) {
-      //   allG.filterArea(
-      //     new PIXI.Rectangle(0, 0, allG.width, this.drawArea.height)
-      //   );
-      // }
-
-      // this.libraryNum++;
-      // this.sprites[this.sprites.length] = allG;
-      // this.librarySelect = this.libraryCurrent;
-      // this.libraryCurrent++;
-      // this.app.stage.addChild(this.sprites[this.libraryCurrent]);
-      // this.createSprite(allG);
-      // console.log(allG.x + ", " + allG.y);
-      // this.app.stage.addChild(allG);
-
-      //get %of offset with repect to (center!)
       var printObj = {
         blob: this.app.renderer.extract.canvas(this.app.stage).toDataURL(),
         library_id: 0,
@@ -489,20 +500,6 @@ export default {
           printObj.size
       );
 
-      // allG.calculateBounds();
-
-      // render right now
-      // this.app.renderer.render(allG);
-
-      // capture immediately
-      // var data = this.app.renderer.view.toDataURL("image/png", 1);
-      // alert(data);
-      // var img = document.createElement("img");
-      // img.id = "printfile";
-      // document.body.append(img);
-      // img.setAttribute("src", data);
-      // $("img").attr("src", data);
-
       this.app.renderer.extract.canvas(this.app.stage).toBlob(function(b) {
         var a = document.createElement("a");
         document.body.append(a);
@@ -524,7 +521,6 @@ export default {
     }
   },
   created() {
-    // this.sprites[0] = PIXI.Sprite.from(blob);
     //set to "template mode" if no template
     this.getTemplateAxios();
     this.init();
@@ -532,6 +528,7 @@ export default {
   mounted() {
     var that = this;
 
+    // document.getElementById("perspective").appendChild(that.app.view);
     // that.sprites[]
 
     document
@@ -545,16 +542,14 @@ export default {
     Xart: {
       get() {
         if (this.libraryCurrent > 0) {
-          console.log("libraryCurrent: " + this.libraryCurrent);
-          console.log("librarySelect: " + this.librarySelect);
           return this.sprites[this.librarySelect].x;
         } else {
-          console.log(this.libraryCurrent);
-          return "N/A";
+          return null;
         }
       },
       set(value) {
         this.sprites[this.librarySelect].x = value;
+        this.art3d.x = value / this.drawArea.width;
       }
     },
     Yart: {
@@ -562,35 +557,44 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.sprites[this.librarySelect].y;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
         this.sprites[this.librarySelect].y = value;
+        this.art3d.y = value / this.drawArea.height;
       }
     },
     Wart: {
       get() {
         if (this.libraryCurrent > 0) {
+          console.log("width: " + this.sprites[this.librarySelect].width);
+          this.art3d.width =
+            this.sprites[this.librarySelect].width * (104 / 120);
           return this.sprites[this.librarySelect].width;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
         this.sprites[this.librarySelect].width = value;
+        this.art3d.width = value;
       }
     },
     Hart: {
       get() {
         if (this.libraryCurrent > 0) {
+          console.log("height: " + this.sprites[this.librarySelect].height);
+          this.art3d.height =
+            this.sprites[this.librarySelect].height * (232 / 280);
           return this.sprites[this.librarySelect].height;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
         this.sprites[this.librarySelect].height = value;
+        this.art3d.height = value;
       }
     },
     inchesXart: {
@@ -598,7 +602,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.Xart / this.ratio;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -611,7 +615,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.Yart / this.ratio;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -624,7 +628,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.sprites[this.librarySelect].width / this.ratio;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -637,7 +641,7 @@ export default {
         if (this.libraryCurrent > 0) {
           return this.sprites[this.librarySelect].height / this.ratio;
         } else {
-          return "N/A";
+          return null;
         }
       },
       set(value) {
@@ -669,18 +673,28 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
+body {
+  transform: perspective(30px);
+  transform-style: preserve-3d;
+}
 #data {
   float: right;
   width: 800px;
   height: 200px;
 }
 canvas {
+  /* transform: translateZ(10px); */
   border: 2px dashed lightblue;
-  background-color: rgba(0, 0, 255, 0.1);
-  position: relative;
-  top: 0px;
+  /* background-color: rgba(0, 0, 255, 0.1); */
+  position: absolute;
+  top: 120px;
+  left: 380px;
   margin: 2px 138px;
   /* z-index: -10; */
+}
+#frontview {
+  margin: 123px 138px;
+  left: 0px;
 }
 input {
   text-align: center;
@@ -718,5 +732,12 @@ input {
   /* flex-wrap: nowrap; */
   /* justify-content: flex-start; */
   text-align: left;
+}
+.inputnumber input[type="number"] {
+  -moz-appearance: textfield;
+}
+.inputNumber input::-webkit-outer-spin-button,
+.inputNumber input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
 }
 </style>

@@ -23,25 +23,27 @@ Auth::routes();
 ###jthummel
 Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
 Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
-Route::get('/search/{id}', 'CollectionsController@searchSuggestions')->name('search-results');
+Route::get('/search/{id}', 'SearchController@index')->name('search-results');
 Route::get('/thetool/{productId}', 'ToolController@index')->name('thetool');
 ###them
 Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 Route::get('/account', 'DashboardController@myAccount')->name('account');
+Route::post('/account', 'DashboardController@myAccount')->name('updateAccount');
 Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->name('artiststorefront');
-Route::get('/mockupgenerator/{productId}', 'MockupgenController@index')->name('mockupgenerator');
+Route::get('/mockupgenerator/{pid}', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/createstore', 'MyStoresController@createStore')->name('createstore');
+Route::get('/editstore/{id}', 'MyStoresController@editStore')->name('editStore');
 Route::post('/savestore', 'MyStoresController@saveStore')->name('savestore');
-Route::post('/saveartwork', 'MyStoresController@saveartwork')->name('saveartwork');
+Route::post('/saveartwork', 'MyStoresController@saveArtWork')->name('saveartwork');
 Route::get('/mystores', 'MyStoresController@index')->name('mystores');
 Route::get('/myearnings', 'MyEarningsController@index')->name('myearnings');
 Route::get('/addartwork', 'MyStoresController@addArtWork')->name('addartwork');
-Route::get('/selectproductype/{artwork_id}/{artwork_name}', 'ProductsController@selectProducType')->name('selectproductype');
-Route::get('/addproducts/{artwork_id}/{artwork_name}', 'ProductsController@addProducts')->name('addproducts');
-Route::get('/addproducts', 'ProductsController@addProducts')->name('addproducts');
-Route::post('/setpricing', 'ProductsController@setPricing')->name('setpricing');
+Route::get('/selectproductype/{artwork_id}/{artwork_name}', 'AddProductsController@selectProducType')->name('selectproductype');
+Route::get('/addproducts/{artwork_id}/{artwork_name}', 'AddProductsController@addProducts')->name('addproducts');
+Route::get('/addproducts', 'AddProductsController@addProducts')->name('addproducts');
+Route::post('/setpricing', 'AddProductsController@setPricing')->name('setpricing');
 Route::get('/tagsuggestions/{id}', 'MyStoresController@tagSuggestions')->name('tagsuggestions');
 Route::get('/artworkmanagement', 'ArtworkManagementController@index')->name('artworkmanagement');
 Route::get('/updateartworkstatus', 'ArtworkManagementController@updateStatus')->name('updateartworkstatus');
@@ -50,12 +52,29 @@ Route::get('/product-details/{productId}', 'ProductDetailsController@index')->na
 Route::get('/collections', 'CollectionsController@index')->name('collections');
 Route::get('/seller', 'ProductDetailsController@seller')->name('seller');
 Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('ordertracking');
-Route::get('/products', 'ProductDetailsController@products')->name('collections');
+
+Route::post('/addtobasket', 'MockupgenController@addProduct');
+
+/**
+ * Products Page
+ */
+Route::group(['prefix' => 'product/'], function($app){
+    $app->get('{category}/{type}', 'ProductsController@index')->name('products');
+    $app->get('{category}/', 'ProductsController@index')->name('productNoType');
+    $app->get('/', 'ProductsController@home')->name('producthome');
+});
+
+Route::get('/contact', 'ContactController@index')->name('contact us');
 
 /**
  * API CALLS NEEDED
  */
 Route::group(['prefix' => 'api/'], function($app){
+
+    /**
+     * PRINT PRODUCTS WITH LIMIT of 6
+     */
+    $app->get('productinformation/{type}/{page}', 'API\ProductInformationController@getProductList')->name('productlistFetcher');
 
     /**
      * COLLECT TEMPLATE INFORMATION FROM THE DATABASE
@@ -110,5 +129,14 @@ Route::group(['prefix' => 'api/'], function($app){
      * ADD A PRINT/LIBRARY
      */
     $app->post('designs/print/create', 'API\DesignPrintsController@createPrint')->name('createPrint');
+
+    $app->get('product/generate/{pid}/{size}/{art_id}/{media_id}', 'API\ProductGenController@index')->name('createProduct');
+
+
+    $app->post('mockgen', 'API\MockgenController@setSession');
+    $app->get('mockgen', 'API\MockgenController@getSession');
+    $app->get('mockgen/flush', 'API\MockgenController@flushSession');
+    $app->get('mockgen/remove/{name}', 'API\MockgenController@removeObject');
+    //$app->get('insertproducts', 'API\InsertProductsController@index');
 
 });

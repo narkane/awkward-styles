@@ -24,7 +24,7 @@ class ToolController extends Controller
     
     public function index($productId)
     {
-              $user_id = Auth::user()->id;
+         $user_id = Auth::user()->id;
         /*$artwork_id = '';
         $artwork_name = '';
         if(isset($artwork_id)) { $artwork_id = $request->artwork_id; }
@@ -112,7 +112,14 @@ class ToolController extends Controller
       
       /////////////////////////////
       $q = $productId;
-      $proddy = DB::select(' select * from tbl_products where id = '.$q);
+
+      $proddy = DB::table(DB::raw('tbl_products AS prod'))
+                ->select(DB::raw("prod.*, med.full_url AS full_url"))
+                ->leftJoin(DB::raw('tbl_media_library AS med'), function($join){
+                    $join->on(DB::raw('med.id'), '=', DB::raw('prod.image'));
+                })
+              ->where(DB::raw('prod.id'),'=',$q)->first();
+
       //  $tags =[];
       //  foreach($termIDs as &$id) {
         //      // echo json_encode($id->category_id);
@@ -129,7 +136,8 @@ class ToolController extends Controller
           // $product = $this->mockupgen->index($productId);
           //  dd($product);//[0]->image_url);
           // return view('thetool', ['request' => json_encode($proddy), 'product_id' => $productId, compact('tokenGen')]);
-          return view('thetool', ['request' => json_encode($proddy), 'product_id' => $productId, 'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
+          return view('thetool', ['request' => $proddy, //json_encode($proddy),
+              'product_id' => $productId, 'menu'=>'stores','menuitem'=>'products','styles' => $styles, 'brands'=>$brands, 'artworks'=>$artworks, 'token'=>$token, 'user'=>$user_id]);
         }
       }
     }

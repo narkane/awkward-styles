@@ -80,21 +80,40 @@
 }
 
 body {
-  font-family: "OpenSans-Regular";
+  /* font-family: "OpenSans-Regular"; */
   font-size: 14px;
   color: #5d5b62;
   background-color: #f5f5f5;
 }
 
 header {
-  display: flex;
+  position: fixed;
+  top: 0;
+  z-index: 9;
+  display: flex !important;
   justify-content: flex-end;
-  padding-bottom: 100px;
+  /* padding-bottom: 100px;
   /* filter: drop-shadow(10px 3px 4px #227722); */
 }
 
+main {
+  margin-top: 150px;
+}
+
 footer {
-  margin-top: 2rem;
+  /*margin-top: 2rem;*/
+}
+
+.contact-tron {
+  background-image: url('../images/clothesimage.jpg');
+
+  background-size: cover;
+
+  background-position-y: -100px;
+
+  background-repeat: repeat-x;
+
+  background-blend-mode: multiply;
 }
 
 .custom-select {
@@ -1423,8 +1442,56 @@ section {
   color: #fff;
 }
 
+.nav-item {
+  /* margin-top: auto; */
+  margin-bottom: auto;
+}
+
+.nav-item > .nav-link.dropdown-toggle[aria-expanded="true"] {
+  background-color: rgba(255,255,255,0) !important;
+}
+
 /* navbar css end */
 .glowhover:hover {
   box-shadow: 0 0 25px 20px rgba(255, 255, 255, 0.9);
   transition: box-shadow 1s ease-in-out;
+}
+
+.contactContainer {
+  width: 100%;
+  width: -moz-available;
+  max-width: 100%;
+}
+
+.big-label, .contact-details,
+.contact-details a,
+.contact-details a:visited {
+  font-size: 20px;
+  color: #ffffff;
+  text-shadow: 1px 1px 5px #000;
+  padding-right: 10px;
+}
+
+.contact-details a:hover,
+.contact-details a:active {
+  color: #ffffff;
+  text-shadow: 1px 1px 5px #000;
+  text-decoration: underline;
+}
+
+.big-label { text-decoration: underline; }
+
+.form-control.contact-input {
+  background-color: rgba(0,0,0,0.5);
+  color: unset;
+  color: #fff;
+}
+
+.form-control.contact-input::placeholder {
+  color: #cccccc;
+}
+
+.btn.btn-form {
+  background-color: #444444;
+  color: #ffffff;
 }
