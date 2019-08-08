@@ -383,12 +383,12 @@
         <div class="col-md-3">
             <div class="container shirt-block">
 
-                <div id="111_div" class="page"
+                <div id="1456_div" class="page"
                      style="position: relative; background-color: rgb(255, 255, 255);">
-                    <img id="111_image" src=""/>
-                    <div id="111_area"
+                    <img id="1456_image" src=""/>
+                    <div id="1456_area"
                          style="position: absolute;top: 0px;left: 0px;z-index: 10;">
-                        <canvas id="111_canvas" class="hover"
+                        <canvas id="1456_canvas" class="hover"
                                 style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
                     </div>
                 </div>
@@ -428,12 +428,12 @@
         <div class="col-md-3">
             <div class="container shirt-block">
 
-                <div id="333_div" class="page"
+                <div id="1455_div" class="page"
                      style="position: relative; background-color: rgb(255, 255, 255);">
-                    <img id="333_image" src=""/>
-                    <div id="333_area"
+                    <img id="1455_image" src=""/>
+                    <div id="1455_area"
                          style="position: absolute;top: 0px;left: 0px;z-index: 10;">
-                        <canvas id="333_canvas" class="hover"
+                        <canvas id="1455_canvas" class="hover"
                                 style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
                     </div>
                 </div>
