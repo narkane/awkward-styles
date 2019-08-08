@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" class="no-js">
 <head>
-    <script src="{{ asset('js/jquery.min.js') }}"></script>
-    <script src="{{ asset('js/popper.min.js') }}"></script>
-    <script src="{{ asset('js/bootstrap.min.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('js/mockup/fabric.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('js/mockup/tshirtEditor.js')}}"></script>
-    <script type="text/javascript" src="{{ asset('js/mockup/jquery.miniColors.min.js')}}"></script>
-    <script type="text/javascript" src="{{ asset('js/mockup/color-picker.min.js') }}"></script>
-    <link type="text/css" rel="stylesheet" href="{{ url('/') }}/packages/aimeos/shop/themes/elegance/aimeos.css">
-    <link href="{{ asset('css/color-picker.min.css') }}" rel="stylesheet"/>
+    <script src="<?php echo e(asset('js/jquery.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('js/popper.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('js/bootstrap.min.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/fabric.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/tshirtEditor.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/jquery.miniColors.min.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/color-picker.min.js')); ?>"></script>
+    <link type="text/css" rel="stylesheet" href="<?php echo e(url('/')); ?>/packages/aimeos/shop/themes/elegance/aimeos.css">
+    <link href="<?php echo e(asset('css/color-picker.min.css')); ?>" rel="stylesheet"/>
     <style type="text/css">
         .footer {
             padding: 70px 0;
@@ -159,19 +159,19 @@
     </style>
 </head>
 <body>
-<div id="{{ $pid }}_div" class="page"
+<div id="<?php echo e($pid); ?>_div" class="page"
          style="position: relative; background-color: rgb(255, 255, 255);">
-        <img id="{{ $pid }}_image" src=""/>
-        <div id="{{ $pid }}_area"
+        <img id="<?php echo e($pid); ?>_image" src=""/>
+        <div id="<?php echo e($pid); ?>_area"
              style="position: absolute;top: 0px;left: 0px;z-index: 10;">
-            <canvas id="{{ $pid }}_canvas" class="hover"
+            <canvas id="<?php echo e($pid); ?>_canvas" class="hover"
                     style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
         </div>
     </div>
 
 <script>
     templateVars = {
-        pid: '{{ $pid }}',
+        pid: '<?php echo e($pid); ?>',
         size: 'XS',
         url: null
     };
@@ -179,12 +179,12 @@
     var newWidth = 400;
     var newHeight = 400;
 
-    var imgurl = '{{ $images[0]->full_url }}';
+    var imgurl = '<?php echo e($images[0]->full_url); ?>';
 
     // MAIN IMAGE
     setShirtImage();
 
-    var myCanvas = new fabric.Canvas('{{ $pid }}_canvas', {
+    var myCanvas = new fabric.Canvas('<?php echo e($pid); ?>_canvas', {
         hoverCursor: 'pointer',
         selection: false,
         selectionBorderColor: 'blue',
@@ -221,7 +221,7 @@
 
         csrf.id = "_token";
         csrf.name = "_token";
-        csrf.value = '{{ csrf_token() }}';
+        csrf.value = '<?php echo e(csrf_token()); ?>';
         csrf.hidden = true;
 
         data.id = "data";
@@ -260,11 +260,11 @@
                 newWidth = imageWidth / (imageHeight / newHeight);
             }
 
-            $("#{{ $pid }}_image").css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
+            $("#<?php echo e($pid); ?>_image").css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
 
-            $("#{{ $pid }}_div").css({'width': newWidth, 'height': newHeight});
+            $("#<?php echo e($pid); ?>_div").css({'width': newWidth, 'height': newHeight});
             //$(".canvas-container").css({'width': newWidth, 'height': newHeight});
-            $("#{{ $pid }}_area").css({'width': newWidth, 'height': newHeight});
+            $("#<?php echo e($pid); ?>_area").css({'width': newWidth, 'height': newHeight});
 
             myCanvas.setHeight(newHeight);
             myCanvas.setWidth(newWidth);
@@ -382,7 +382,7 @@
                 var w = newWidth / 3;
                 var h = newHeight / 3;
 
-                $("#{{ $pid }}_area").css({"top": '35%', "left": '35%', "width": w, "height": h});
+                $("#<?php echo e($pid); ?>_area").css({"top": '35%', "left": '35%', "width": w, "height": h});
             }
         });
     }
@@ -395,7 +395,7 @@
         });
     });
 
-    let original = {!! $art_design !!};
+    let original = <?php echo $art_design; ?>;
     var cv = null;
 
     if(original.is_public){

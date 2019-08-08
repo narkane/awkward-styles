@@ -93,7 +93,7 @@ class MockupgenController extends Controller
         //list($w,$h) = getimagesize((strpos($images[0]->full_url, "http://") ? $images[0]->full_url :
         //URL::to("/") . $images[0]->full_url));
 
-        return view('Mockup.' . ($request->has('standAlone') ? 'standalone' : 'mockupgen-new'), [
+        return view('Mockup.mockupgen-new', [
             'art' => $art,
             'images' => $images,
             'pid' => $pid,
@@ -103,6 +103,26 @@ class MockupgenController extends Controller
             'token' => $this->getToken(),
             'canvasUrls' => $this->standInImageUrls()
         ]);
+    }
+
+    public function standAlone(Request $request, $pid, $designId){
+        $art_design = ArtistDesigns::where('id', $designId)->first();
+
+        $product = DB::table('tbl_products')
+            ->select('image')
+            ->where('id', '=', $pid)
+            ->get();
+
+        $images = DB::table('tbl_media_library')
+            ->select("full_url","thumbnail")
+            ->whereIn("id", explode(",", $product[0]->image) )
+            ->get();
+
+        return view('Mockup.standalone', [
+            'images' => $images,
+            'pid' => $pid,
+            'art_design' => $art_design
+            ]);
     }
 
     private function standInImageUrls(){

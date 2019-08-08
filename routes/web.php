@@ -33,6 +33,7 @@ Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->n
 
 Route::get('/mockupgenerator/{pid}', 'MockupgenController@index')->name('mockupgenerator');
 Route::post('/mockupgenerator/{pid}', 'MockupgenController@save')->name('mockupPost');
+Route::get('/mockupgenerator/standalone/{pid}/{design}', 'MockupgenController@standalone');
 
 Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
 Route::get('/home', 'HomeController@index')->name('home');
@@ -82,6 +83,7 @@ Route::group(['prefix' => 'api/'], function($app){
      */
     $app->get('productinformation/{type}/{page}', 'API\ProductInformationController@getProductList')->name('productlistFetcher');
 
+    $app->post('designimage/', 'API\ProductInformationController@createImage')->name('createimage');
     /**
      * COLLECT TEMPLATE INFORMATION FROM THE DATABASE
      *

@@ -66,4 +66,13 @@ class ProductInformationController extends Controller
 
     }
 
+    public function createImage(Request $request){
+
+        $data = base64_decode(str_replace('data:image/png;base64,','',$request->input('data')));
+        //$image = imagecreatefromstring($data);
+        header("Content-Type: image/png");
+        echo $data;
+        exit();
+    }
+
 }
