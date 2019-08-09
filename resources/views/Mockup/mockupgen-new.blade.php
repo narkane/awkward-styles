@@ -583,7 +583,7 @@
                     },
                     type: 'GET',
                     success: function (images) {
-                        $("#hoodieFacing").attr('src', images.properties.full_url);
+                        $("#shirtFacing").attr('src', images.properties.full_url);
                     }
                 });
                 e.preventDefault();
