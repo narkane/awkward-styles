@@ -37,7 +37,6 @@
                         @else
                             John Thummel
                         @endif
-
                 </li>
             </ol>
         </nav>

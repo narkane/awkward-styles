@@ -459,10 +459,18 @@ $(document).ready(function () {
                 let obj = $.extend(true,{},item[i]);
                 obj.lockMovementX = true;
                 obj.lockMovementY = true;
+                // console.log("YO HERE IT IS (canvas width):");
+                // console.log(prevCanvas[c].getObjects[0].width)
+                // console.log(obj);
+                // let newW = obj.aCoords.br.x - obj.aCoords.bl.x;
+                // let newH = obj.aCoords.bl.y - obj.aCoords.tl.y;
+                // console.log(newW);
+                // console.log(newH);
+                // obj.left = (prevCanvas[c].width - newW) * 0.5; 
+                // obj.top = (prevCanvas[c].height - newH) * 0.5;
                 prevCanvas[c].add(obj);
             }
         }
-
     });
 
     $(document).on('input',"#imageOpacity", function(){
@@ -1286,7 +1294,7 @@ function saveDesign (csrfToken){
 
     design_object.id = "design_object";
     design_object.name = "design_object";
-    design_object.value = localStorage.getItem('canvas');
+    design_object.value = localStorage.getIteXm('canvas');
 
     form.appendChild(csrf);
     form.appendChild(design_object);
