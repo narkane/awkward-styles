@@ -1,5 +1,13 @@
 @extends('layouts.dashboard')
 @section('content')
+    <script>
+        let template = {!! ($template) !!};
+        let design = {!! ($design) !!};
+
+        console.log(JSON.parse(template.values));
+
+        console.log(JSON.parse(design.design_data));
+    </script>
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb bg-white border">

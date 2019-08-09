@@ -159,10 +159,7 @@
     </style>
 </head>
 <body>
-
-<div class="container shirt-block">
-
-    <div id="{{ $pid }}_div" class="page"
+<div id="{{ $pid }}_div" class="page"
          style="position: relative; background-color: rgb(255, 255, 255);">
         <img id="{{ $pid }}_image" src=""/>
         <div id="{{ $pid }}_area"
@@ -172,8 +169,6 @@
         </div>
     </div>
 
-</div>
-
 <script>
     templateVars = {
         pid: '{{ $pid }}',
@@ -181,24 +176,70 @@
         url: null
     };
 
+    var newWidth = 400;
+    var newHeight = 400;
+
+    var imgurl = '{{ $images[0]->full_url }}';
+
     // MAIN IMAGE
-    setTimeout(
-    setShirtImage('{{ $images[0]->full_url }}'),
-    5000);
+    setShirtImage();
 
-    var myCanvas;
+    var myCanvas = new fabric.Canvas('{{ $pid }}_canvas', {
+        hoverCursor: 'pointer',
+        selection: false,
+        selectionBorderColor: 'blue',
+        width: newWidth,
+        height: newHeight,
+        preserveObjectStacking: true
+    });
 
-    function setShirtImage(imgurl){
+    var count = 5000;
+    var totalObjs = 20;
+/*
+    setTimeout(function(){
+
+        console.log("here");
+
+        $("#image").html("");
+
+        var img = $('<img />').attr({
+            'id': 'myImage',
+            'src': myCanvas.toDataURL(),
+            'alt': '',
+            'title': '',
+            'width': newWidth
+        }).appendTo('#image');
+
+        /*
+        let form = document.createElement('form');
+
+        let csrf = document.createElement('input');
+        let data = document.createElement('input');
+
+        form.method = "POST";
+        form.action = "/api/designimage";
+
+        csrf.id = "_token";
+        csrf.name = "_token";
+        csrf.value = '{{ csrf_token() }}';
+        csrf.hidden = true;
+
+        data.id = "data";
+        data.name = "data";
+        data.value = myCanvas.toDataURL();
+
+        form.appendChild(csrf);
+        form.appendChild(data);
+
+        document.body.appendChild(form);
+        form.submit();
+
+    }, count);
+    */
+
+    function setShirtImage(){
 
         //setup front side canvas
-        myCanvas = new fabric.Canvas('{{ $pid }}_canvas', {
-            hoverCursor: 'pointer',
-            selection: false,
-            selectionBorderColor: 'blue',
-            width: newWidth,
-            height: newHeight,
-            preserveObjectStacking: true
-        });
 
         let img = new Image();
 
@@ -228,7 +269,7 @@
             myCanvas.setHeight(newHeight);
             myCanvas.setWidth(newWidth);
 
-            //setTemplate();
+            setTemplate();
 
             img = null;
 
@@ -341,50 +382,42 @@
                 var w = newWidth / 3;
                 var h = newHeight / 3;
 
-                $("#hoddieDrawingArea").css({"top": '35%', "left": '35%', "width": w, "height": h});
+                $("#{{ $pid }}_area").css({"top": '35%', "left": '35%', "width": w, "height": h});
             }
         });
     }
 
-    function fromStorage(result = null){
-        let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
+    myCanvas.on('object:moving', function(){
+        myCanvas.deactivateAll();
+        myCanvas.renderAll();
+        myCanvas.forEachObject(function(object){
+            object.selectable = false;
+        });
+    });
 
-        // Merge
-        if(result != null && Object.keys(result).length){
+    let original = {!! $art_design !!};
+    var cv = null;
 
-            // If downloaded, remove from site session
-            if(!cv.objects) { cv.objects = []; }
-            for(var i in result){
-                let l = Object.keys(cv.objects).length;
-                if(result[i]) {
-                    cv.objects[l] = result[i];
-                    console.log(result[i]);
-                    removeSessionItem(result[i].objectName, true);
-                }
-            }
-        }
+    if(original.is_public){
+        cv = JSON.parse(original.design_data);
+    }
+
+    console.log(cv);
+    function fromStorage(){
 
         if(cv.objects && Object.keys(cv.objects).length > 0){
 
-            let totalObjs = Object.keys(cv.objects).length;
-            let count = 0;
+            console.log(cv);
+
+            totalObjs = Object.keys(cv.objects).length;
 
             let listItems = [];
 
             if(totalObjs > 0) {
 
                 myCanvas.loadFromJSON(cv,myCanvas.renderAll.bind(myCanvas), function (o, object) {
-
-                    count++;
-
-                    if(listItems[object.objectIndex]){
-                        listItems[object.objectIndex].push(object)
-                    } else {
-                        listItems[object.objectIndex] = [object];
-                    }
-
-                    // fabric.log(object, o);
-
+                    count = 0;
+                        fabric.log(object, o);
                 });
 
                 myCanvas.selectable = false;
@@ -412,8 +445,6 @@
         console.log("CENTERY: " + y);
         return y;
     };
-
-    prevCanvas.push(myCanvas);
 
 </script>
 

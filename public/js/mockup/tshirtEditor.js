@@ -136,6 +136,7 @@ function setShirtImage(imgurl, canvasType = "canvas"){
         });
 
     } else {
+
         canvasToUse = prevCanvas[canvasType] = new fabric.Canvas(tag + '_canvas', {
             hoverCursor: 'pointer',
             selection: true,
@@ -355,11 +356,6 @@ function fromStorage(result = null){
                     listItems[object.objectIndex] = [object];
                 }
 
-                for(var a in prevCanvas){
-                    prevCanvas[a].add(object);
-                    prevCanvas[a].renderAll();
-                }
-
                 if(count === totalObjs){
                     for(var i in listItems){
                         for(var j in listItems[i]){
@@ -451,6 +447,24 @@ $(document).ready(function () {
         console.log($(this).attr('src'));
     });
 
+    $("#saveMyDesign").on('click', function() {
+        let item = canvas.getObjects();
+
+        for(let i in prevCanvas){
+            prevCanvas[i].clear();
+        }
+
+        for(let i in item) {
+            for (let c in prevCanvas) {
+                let obj = $.extend(true,{},item[i]);
+                obj.lockMovementX = true;
+                obj.lockMovementY = true;
+                prevCanvas[c].add(obj);
+            }
+        }
+
+    });
+
     $(document).on('input',"#imageOpacity", function(){
         let obj = canvas.getActiveObject();
         if(obj.type === 'awkward-image' || obj.type === 'awkward-text'){
@@ -538,6 +552,7 @@ $(document).ready(function () {
     canvas.on({
         'object:moving': function (e) {
             canvas.clipPath.opacity = 0.5;
+            /*
             // Set objects?
             for(var c in prevCanvas){
                 let can = prevCanvas[c].getObjects();
@@ -550,6 +565,8 @@ $(document).ready(function () {
                 }
 
             }
+
+             */
 
         },
         'object:modified': function (e) {
@@ -1249,3 +1266,30 @@ fabric.AwkwardText.fromObject = function (object, callback) {
 };
 
 fabric.AwkwardText.async = true;
+
+function saveDesign (csrfToken){
+
+    let form = document.createElement('form');
+
+    let csrf = document.createElement('input');
+    let design_object = document.createElement('input');
+
+    form.method = "POST";
+    form.action = "";
+
+    csrf.id = "_token";
+    csrf.name = "_token";
+    csrf.value = csrfToken;
+    csrf.hidden = true;
+
+    design_object.id = "design_object";
+    design_object.name = "design_object";
+    design_object.value = localStorage.getItem('canvas');
+
+    form.appendChild(csrf);
+    form.appendChild(design_object);
+
+    document.body.appendChild(form);
+    form.submit();
+
+};
