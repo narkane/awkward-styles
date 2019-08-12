@@ -6,8 +6,7 @@
     <div class="row products-row" style="float:left;border:3px inset lightblue;height:100%;">
         <div id="art-product-list">
             <div id="app">
-            <product />
-                <!-- <thetool prodid="{{$product_id}}"/> -->
+                <thetool prodid="{{$product_id}}"/>
             </div>
         </div>
 
