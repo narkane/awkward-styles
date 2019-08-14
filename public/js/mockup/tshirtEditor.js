@@ -35,7 +35,7 @@ var prevCanvas = [
  *        4: rectangle
  */
 
-var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, groupX, groupY, realW, realH, url, pid, size;
+var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, groupX, groupY, realW, realH, url, pid, size, mainG;
 var upperLeft = 999;
 var upperTop = 999;
 
@@ -101,6 +101,11 @@ function init(){
 
         for (let i in item) {
             for (let c in prevCanvas) {
+                if(item[i].type==='group')
+                {
+                    // prevCanvas[c].add(allG[c]);
+                    continue;
+                }
                 let obj = $.extend(true, {}, item[i]);
                 obj.lockMovementX = true;
                 obj.lockMovementY = true;
@@ -179,7 +184,8 @@ function init(){
      * END PAGE FUNCTIONS
      */
 
-    let tmpOpacity = 0;
+    // let tmpOpacity = 0;
+
     canvas.on({
         'object:moving': function (e) {
             canvas.clipPath.opacity = 0.5;
@@ -201,7 +207,7 @@ function init(){
 
         },
         'object:modified': function (e) {
-            canvas.clipPath.opacity = 0.05;
+            canvas.clipPath.opacity = 0.5;
             setCoordinates(e.target);
             if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
                 var startTimer = function () {
@@ -651,7 +657,8 @@ function setTemplate(main = "main") {
                             originX: "left",
                             originY: "top",
                             stroke: "rgba(255,0,0,1)",
-                            strokeWidth: 1
+                            strokeWidth: 1,
+                            opacity: 1
                         }));
 
                     } else if (result.values[i].shape === 4) {
@@ -665,7 +672,8 @@ function setTemplate(main = "main") {
                             originX: "left",
                             originY: "top",
                             stroke: "rgba(255,0,0,1)",
-                            strokeWidth: 1
+                            strokeWidth: 1,
+                            opacity: 1
                         }));
                     }
                     upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
@@ -705,11 +713,13 @@ function setTemplate(main = "main") {
                 }
 
                 if (isNaN(main)) {
+                    mainG = g;
                     myCanvas = canvas;
                     $("#upper-canvas").width(newWidth).height(newHeight);
                 } else {
                     myCanvas = prevCanvas[tag];
                 }
+                // allG.push(g);
 
                 myCanvas.clipPath = g;
 
@@ -756,6 +766,7 @@ function setTemplate(main = "main") {
 
 function fromStorage(result = null){
     let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
+    console.log(cv);
 
     // Merge
     if(result != null && Object.keys(result).length){
@@ -783,6 +794,10 @@ function fromStorage(result = null){
         let listItems = [];
 
         if(totalObjs > 0) {
+            console.log(cv.objects);
+            // cv.objects = Array.from(cv.objects);
+            cv.objects.unshift(mainG.toObject());
+            console.log(cv.objects);
 
             try{
             canvas.loadFromJSON(cv,canvas.renderAll.bind(canvas), function (o, object) {
@@ -801,7 +816,7 @@ function fromStorage(result = null){
                             createListItem(listItems[i][j].objectName,
                                 ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
                                 ((listItems[i][j].type === "awkward-image") ?
-                                    {
+                                {
                                         width: listItems[i][j].objectWidth*listItems[i][j].scaleX,
                                         height: listItems[i][j].objectHeight*listItems[i][j].scaleY,
                                         x: listItems[i][j].left,
@@ -811,9 +826,9 @@ function fromStorage(result = null){
                                         x: listItems[i][j].left,
                                         y: listItems[i][j].top
                                     } )
-                            );
-                        }
-                    }
+                                    );
+                                }
+                            }
                 }
                 fabric.log(object, o);
             });
@@ -1309,27 +1324,9 @@ fabric.AwkwardImage = fabric.util.createClass(fabric.Image, {
 });
 
 fabric.AwkwardImage.fromObject = function (object, callback) {
-    // let url = object.src;
-    $.ajax({
-        url: object.src,
-        success: function (data, textStatus) {
-            // URL is good
-            fabric.util.loadImage(object.src, function(img) {
-            callback && callback(new fabric.AwkwardImage(img,object));
-            });
-        }, error: function (jqXHR, textStatus, errorThrown) {
-            // URL is bad
-            console.log("...inner break :(");
-            console.log(errorThrown);
-            // clearAll();
-            fromStorage();
-            // $("#clearAll").click();
-            // setTimeout(function () {$("#drawingArea").click();}, 50);
-            // location.reload(true);
-            // init();
-            setTimeout(function () { canvas.renderAll(); }, 50);
-            // canvas.
-        }});
+    fabric.util.loadImage(object.src, function (img) {
+        callback && callback(new fabric.AwkwardImage(img, object));
+    });
 };
 
 fabric.AwkwardImage.fromURL = function (url, callback, imageOptions){
