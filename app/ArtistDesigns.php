@@ -45,6 +45,6 @@ class ArtistDesigns extends Model
         }
 
         return ($save) ? $save->id : false;
-
     }
+
 }

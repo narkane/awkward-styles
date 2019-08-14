@@ -35,6 +35,8 @@ class DesignLibrary extends Model
     public static function createOrUpdate(Request $request)
     {
 
+        $imageName = ((Auth::check()) ? Auth::user()->getAuthIdentifier() : "0") . time();
+
         $check = DesignLibrary::where('id', '=', $request->input('library_id'))
             ->where('user_id', '=', Auth::user()->getAuthIdentifier());
 
@@ -42,7 +44,7 @@ class DesignLibrary extends Model
 
             $id = DesignLibrary::insertGetId([
                 'user_id' => Auth::user()->getAuthIdentifier(),
-                'image_url' => "image1.png"
+                'image_url' => $imageName .".png"
             ]);
 
                 if ($request->input('blob') != null) {
@@ -57,7 +59,7 @@ class DesignLibrary extends Model
                         mkdir($path, 0777, true);
                     }
 
-                    imagepng($image, $path . DIRECTORY_SEPARATOR . "image1.PNG");
+                    imagepng($image, $path . DIRECTORY_SEPARATOR . $imageName .".PNG");
 
                 } else {
 

@@ -26,8 +26,8 @@ Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
 Route::get('/search/{id}', 'SearchController@index')->name('search-results');
 Route::get('/thetool/{productId}', 'ToolController@index')->name('thetool');
 ###them
-Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
-Route::get('/account', 'DashboardController@myAccount')->name('account');
+Route::get('/dashboard', 'DashboardController@myAccount')->name('dashboard');
+//Route::get('/account', 'DashboardController@myAccount')->name('account');
 Route::post('/account', 'DashboardController@myAccount')->name('updateAccount');
 Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->name('artiststorefront');
 
@@ -71,6 +71,21 @@ Route::group(['prefix' => 'product/'], function($app){
     $app->get('/', 'ProductsController@home')->name('producthome');
 });
 
+Route::get('storage/{filename}', function ($filename)
+{
+    $path = storage_path() . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR .'public' . DIRECTORY_SEPARATOR . $filename;
+
+    if(!File::exists($path)) abort(404);
+
+    $file = File::get($path);
+    $type = File::mimeType($path);
+
+    $response = Response::make($file, 200);
+    $response->header("Content-Type", $type);
+
+    return $response;
+});
+
 Route::get('/contact', 'ContactController@index')->name('contact us');
 
 /**
@@ -84,6 +99,7 @@ Route::group(['prefix' => 'api/'], function($app){
     $app->get('productinformation/{type}/{page}', 'API\ProductInformationController@getProductList')->name('productlistFetcher');
 
     $app->post('designimage/', 'API\ProductInformationController@createImage')->name('createimage');
+
     /**
      * COLLECT TEMPLATE INFORMATION FROM THE DATABASE
      *
@@ -145,6 +161,12 @@ Route::group(['prefix' => 'api/'], function($app){
     $app->get('mockgen', 'API\MockgenController@getSession');
     $app->get('mockgen/flush', 'API\MockgenController@flushSession');
     $app->get('mockgen/remove/{name}', 'API\MockgenController@removeObject');
+
+    /**
+     * GENERATE IMAGE
+     */
+    $app->get('designs/images/{pid}/{size}/{design_id}', 'API\ImageMakerController@index')->name('imageMaker');
+
     //$app->get('insertproducts', 'API\InsertProductsController@index');
 
 });
