@@ -106,8 +106,12 @@ export default {
       //   ratio: 0
       // };
 
+      this.app.view.setAttribute("id", "drawingboard");
+      this.app.view.style.position = "absolute";
+      this.app.view.style.marginTop = "3px";
+      this.app.view.style.left = "138px";
+      this.app.view.style.border = "1px yellow outset";
       document.body.appendChild(this.app.view);
-      document.body.lastElementChild.setAttribute("id", "drawingboard");
 
       // this.drawPoly();
       var graphics = new PIXI.Graphics();
@@ -489,9 +493,7 @@ export default {
       for (let i = 1; i < this.shapes.length - 1; i++) {
         this.libraryCurrent = i + 1;
         var newSel = this.createRadioElement(this.libraryCurrent);
-        newSel.onclick = event => {
-          this.selectRadio(event.target.value);
-        };
+
         var sel = document.getElementById("selection");
         sel.appendChild(document.createElement("br"));
         sel.appendChild(newSel);
@@ -506,19 +508,24 @@ export default {
       this.select(this.shapes.length - 1);
     },
     createRadioElement: function(name) {
-      var radioHtml =
-        "<button id='button" +
-        name +
-        "' type='button' value='" +
-        name +
-        "'>Select " +
-        name +
-        "</button>";
+      var radioFragment = document.createElement("button");
+      radioFragment.id = "button" + name;
+      radioFragment.type = "button";
+      radioFragment.value = name;
+      radioFragment.textContent = "Template " + name;
+      radioFragment.style.width = "80px";
+      radioFragment.style.height = "58px";
+      radioFragment.style.backgroundColor = "lightgray";
+      radioFragment.style.border = "2px outset darkgray";
+      radioFragment.style.borderRadius = "10px";
+      radioFragment.style.margin = "5px 0px 0px 15px";
+      radioFragment.style.filter = "drop-shadow(1px 1px 3px #333333)";
 
-      var radioFragment = document.createElement("div");
-      radioFragment.innerHTML = radioHtml;
+      radioFragment.onclick = event => {
+        this.selectRadio(event.target.value);
+      };
 
-      return radioFragment.firstChild;
+      return radioFragment;
     },
     selectRadio: function(current) {
       this.select(current);
@@ -636,16 +643,10 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .data {
   margin-top: 18px;
   margin-left: 550px;
-}
-#drawingboard {
-  position: absolute;
-  margin-top: 3px;
-  left: 138px;
-  border: 1px yellow outset;
 }
 button {
   width: 80px;
@@ -665,5 +666,12 @@ button {
 }
 #minus {
   padding-bottom: 20px;
+}
+#selection {
+  position: relative;
+  border: 2px inset lightgreen;
+  background-color: lightseagreen;
+  left: -7px;
+  padding: 5px;
 }
 </style>
