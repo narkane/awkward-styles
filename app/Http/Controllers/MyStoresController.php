@@ -55,7 +55,7 @@ class MyStoresController extends Controller
     }
 
 
-    public function addArtWork(Request $request)
+    public function addArtWork(Request $request, $id = null)
     {
         $user_id = Auth::user()->id;
         $data = array("privateKey" => "password");                                                                    

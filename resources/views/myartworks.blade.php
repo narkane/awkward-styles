@@ -112,7 +112,7 @@
                                     <div class="input-box col-sm-7">
                                         <input type="text" class="form-control input-bg"
                                                id="artwork_name" name="artwork_name"
-                                               @if()
+
                                                                            required>
                                     </div>
                                 </div>
