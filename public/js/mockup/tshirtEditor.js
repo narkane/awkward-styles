@@ -614,6 +614,7 @@ function setShirtImage(imgurl, canvasType = "canvas"){
     img.src = imgurl;
 }
 
+
 function setTemplate(main = "main") {
 
     $.ajax({
@@ -624,14 +625,11 @@ function setTemplate(main = "main") {
         success: (result) => {
             template = result;
 
-            
-            console.log(template)
-
             var group = [];
 
             var upleft = uptop = 999;
 
-            if(result.values) {
+            if (result.values) {
 
                 // Run Through Template(s)
                 for (var i = 1; i < result.values.length; i++) {
@@ -653,12 +651,10 @@ function setTemplate(main = "main") {
                             originX: "left",
                             originY: "top",
                             stroke: "rgba(255,0,0,1)",
-                            strokeWidth: 2
+                            strokeWidth: 1
                         }));
 
                     } else if (result.values[i].shape === 4) {
-                        // result.values[i].x = (isNaN(main) ? result.values[i].x : 0);
-                        // result.values[i].y = (isNaN(main) ? result.values[i].y : 0);
 
                         group.push(new fabric.Rect({
                             width: result.values[i].width,
@@ -669,7 +665,7 @@ function setTemplate(main = "main") {
                             originX: "left",
                             originY: "top",
                             stroke: "rgba(255,0,0,1)",
-                            strokeWidth: 2
+                            strokeWidth: 1
                         }));
                     }
                     upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
@@ -681,7 +677,7 @@ function setTemplate(main = "main") {
                 }
             }
 
-            if(group.length > 0) {
+            if (group.length > 0) {
                 var g = new fabric.Group(group, {
                     originY: "top",
                     originX: "left",
@@ -690,6 +686,7 @@ function setTemplate(main = "main") {
                     selectable: false,
                     opacity: 0.3
                 });
+
                 if (main == "main") {
                     groupX = g.left;
                     groupY = g.top;
@@ -697,13 +694,9 @@ function setTemplate(main = "main") {
                     groupHeight = g.height;
                 }
 
-                console.log('group coords:')
-                console.log(groupX, groupY)
-                console.log('group w,h');
-                console.log(groupWidth, groupHeight)
 
                 let tag = main;
-                switch(main) {
+                switch (main) {
                     default: tag = false; break;
                     case 1456: tag = 0; break;
                     case 112: tag = 1; break;
@@ -711,22 +704,22 @@ function setTemplate(main = "main") {
                     case 1455: tag = 3; break;
                 }
 
-                if(isNaN(main)){
+                if (isNaN(main)) {
                     myCanvas = canvas;
                     $("#upper-canvas").width(newWidth).height(newHeight);
                 } else {
                     myCanvas = prevCanvas[tag];
                 }
 
-                isNaN(main) && (myCanvas.clipPath = g)
+                myCanvas.clipPath = g;
 
                 myCanvas.add(g);
 
-                // myCanvas.moveTo(g, 0);
+                myCanvas.moveTo(g, 0);
 
             }
 
-            if(isNaN(main)) {
+            if (isNaN(main)) {
                 $.ajax({
                     url: "/api/mockgen",
                     type: 'GET',
@@ -755,10 +748,11 @@ function setTemplate(main = "main") {
             var w = newWidth / 3;
             var h = newHeight / 3;
 
-            $("#shirtDrawingArea").css({"top": '35%', "left": '35%', "width": w, "height": h});
+            $("#shirtDrawingArea").css({ "top": '35%', "left": '35%', "width": w, "height": h });
         }
     });
 }
+
 
 function fromStorage(result = null){
     let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
