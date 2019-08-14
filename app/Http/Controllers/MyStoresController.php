@@ -54,13 +54,14 @@ class MyStoresController extends Controller
         return view('createstore',['menu'=>'stores','menuitem'=>'createstore','storefronts'=>$storefronts, 'tags' => $tags]);
     }
 
-    public function addArtWork(Request $request)
+
+    public function addArtWork(Request $request, $id = null)
     {
         $user_id = Auth::user()->id;
         $data = array("privateKey" => "password");                                                                    
         $data_string = json_encode($data);
         $categories = DB::SELECT('select id,name from tbl_art_category where type=? and active=?',['templates',1]);
-        $artworks = DB::SELECT('select id,artname,artwork,DATE_FORMAT(mtime,"%d-%M-%Y") as date from tbl_art_work where parentid=? order by id DESC LIMIT 8',[$user_id]);
+        $artworks = DB::SELECT('select id,artname,artwork, DATE_FORMAT(mtime,"%d-%M-%Y") as date from tbl_art_work where parentid=? order by id DESC LIMIT 8',[$user_id]);
         $royaltyfees = DB::SELECT('select id,value,name from tbl_royalty_fee order by id DESC');
         return view('myartworks',[
             'menu'=>'stores',
