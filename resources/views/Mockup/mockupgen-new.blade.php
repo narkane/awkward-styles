@@ -200,7 +200,7 @@
 
                 <div class="col-md-7">
 
-                    <div class="container shirt-block">
+                    <div class="container shirt-block" style="padding:50px 0px 0px 0px">
 
                         <div id="shirtDiv" class="page"
                              style="position: relative; background-color: rgb(255, 255, 255);">

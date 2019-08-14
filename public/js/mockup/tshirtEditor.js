@@ -1333,7 +1333,7 @@ fabric.AwkwardImage.fromObject = function (object, callback) {
             // setTimeout(function () {$("#drawingArea").click();}, 50);
             // location.reload(true);
             // init();
-            // setTimeout(function () { canvas.renderAll(); }, 50);
+            setTimeout(function () { canvas.renderAll(); }, 50);
             // canvas.
         }});
 };
