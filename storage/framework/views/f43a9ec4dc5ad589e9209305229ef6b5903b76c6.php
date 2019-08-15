@@ -1,3 +1,5 @@
+
+
 <?php $__env->startSection('content'); ?>
 
     <style>
@@ -103,9 +105,7 @@
                             <h4 class="mb-4">Artwork Details</h4>
                             <form action="<?php echo e(url('saveartwork')); ?>" method="post" enctype="multipart/form-data"
                                   id="submit_artwork">
-
                                 <?php echo e(csrf_field()); ?>
-
 
                                 <?php if(isset($id)): ?> <input type="hidden" name="art_id" id="art_id" value="<?php echo e($id); ?>"/> <?php endif; ?>
                                 <div class="form-group row">
@@ -263,7 +263,9 @@
                                 </div>
                                 <br/>
                                 <div class="form-group">
-                                    <input type="submit" class="btn btn-primary float-right" id="submitBtn" value="Save and Choose Products" />
+                                    <button type="submit" class="btn btn-primary float-right" id="submitBtn"> Save and
+                                        Choose Products
+                                    </button>
                                 </div>
                             </form>
 
@@ -302,6 +304,10 @@
                 } else {
                     $(".hide-when-private").hide();
                 }
+            });
+
+            $("#submitBtn").on('click', function(){
+                $("#submit_artwork").submit();
             });
 
             /*
@@ -374,7 +380,7 @@
 
                 $("#tag-suggestions").val(JSON.stringify(allTags)).hide();
 
-                alert("TEST");
+                alert("HERE");
 
                 return true;
             });

@@ -54,8 +54,8 @@
                                                 <div class="pb-3">
                                                     <h5 class="d-inline">Name:</h5>
                                                         <span class="float-right">
-                                                        <i class="fa fa-edit"></i>
-                                                        <i class="fa fa-trash-alt"></i>
+                                                        <i class="fa fa-edit btn btn-secondary p-1"></i>
+                                                        <i class="fa fa-trash-alt btn btn-secondary p-1"></i>
                                                         </span>
                                                 </div>
                                                 <span class="text-uppercase">{{ $artwork->artname }}</span>
@@ -104,15 +104,17 @@
                             <h4 class="mb-4">Artwork Details</h4>
                             <form action="{{ url('saveartwork') }}" method="post" enctype="multipart/form-data"
                                   id="submit_artwork">
+
                                 {{ csrf_field() }}
 
+                                @if(isset($id)) <input type="hidden" name="art_id" id="art_id" value="{{$id}}"/> @endif
                                 <div class="form-group row">
                                     <label for="email" class="col-sm-5 col-form-label">Artwork Name <span
                                                 style="color:red">*</span></label>
                                     <div class="input-box col-sm-7">
                                         <input type="text" class="form-control input-bg"
                                                id="artwork_name" name="artwork_name"
-
+                                               @if(isset($id)) value="{{$current_artwork->artname}}" @endif
                                                                            required>
                                     </div>
                                 </div>
@@ -124,43 +126,31 @@
                                         <span class="text-danger text-small">Min. 400 X 400 px Max.Size 1 MB</span>
                                     </label>
                                     <div class="col-sm-7">
-                                        <div class="custom-file">
+                                        <div class="custom-file" @if(isset($id)) style="display:none" @endif>
                                             <input type="file" class="custom-file-input" id="updated_artwork"
-                                                   name="updated_artwork" accept="image/*" required>
+                                                   name="updated_artwork" accept="image/*"
+                                                   @if(isset($id)) disabled="true" @else required @endif>
                                             <input class="" type="checkbox" name="remember" required>
                                             <span>By uploading the Artwork, i confirm that i hold the copyrights for the Artwork or a license to use it.</span>
                                             <label class="custom-file-label" for="customFile">Choose file</label>
                                         </div>
                                         <div class="mt-3">
-                                            <img src="images/storelogo.png" id="artwork_image" width="80" height="80"
+                                            <img @if(isset($id)) src="{{ $current_artwork->artwork }}" @else src="images/blank.jpg" @endif id="artwork_image" width="80" height="80"
                                                  class="img-fluid" alt="">
                                         </div>
                                     </div>
                                 </div>
 
-                                <!--<div class="form-group">
-                                  <label for="pwd">Upload Artwork <br>
-                                  <span class="text-danger text-small">Min. 400 x 400 px Max.Size 1 MB</span>
-                                  </label>
-
-                                  <div class="input-box">
-
-                                   <input type="file" class="form-control" id="updated_artwork"  name="updated_artwork" required>
-
-
-                                  </div>
-
-
-
-                                </div>-->
                                 <div class="form-group row">
                                     <label for="pwd" class="col-sm-5 col-form-label">Artwork Usage</label>
                                     <div class="input-box col-sm-7">
-                                        <div class="m-check"><input class="input-bg" type="radio" name="private_artwork"
-                                                                    value="1" checked="checked"> <span>Private</span>
+                                        <div class="m-check">
+                                            <input class="input-bg" type="radio" name="private_artwork"
+                                                   value="1" @if(isset($id) && $current_artwork->is_private == 0) checked="checked" @endif> <span>Private</span>
                                         </div>
-                                        <div class="m-check"><input class="input-bg" type="radio" name="private_artwork"
-                                                                    value="0"> <span>Public (Commercial)</span></div>
+                                        <div class="m-check">
+                                            <input class="input-bg" type="radio" name="private_artwork"
+                                                   value="0" @if(isset($id) && $current_artwork->is_private == 1) checked="checked" @endif> <span>Public (Commercial)</span></div>
                                     </div>
                                 </div>
                                 <div class="form-group row hide-when-private">
@@ -168,29 +158,38 @@
                                         Channels where your Artwork can be used. <span
                                                 style="color:red">*</span></label>
                                     <div class="input-box col-sm-7">
-                                        <div class="m-check"><input class="input-bg channels" type="checkbox"
-                                                                    name="channel_individual"
-                                                                    value="Individual Buyers (B2C)"> <span>Individual Buyers (B2C)</span>
+                                        <div class="m-check">
+                                            <input class="input-bg channels" type="checkbox"
+                                                   name="channel_individual"
+                                                   value="Individual Buyers (B2C)"
+                                                   @if(isset($id) && $current_artwork->is_individual == 1) checked="checked" @endif> <span>Individual Buyers (B2C)</span>
                                         </div>
-                                        <div class="m-check"><input class="input-bg channels" type="checkbox"
-                                                                    name="channel_awkwardstyle"
-                                                                    value="Awkwardstyles Marketplace Stores"> <span>Awkwardstyles Marketplace Stores</span>
+                                        <div class="m-check">
+                                            <input class="input-bg channels" type="checkbox"
+                                                   name="channel_awkwardstyle"
+                                                   value="Awkwardstyles Marketplace Stores"
+                                                   @if(isset($id) && $current_artwork->is_awkwardstyle) checked="checked" @endif> <span>Awkwardstyles Marketplace Stores</span>
                                         </div>
-                                        <div class="m-check"><input class="input-bg channels" type="checkbox"
-                                                                    name="channel_thirdMarketPlace"
-                                                                    value="Thirdparty Marketplace Stores"> <span>Thirdparty Marketplace Stores</span>
+                                        <div class="m-check">
+                                            <input class="input-bg channels" type="checkbox"
+                                                   name="channel_thirdMarketPlace"
+                                                   value="Thirdparty Marketplace Stores"
+                                                   @if(isset($id) && $current_artwork->is_thirdparty_marketplace) checked="checked" @endif> <span>Thirdparty Marketplace Stores</span>
                                         </div>
-                                        <div class="m-check"><input class="input-bg channels" type="checkbox"
-                                                                    name="channel_thirdEcommerce"
-                                                                    value="Thirdparty Ecommerce Platforms"> <span>Thirdparty Ecommerce Platforms</span>
+                                        <div class="m-check">
+                                            <input class="input-bg channels" type="checkbox"
+                                                   name="channel_thirdEcommerce"
+                                                   value="Thirdparty Ecommerce Platforms"
+                                                   @if(isset($id) && $current_artwork->is_thirdparty_ecommerce) checked="checked" @endif> <span>Thirdparty Ecommerce Platforms</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="form-group row">
                                     <label for="pwd" class="col-sm-5 col-form-label">Artwork Description</label>
-                                    <div class="input-box col-sm-7"><textarea class="form-control input-bg" rows="3"
-                                                                              id="artwork_description"
-                                                                              name="artwork_description"></textarea>
+                                    <div class="input-box col-sm-7">
+                                        <textarea class="form-control input-bg" rows="3"
+                                                  id="artwork_description"
+                                                  name="artwork_description">@if(isset($id)){{ $current_artwork->description }}@endif</textarea>
                                     </div>
                                 </div>
 
@@ -199,10 +198,11 @@
                                     <div class="input-box col-sm-7">
                                         @if( count($categories)>0 )
                                             <select class="form-control input-bg" id="artwork_category"
-                                                    name="artwork_category" required>
+                                                    name="artwork_category" autocomplete="off" required>
                                                 <option>Select Category</option>
                                                 @foreach( $categories as $category)
-                                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                                    <option value="{{ $category->id }}"
+                                                            @if(isset($id) && $current_artwork->artwork_category_id == $category->id) selected="selected" @endif>{{ $category->name }}</option>
                                                 @endforeach
                                             </select>
                                         @endif
@@ -217,8 +217,14 @@
                                             <input type="text" class="form-control input-bg" id="tag-suggestions"
                                                    name="artwork_tags" placeholder="Enter tag name and press comma[,]"
                                                    autocomplete="off">
+                                            @if(isset($id))
+                                                @foreach(json_decode($current_artwork->tag_name) as $tag)
+                                                    <span class="tag">{{ $tag }}</span>
+                                                @endforeach
+                                            @endif
                                             <div class="easy-autocomplete-container" id="eac-container-provider-remote">
-                                                <ul style="display: none;"></ul>
+                                                <ul style="display: none;">
+                                                </ul>
                                             </div>
                                         </div>
                                     </div>
@@ -228,14 +234,21 @@
                                     <label for="email" class="col-sm-5 col-form-label">Suitable Audience <span
                                                 style="color:red">*</span></label>
                                     <div class="input-box col-sm-7">
-                                        <div class="m-check"><input class="input-bg" type="radio"
-                                                                    name="suitable_audience" value="G"> <span>G</span>
+                                        <div class="m-check">
+                                            <input class="input-bg" type="radio"
+                                                   name="suitable_audience" value="G"
+                                            @if(isset($id) && $current_artwork->suitable_audience == "G") checked="checked" @endif> <span>G</span>
                                         </div>
-                                        <div class="m-check"><input class="input-bg" type="radio"
-                                                                    name="suitable_audience" value="PG--13"> <span>PG--13</span>
+                                        <div class="m-check">
+                                            <input class="input-bg" type="radio"
+                                                 name="suitable_audience" value="PG--13"
+                                                   @if(isset($id) && $current_artwork->suitable_audience == "PG--13") checked="checked" @endif>
+                                            <span>PG--13</span>
                                         </div>
-                                        <div class="m-check"><input class="input-bg" type="radio"
-                                                                    name="suitable_audience" value="R"> <span>R</span>
+                                        <div class="m-check">
+                                            <input class="input-bg" type="radio"
+                                                 name="suitable_audience" value="R"
+                                                   @if(isset($id) && $current_artwork->suitable_audience == "R") checked="checked" @endif> <span>R</span>
                                         </div>
                                     </div>
                                 </div>
@@ -250,9 +263,7 @@
                                 </div>
                                 <br/>
                                 <div class="form-group">
-                                    <button type="submit" class="btn btn-primary float-right" id="submitBtn"> Save and
-                                        Choose Products
-                                    </button>
+                                    <input type="submit" class="btn btn-primary float-right" id="submitBtn" value="Save and Choose Products" />
                                 </div>
                             </form>
 
@@ -275,7 +286,8 @@
                 getValue: "tag"
             };
 
-            $("#tag-suggestions").easyAutocomplete(options1);
+            //$("#tag-suggestions").easyAutocomplete(options1);
+
             let isPrivate = $("input[name='private_artwork']:checked").val();
             if (isPrivate == 0) {
                 $(".hide-when-private").show();
@@ -292,6 +304,7 @@
                 }
             });
 
+            /*
             console.log("TOKEN:", "{{$token}}");
             $.ajax({
                 url: "{{env('API_URL')}}api/artwork/getAllArtworks",
@@ -326,19 +339,11 @@
                     $('.art-works-list').html(error.responseJSON.message);
                 }
             });
+            */
 
         });
 
-        var allTags = [];
-
-        $("form").submit(function (e) {
-            // e.preventDefault();
-
-            $("#tag-suggestions").val(JSON.stringify(allTags)).hide();
-
-
-            return true;
-        });
+        var allTags = @if(isset($id)) {!! $current_artwork->tag_name  !!}; @else []; @endif;
 
         $(function () {
 
@@ -362,6 +367,21 @@
                     }
                     $(this).remove();
                 }
+            });
+
+            $("#submit_button").on('click', function(){
+                $("#submit_artwork").click();
+                $(this).val("")
+            });
+
+            $("#submit_artwork").on('submit',function (e) {
+                // e.preventDefault();
+
+                $("#tag-suggestions").val(JSON.stringify(allTags)).hide();
+
+                alert("TEST");
+
+                return true;
             });
 
         });

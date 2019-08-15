@@ -43,7 +43,10 @@ Route::post('/savestore', 'MyStoresController@saveStore')->name('savestore');
 Route::post('/saveartwork', 'MyStoresController@saveArtWork')->name('saveartwork');
 Route::get('/mystores', 'MyStoresController@index')->name('mystores');
 Route::get('/myearnings', 'MyEarningsController@index')->name('myearnings');
+
 Route::get('/addartwork', 'MyStoresController@addArtWork')->name('addartwork');
+Route::get('/addartwork/{id}', 'MyStoresController@addArtWork')->name('editartwork');
+
 Route::get('/selectproductype/{artwork_id}/{artwork_name}', 'AddProductsController@selectProducType')->name('selectproductype');
 Route::get('/addproducts/{artwork_id}/{artwork_name}', 'AddProductsController@addProducts')->name('addproducts');
 Route::get('/addproducts', 'AddProductsController@addProducts')->name('addproducts');

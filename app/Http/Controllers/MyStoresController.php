@@ -54,15 +54,27 @@ class MyStoresController extends Controller
         return view('createstore',['menu'=>'stores','menuitem'=>'createstore','storefronts'=>$storefronts, 'tags' => $tags]);
     }
 
-
     public function addArtWork(Request $request, $id = null)
     {
         $user_id = Auth::user()->id;
         $data = array("privateKey" => "password");                                                                    
         $data_string = json_encode($data);
-        $categories = DB::SELECT('select id,name from tbl_art_category where type=? and active=?',['templates',1]);
-        $artworks = DB::SELECT('select id,artname,artwork, DATE_FORMAT(mtime,"%d-%M-%Y") as date from tbl_art_work where parentid=? order by id DESC LIMIT 8',[$user_id]);
-        $royaltyfees = DB::SELECT('select id,value,name from tbl_royalty_fee order by id DESC');
+
+        $categories = \App\ArtCategory::select(['id','name'])
+                    ->where('type', '=', 'templates')
+                    ->where('active', '=', 1)
+                    ->get();
+
+        $artworks = \App\Artwork::where("parentid", "=", $user_id);
+
+        $current_artwork = (!is_null($id)) ? $artworks->where('id', '=', $id)->first() : null;
+
+        $artworks = $artworks->orderBy('id', 'desc')
+            ->get();
+
+        $royaltyfees = \App\RoyaltyFee::select(['id','value','name'])
+                        ->orderBy('id','desc');
+
         return view('myartworks',[
             'menu'=>'stores',
             'menuitem'=>'artwork',
@@ -70,7 +82,10 @@ class MyStoresController extends Controller
             'royaltyfees'=>$royaltyfees,
             'artworks'=> $artworks,
             'token'=>$this->getToken(),
-            'user'=>$user_id]);
+            'user'=>$user_id,
+            'id' => $id,
+            'current_artwork' => $current_artwork
+        ]);
 
     }
 
@@ -234,60 +249,73 @@ class MyStoresController extends Controller
         $artwork_category = ($request->has('artwork_category')) ? $request->input('artwork_category') : 0;
         $artwork_tags = ($request->has('artwork_tags')) ? $request->input('artwork_tags') : null;
 
-        $fileSize = $updated_artwork->getSize();
-        list($width, $height) = getimagesize($updated_artwork->getRealPath());
-
         $user_id = Auth::user()->id;
 
-        $characters = '019A26nPRe3js3W69CrGF8kKXvvmYtT4zNGqicXRjvuAnmmbvPZXu5yRJVWXYZ';
-        $charactersLength = 20;
-        $randomString = '';
-        for ($i = 0; $i < 20; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        // Create Arrays
+        $searchArr = [
+            'id' => ($request->has('art_id')) ? $request->input('art_id') : null,
+            'parentid' => $user_id
+        ];
+
+        $updateArr = [
+            'artname' => $artwork_name,
+            'description' => $artwork_description,
+            'royalty_fee' => intval($royalty_fees),
+            'suitable_audience' => $audience,
+            'is_private' => $private,
+            'is_individual' => $individual,
+            'is_awkwardstyle' => $awkwardstyle,
+            'is_thirdparty_marketplace' => $thirdMarketPlace,
+            'is_thirdparty_ecommerce' => $thirdECommerce,
+            'artwork_category_id' => $artwork_category,
+            'tag_name' => $artwork_tags,
+            'mtime' => now(),
+            'ctime' => now(),
+            'editor' => $user_id
+        ];
+
+        if(!$request->has('art_id')){
+            $fileSize = $updated_artwork->getSize();
+            list($width, $height) = getimagesize($updated_artwork->getRealPath());
+
+            $characters = '019A26nPRe3js3W69CrGF8kKXvvmYtT4zNGqicXRjvuAnmmbvPZXu5yRJVWXYZ';
+            $charactersLength = 20;
+            $randomString = '';
+            for ($i = 0; $i < 20; $i++) {
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
+            }
+
+            $updated_artwork->move('./images/products/', $randomString.".png");
+            $image = "/images/products/".$randomString.".png";
+            $full_url = URL::to("/") . $image;
+
+            // Insert Image into DB
+
+            if(!$request->has('art_id')) {
+                $mediaID = DB::table('tbl_media_library')
+                    ->insertGetId([
+                        'full_url' => $full_url,
+                        'type' => 'image',
+                        'mtime' => now(),
+                        'ctime' => now(),
+                        'editor' => $user_id
+                    ]);
+            }
+
+            $updateArr['file_size'] = $fileSize;
+            $updateArr['height'] = $height;
+            $updateArr['width'] = $width;
+            $updateArr['resolution'] = $width . " x " . $height;
+            $updateArr['mediaid'] = $mediaID;
+            $updateArr['artwork'] = $image;
+
         }
 
-        $updated_artwork->move('./images/products/', $randomString.".png");
-        $image = "/images/products/".$randomString.".png";
-        $full_url = URL::to("/") . $image;
-
-        // Insert Image into DB
-        $mediaID = DB::table('tbl_media_library')
-                ->insertGetId([
-                    'full_url' => $full_url,
-                    'type' => 'image',
-                    'mtime' => now(),
-                    'ctime' => now(),
-                    'editor' => $user_id
-                ]);
-            
-        $artwork_saved = DB::table('tbl_art_work')
-            ->insertGetId(
-                ['parentid'=>$user_id,
-                    'artname' => $artwork_name,
-                    'artwork' => $image,
-                    'description' => $artwork_description,
-                    'royalty_fee' => intval($royalty_fees),
-                    'suitable_audience' => $audience,
-                    'mediaid' => $mediaID,
-                    'is_private' => $private,
-                    'is_individual' => $individual,
-                    'is_awkwardstyle' => $awkwardstyle,
-                    'is_thirdparty_marketplace' => $thirdMarketPlace,
-                    'is_thirdparty_ecommerce' => $thirdECommerce,
-                    'artwork_category_id' => $artwork_category,
-                    'tag_name' => $artwork_tags,
-                    'file_size' => $fileSize,
-                    'height' => $height,
-                    'width' => $width,
-                    'resolution' => $width . " x " . $height,
-                    'mtime' => now(),
-                    'ctime' => now(),
-                    'editor' => $user_id
-                ]);
+        $save_art = \App\Artwork::updateOrCreate($searchArr, $updateArr);
         
         //$data = $request->all();
         //echo json_encode($data);
-        if($artwork_saved) {
+        if($save_art) {
             $request->session()->flash('message.level', 'info');
             $request->session()->flash('message.content', 'Artwork added successfully...');
         } else {

@@ -1,12 +1,10 @@
-@extends('layouts.dashboard')
-
-@section('content')
-    <script type="text/javascript" src="{{ asset('js/mockup/fabric.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('js/mockup/tshirtEditor.js')}}"></script>
-    <script type="text/javascript" src="{{ asset('js/mockup/jquery.miniColors.min.js')}}"></script>
-    <script type="text/javascript" src="{{ asset('js/mockup/color-picker.min.js') }}"></script>
-    <link type="text/css" rel="stylesheet" href="{{ url('/') }}/packages/aimeos/shop/themes/elegance/aimeos.css">
-    <link href="{{ asset('css/color-picker.min.css') }}" rel="stylesheet"/>
+<?php $__env->startSection('content'); ?>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/fabric.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/tshirtEditor.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/jquery.miniColors.min.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo e(asset('js/mockup/color-picker.min.js')); ?>"></script>
+    <link type="text/css" rel="stylesheet" href="<?php echo e(url('/')); ?>/packages/aimeos/shop/themes/elegance/aimeos.css">
+    <link href="<?php echo e(asset('css/color-picker.min.css')); ?>" rel="stylesheet"/>
     <style type="text/css">
         .footer {
             padding: 70px 0;
@@ -200,7 +198,7 @@
 
                 <div class="col-md-7">
 
-                    <div class="container shirt-block" style="padding:50px 0px 0px 0px">
+                    <div class="container shirt-block">
 
                         <div id="shirtDiv" class="page"
                              style="position: relative; background-color: rgb(255, 255, 255);">
@@ -234,21 +232,21 @@
                                                 <ul class="select-list-color" id="varient-color" data-index="0"
                                                     data-type="color">
 
-                                                    @foreach($attributes as $attr)
+                                                    <?php $__currentLoopData = $attributes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $attr): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-                                                        @if($attr->attribute_label == 'color')
+                                                        <?php if($attr->attribute_label == 'color'): ?>
 
                                                             <li class="select-entry-color">
                                                                 <input class="select-option" type="radio"
-                                                                       id="option-{{ $attr->code1 }}"
-                                                                       name="{{ $attr->value }}" value="{{ $attr->code1 }}">
-                                                                <label class="select-label" name="{{ $attr->value }}"
-                                                                       for="{{ $attr->code1 }}"
-                                                                       style="background-color:{{ $attr->code1 }}; width:30px;height:30px;"></label>
+                                                                       id="option-<?php echo e($attr->code1); ?>"
+                                                                       name="<?php echo e($attr->value); ?>" value="<?php echo e($attr->code1); ?>">
+                                                                <label class="select-label" name="<?php echo e($attr->value); ?>"
+                                                                       for="<?php echo e($attr->code1); ?>"
+                                                                       style="background-color:<?php echo e($attr->code1); ?>; width:30px;height:30px;"></label>
 
                                                             </li>
-                                                        @endif
-                                                    @endforeach
+                                                        <?php endif; ?>
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                 </ul>
 
                                             </div>
@@ -393,9 +391,10 @@
                             Checkout
                         </div>
                         <div class="card-body">
-                            <form name="checkout" method="POST" action="{{ url('/basket') }}">
-                                {{ csrf_field() }}
-                                <input type="hidden" name="b_prod[0][prodid]" value="{{ $pid }}"/>
+                            <form name="checkout" method="POST" action="<?php echo e(url('/basket')); ?>">
+                                <?php echo e(csrf_field()); ?>
+
+                                <input type="hidden" name="b_prod[0][prodid]" value="<?php echo e($pid); ?>"/>
 
                                 <button type="submit" name="submit" id="submitCheckout">
                                     Checkout
@@ -488,7 +487,7 @@
                                 </a>
                             </div>
                             <div class="col-md-6 text-right" id="continueSpace">
-                                <a href="javascript:void(0);" class="close" id="saveAndContinue" onclick="saveDesign('{{ csrf_token() }}')">
+                                <a href="javascript:void(0);" class="close" id="saveAndContinue" onclick="saveDesign('<?php echo e(csrf_token()); ?>')">
                                     Continue
                                 </a>
                             </div>
@@ -515,10 +514,10 @@
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-sm-12 p-3">
-                                @foreach($artwork as $a)
-                                    <img src="{{ $a->full_url }}" width="200" class="design-images d-inline p-2"
+                                <?php $__currentLoopData = $artwork; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $a): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <img src="<?php echo e($a->full_url); ?>" width="200" class="design-images d-inline p-2"
                                          data-dismiss="modal"/>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -529,22 +528,22 @@
 
     <script>
         templateVars = {
-            pid: '{{ $pid }}',
+            pid: '<?php echo e($pid); ?>',
             size: 'XS',
             url: null
         };
 
         // MAIN IMAGE
-        setShirtImage('{{ $images[0]->full_url }}');
+        setShirtImage('<?php echo e($images[0]->full_url); ?>');
 
-        @foreach($canvasUrls as $k => $urls)
-            setShirtImage('{{ $urls }}', {{ $k }});
-        @endforeach
+        <?php $__currentLoopData = $canvasUrls; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k => $urls): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            setShirtImage('<?php echo e($urls); ?>', <?php echo e($k); ?>);
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
         $(document).ready(function () {
             $(".select-entry-color label").first().addClass("active");
 
-            let variants = {!! json_encode($variants) !!};
+            let variants = <?php echo json_encode($variants); ?>;
 
             $(".select-entry-color label").on('click', function (e) {
                 $(".select-entry-color label.active")
@@ -572,13 +571,13 @@
 
 
                 $.ajax({
-                    url: "{{env('API_URL')}}api/media/getById/" +
+                    url: "<?php echo e(env('API_URL')); ?>api/media/getById/" +
                         newVariant[0].image.split(",")[
                             0],
                     contentType: 'application/json',
                     dataType: 'json',
                     headers: {
-                        "Authorization": "Bearer {{ $token }}",
+                        "Authorization": "Bearer <?php echo e($token); ?>",
                         "Content-Type": "application/json"
                     },
                     type: 'GET',
@@ -597,4 +596,5 @@
 
     </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.dashboard', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>

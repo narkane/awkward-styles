@@ -3,6 +3,7 @@
 return [
 	'dashboard',
 	'order',
+    'templates',
 	'subscription',
 	'customer',
 	'product',

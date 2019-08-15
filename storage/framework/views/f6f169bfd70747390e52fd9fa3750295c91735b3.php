@@ -150,7 +150,7 @@
                     <li class="nav-logo">
 
                         <a href="/list">
-                            <img src="{{ asset('images/logo.png') }}" alt="">
+                            <img src="<?php echo e(asset('images/logo.png')); ?>" alt="">
                         </a>
                     </li>
                     <li class="nav-login">
@@ -198,7 +198,7 @@
 
 
 
-                                @if (Auth::guest())
+                                <?php if(Auth::guest()): ?>
 
                                     <li>
                                         <div class="dropdown">
@@ -213,21 +213,19 @@
                                         </div>
                                     </li>
 
-                                @else
+                                <?php else: ?>
                                     <li>
                                         <div class="dropdown">
-                                            <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ Auth::user()->name }} <span class="caret"></span></a>
+                                            <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo e(Auth::user()->name); ?> <span class="caret"></span></a>
                                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userdropdown">
 
                                                 <a class="dropdown-item" href="/dashboard" title="My account">My Dashboard</a>
-                                            <!-- <li><a href="{{
-route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default'),'locale'=>Route::current()->parameter('locale','en'),'currency'=>Route::current()->parameter('currency','DOL')])
-}}" title="My account">My account</a></li> -->
-                                                <form id="logout" action="/logout" method="POST">{{csrf_field()}}</form><a  class="dropdown-item" href="javascript: document.getElementById('logout').submit();">Logout</a>
+                                            <!-- <li><a href="<?php echo e(route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default'),'locale'=>Route::current()->parameter('locale','en'),'currency'=>Route::current()->parameter('currency','DOL')])); ?>" title="My account">My account</a></li> -->
+                                                <form id="logout" action="/logout" method="POST"><?php echo e(csrf_field()); ?></form><a  class="dropdown-item" href="javascript: document.getElementById('logout').submit();">Logout</a>
                                             </div>
                                         </div>
                                     </li>
-                                @endif
+                                <?php endif; ?>
 
 
                             </ul>
@@ -241,28 +239,28 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
         <div class="header-product-menu" id="header-product-menu">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url("/product/womens/") }}" title="Womens">Women</a>
+                    <a class="nav-link" href="<?php echo e(url("/product/womens/")); ?>" title="Womens">Women</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url("/product/mens/") }}" title="Mens">Mens</a>
+                    <a class="nav-link" href="<?php echo e(url("/product/mens/")); ?>" title="Mens">Mens</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url("/product/girls/") }}" title="Girls">Girls</a>
+                    <a class="nav-link" href="<?php echo e(url("/product/girls/")); ?>" title="Girls">Girls</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url("/product/boys/") }}" title="Boys">Boys</a>
+                    <a class="nav-link" href="<?php echo e(url("/product/boys/")); ?>" title="Boys">Boys</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url("/product/mugs/") }}" title="Mugs">Mugs</a>
+                    <a class="nav-link" href="<?php echo e(url("/product/mugs/")); ?>" title="Mugs">Mugs</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url("/product/hats/") }}" title="Hats">Hats</a>
+                    <a class="nav-link" href="<?php echo e(url("/product/hats/")); ?>" title="Hats">Hats</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url("/product/canvas/") }}" title="Canvas">Canvas</a>
+                    <a class="nav-link" href="<?php echo e(url("/product/canvas/")); ?>" title="Canvas">Canvas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url("/product/other/") }}" title="Other">Other</a>
+                    <a class="nav-link" href="<?php echo e(url("/product/other/")); ?>" title="Other">Other</a>
                 </li>
             </ul>
         </div>

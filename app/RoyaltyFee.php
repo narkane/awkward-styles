@@ -4,9 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Artwork extends Model
+class RoyaltyFee extends Model
 {
-    protected $table = 'tbl_art_work';
+    public $table = "tbl_royalty_fee";
 
     public $guarded = ['id'];
 }
