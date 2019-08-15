@@ -35,7 +35,7 @@ var prevCanvas = [
  *        4: rectangle
  */
 
-var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, url, pid, size;
+var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, groupX, groupY, realW, realH, url, pid, size;
 var upperLeft = 999;
 var upperTop = 999;
 
@@ -45,369 +45,14 @@ var templateVars = {
     size: 'L'
 };
 
-var sessionInfo = function(item, file = null){
-
-    if(item.type === 'awkward-image' && item.toObject().src.length > 200){
-
-        var data = new FormData();
-        var obj = item.toObject();
-        delete obj.src;
-
-        obj.objectIndex = canvas.getObjects().indexOf(item);
-
-        data.append("name",obj.objectName);
-
-        if(file){
-            data.append("file", file);
-        }
-
-        data.append("myObject", JSON.stringify(obj));
-        data.append("_token", $('[name="_token"]').val());
-
-        $.ajax({
-            url: "/api/mockgen",
-            type: 'POST',
-            method: 'POST',
-            enctype: 'multipart/form-data',
-            cache: false,
-            contentType: false,
-            processData: false,
-            data: data,
-            success: (result) => {
-                console.log(result);
-            },
-            error: (error, data) => {
-                console.log(error);
-            }
-        });
-
-        return true;
-    }
-
-    let storage = (localStorage.getItem('canvas')) ? JSON.parse(localStorage.getItem('canvas')) : {};
-
-    storage.objects = (storage.objects) ? storage.objects : [];
-    var itemObject = item.toObject();
-
-    itemObject.objectIndex = canvas.getObjects().indexOf(item);
-
-    // Check for name
-    let itemExists = false;
-    for(var a in storage.objects){
-        if(storage.objects[a] != null && storage.objects[a].objectName === itemObject.objectName){
-            itemExists = a;
-        }
-    }
-
-    if(itemExists){
-        storage.objects[itemExists] = itemObject;
-    } else {
-        let l = (storage.objects.length) ? storage.objects.length : 0;
-        storage.objects[l] = itemObject;
-    }
-
-    localStorage.setItem('canvas',JSON.stringify(storage));
-
-};
-
-function setShirtImage(imgurl, canvasType = "canvas"){
-
-    var canvasToUse = null;
-
-    var tag = false;
-
-    switch(canvasType) {
-        default: tag = "main"; break;
-        case 0: tag = 1456; break;
-        case 1: tag = 112; break;
-        case 2: tag = 1402; break;
-        case 3: tag = 1455; break;
-    }
-
-    //setup front side canvas
-    if(isNaN(canvasType)) {
-        canvas = canvasToUse = new fabric.Canvas('tcanvas', {
-            hoverCursor: 'pointer',
-            selection: true,
-            selectionBorderColor: 'blue',
-            width: newWidth,
-            height: newHeight,
-            preserveObjectStacking: true
-        });
-
-    } else {
-
-        canvasToUse = prevCanvas[canvasType] = new fabric.Canvas(tag + '_canvas', {
-            hoverCursor: 'pointer',
-            selection: true,
-            selectionBorderColor: 'blue',
-            width: 400,
-            height: 400,
-            preserveObjectStacking: true
-        })
-    }
-
-    let img = new Image();
-
-    img.onload = function(){
-
-        imageWidth = img.width;
-        imageHeight = img.height;
-
-        console.log("Width: " + imageWidth);
-        console.log("Height: " + imageHeight);
-
-        newWidth = 400;
-        newHeight = 400;
-
-        if((imageWidth/newWidth) > (imageHeight/newHeight)) {
-            newHeight = imageHeight / (imageWidth / newWidth);
-        } else {
-            newWidth = imageWidth / (imageHeight / newHeight);
-        }
-
-        $("#" + ((!isNaN(tag)) ? tag + "_image" : "shirtFacing")).css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
-
-        $("#" + ((!isNaN(tag)) ? tag + "_div"  : "shirtDiv")).css({'width': newWidth, 'height': newHeight});
-
-        var drawingArea = "#" + ((!isNaN(tag)) ? tag + "_area" : "shirtDrawingArea");
-
-        $(drawingArea).css({'width': newWidth, 'height': newHeight});
-        $(drawingArea).find(".canvas-container").css({'width': newWidth, 'height': newHeight});
-        canvasToUse.setHeight(newHeight);
-        canvasToUse.setWidth(newWidth);
-
-        setTemplate(tag);
-
-        img = null;
-
-    };
-
-    img.src = imgurl;
-}
-
-function setTemplate(main = "main") {
-
-    $.ajax({
-        url: "/api/template/" + ((isNaN(main)) ? templateVars.pid : main) + "/" + templateVars.size,
-        contentType: 'application/json',
-        //dataType: 'json',
-        type: 'GET',
-        success: (result) => {
-            template = result;
-
-            var group = [];
-
-            var upleft = uptop = 999;
-
-            if(result.values) {
-
-                // Run Through Template(s)
-                for (var i = 1; i < result.values.length; i++) {
-
-                    // EMPTY OBJECT
-                    if (result.values[i].x === 0 && result.values[i].y === 0 && result.values[i].width === 0 && result.values[i].height === 0) {
-                        continue;
-                    }
-
-                    if (result.values[i].shape === 1) {
-
-                        group.push(new fabric.Circle({
-                            radius: result.values[i].width / 2,
-                            height: result.values[i].height,
-                            width: result.values[i].width,
-                            top: result.values[i].y, // y - h
-                            left: result.values[i].x, // x - w
-                            fill: '#000000',
-                            originX: "left",
-                            originY: "top",
-                            stroke: "rgba(255,0,0,1)",
-                            strokeWidth: 1
-                        }));
-
-                    } else if (result.values[i].shape === 4) {
-
-                        group.push(new fabric.Rect({
-                            width: result.values[i].width,
-                            height: result.values[i].height,
-                            top: result.values[i].y,
-                            left: result.values[i].x,
-                            fill: '#000000',
-                            originX: "left",
-                            originY: "top",
-                            stroke: "rgba(255,0,0,1)",
-                            strokeWidth: 1
-                        }));
-                    }
-                    upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
-                    upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
-
-                    uptop = (result.values[i].y < uptop) ? result.values[i].y : uptop;
-                    upleft = (result.values[i].x < upleft) ? result.values[i].x : upleft;
-
-                }
-            }
-
-            if(group.length > 0) {
-                var g = new fabric.Group(group, {
-                    originY: "top",
-                    originX: "left",
-                    left: upleft,
-                    top: uptop,
-                    selectable: false,
-                    opacity: 0.3
-                });
-
-                groupWidth = g.width;
-                groupHeight = g.height;
-
-                let tag = main;
-                switch(main) {
-                    default: tag = false; break;
-                    case 1456: tag = 0; break;
-                    case 112: tag = 1; break;
-                    case 1402: tag = 2; break;
-                    case 1455: tag = 3; break;
-                }
-
-                if(isNaN(main)){
-                    myCanvas = canvas;
-                    $("#upper-canvas").width(newWidth).height(newHeight);
-                } else {
-                    myCanvas = prevCanvas[tag];
-                }
-
-                myCanvas.clipPath = g;
-
-                myCanvas.add(g);
-
-                myCanvas.moveTo(g, 0);
-
-            }
-
-            if(isNaN(main)) {
-                $.ajax({
-                    url: "/api/mockgen",
-                    type: 'GET',
-                    method: 'GET',
-                    cache: false,
-                    contentType: 'application/json',
-                    processData: false,
-                    success: (result) => {
-
-                        fromStorage(result);
-
-                    },
-                    error: (error, data) => {
-                        console.log(error);
-                        fromStorage();
-                    }
-                });
-            }
-
-        },
-        error: (err, data) => {
-            console.log("Error fetching template.");
-
-            // IF EMPTY, USE GENERIC
-            // SET TEMPLATE TO SHIRT
-            var w = newWidth / 3;
-            var h = newHeight / 3;
-
-            $("#shirtDrawingArea").css({"top": '35%', "left": '35%', "width": w, "height": h});
-        }
-    });
-}
-
-function fromStorage(result = null){
-    let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
-
-    // Merge
-    if(result != null && Object.keys(result).length){
-
-        // If downloaded, remove from site session
-        if(!cv.objects) { cv.objects = []; }
-        for(var i in result){
-            let l = Object.keys(cv.objects).length;
-            if(result[i]) {
-                cv.objects[l] = result[i];
-                console.log(result[i]);
-                removeSessionItem(result[i].objectName, true);
-            }
-        }
-    }
-
-    if(cv.objects && Object.keys(cv.objects).length > 0){
-
-        let totalObjs = Object.keys(cv.objects).length;
-        let count = 0;
-
-        let listItems = [];
-
-        if(totalObjs > 0) {
-
-            canvas.loadFromJSON(cv,canvas.renderAll.bind(canvas), function (o, object) {
-
-                count++;
-
-                if(listItems[object.objectIndex]){
-                    listItems[object.objectIndex].push(object)
-                } else {
-                    listItems[object.objectIndex] = [object];
-                }
-
-                if(count === totalObjs){
-                    for(var i in listItems){
-                        for(var j in listItems[i]){
-                            createListItem(listItems[i][j].objectName,
-                                ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
-                                ((listItems[i][j].type === "awkward-image") ?
-                                    {
-                                        width: listItems[i][j].objectWidth,
-                                        height: listItems[i][j].objectHeight,
-                                        x: listItems[i][j].left,
-                                        y: listItems[i][j].top
-                                    } :
-                                    {
-                                        x: listItems[i][j].left,
-                                        y: listItems[i][j].top
-                                    } )
-                            );
-                        }
-                    }
-                }
-                fabric.log(object, o);
-            });
-        }
-    }
-}
-
-var radius = function (a, b) {
-    let aSquared = a * a;
-    let bSquared = b * b;
-
-    return Math.sqrt(aSquared + bSquared) / Math.sqrt(2);
-};
-
-var centerX = function(){
-    var x = Math.round(upperLeft + (groupWidth/3));
-    console.log("CENTERX: " + x);
-    return x;
-};
-
-var centerY = function(){
-    var y = Math.round(upperTop + (groupHeight/2));
-    console.log("CENTERY: " + y);
-    return y;
-};
-
-$(document).ready(function () {
-
+function init(){
     /**
-     * START PAGE FUNCTIONS
-     */
-        //var imageWidth = $width }};
-        //var imageHeight =  $height }};
+     * 
+ * START PAGE FUNCTIONS
+ */
+    //var imageWidth = $width }};
+    //var imageHeight =  $height }};
+    console.log("INITIALIZING MOCKGEN!");
 
 
     $(".mock-block").on("click", function () {
@@ -422,20 +67,20 @@ $(document).ready(function () {
             }
         });
 
-        if($(this).attr('id') === 'imageUpload'){
+        if ($(this).attr('id') === 'imageUpload') {
             $("#fileUpload").trigger('click');
         }
 
-        if($(this).attr('id') === 'productSearch'){
+        if ($(this).attr('id') === 'productSearch') {
             window.location.href = "/product/mens";
         }
     });
 
-    $("#fileUpload").on('change', function(e){
+    $("#fileUpload").on('change', function (e) {
         if (e.target.files && e.target.files[0]) {
             var reader = new FileReader();
 
-            reader.onload = function() {
+            reader.onload = function () {
                 addAwkwardImage(reader.result, e.target.files[0]);
             };
 
@@ -443,37 +88,46 @@ $(document).ready(function () {
         }
     });
 
-    $(".design-images").on('click', function(){
+    $(".design-images").on('click', function () {
         console.log($(this).attr('src'));
     });
 
-    $("#saveMyDesign").on('click', function() {
+    $("#saveMyDesign").on('click', function () {
         let item = canvas.getObjects();
 
-        for(let i in prevCanvas){
+        for (let i in prevCanvas) {
             prevCanvas[i].clear();
         }
 
-        for(let i in item) {
+        for (let i in item) {
             for (let c in prevCanvas) {
-                let obj = $.extend(true,{},item[i]);
+                let obj = $.extend(true, {}, item[i]);
                 obj.lockMovementX = true;
                 obj.lockMovementY = true;
+                // console.log("YO HERE IT IS (canvas width):");
+                // console.log(prevCanvas[c].getObjects[0].width)
+                // console.log(obj);
+                // let newW = obj.aCoords.br.x - obj.aCoords.bl.x;
+                // let newH = obj.aCoords.bl.y - obj.aCoords.tl.y;
+                // console.log(newW);
+                // console.log(newH);
+                // obj.left = (prevCanvas[c].width - newW) * 0.5; 
+                // obj.top = (prevCanvas[c].height - newH) * 0.5;
                 prevCanvas[c].add(obj);
             }
         }
 
     });
 
-    $(document).on('input',"#imageOpacity", function(){
+    $(document).on('input', "#imageOpacity", function () {
         let obj = canvas.getActiveObject();
-        if(obj.type === 'awkward-image' || obj.type === 'awkward-text'){
+        if (obj.type === 'awkward-image' || obj.type === 'awkward-text') {
             obj.setOpacity(($(this).val() / 100));
             canvas.renderAll();
-            if(obj.type === 'awkward-image' && obj.toObject().src.length > 200){
-                var startTimer = function() {
+            if (obj.type === 'awkward-image' && obj.toObject().src.length > 200) {
+                var startTimer = function () {
                     clearTimeout(timer);
-                    timer = setTimeout(function(){ sessionInfo(obj); }, 3000);
+                    timer = setTimeout(function () { sessionInfo(obj); }, 3000);
                 };
                 startTimer();
             } else {
@@ -482,32 +136,32 @@ $(document).ready(function () {
         }
     });
 
-    $(document).on("click", ".remove-art", function(){
+    $(document).on("click", ".remove-art", function () {
         let id = $(this).parent().parent().parent().attr('id');
         removeListItem(id);
         removeSessionItem(id);
         removeItemByName(id);
     });
 
-    $(document).on("click", ".art-down", function(){
+    $(document).on("click", ".art-down", function () {
         let id = $(this).parent().parent().parent().attr('id');
         let sibling = $(this).parent().parent().parent().next();
 
-        if(sibling.length){
+        if (sibling.length) {
             moveItemDownByName(id, $(this).parent().parent().parent().next());
             let existing = $(this).parent().parent().parent()[0].outerHTML;
             $(this).parent().parent().parent().remove();
             sibling.after(existing);
         }
 
-        $(this).prop('disabled',(!sibling.next().length));
+        $(this).prop('disabled', (!sibling.next().length));
     });
 
-    $(document).on("click", ".art-up", function(){
+    $(document).on("click", ".art-up", function () {
         let id = $(this).parent().parent().parent().attr('id');
         let sibling = $(this).parent().parent().parent().prev();
 
-        if(sibling.length) {
+        if (sibling.length) {
             moveItemUpByName(id, $(this).parent().parent().parent().prev());
 
             // Move down the list if possible
@@ -516,33 +170,10 @@ $(document).ready(function () {
             sibling.before(existing);
         }
 
-        $(this).prop('disabled',(!sibling.prev().length));
+        $(this).prop('disabled', (!sibling.prev().length));
     });
 
-    $("#clearAll").on('click',function(){
-        // Clear storage and flush sessions
-        localStorage.clear();
-        $("#objectHolder").html(' ');
-
-        $.ajax({
-            url: "/api/mockgen/flush",
-            type: 'GET',
-            method: 'GET',
-            cache: false,
-            contentType: false,
-            processData: false,
-            success: (result) => {
-                console.log(result);
-            },
-            error: (error, data) => {
-                console.log(error);
-            }
-        });
-
-        // Clear All Objects
-        canvas.clear();
-        setTemplate("main");
-    });
+    $("#clearAll").on('click', ()=>{clearAll();});
 
     /**
      * END PAGE FUNCTIONS
@@ -570,13 +201,12 @@ $(document).ready(function () {
 
         },
         'object:modified': function (e) {
-            canvas.clipPath.opacity = 0.5;
-
+            canvas.clipPath.opacity = 0.05;
             setCoordinates(e.target);
-            if(e.target.type === 'awkward-image' && e.target.toObject().src.length > 200){
-                var startTimer = function() {
+            if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
+                var startTimer = function () {
                     clearTimeout(timer);
-                    timer = setTimeout(function(){ sessionInfo(e.target); }, 3000);
+                    timer = setTimeout(function () { sessionInfo(e.target); }, 3000);
                 };
                 startTimer();
             } else {
@@ -598,14 +228,14 @@ $(document).ready(function () {
             var target = originalFn.apply(this, arguments);
             if (target) {
                 if (this._hoveredTarget !== target) {
-                    canvas.fire('object:over', {target: target});
+                    canvas.fire('object:over', { target: target });
                     if (this._hoveredTarget) {
-                        canvas.fire('object:out', {target: this._hoveredTarget});
+                        canvas.fire('object:out', { target: this._hoveredTarget });
                     }
                     this._hoveredTarget = target;
                 }
             } else if (this._hoveredTarget) {
-                canvas.fire('object:out', {target: this._hoveredTarget});
+                canvas.fire('object:out', { target: this._hoveredTarget });
                 this._hoveredTarget = null;
             }
             return target;
@@ -642,11 +272,11 @@ $(document).ready(function () {
         });
 
         textSample.toObject = (function (toObject) {
-            return function() {
-                return fabric.util.object.extend(toObject.call(this),{
-                        objectName : name,
-                        objectIndex: objInd
-                    });
+            return function () {
+                return fabric.util.object.extend(toObject.call(this), {
+                    objectName: name,
+                    objectIndex: objInd
+                });
             }
         })(textSample.toObject);
         textSample.fontStyle = textString.css('font-style');
@@ -663,7 +293,7 @@ $(document).ready(function () {
         $("#imageeditor").css('display', 'block');
     };
 
-    $("#text-string").on('keyup',function () {
+    $("#text-string").on('keyup', function () {
         var activeObject = canvas.getActiveObject();
         if (activeObject && activeObject.type === 'i-text') {
             activeObject.setText(this.value);
@@ -815,6 +445,408 @@ $(document).ready(function () {
         hasRotatingPoint: false,
         selectable: false
     });
+
+}
+
+function clearAll() {
+    console.log("CLEEEEEEAR!");
+    // Clear storage and flush sessions
+    localStorage.clear();
+    $("#objectHolder").html(' ');
+
+    $.ajax({
+        url: "/api/mockgen/flush",
+        type: 'GET',
+        method: 'GET',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: (result) => {
+            console.log(result);
+        },
+        error: (error, data) => {
+            console.log(error);
+        }
+    });
+
+    // Clear All Objects
+    canvas.clear();
+    setTemplate("main");
+}
+
+var sessionInfo = function(item, file = null){
+
+    if(item.type === 'awkward-image' && item.toObject().src.length > 200){
+
+        var data = new FormData();
+        var obj = item.toObject();
+        delete obj.src;
+
+        obj.objectIndex = canvas.getObjects().indexOf(item);
+
+        data.append("name",obj.objectName);
+
+        if(file){
+            data.append("file", file);
+        }
+
+        data.append("myObject", JSON.stringify(obj));
+        data.append("_token", $('[name="_token"]').val());
+
+        $.ajax({
+            url: "/api/mockgen",
+            type: 'POST',
+            method: 'POST',
+            enctype: 'multipart/form-data',
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: data,
+            success: (result) => {
+                console.log(result);
+            },
+            error: (error, data) => {
+                console.log(error);
+            }
+        });
+
+        return true;
+    }
+
+    let storage = (localStorage.getItem('canvas')) ? JSON.parse(localStorage.getItem('canvas')) : {};
+
+    storage.objects = (storage.objects) ? storage.objects : [];
+    var itemObject = item.toObject();
+
+    itemObject.objectIndex = canvas.getObjects().indexOf(item);
+
+    // Check for name
+    let itemExists = false;
+    for(var a in storage.objects){
+        if(storage.objects[a] != null && storage.objects[a].objectName === itemObject.objectName){
+            itemExists = a;
+        }
+    }
+
+    if(itemExists){
+        storage.objects[itemExists] = itemObject;
+    } else {
+        let l = (storage.objects.length) ? storage.objects.length : 0;
+        storage.objects[l] = itemObject;
+    }
+
+    localStorage.setItem('canvas',JSON.stringify(storage));
+
+};
+
+function setShirtImage(imgurl, canvasType = "canvas"){
+
+    var canvasToUse = null;
+
+    var tag = false;
+
+    switch(canvasType) {
+        default: tag = "main"; break;
+        case 0: tag = 1456; break;
+        case 1: tag = 112; break;
+        case 2: tag = 1402; break;
+        case 3: tag = 1455; break;
+    }
+
+    //setup front side canvas
+    if(isNaN(canvasType)) {
+        canvas = canvasToUse = new fabric.Canvas('tcanvas', {
+            hoverCursor: 'pointer',
+            selection: true,
+            selectionBorderColor: 'blue',
+            width: newWidth,
+            height: newHeight,
+            preserveObjectStacking: true
+        });
+
+    } else {
+        canvasToUse = prevCanvas[canvasType] = new fabric.Canvas(tag + '_canvas', {
+            hoverCursor: 'pointer',
+            selection: true,
+            selectionBorderColor: 'blue',
+            width: 400,
+            height: 400,
+            preserveObjectStacking: true
+        })
+    }
+
+    let img = new Image();
+
+    img.onload = function(){
+
+        imageWidth = img.width;
+        imageHeight = img.height;
+
+        console.log("Width: " + imageWidth);
+        console.log("Height: " + imageHeight);
+
+        newWidth = 400;
+        newHeight = 400;
+
+        if((imageWidth/newWidth) > (imageHeight/newHeight)) {
+            newHeight = imageHeight / (imageWidth / newWidth);
+        } else {
+            newWidth = imageWidth / (imageHeight / newHeight);
+        }
+
+        $("#" + ((!isNaN(tag)) ? tag + "_image" : "shirtFacing")).css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
+
+        $("#" + ((!isNaN(tag)) ? tag + "_div"  : "shirtDiv")).css({'width': newWidth, 'height': newHeight});
+
+        var drawingArea = "#" + ((!isNaN(tag)) ? tag + "_area" : "shirtDrawingArea");
+
+        $(drawingArea).css({'width': newWidth, 'height': newHeight});
+        $(drawingArea).find(".canvas-container").css({'width': newWidth, 'height': newHeight});
+        canvasToUse.setHeight(newHeight);
+        canvasToUse.setWidth(newWidth);
+
+        setTemplate(tag);
+
+        img = null;
+
+    };
+
+    img.src = imgurl;
+}
+
+
+function setTemplate(main = "main") {
+
+    $.ajax({
+        url: "/api/template/" + ((isNaN(main)) ? templateVars.pid : main) + "/" + templateVars.size,
+        contentType: 'application/json',
+        //dataType: 'json',
+        type: 'GET',
+        success: (result) => {
+            template = result;
+
+            var group = [];
+
+            var upleft = uptop = 999;
+
+            if (result.values) {
+
+                // Run Through Template(s)
+                for (var i = 1; i < result.values.length; i++) {
+
+                    // EMPTY OBJECT
+                    if (result.values[i].x === 0 && result.values[i].y === 0 && result.values[i].width === 0 && result.values[i].height === 0) {
+                        continue;
+                    }
+
+                    if (result.values[i].shape === 1) {
+
+                        group.push(new fabric.Circle({
+                            radius: result.values[i].width / 2,
+                            height: result.values[i].height,
+                            width: result.values[i].width,
+                            top: result.values[i].y, // y - h
+                            left: result.values[i].x, // x - w
+                            fill: '#000000',
+                            originX: "left",
+                            originY: "top",
+                            stroke: "rgba(255,0,0,1)",
+                            strokeWidth: 1
+                        }));
+
+                    } else if (result.values[i].shape === 4) {
+
+                        group.push(new fabric.Rect({
+                            width: result.values[i].width,
+                            height: result.values[i].height,
+                            top: result.values[i].y,
+                            left: result.values[i].x,
+                            fill: '#000000',
+                            originX: "left",
+                            originY: "top",
+                            stroke: "rgba(255,0,0,1)",
+                            strokeWidth: 1
+                        }));
+                    }
+                    upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
+                    upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
+
+                    uptop = (result.values[i].y < uptop) ? result.values[i].y : uptop;
+                    upleft = (result.values[i].x < upleft) ? result.values[i].x : upleft;
+
+                }
+            }
+
+            if (group.length > 0) {
+                var g = new fabric.Group(group, {
+                    originY: "top",
+                    originX: "left",
+                    left: upleft,
+                    top: uptop,
+                    selectable: false,
+                    opacity: 0.3
+                });
+
+                if (main == "main") {
+                    groupX = g.left;
+                    groupY = g.top;
+                    groupWidth = g.width;
+                    groupHeight = g.height;
+                }
+
+
+                let tag = main;
+                switch (main) {
+                    default: tag = false; break;
+                    case 1456: tag = 0; break;
+                    case 112: tag = 1; break;
+                    case 1402: tag = 2; break;
+                    case 1455: tag = 3; break;
+                }
+
+                if (isNaN(main)) {
+                    myCanvas = canvas;
+                    $("#upper-canvas").width(newWidth).height(newHeight);
+                } else {
+                    myCanvas = prevCanvas[tag];
+                }
+
+                myCanvas.clipPath = g;
+
+                myCanvas.add(g);
+
+                myCanvas.moveTo(g, 0);
+
+            }
+
+            if (isNaN(main)) {
+                $.ajax({
+                    url: "/api/mockgen",
+                    type: 'GET',
+                    method: 'GET',
+                    cache: false,
+                    contentType: 'application/json',
+                    processData: false,
+                    success: (result) => {
+
+                        fromStorage(result);
+
+                    },
+                    error: (error, data) => {
+                        console.log(error);
+                        fromStorage();
+                    }
+                });
+            }
+
+        },
+        error: (err, data) => {
+            console.log("Error fetching template.");
+
+            // IF EMPTY, USE GENERIC
+            // SET TEMPLATE TO SHIRT
+            var w = newWidth / 3;
+            var h = newHeight / 3;
+
+            $("#shirtDrawingArea").css({ "top": '35%', "left": '35%', "width": w, "height": h });
+        }
+    });
+}
+
+
+function fromStorage(result = null){
+    let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
+
+    // Merge
+    if(result != null && Object.keys(result).length){
+
+        // If downloaded, remove from site session
+        if(!cv.objects) { cv.objects = []; }
+        for(var i in result){
+            let l = Object.keys(cv.objects).length;
+            if(result[i]) {
+                cv.objects[l] = result[i];
+                console.log(result[i]);
+                // removeListItem(result[i].objectName);
+                removeSessionItem(result[i].objectName, true);
+                // removeItemByName(result[i].objectName);
+                // $(document).ready();
+            }
+        }
+    }
+
+    if(cv.objects && Object.keys(cv.objects).length > 0){
+
+        let totalObjs = Object.keys(cv.objects).length;
+        let count = 0;
+
+        let listItems = [];
+
+        if(totalObjs > 0) {
+
+            try{
+            canvas.loadFromJSON(cv,canvas.renderAll.bind(canvas), function (o, object) {
+
+                count++;
+
+                if(listItems[object.objectIndex]){
+                    listItems[object.objectIndex].push(object)
+                } else {
+                    listItems[object.objectIndex] = [object];
+                }
+
+                if(count === totalObjs){
+                    for(var i in listItems){
+                        for(var j in listItems[i]){
+                            createListItem(listItems[i][j].objectName,
+                                ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
+                                ((listItems[i][j].type === "awkward-image") ?
+                                    {
+                                        width: listItems[i][j].objectWidth*listItems[i][j].scaleX,
+                                        height: listItems[i][j].objectHeight*listItems[i][j].scaleY,
+                                        x: listItems[i][j].left,
+                                        y: listItems[i][j].top
+                                    } :
+                                    {
+                                        x: listItems[i][j].left,
+                                        y: listItems[i][j].top
+                                    } )
+                            );
+                        }
+                    }
+                }
+                fabric.log(object, o);
+            });
+            } catch (e) {
+                console.log("...inner break :(");
+                console.log(e);
+                // $("#clearAll").click();
+            }
+        }
+    }
+}
+
+var radius = function (a, b) {
+    let aSquared = a * a;
+    let bSquared = b * b;
+
+    return Math.sqrt(aSquared + bSquared) / Math.sqrt(2);
+};
+
+var centerX = function(){
+    var x = Math.round(upperLeft + (groupWidth/3));
+    console.log("CENTERX: " + x);
+    return x;
+};
+
+var centerY = function(){
+    var y = Math.round(upperTop + (groupHeight/2));
+    console.log("CENTERY: " + y);
+    return y;
+};
+
+$(document).ready(function () {
+    init();
 });//doc ready
 
 function addAwkwardImage(src, info = false){
@@ -822,54 +854,91 @@ function addAwkwardImage(src, info = false){
     let name = randomString();
     let objInd = objectIndex++;
 
+    console.log('used by image:');
+    console.log(groupX, groupY);
+    try{
     fabric.AwkwardImage.fromURL(src, function (image) {
         image.set({
-            left: (newWidth / 3),
-            top: (newHeight / 3),
+            left: (groupWidth/2 + groupX),     //(newWidth / 3),
+            top: (groupHeight/2 + groupY),    //(newHeight / 3),
             angle: 0,
-            padding: 10,
+            // padding: 10,
             cornersize: 10,
             hasRotatingPoint: true,
             crossOrigin: "anonymous",
             objectName: name,
             objectIndex: objInd
         });
-
+        
         let w = image.width;
         let h = image.height;
         let options = null;
+        
+        console.log(image);
+        let downRatio;
 
-        image.objectWidth = w;
-        image.objectHeight = h;
+        realW = w * image.scaleX;//image.aCoords.tr.x - image.aCoords.tl.x;
+        realH = h * image.scaleY;//image.aCoords.bl.y - image.aCoords.tl.y;
 
+        // if image is oversized...
+        if (realW > groupWidth || realH > groupHeight) {
+            console.log("toobig...");
+            // if mainly over width ELSE mainly over by height
+            if (realW - groupWidth > realH - groupHeight) {
+                downRatio = realW / groupWidth;
+                console.log(downRatio);
+            } else {
+                downRatio = realH / groupHeight;
+                console.log(downRatio);
+            }
+            realW = realW / downRatio;
+            realH = realH / downRatio;
+            image.scaleToWidth(realW);
+            image.scaleToHeight(realH);
+            console.log(w * image.scaleX);
+            console.log(h* image.scaleY);
+            // image.scaleWidth
+
+            console.log("W/H:");
+            console.log(realW, realH);
+        }
+
+        //CENTER IMAGE on TEMPLATE +10 for controls size
+        image.left = (groupWidth / 2 + groupX) - (realW / 2);
+        image.top = (groupHeight / 2 + groupY) - (realH / 2);
+
+
+        image.objectWidth = w*image.scaleX;
+        image.objectHeight = h*image.scaleY;
+        
         image.crossOrigin = "anonymous";
-
+        
         image.toObject = (function (toObject) {
             return function () {
                 return fabric.util.object.extend(toObject.call(this), {
                     objectName: name,
-                    objectIndex: objInd
+                    objectIndex: objInd,
                 });
             }
         })(image.toObject);
 
-        if(info){
+        // if(info){
             options = {
-                width: w,
-                height: h,
+                width: image.objectWidth,
+                height: image.objectHeight,
                 x: image.left,
                 y: image.top
             };
-        } else {
-            options = {
-                x: image.left,
-                y: image.top
-            }
-        }
+        // } else {
+            // options = {
+            //     x: image.left,
+            //     y: image.top
+            // }
+        // }
 
         createListItem(name, 'Image', options);
 
-        image.scaleToWidth(newWidth);
+        // image.scaleToWidth(newWidth);
         //image.scale(getRandomNum(0.1, 0.25)).setCoords();
         canvas.add(image);
 
@@ -883,6 +952,11 @@ function addAwkwardImage(src, info = false){
 
         sessionInfo(image, info);
     });
+    }catch(e){
+        console.log("BREEEAKER!");
+        console.log(e);
+        // $("#clearAll").click();
+    }
 }
 
 function renderAllCanvas() {
@@ -1235,9 +1309,27 @@ fabric.AwkwardImage = fabric.util.createClass(fabric.Image, {
 });
 
 fabric.AwkwardImage.fromObject = function (object, callback) {
-    fabric.util.loadImage(object.src, function(img) {
-        callback && callback(new fabric.AwkwardImage(img,object));
-    });
+    // let url = object.src;
+    $.ajax({
+        url: object.src,
+        success: function (data, textStatus) {
+            // URL is good
+            fabric.util.loadImage(object.src, function(img) {
+            callback && callback(new fabric.AwkwardImage(img,object));
+            });
+        }, error: function (jqXHR, textStatus, errorThrown) {
+            // URL is bad
+            console.log("...inner break :(");
+            console.log(errorThrown);
+            // clearAll();
+            fromStorage();
+            // $("#clearAll").click();
+            // setTimeout(function () {$("#drawingArea").click();}, 50);
+            // location.reload(true);
+            // init();
+            setTimeout(function () { canvas.renderAll(); }, 50);
+            // canvas.
+        }});
 };
 
 fabric.AwkwardImage.fromURL = function (url, callback, imageOptions){
