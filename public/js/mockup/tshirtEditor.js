@@ -570,7 +570,8 @@ $(document).ready(function () {
 
         },
         'object:modified': function (e) {
-            canvas.clipPath.opacity = 0.05;
+            canvas.clipPath.opacity = 0.5;
+
             setCoordinates(e.target);
             if(e.target.type === 'awkward-image' && e.target.toObject().src.length > 200){
                 var startTimer = function() {

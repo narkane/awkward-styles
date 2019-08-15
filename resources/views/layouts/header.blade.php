@@ -1,6 +1,12 @@
 
 <header>
 
+    <style>
+        .head-top {
+            right: 0;
+        }
+    </style>
+
     <script>
         $(document).ready(function() {
             $('.dropdown-submenu-toggle').hover(function() {
@@ -16,22 +22,29 @@
         });
     </script>
 
-    <div class="head-top bg-dark px-3 rounded-right">
-        <ul class="head-top-ul pl-5">
-                <li>
-                    <a href="/createstore">Open Your Store</a>
-                </li>
-                <li>
-                    <a href="/seller">Sell Anything</a>
-                </li>
-                <li>
-                    <a href="/seller">Sell Everywhere</a>
-                </li>
-            </ul>
-    </div>
+    <div class="row">
 
+        <div class="col-12">
 
-    <nav class="navbar navbar-expand-lg navbar-light shadow-sm  bg-light ">
+            <div class="head-top bg-dark px-3 rounded-left">
+                <ul class="head-top-ul pl-5">
+                        <li>
+                            <a href="/createstore">Open Your Store</a>
+                        </li>
+                        <li>
+                            <a href="/seller">Sell Anything</a>
+                        </li>
+                        <li>
+                            <a href="/seller">Sell Everywhere</a>
+                        </li>
+                    </ul>
+            </div>
+
+        </div>
+
+        <div class="col-12">
+
+            <nav class="navbar navbar-expand-lg navbar-light shadow-sm  bg-light ">
         <div class="container">
 
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mega-menu" aria-controls="mega-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -205,6 +218,7 @@
                                         <div class="dropdown">
                                             <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ Auth::user()->name }} <span class="caret"></span></a>
                                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userdropdown">
+
                                                 <a class="dropdown-item" href="/dashboard" title="My account">My Dashboard</a>
                                             <!-- <li><a href="{{
 route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default'),'locale'=>Route::current()->parameter('locale','en'),'currency'=>Route::current()->parameter('currency','DOL')])
@@ -227,7 +241,7 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
         <div class="header-product-menu" id="header-product-menu">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a href="{{ url("/product/womens/") }}" title="Womens">Women</a>
+                    <a class="nav-link" href="{{ url("/product/womens/") }}" title="Womens">Women</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url("/product/mens/") }}" title="Mens">Mens</a>
@@ -253,4 +267,6 @@ route('aimeos_shop_account',['site'=>Route::current()->parameter('site','default
             </ul>
         </div>
     </nav>
+
+        </div>
 </header>

@@ -538,7 +538,7 @@
         setShirtImage('{{ $images[0]->full_url }}');
 
         @foreach($canvasUrls as $k => $urls)
-        setShirtImage('{{ $urls }}', {{ $k }});
+            setShirtImage('{{ $urls }}', {{ $k }});
         @endforeach
 
         $(document).ready(function () {

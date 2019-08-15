@@ -537,7 +537,7 @@
         setShirtImage('<?php echo e($images[0]->full_url); ?>');
 
         <?php $__currentLoopData = $canvasUrls; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k => $urls): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-        setShirtImage('<?php echo e($urls); ?>', <?php echo e($k); ?>);
+            setShirtImage('<?php echo e($urls); ?>', <?php echo e($k); ?>);
         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
         $(document).ready(function () {
@@ -582,7 +582,7 @@
                     },
                     type: 'GET',
                     success: function (images) {
-                        $("#hoodieFacing").attr('src', images.properties.full_url);
+                        $("#shirtFacing").attr('src', images.properties.full_url);
                     }
                 });
                 e.preventDefault();

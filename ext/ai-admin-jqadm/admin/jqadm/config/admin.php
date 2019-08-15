@@ -57,6 +57,13 @@ return [
 				],
 			],
 		],
+        'templates' => [
+            'standard' => [
+                'subparts' => [
+                    'thetool' => 'thetool'
+                ]
+            ]
+        ],
 		'dashboard' => [
 			'standard' => [
 				'subparts' => [
