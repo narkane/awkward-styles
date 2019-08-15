@@ -795,7 +795,7 @@ function fromStorage(result = null){
 
         if(totalObjs > 0) {
             console.log(cv.objects);
-            // cv.objects = Array.from(cv.objects);
+            cv.objects = Array.from(cv.objects);
             cv.objects.unshift(mainG.toObject());
             console.log(cv.objects);
 
@@ -813,6 +813,8 @@ function fromStorage(result = null){
                 if(count === totalObjs){
                     for(var i in listItems){
                         for(var j in listItems[i]){
+                            console.log(listItems[i][j]);
+                            ((listItems[i][j].type !== "group") &&
                             createListItem(listItems[i][j].objectName,
                                 ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
                                 ((listItems[i][j].type === "awkward-image") ?
@@ -825,7 +827,7 @@ function fromStorage(result = null){
                                     {
                                         x: listItems[i][j].left,
                                         y: listItems[i][j].top
-                                    } )
+                                    } )) 
                                     );
                                 }
                             }
@@ -937,19 +939,19 @@ function addAwkwardImage(src, info = false){
             }
         })(image.toObject);
 
-        // if(info){
+        if(info){
             options = {
                 width: image.objectWidth,
                 height: image.objectHeight,
                 x: image.left,
                 y: image.top
             };
-        // } else {
-            // options = {
-            //     x: image.left,
-            //     y: image.top
-            // }
-        // }
+        } else {
+            options = {
+                x: image.left,
+                y: image.top
+            }
+        }
 
         createListItem(name, 'Image', options);
 
