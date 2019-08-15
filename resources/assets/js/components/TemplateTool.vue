@@ -106,8 +106,12 @@ export default {
       //   ratio: 0
       // };
 
+      this.app.view.setAttribute("id", "drawingboard");
+      this.app.view.style.position = "absolute";
+      this.app.view.style.marginTop = "3px";
+      this.app.view.style.left = "138px";
+      this.app.view.style.border = "1px yellow outset";
       document.body.appendChild(this.app.view);
-      document.body.lastElementChild.setAttribute("id", "drawingboard");
 
       // this.drawPoly();
       var graphics = new PIXI.Graphics();
@@ -167,7 +171,8 @@ export default {
           if (that.shapes[that.librarySelect].polyArr.length == 0) {
             that.shapes[that.librarySelect].polyArr.push({
               x: newPosition.x,
-              y: newPosition.y
+              y: newPosition.y,
+              closed: false
             });
             that.shapes[that.librarySelect].polyArr.push({
               x: newPosition.x,
@@ -177,13 +182,33 @@ export default {
               that.shapes[that.librarySelect].polyArr[0].x,
               that.shapes[that.librarySelect].polyArr[0].y
             );
-            that.geo[that.librarySelect].lineStyle(2, 0xffffff);
-            that.geo[that.librarySelect].beginFill(0x44aaff, 0.25);
-            that.geo[that.librarySelect].lineStyle(10, 0xffd900, 1);
+            // that.geo[that.librarySelect].lineStyle(2, 0xffffff);
+            // that.geo[that.librarySelect].beginFill(0x44aaff, 0.25);
+            // that.geo[that.librarySelect].lineStyle(10, 0xffd900, 1);
+          } else {
+            if (that.shapes[that.librarySelect].polyArr[0].closed == true) {
+              that.shapes[that.librarySelect].polyArr = [];
+              // that.onDragStart();
+              that.shapes[that.librarySelect].polyArr.push({
+                x: newPosition.x,
+                y: newPosition.y,
+                closed: false
+              });
+              that.shapes[that.librarySelect].polyArr.push({
+                x: newPosition.x,
+                y: newPosition.y
+              });
+              that.geo[that.librarySelect].moveTo(
+                that.shapes[that.librarySelect].polyArr[0].x,
+                that.shapes[that.librarySelect].polyArr[0].y
+              );
+            }
           }
           console.log("START #2");
+        } else {
+          // that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
+          that.dataChange(that.$refs.trow1.template.geo);
         }
-        that.$refs.trow1.template.geo = that.shapes[that.librarySelect];
         that.geo[that.librarySelect].clear();
         // store a reference to the data
         // the reason for this is because of multitouch
@@ -212,17 +237,24 @@ export default {
         if (that.shapes[that.librarySelect].shape == 2) {
           var fx = newPosition.x;
           var fy = newPosition.y;
+          // console.log(fx);
+          // console.log(fy);
+          // console.log(that.shapes[that.librarySelect].polyArr[0].x);
+          // console.log(that.shapes[that.librarySelect].polyArr[0].y);
           if (
-            newPosition.x > that.shapes[that.librarySelect].polyArr[0].x - 10 ||
-            newPosition.x < that.shapes[that.librarySelect].polyArr[0].x + 10
+            newPosition.x > that.shapes[that.librarySelect].polyArr[0].x - 30 &&
+            newPosition.x < that.shapes[that.librarySelect].polyArr[0].x + 30
           ) {
             if (
               newPosition.y >
-                that.shapes[that.librarySelect].polyArr[0].y - 10 ||
-              newPosition.y < that.shapes[that.librarySelect].polyArr[0].y + 10
+                that.shapes[that.librarySelect].polyArr[0].y - 30 &&
+              newPosition.y < that.shapes[that.librarySelect].polyArr[0].y + 30
             ) {
               fx = that.shapes[that.librarySelect].polyArr[0].x;
               fy = that.shapes[that.librarySelect].polyArr[0].y;
+              that.shapes[that.librarySelect].polyArr[0].closed = true;
+              console.log("SNAPPO!!!!!!!!!!!!!!!!!!!!!");
+              alert("custom object closed");
             }
           }
           // that.geo[that.librarySelect].lineStyle(Math.random() * 30, Math.random() * 0xFFFFFF, 1);
@@ -235,6 +267,8 @@ export default {
             that.shapes[that.librarySelect].polyArr;
 
           console.log("END #2");
+        } else {
+          that.dataChange(that.$refs.trow1.template.geo);
         }
       }
       function onDragMove() {
@@ -252,14 +286,16 @@ export default {
             let avg = (offX + offY) / 2;
             that.shapes[that.librarySelect].width = avg;
             that.shapes[that.librarySelect].height = avg;
+            that.dataChange(that.$refs.trow1.template.geo);
           } else if (that.shapes[that.librarySelect].shape == 4) {
             that.shapes[that.librarySelect].width = offX;
             that.shapes[that.librarySelect].height = offY;
+            that.dataChange(that.$refs.trow1.template.geo);
           } else if (that.shapes[that.librarySelect].shape == 2) {
             console.log("GOING #2");
             that.geo[that.librarySelect].clear();
-            that.geo[that.librarySelect].lineStyle(2, 0xffffff);
-            that.geo[that.librarySelect].beginFill(0x44aaff, 0.25);
+            // that.geo[that.librarySelect].lineStyle(2, 0xffffff);
+            // that.geo[that.librarySelect].beginFill(0x44aaff, 0.25);
             that.geo[that.librarySelect].moveTo(
               that.shapes[that.librarySelect].polyArr[0].x,
               that.shapes[that.librarySelect].polyArr[0].y
@@ -283,11 +319,12 @@ export default {
               );
             }
             that.geo[that.librarySelect].endFill();
-            that.geo[that.librarySelect].lineStyle(
-              Math.random() * 30,
-              Math.random() * 0xffffff,
-              1
-            );
+            that.geo[that.librarySelect].beginFill(0x44aaff, 0.25);
+            // that.geo[that.librarySelect].lineStyle(
+            //   Math.random() * 30,
+            //   Math.random() * 0xffffff,
+            //   1
+            // );
           }
 
           // that.$refs.trow1.setW(that.shapes[that.librarySelect].width);
@@ -308,16 +345,15 @@ export default {
       this.shapes[this.librarySelect].width = parseFloat(data.width);
       this.shapes[this.librarySelect].height = parseFloat(data.height);
       this.shapes[this.librarySelect].shape = parseInt(data.shape);
-      if (this.shapes[this.librarySelect].shape == 2) {
-        if (this.shapes[this.librarySelect].polyArr == undefined) {
-          this.shapes[this.librarySelect].polyArr = [];
-        } else {
-          // HAVE TO SHIFT ALL POINTS WITH RESPECT TO EACH OTHER... OOF
-          // this.shapes[this.librarySelect].polyArr[0].x = parseFloat(data.x);
-        }
+      // if (this.shapes[this.librarySelect].shape == 2) {
+      if (this.shapes[this.librarySelect].polyArr == undefined) {
+        this.shapes[this.librarySelect].polyArr = [];
       } else {
-        this.dataDraw(this.librarySelect);
+        // HAVE TO SHIFT ALL POINTS WITH RESPECT TO EACH OTHER... OOF
+        // this.shapes[this.librarySelect].polyArr[0].x = parseFloat(data.x);
       }
+
+      this.dataDraw(this.librarySelect);
     },
     doAll: function(cbFunc) {
       for (let i = 1; i < this.shapes.length; i++) {
@@ -330,7 +366,7 @@ export default {
       // this.geo[i] = new PIXI.Graphics();
 
       // this.geo[i].lineStyle(2, 0xffffff);
-      // this.geo[i].beginFill(0x44aaff, 0.25);
+      this.geo[i].beginFill(0x44aaff, 0.25);
       // this.geo[i].transparent = 1;
       // this.geo[i].alpha = 0.1;
       // this.geo[i].clear();
@@ -352,8 +388,8 @@ export default {
           break;
         case 2:
           // console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH!!!!!~");
-          this.geo[i].lineStyle(2, 0xffffff);
-          this.geo[i].beginFill(0x44aaff, 0.25);
+          // this.geo[i].lineStyle(2, 0xffffff);
+          // this.geo[i].beginFill(0x44aaff, 0.25);
           this.geo[i].moveTo(
             this.shapes[i].polyArr[0].x,
             this.shapes[i].polyArr[0].y
@@ -457,9 +493,7 @@ export default {
       for (let i = 1; i < this.shapes.length - 1; i++) {
         this.libraryCurrent = i + 1;
         var newSel = this.createRadioElement(this.libraryCurrent);
-        newSel.onclick = event => {
-          this.selectRadio(event.target.value);
-        };
+
         var sel = document.getElementById("selection");
         sel.appendChild(document.createElement("br"));
         sel.appendChild(newSel);
@@ -474,19 +508,24 @@ export default {
       this.select(this.shapes.length - 1);
     },
     createRadioElement: function(name) {
-      var radioHtml =
-        "<button id='button" +
-        name +
-        "' type='button' value='" +
-        name +
-        "'>Select " +
-        name +
-        "</button>";
+      var radioFragment = document.createElement("button");
+      radioFragment.id = "button" + name;
+      radioFragment.type = "button";
+      radioFragment.value = name;
+      radioFragment.textContent = "Template " + name;
+      radioFragment.style.width = "80px";
+      radioFragment.style.height = "58px";
+      radioFragment.style.backgroundColor = "lightgray";
+      radioFragment.style.border = "2px outset darkgray";
+      radioFragment.style.borderRadius = "10px";
+      radioFragment.style.margin = "5px 0px 0px 15px";
+      radioFragment.style.filter = "drop-shadow(1px 1px 3px #333333)";
 
-      var radioFragment = document.createElement("div");
-      radioFragment.innerHTML = radioHtml;
+      radioFragment.onclick = event => {
+        this.selectRadio(event.target.value);
+      };
 
-      return radioFragment.firstChild;
+      return radioFragment;
     },
     selectRadio: function(current) {
       this.select(current);
@@ -604,16 +643,10 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .data {
   margin-top: 18px;
   margin-left: 550px;
-}
-#drawingboard {
-  position: absolute;
-  margin-top: 3px;
-  left: 138px;
-  border: 1px yellow outset;
 }
 button {
   width: 80px;
@@ -633,5 +666,12 @@ button {
 }
 #minus {
   padding-bottom: 20px;
+}
+#selection {
+  position: relative;
+  border: 2px inset lightgreen;
+  background-color: lightseagreen;
+  left: -7px;
+  padding: 5px;
 }
 </style>

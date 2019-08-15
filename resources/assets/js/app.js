@@ -19,6 +19,7 @@ Vue.use(Vuetify);
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
+Vue.component("product", require("./components/Product.vue"));
 Vue.component("comingsoon", require("./components/Comingsoon.vue"));
 Vue.component("example", require("./components/Example.vue"));
 Vue.component("searchbar", require("./components/Search.vue"));
