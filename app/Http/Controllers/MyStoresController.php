@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Artwork;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -65,12 +66,10 @@ class MyStoresController extends Controller
                     ->where('active', '=', 1)
                     ->get();
 
-        $artworks = \App\Artwork::where("parentid", "=", $user_id);
-
-        $current_artwork = (!is_null($id)) ? $artworks->where('id', '=', $id)->first() : null;
-
-        $artworks = $artworks->orderBy('id', 'desc')
+        $artworks = \App\Artwork::where("parentid", "=", $user_id)->orderBy('id', 'desc')
             ->get();
+
+        $current_artwork = (!is_null($id)) ? \App\Artwork::where("parentid", "=", $user_id)->where('id', '=', $id)->first() : null;
 
         $royaltyfees = \App\RoyaltyFee::select(['id','value','name'])
                         ->orderBy('id','desc');
@@ -91,6 +90,31 @@ class MyStoresController extends Controller
 
     public function artworkmanagement() {
         return view('artworkmanagement');
+    }
+
+    /**
+     * Remove the Artwork
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function removeArt(Request $request){
+        $error = null;
+
+        if(Auth::check()){
+            $id = Auth::user()->getAuthIdentifier();
+            $art_id = ($request->has('art_id')) ? $request->input('art_id') : 0;
+
+            $remove = Artwork::where("parentid", "=", $id)
+                    ->where("id", "=", $art_id)
+                    ->delete();
+
+            if($remove){
+                return response()->json(['status' => 'success']);
+            } else {
+                $error = "IDs Don't Match";
+            }
+        }
+        return response()->json(['status' => 'error', 'msg' => $error]);
     }
 
     public function tagSuggestions(Request $request) {
@@ -226,14 +250,25 @@ class MyStoresController extends Controller
          */
         //$dpi = $this->getPPI($file->getReaPath());
 
-        $validated = $request->validate([
+        $art_id = ($request->has('art_id')) ? $request->input('art_id') : false;
+
+        // Create Validation Array
+        $validationArray = [
             'artwork_name' => 'required|max:255',
-            'artwork_description' => 'required',
-            'suitable_audience' => 'required',
-            'royalty_fees' => 'required',
-            'remember' => 'required',
-            'updated_artwork' => 'required|file|image|max:10000000'
-        ]);
+            'artwork_description' => 'required'
+        ];
+
+        if($art_id == false){
+            $validationArray['remember'] = 'required';
+            $validationArray['updated_artwork'] = 'required|file|image|max:10000000';
+        }
+
+        if($request->input('private_artwork') == 0){
+            $validationArray['suitable_audience'] = 'required';
+            $validationArray['royalty_fees'] = 'required';
+        }
+
+        $validated = $request->validate($validationArray);
 
         $artwork_name = $request->input('artwork_name');
         $artwork_description = $request->input('artwork_description');

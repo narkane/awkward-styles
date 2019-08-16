@@ -40,7 +40,9 @@ Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/createstore', 'MyStoresController@createStore')->name('createstore');
 Route::get('/editstore/{id}', 'MyStoresController@editStore')->name('editStore');
 Route::post('/savestore', 'MyStoresController@saveStore')->name('savestore');
+
 Route::post('/saveartwork', 'MyStoresController@saveArtWork')->name('saveartwork');
+
 Route::get('/mystores', 'MyStoresController@index')->name('mystores');
 Route::get('/myearnings', 'MyEarningsController@index')->name('myearnings');
 
@@ -169,6 +171,12 @@ Route::group(['prefix' => 'api/'], function($app){
      * GENERATE IMAGE
      */
     $app->get('designs/images/{pid}/{size}/{design_id}', 'API\ImageMakerController@index')->name('imageMaker');
+
+    /**
+     * REMOVE ARTWORK
+     */
+    $app->get('removeArt', 'MyStoresController@removeArt')->name('removeArtwork');
+
 
     //$app->get('insertproducts', 'API\InsertProductsController@index');
 
