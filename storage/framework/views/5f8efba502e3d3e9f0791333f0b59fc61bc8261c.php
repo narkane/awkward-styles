@@ -37,31 +37,62 @@
             <div class="col-md-3">
                 <?php echo $__env->make('menu', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>;
 
-                <div class="bg-white p-3 pt-1">
+                <div class="bg-white p-3 pt-1 mb-5">
                     <h4 class="mt-4">Your Artworks</h4>
 
                     <div class="art-works">
-                            <ul id="artWorkProduct" class="list-group">
-                                <?php $__currentLoopData = $artworks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $artwork): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-5">
-                                                <img src="<?php echo e($artwork->artwork); ?>" style="max-width: 75px; max-height: 75px; float:right;"/>
-                                            </div>
-                                            <div class="col-md-7">
-                                                <div class="pb-3">
-                                                    <h5 class="d-inline">Name:</h5>
-                                                        <span class="float-right">
-                                                        <i class="fa fa-edit btn btn-secondary p-1"></i>
-                                                        <i class="fa fa-trash-alt btn btn-secondary p-1"></i>
-                                                        </span>
-                                                </div>
-                                                <span class="text-uppercase"><?php echo e($artwork->artname); ?></span>
-                                            </div>
+                        <ul id="artWorkProduct" class="list-group">
+                            <?php $__currentLoopData = $artworks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $artwork): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <img src="<?php echo e($artwork->artwork); ?>" id="img_<?php echo e($artwork->id); ?>"
+                                                 style="max-width: 75px; max-height: 75px; float:right;"/>
                                         </div>
-                                    </li>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </ul>
+                                        <div class="col-md-7">
+                                            <div class="pb-3">
+                                                <h5 class="d-inline">Name:</h5>
+                                                <span class="float-right">
+                                                        <i class="fa fa-edit btn btn-secondary p-1"
+                                                           id="edit_<?php echo e($artwork->id); ?>"></i>
+                                                        <i class="fa fa-trash-alt btn btn-secondary p-1"
+                                                           data-toggle="modal" data-target="#deleteModal"
+                                                           id="delete_<?php echo e($artwork->id); ?>"></i>
+                                                        </span>
+                                            </div>
+                                            <span class="text-uppercase"
+                                                  id="name_<?php echo e($artwork->id); ?>"><?php echo e($artwork->artname); ?></span>
+                                        </div>
+                                    </div>
+                                </li>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </ul>
+
+                        <!-- MODAL FOR DELETION -->
+                        <div class="modal" id="deleteModal" tabindex="-1" role="dialog"
+                             aria-labelledby="deleteModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteModalLabel">Delete Artwork?</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body text-center" id="deleteArtworkModal">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <input type="hidden" name="held_id" id="held_id" value="0"/>
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close
+                                        </button>
+                                        <button type="button" class="btn btn-primary" id="delete_my_art"
+                                                data-dismiss="modal">Delete Artwork
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -101,42 +132,65 @@
                                 </div>
                             <?php endif; ?>
                             <h4 class="mb-4">Artwork Details</h4>
-                            <form action="<?php echo e(url('saveartwork')); ?>" method="post" enctype="multipart/form-data"
-                                  id="submit_artwork">
+                            <form action="<?php echo e(url('saveartwork')); ?>" method="POST" enctype="multipart/form-data"
+                                  id="submit_artwork" class="needs-validation" novalidate>
 
                                 <?php echo e(csrf_field()); ?>
 
 
                                 <?php if(isset($id)): ?> <input type="hidden" name="art_id" id="art_id" value="<?php echo e($id); ?>"/> <?php endif; ?>
-                                <div class="form-group row">
+                                <div class="form-row">
                                     <label for="email" class="col-sm-5 col-form-label">Artwork Name <span
                                                 style="color:red">*</span></label>
                                     <div class="input-box col-sm-7">
-                                        <input type="text" class="form-control input-bg"
-                                               id="artwork_name" name="artwork_name"
-                                               <?php if(isset($id)): ?> value="<?php echo e($current_artwork->artname); ?>" <?php endif; ?>
-                                                                           required>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control input-bg"
+                                                   id="artwork_name" name="artwork_name"
+                                                   <?php if(isset($id)): ?> value="<?php echo e($current_artwork->artname); ?>" <?php endif; ?>
+                                                   required/>
+                                            <div class="invalid-feedback">
+                                               Artwork Name is required
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="form-group row">
-                                    <label class="col-sm-5 col-form-label">Upload Artwork <span
+                                    <label class="col-sm-5 col-form-label"><?php if(isset($id)): ?> Existing <?php else: ?> Upload <?php endif; ?> Artwork <span
                                                 style="color:red">*</span>
                                         <br>
                                         <span class="text-danger text-small">Min. 400 X 400 px Max.Size 1 MB</span>
                                     </label>
                                     <div class="col-sm-7">
-                                        <div class="custom-file" <?php if(isset($id)): ?> style="display:none" <?php endif; ?>>
-                                            <input type="file" class="custom-file-input" id="updated_artwork"
-                                                   name="updated_artwork" accept="image/*"
-                                                   <?php if(isset($id)): ?> disabled="true" <?php else: ?> required <?php endif; ?>>
-                                            <input class="" type="checkbox" name="remember" required>
-                                            <span>By uploading the Artwork, i confirm that i hold the copyrights for the Artwork or a license to use it.</span>
-                                            <label class="custom-file-label" for="customFile">Choose file</label>
-                                        </div>
+                                        <?php if(!isset($id)): ?>
+                                            <div class="input-group custom-file">
+                                                <input type="file" class="custom-file-input form-control" id="updated_artwork"
+                                                           name="updated_artwork" accept="image/*"
+                                                          required />
+                                                <label class="custom-file-label" for="customFile">Choose file</label>
+
+                                                <div class="invalid-feedback">
+                                                    Artwork is required.
+                                                </div>
+                                            </div>
+                                            <div class="input-group form-row">
+                                                <div class="col-2">
+                                                    <input class="form-control" type="checkbox" name="remember" id="remember"
+                                                           required/>
+                                                </div>
+                                                <div class="col-10">
+                                                    <label for="remember" class="d-inline">By uploading the Artwork, I confirm that I hold the copyrights for the Artwork or a license to use it.</label>
+                                                </div>
+                                                    <div class="invalid-feedback">
+                                                    You must agree for copyright or licensing.
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
                                         <div class="mt-3">
-                                            <img <?php if(isset($id)): ?> src="<?php echo e($current_artwork->artwork); ?>" <?php else: ?> src="images/blank.jpg" <?php endif; ?> id="artwork_image" width="80" height="80"
-                                                 class="img-fluid" alt="">
+                                            <img <?php if(isset($id)): ?> src="<?php echo e($current_artwork->artwork); ?>"
+                                                 <?php else: ?> src="images/blank.jpg" <?php endif; ?> id="artwork_image" width="80"
+                                                 height="80"
+                                                 class="img-fluid" alt=""/>
                                         </div>
                                     </div>
                                 </div>
@@ -146,11 +200,15 @@
                                     <div class="input-box col-sm-7">
                                         <div class="m-check">
                                             <input class="input-bg" type="radio" name="private_artwork"
-                                                   value="1" <?php if(isset($id) && $current_artwork->is_private == 0): ?> checked="checked" <?php endif; ?>> <span>Private</span>
+                                                   value="1"
+                                                   checked="checked"/>
+                                            <span>Private</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg" type="radio" name="private_artwork"
-                                                   value="0" <?php if(isset($id) && $current_artwork->is_private == 1): ?> checked="checked" <?php endif; ?>> <span>Public (Commercial)</span></div>
+                                                   value="0"
+                                                   <?php if(isset($id) && $current_artwork->is_private == 1): ?> checked="checked" <?php endif; ?> />
+                                            <span>Public (Commercial)</span></div>
                                     </div>
                                 </div>
                                 <div class="form-group row hide-when-private">
@@ -162,25 +220,29 @@
                                             <input class="input-bg channels" type="checkbox"
                                                    name="channel_individual"
                                                    value="Individual Buyers (B2C)"
-                                                   <?php if(isset($id) && $current_artwork->is_individual == 1): ?> checked="checked" <?php endif; ?>> <span>Individual Buyers (B2C)</span>
+                                                   <?php if(isset($id) && $current_artwork->is_individual == 1): ?> checked="checked" <?php endif; ?> />
+                                            <span>Individual Buyers (B2C)</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg channels" type="checkbox"
                                                    name="channel_awkwardstyle"
                                                    value="Awkwardstyles Marketplace Stores"
-                                                   <?php if(isset($id) && $current_artwork->is_awkwardstyle): ?> checked="checked" <?php endif; ?>> <span>Awkwardstyles Marketplace Stores</span>
+                                                   <?php if(isset($id) && $current_artwork->is_awkwardstyle): ?> checked="checked" <?php endif; ?> />
+                                            <span>Awkwardstyles Marketplace Stores</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg channels" type="checkbox"
                                                    name="channel_thirdMarketPlace"
                                                    value="Thirdparty Marketplace Stores"
-                                                   <?php if(isset($id) && $current_artwork->is_thirdparty_marketplace): ?> checked="checked" <?php endif; ?>> <span>Thirdparty Marketplace Stores</span>
+                                                   <?php if(isset($id) && $current_artwork->is_thirdparty_marketplace): ?> checked="checked" <?php endif; ?> />
+                                            <span>Thirdparty Marketplace Stores</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg channels" type="checkbox"
                                                    name="channel_thirdEcommerce"
                                                    value="Thirdparty Ecommerce Platforms"
-                                                   <?php if(isset($id) && $current_artwork->is_thirdparty_ecommerce): ?> checked="checked" <?php endif; ?>> <span>Thirdparty Ecommerce Platforms</span>
+                                                   <?php if(isset($id) && $current_artwork->is_thirdparty_ecommerce): ?> checked="checked" <?php endif; ?> />
+                                            <span>Thirdparty Ecommerce Platforms</span>
                                         </div>
                                     </div>
                                 </div>
@@ -197,14 +259,22 @@
                                     <label for="pwd" class="col-sm-5 col-form-label">Artwork Category</label>
                                     <div class="input-box col-sm-7">
                                         <?php if( count($categories)>0 ): ?>
-                                            <select class="form-control input-bg" id="artwork_category"
-                                                    name="artwork_category" autocomplete="off" required>
-                                                <option>Select Category</option>
-                                                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($category->id); ?>"
-                                                            <?php if(isset($id) && $current_artwork->artwork_category_id == $category->id): ?> selected="selected" <?php endif; ?>><?php echo e($category->name); ?></option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                            </select>
+                                            <div class="input-group d-flex">
+                                                <select class="form-control input-bg" id="artwork_category"
+                                                        name="artwork_category" autocomplete="off" required>
+                                                    <option value="">Select Category</option>
+                                                    <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        <option value="<?php echo e($category->id); ?>"
+                                                                <?php if(isset($id) && $current_artwork->artwork_category_id == $category->id): ?> selected="selected" <?php endif; ?>>
+                                                            <?php echo e($category->name); ?>
+
+                                                        </option>
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                </select>
+                                            </div>
+                                            <div class="invalid-feedback">
+                                                A category is required.
+                                            </div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -216,8 +286,8 @@
                                             <!--<textarea class="form-control input-bg" rows="3" id="tag-suggestions" name="artwork_tags"></textarea>-->
                                             <input type="text" class="form-control input-bg" id="tag-suggestions"
                                                    name="artwork_tags" placeholder="Enter tag name and press comma[,]"
-                                                   autocomplete="off">
-                                            <?php if(isset($id)): ?>
+                                                   autocomplete="off"/>
+                                            <?php if(isset($id) && $current_artwork->tag_name != null): ?>
                                                 <?php $__currentLoopData = json_decode($current_artwork->tag_name); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tag): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <span class="tag"><?php echo e($tag); ?></span>
                                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -237,18 +307,20 @@
                                         <div class="m-check">
                                             <input class="input-bg" type="radio"
                                                    name="suitable_audience" value="G"
-                                            <?php if(isset($id) && $current_artwork->suitable_audience == "G"): ?> checked="checked" <?php endif; ?>> <span>G</span>
+                                                   <?php if(isset($id) && $current_artwork->suitable_audience == "G"): ?> checked="checked" <?php endif; ?> />
+                                            <span>G</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg" type="radio"
-                                                 name="suitable_audience" value="PG--13"
-                                                   <?php if(isset($id) && $current_artwork->suitable_audience == "PG--13"): ?> checked="checked" <?php endif; ?>>
+                                                   name="suitable_audience" value="PG--13"
+                                                   <?php if(isset($id) && $current_artwork->suitable_audience == "PG--13"): ?> checked="checked" <?php endif; ?> />
                                             <span>PG--13</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg" type="radio"
-                                                 name="suitable_audience" value="R"
-                                                   <?php if(isset($id) && $current_artwork->suitable_audience == "R"): ?> checked="checked" <?php endif; ?>> <span>R</span>
+                                                   name="suitable_audience" value="R"
+                                                   <?php if(isset($id) && $current_artwork->suitable_audience == "R"): ?> checked="checked" <?php endif; ?> />
+                                            <span>R</span>
                                         </div>
                                     </div>
                                 </div>
@@ -258,17 +330,19 @@
                                                 style="color:red">*</span></label>
                                     <div class="input-box col-sm-7">
                                         <input type="text" class="form-control input-bg" id="royalty_fees"
-                                               name="royalty_fees">
+                                               <?php if(isset($id)): ?> value="<?php echo e($current_artwork->royalty_fee); ?>" <?php endif; ?>
+                                               name="royalty_fees"/>
                                     </div>
                                 </div>
                                 <br/>
                                 <div class="form-group">
-                                    <input type="submit" class="btn btn-primary float-right" id="submitBtn" value="Save and Choose Products" />
+                                    <button type="submit" class="btn btn-primary float-right" id="submitBtn">
+                                        Save and Choose Products
+                                    </button>
                                 </div>
                             </form>
 
                         </div>
-
 
                     </div>
                 </div>
@@ -278,7 +352,120 @@
         </div>
     </div>
     <script>
+        var allTags =<?php if(isset($id) && $current_artwork->tag_name != null): ?><?php echo $current_artwork->tag_name; ?>;
+        <?php else: ?>
+        [];
+        <?php endif; ?>
+
         $(document).ready(function () {
+
+            $("#submitBtn").on('click', function () {
+
+                $(this).html("Processing..");
+
+                // RUN VALIDATIONS
+
+                /*
+
+                let string = '[';
+                console.log(allTags.length);
+
+                for(let i in allTags){
+                    if(allTags[i] !== null) {
+                        string += '"' + allTags[i] + '"';
+                        if (allTags[i] !== allTags[(allTags.length - 1)]) {
+                            string += ",";
+                        }
+                    }
+                }
+
+                $("#tag-suggestions").val(string + "]");
+
+                $("#submit_artwork").submit();
+
+                 */
+
+            });
+
+            (function() {
+                'use strict';
+                window.addEventListener('load', function() {
+                    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                    var forms = document.getElementsByClassName('needs-validation');
+                    // Loop over them and prevent submission
+                    var validation = Array.prototype.filter.call(forms, function(form) {
+                        form.addEventListener('submit', function(event) {
+                            if (form.checkValidity() === false) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                            form.classList.add('was-validated');
+                        }, false);
+                    });
+                }, false);
+            })();
+
+            function form_validation(Form){
+                Form = Form || '';
+                let validated = true;
+
+                if(Form !== ''){
+                   Form.find("input,select,textarea").each(function(i){
+                       if($(this).attr('type') !== 'submit') {
+                           if($(this).hasAttribute('required') && $(this).val() == null){
+                               validated = false;
+
+                           }
+                       }
+                   });
+               }
+            }
+
+
+            $(".fa-edit").on('click', function () {
+                let id = $(this).attr('id').split("_")[1];
+                window.location.href = "<?php echo e(url("addartwork")); ?>/" + id;
+            });
+
+            $(".fa-trash-alt").on('click', function () {
+                let item = $(this);
+                let id = item.attr('id').split("_")[1];
+
+                // Get image and name
+                let img = $("#img_" + id).attr('src');
+                let name = $("#name_" + id).html();
+
+                $("#held_id").val(id);
+
+                // Fill Delete Modal
+                let deleteModal = $("#deleteArtworkModal");
+
+                deleteModal.html("<p>Are you sure you would like to delete the \"" + name + "\"?</p>"
+                    + "<img src='" + img + "' style='max-width: 300px; max-height: 300px;'/>");
+
+            });
+
+            $("#delete_my_art").on('click', function () {
+
+                let id = $("#held_id").val();
+
+                $.ajax({
+                    url: "<?php echo e(url("api/removeArt")); ?>",
+                    type: 'GET',
+                    data: {
+                        art_id: $("#held_id").val()
+                    },
+                    success: (result) => {
+                        console.log(result);
+                        $("#delete_" + id).closest("li").remove();
+                    },
+                    error: (err, data) => {
+                        console.log("ERROR: " + JSON.stringify(err));
+                    }
+                });
+
+            });
+
             var options1 = {
                 url: function (phrase) {
                     return "<?php echo e(url('tagsuggestions/')); ?>/" + phrase;
@@ -304,46 +491,7 @@
                 }
             });
 
-            /*
-            console.log("TOKEN:", "<?php echo e($token); ?>");
-            $.ajax({
-                url: "<?php echo e(env('API_URL')); ?>api/artwork/getAllArtworks",
-                contentType: 'application/json',
-                dataType: 'json',
-                headers: {
-                    "Authorization": "Bearer " +
-                        "<?php echo e($token); ?>",
-                    "Content-Type": "application/json"
-                },
-                type: 'GET',
-                success: function (artworkList) {
-                    console.log("artwork---", artworkList);
-                    let url = "<?php echo e(url('/')); ?>";
-                    for (let i = 0; i <= artworkList.properties.length; i++) {
-                        if (artworkList.properties) {
-                            let data = new Date(artworkList.properties[i].ctime)
-                            $('#artWorkProduct').append(`
-                <li>
-                  <div><img src="${artworkList.properties[i].mediaId.full_url}" width="100%" height="auto" ></div>
-                  <p class="art-work-title"><a href="<?php echo e(url('addproducts')); ?>/${artworkList.properties[i].id}/${artworkList.properties[i].artName}">${artworkList.properties[i].artName}</a></p>
-                  <p class="art-creation-date">${data}</p>
-                </li>
-              `);
-                        } else {
-                            $(".art-works-list").html(`You have not uploaded any Artwork's yet.`);
-                        }
-                    }
-                },
-                error: function (error) {
-                    console.log("artWorkProduct ERROR:", error.responseJSON.message);
-                    $('.art-works-list').html(error.responseJSON.message);
-                }
-            });
-            */
-
         });
-
-        var allTags = <?php if(isset($id)): ?> <?php echo $current_artwork->tag_name; ?>; <?php else: ?> []; <?php endif; ?>;
 
         $(function () {
 
@@ -368,17 +516,6 @@
                     $(this).remove();
                 }
             });
-
-            $("#submit_artwork").on('submit',function (e) {
-                // e.preventDefault();
-
-                $("#tag-suggestions").val(JSON.stringify(allTags)).hide();
-
-                alert("TEST");
-
-                return true;
-            });
-
         });
 
         /* Image preview on select start*/
@@ -388,7 +525,7 @@
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     $(v).attr('src', e.target.result);
-                }
+                };
                 reader.readAsDataURL(input.files[0]);
             }
         }

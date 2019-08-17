@@ -50,8 +50,10 @@ Route::get('/addartwork', 'MyStoresController@addArtWork')->name('addartwork');
 Route::get('/addartwork/{id}', 'MyStoresController@addArtWork')->name('editartwork');
 
 Route::get('/selectproductype/{artwork_id}/{artwork_name}', 'AddProductsController@selectProducType')->name('selectproductype');
+
 Route::get('/addproducts/{artwork_id}/{artwork_name}', 'AddProductsController@addProducts')->name('addproducts');
 Route::get('/addproducts', 'AddProductsController@addProducts')->name('addproducts');
+
 Route::post('/setpricing', 'AddProductsController@setPricing')->name('setpricing');
 Route::get('/tagsuggestions/{id}', 'MyStoresController@tagSuggestions')->name('tagsuggestions');
 Route::get('/artworkmanagement', 'ArtworkManagementController@index')->name('artworkmanagement');

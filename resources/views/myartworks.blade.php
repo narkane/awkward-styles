@@ -39,7 +39,7 @@
             <div class="col-md-3">
                 @include('menu');
 
-                <div class="bg-white p-3 pt-1">
+                <div class="bg-white p-3 pt-1 mb-5">
                     <h4 class="mt-4">Your Artworks</h4>
 
                     <div class="art-works">
