@@ -1,3 +1,5 @@
+// import { timeout } from "q";
+
 var canvas;
 var tshirts = new Array(); //prototype: [{style:'x',color:'white',front:'a',back:'b',price:{tshirt:'12.95',frontPrint:'4.99',backPrint:'4.99',total:'22.47'}}]
 var a;
@@ -36,6 +38,7 @@ var prevCanvas = [
  */
 
 var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, groupX, groupY, realW, realH, url, pid, size, mainG;
+var tempRatio = [];
 var upperLeft = 999;
 var upperTop = 999;
 
@@ -681,7 +684,11 @@ function setTemplate(main = "main") {
 
                     uptop = (result.values[i].y < uptop) ? result.values[i].y : uptop;
                     upleft = (result.values[i].x < upleft) ? result.values[i].x : upleft;
-
+                    
+                    //set templates ratio onto last tempRatio position
+                    console.log(result);
+                    if(main=='main')
+                        tempRatio.push(result.dpi);
                 }
             }
 
@@ -701,6 +708,7 @@ function setTemplate(main = "main") {
                     groupWidth = g.width;
                     groupHeight = g.height;
                 }
+
 
 
                 let tag = main;
@@ -941,10 +949,11 @@ function addAwkwardImage(src, info = false){
 
         if(info){
             options = {
-                width: image.objectWidth,
-                height: image.objectHeight,
+                Width: image.objectWidth/tempRatio[tempRatio.length-1],
+                Height: realH/tempRatio[tempRatio.length-1],
                 x: image.left,
-                y: image.top
+                y: image.top,
+                DPI: image.width/(image.objectWidth/tempRatio[tempRatio.length-1])
             };
         } else {
             options = {
@@ -1132,6 +1141,7 @@ function createListItem(id, type, options = null){
         '<div class="row">' +
         '<div class="col-sm-6 object_x">X: ' + options.x + '</div>' +
         '<div class="col-sm-6 object_y">Y: ' + options.y + '</div>' +
+        '<div class="col-sm-6 object_x">DPI: ' + Math.round(options.DPI) + '</div>' +
         '</div>';
 
     delete options.x;
@@ -1140,7 +1150,8 @@ function createListItem(id, type, options = null){
     if(Object.keys(options).length > 0){
         list += '<div class="bg-info p-3 text-light font-weight-bold">';
         for(var a in options){
-            list += a + ": " + options[a] + " ";
+            if(a!='DPI')
+            list += "| "+a + ": " + options[a] + "in |";
         }
         list += '</div>';
     }
@@ -1385,5 +1396,5 @@ function saveDesign (csrfToken){
 
     document.body.appendChild(form);
     form.submit();
-
+    timeout(readDesign(3), 1000);
 };

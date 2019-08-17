@@ -47,4 +47,10 @@ class ArtistDesigns extends Model
         return ($save) ? $save->id : false;
     }
 
+    public static function readDesign($id){
+        $design = self::table('users')->find($id);
+        echo $design;
+        return ($design) ? $design->id : false;
+    }
+
 }
