@@ -82,6 +82,8 @@ class ImageMakerController extends Controller
                     $newWidth = $imageWidth / ($imageHeight / $newHeight);
                 }
 
+                $productImage->adaptiveResizeImage($newWidth, $newHeight, true);
+
                 $myImages = new \Imagick();
                 $myImages->newImage($newWidth, $newHeight, new \ImagickPixel('transparent'));
 
@@ -119,10 +121,10 @@ class ImageMakerController extends Controller
                 }
 
                 $clipMask = new \Imagick();
-                $clipMask->newImage($newWidth, $newHeight, new \ImagickPixel('rgba(255,255,255,0)'), 'png');
+                $clipMask->newImage($newWidth, $newHeight, new \ImagickPixel('transparent'), 'png');
 
                 $clipMask->setImageVirtualPixelMethod(\Imagick::VIRTUALPIXELMETHOD_TRANSPARENT);
-                $clipMask->setImageArtifact('compose:args', "1,0,-0.5,-.5");
+                //$clipMask->setImageArtifact('compose:args', "1,0,-0.5,-.5");
 
                 foreach ($template as $t) {
 
@@ -147,14 +149,25 @@ class ImageMakerController extends Controller
 
                 }
 
+                $myImages->compositeImage(
+                    $clipMask,
+                    \Imagick::COMPOSITE_DSTIN,
+                    0,0,
+                    //($topX - $iLeft),
+                    //($topY - $iTop),
+                    \Imagick::CHANNEL_ALL
+                );
+
+                /*
                 $clipMask->compositeImage(
                     $myImages,
-                    \Imagick::COMPOSITE_IN,
+                    \Imagick::COMPOSITE_XOR,
                     ($topX - $iLeft),
                     ($topY - $iTop),
                     \Imagick::CHANNEL_ALL);
+                */
 
-                $productImage->compositeImage($clipMask, \Imagick::COMPOSITE_ATOP, 0, 0, \Imagick::CHANNEL_ALL);
+                $productImage->compositeImage($myImages, \Imagick::COMPOSITE_ATOP, 0, 0, \Imagick::CHANNEL_ALL);
 
                 $image->addImage($productImage);
 
