@@ -39,31 +39,62 @@
             <div class="col-md-3">
                 @include('menu');
 
-                <div class="bg-white p-3 pt-1">
+                <div class="bg-white p-3 pt-1 mb-5">
                     <h4 class="mt-4">Your Artworks</h4>
 
                     <div class="art-works">
-                            <ul id="artWorkProduct" class="list-group">
-                                @foreach($artworks as $artwork)
-                                    <li class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-md-5">
-                                                <img src="{{ $artwork->artwork }}" style="max-width: 75px; max-height: 75px; float:right;"/>
-                                            </div>
-                                            <div class="col-md-7">
-                                                <div class="pb-3">
-                                                    <h5 class="d-inline">Name:</h5>
-                                                        <span class="float-right">
-                                                        <i class="fa fa-edit btn btn-secondary p-1"></i>
-                                                        <i class="fa fa-trash-alt btn btn-secondary p-1"></i>
-                                                        </span>
-                                                </div>
-                                                <span class="text-uppercase">{{ $artwork->artname }}</span>
-                                            </div>
+                        <ul id="artWorkProduct" class="list-group">
+                            @foreach($artworks as $artwork)
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <img src="{{ $artwork->artwork }}" id="img_{{$artwork->id}}"
+                                                 style="max-width: 75px; max-height: 75px; float:right;"/>
                                         </div>
-                                    </li>
-                                @endforeach
-                            </ul>
+                                        <div class="col-md-7">
+                                            <div class="pb-3">
+                                                <h5 class="d-inline">Name:</h5>
+                                                <span class="float-right">
+                                                        <i class="fa fa-edit btn btn-secondary p-1"
+                                                           id="edit_{{$artwork->id}}"></i>
+                                                        <i class="fa fa-trash-alt btn btn-secondary p-1"
+                                                           data-toggle="modal" data-target="#deleteModal"
+                                                           id="delete_{{$artwork->id}}"></i>
+                                                        </span>
+                                            </div>
+                                            <span class="text-uppercase"
+                                                  id="name_{{$artwork->id}}">{{ $artwork->artname }}</span>
+                                        </div>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        <!-- MODAL FOR DELETION -->
+                        <div class="modal" id="deleteModal" tabindex="-1" role="dialog"
+                             aria-labelledby="deleteModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteModalLabel">Delete Artwork?</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body text-center" id="deleteArtworkModal">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <input type="hidden" name="held_id" id="held_id" value="0"/>
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close
+                                        </button>
+                                        <button type="button" class="btn btn-primary" id="delete_my_art"
+                                                data-dismiss="modal">Delete Artwork
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -102,41 +133,64 @@
                                 </div>
                             @endif
                             <h4 class="mb-4">Artwork Details</h4>
-                            <form action="{{ url('saveartwork') }}" method="post" enctype="multipart/form-data"
-                                  id="submit_artwork">
+                            <form action="{{ url('saveartwork') }}" method="POST" enctype="multipart/form-data"
+                                  id="submit_artwork" class="needs-validation" novalidate>
 
                                 {{ csrf_field() }}
 
                                 @if(isset($id)) <input type="hidden" name="art_id" id="art_id" value="{{$id}}"/> @endif
-                                <div class="form-group row">
+                                <div class="form-row">
                                     <label for="email" class="col-sm-5 col-form-label">Artwork Name <span
                                                 style="color:red">*</span></label>
                                     <div class="input-box col-sm-7">
-                                        <input type="text" class="form-control input-bg"
-                                               id="artwork_name" name="artwork_name"
-                                               @if(isset($id)) value="{{$current_artwork->artname}}" @endif
-                                                                           required>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control input-bg"
+                                                   id="artwork_name" name="artwork_name"
+                                                   @if(isset($id)) value="{{$current_artwork->artname}}" @endif
+                                                   required/>
+                                            <div class="invalid-feedback">
+                                               Artwork Name is required
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="form-group row">
-                                    <label class="col-sm-5 col-form-label">Upload Artwork <span
+                                    <label class="col-sm-5 col-form-label">@if(isset($id)) Existing @else Upload @endif Artwork <span
                                                 style="color:red">*</span>
                                         <br>
                                         <span class="text-danger text-small">Min. 400 X 400 px Max.Size 1 MB</span>
                                     </label>
                                     <div class="col-sm-7">
-                                        <div class="custom-file" @if(isset($id)) style="display:none" @endif>
-                                            <input type="file" class="custom-file-input" id="updated_artwork"
-                                                   name="updated_artwork" accept="image/*"
-                                                   @if(isset($id)) disabled="true" @else required @endif>
-                                            <input class="" type="checkbox" name="remember" required>
-                                            <span>By uploading the Artwork, i confirm that i hold the copyrights for the Artwork or a license to use it.</span>
-                                            <label class="custom-file-label" for="customFile">Choose file</label>
-                                        </div>
+                                        @if(!isset($id))
+                                            <div class="input-group custom-file">
+                                                <input type="file" class="custom-file-input form-control" id="updated_artwork"
+                                                           name="updated_artwork" accept="image/*"
+                                                          required />
+                                                <label class="custom-file-label" for="customFile">Choose file</label>
+
+                                                <div class="invalid-feedback">
+                                                    Artwork is required.
+                                                </div>
+                                            </div>
+                                            <div class="input-group form-row">
+                                                <div class="col-2">
+                                                    <input class="form-control" type="checkbox" name="remember" id="remember"
+                                                           required/>
+                                                </div>
+                                                <div class="col-10">
+                                                    <label for="remember" class="d-inline">By uploading the Artwork, I confirm that I hold the copyrights for the Artwork or a license to use it.</label>
+                                                </div>
+                                                    <div class="invalid-feedback">
+                                                    You must agree for copyright or licensing.
+                                                </div>
+                                            </div>
+                                        @endif
                                         <div class="mt-3">
-                                            <img @if(isset($id)) src="{{ $current_artwork->artwork }}" @else src="images/blank.jpg" @endif id="artwork_image" width="80" height="80"
-                                                 class="img-fluid" alt="">
+                                            <img @if(isset($id)) src="{{ $current_artwork->artwork }}"
+                                                 @else src="images/blank.jpg" @endif id="artwork_image" width="80"
+                                                 height="80"
+                                                 class="img-fluid" alt=""/>
                                         </div>
                                     </div>
                                 </div>
@@ -146,11 +200,15 @@
                                     <div class="input-box col-sm-7">
                                         <div class="m-check">
                                             <input class="input-bg" type="radio" name="private_artwork"
-                                                   value="1" @if(isset($id) && $current_artwork->is_private == 0) checked="checked" @endif> <span>Private</span>
+                                                   value="1"
+                                                   checked="checked"/>
+                                            <span>Private</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg" type="radio" name="private_artwork"
-                                                   value="0" @if(isset($id) && $current_artwork->is_private == 1) checked="checked" @endif> <span>Public (Commercial)</span></div>
+                                                   value="0"
+                                                   @if(isset($id) && $current_artwork->is_private == 1) checked="checked" @endif />
+                                            <span>Public (Commercial)</span></div>
                                     </div>
                                 </div>
                                 <div class="form-group row hide-when-private">
@@ -162,25 +220,29 @@
                                             <input class="input-bg channels" type="checkbox"
                                                    name="channel_individual"
                                                    value="Individual Buyers (B2C)"
-                                                   @if(isset($id) && $current_artwork->is_individual == 1) checked="checked" @endif> <span>Individual Buyers (B2C)</span>
+                                                   @if(isset($id) && $current_artwork->is_individual == 1) checked="checked" @endif />
+                                            <span>Individual Buyers (B2C)</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg channels" type="checkbox"
                                                    name="channel_awkwardstyle"
                                                    value="Awkwardstyles Marketplace Stores"
-                                                   @if(isset($id) && $current_artwork->is_awkwardstyle) checked="checked" @endif> <span>Awkwardstyles Marketplace Stores</span>
+                                                   @if(isset($id) && $current_artwork->is_awkwardstyle) checked="checked" @endif />
+                                            <span>Awkwardstyles Marketplace Stores</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg channels" type="checkbox"
                                                    name="channel_thirdMarketPlace"
                                                    value="Thirdparty Marketplace Stores"
-                                                   @if(isset($id) && $current_artwork->is_thirdparty_marketplace) checked="checked" @endif> <span>Thirdparty Marketplace Stores</span>
+                                                   @if(isset($id) && $current_artwork->is_thirdparty_marketplace) checked="checked" @endif />
+                                            <span>Thirdparty Marketplace Stores</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg channels" type="checkbox"
                                                    name="channel_thirdEcommerce"
                                                    value="Thirdparty Ecommerce Platforms"
-                                                   @if(isset($id) && $current_artwork->is_thirdparty_ecommerce) checked="checked" @endif> <span>Thirdparty Ecommerce Platforms</span>
+                                                   @if(isset($id) && $current_artwork->is_thirdparty_ecommerce) checked="checked" @endif />
+                                            <span>Thirdparty Ecommerce Platforms</span>
                                         </div>
                                     </div>
                                 </div>
@@ -197,14 +259,21 @@
                                     <label for="pwd" class="col-sm-5 col-form-label">Artwork Category</label>
                                     <div class="input-box col-sm-7">
                                         @if( count($categories)>0 )
-                                            <select class="form-control input-bg" id="artwork_category"
-                                                    name="artwork_category" autocomplete="off" required>
-                                                <option>Select Category</option>
-                                                @foreach( $categories as $category)
-                                                    <option value="{{ $category->id }}"
-                                                            @if(isset($id) && $current_artwork->artwork_category_id == $category->id) selected="selected" @endif>{{ $category->name }}</option>
-                                                @endforeach
-                                            </select>
+                                            <div class="input-group d-flex">
+                                                <select class="form-control input-bg" id="artwork_category"
+                                                        name="artwork_category" autocomplete="off" required>
+                                                    <option value="">Select Category</option>
+                                                    @foreach( $categories as $category)
+                                                        <option value="{{ $category->id }}"
+                                                                @if(isset($id) && $current_artwork->artwork_category_id == $category->id) selected="selected" @endif>
+                                                            {{ $category->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="invalid-feedback">
+                                                A category is required.
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
@@ -216,8 +285,8 @@
                                             <!--<textarea class="form-control input-bg" rows="3" id="tag-suggestions" name="artwork_tags"></textarea>-->
                                             <input type="text" class="form-control input-bg" id="tag-suggestions"
                                                    name="artwork_tags" placeholder="Enter tag name and press comma[,]"
-                                                   autocomplete="off">
-                                            @if(isset($id))
+                                                   autocomplete="off"/>
+                                            @if(isset($id) && $current_artwork->tag_name != null)
                                                 @foreach(json_decode($current_artwork->tag_name) as $tag)
                                                     <span class="tag">{{ $tag }}</span>
                                                 @endforeach
@@ -237,18 +306,20 @@
                                         <div class="m-check">
                                             <input class="input-bg" type="radio"
                                                    name="suitable_audience" value="G"
-                                            @if(isset($id) && $current_artwork->suitable_audience == "G") checked="checked" @endif> <span>G</span>
+                                                   @if(isset($id) && $current_artwork->suitable_audience == "G") checked="checked" @endif />
+                                            <span>G</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg" type="radio"
-                                                 name="suitable_audience" value="PG--13"
-                                                   @if(isset($id) && $current_artwork->suitable_audience == "PG--13") checked="checked" @endif>
+                                                   name="suitable_audience" value="PG--13"
+                                                   @if(isset($id) && $current_artwork->suitable_audience == "PG--13") checked="checked" @endif />
                                             <span>PG--13</span>
                                         </div>
                                         <div class="m-check">
                                             <input class="input-bg" type="radio"
-                                                 name="suitable_audience" value="R"
-                                                   @if(isset($id) && $current_artwork->suitable_audience == "R") checked="checked" @endif> <span>R</span>
+                                                   name="suitable_audience" value="R"
+                                                   @if(isset($id) && $current_artwork->suitable_audience == "R") checked="checked" @endif />
+                                            <span>R</span>
                                         </div>
                                     </div>
                                 </div>
@@ -258,17 +329,19 @@
                                                 style="color:red">*</span></label>
                                     <div class="input-box col-sm-7">
                                         <input type="text" class="form-control input-bg" id="royalty_fees"
-                                               name="royalty_fees">
+                                               @if(isset($id)) value="{{ $current_artwork->royalty_fee }}" @endif
+                                               name="royalty_fees"/>
                                     </div>
                                 </div>
                                 <br/>
                                 <div class="form-group">
-                                    <input type="submit" class="btn btn-primary float-right" id="submitBtn" value="Save and Choose Products" />
+                                    <button type="submit" class="btn btn-primary float-right" id="submitBtn">
+                                        Save and Choose Products
+                                    </button>
                                 </div>
                             </form>
 
                         </div>
-
 
                     </div>
                 </div>
@@ -278,7 +351,120 @@
         </div>
     </div>
     <script>
+        var allTags =@if(isset($id) && $current_artwork->tag_name != null){!! $current_artwork->tag_name  !!};
+        @else
+        [];
+        @endif
+
         $(document).ready(function () {
+
+            $("#submitBtn").on('click', function () {
+
+                $(this).html("Processing..");
+
+                // RUN VALIDATIONS
+
+                /*
+
+                let string = '[';
+                console.log(allTags.length);
+
+                for(let i in allTags){
+                    if(allTags[i] !== null) {
+                        string += '"' + allTags[i] + '"';
+                        if (allTags[i] !== allTags[(allTags.length - 1)]) {
+                            string += ",";
+                        }
+                    }
+                }
+
+                $("#tag-suggestions").val(string + "]");
+
+                $("#submit_artwork").submit();
+
+                 */
+
+            });
+
+            (function() {
+                'use strict';
+                window.addEventListener('load', function() {
+                    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                    var forms = document.getElementsByClassName('needs-validation');
+                    // Loop over them and prevent submission
+                    var validation = Array.prototype.filter.call(forms, function(form) {
+                        form.addEventListener('submit', function(event) {
+                            if (form.checkValidity() === false) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                            form.classList.add('was-validated');
+                        }, false);
+                    });
+                }, false);
+            })();
+
+            function form_validation(Form){
+                Form = Form || '';
+                let validated = true;
+
+                if(Form !== ''){
+                   Form.find("input,select,textarea").each(function(i){
+                       if($(this).attr('type') !== 'submit') {
+                           if($(this).hasAttribute('required') && $(this).val() == null){
+                               validated = false;
+
+                           }
+                       }
+                   });
+               }
+            }
+
+
+            $(".fa-edit").on('click', function () {
+                let id = $(this).attr('id').split("_")[1];
+                window.location.href = "{{ url("addartwork") }}/" + id;
+            });
+
+            $(".fa-trash-alt").on('click', function () {
+                let item = $(this);
+                let id = item.attr('id').split("_")[1];
+
+                // Get image and name
+                let img = $("#img_" + id).attr('src');
+                let name = $("#name_" + id).html();
+
+                $("#held_id").val(id);
+
+                // Fill Delete Modal
+                let deleteModal = $("#deleteArtworkModal");
+
+                deleteModal.html("<p>Are you sure you would like to delete the \"" + name + "\"?</p>"
+                    + "<img src='" + img + "' style='max-width: 300px; max-height: 300px;'/>");
+
+            });
+
+            $("#delete_my_art").on('click', function () {
+
+                let id = $("#held_id").val();
+
+                $.ajax({
+                    url: "{{ url("api/removeArt") }}",
+                    type: 'GET',
+                    data: {
+                        art_id: $("#held_id").val()
+                    },
+                    success: (result) => {
+                        console.log(result);
+                        $("#delete_" + id).closest("li").remove();
+                    },
+                    error: (err, data) => {
+                        console.log("ERROR: " + JSON.stringify(err));
+                    }
+                });
+
+            });
+
             var options1 = {
                 url: function (phrase) {
                     return "{{ url('tagsuggestions/') }}/" + phrase;
@@ -304,46 +490,7 @@
                 }
             });
 
-            /*
-            console.log("TOKEN:", "{{$token}}");
-            $.ajax({
-                url: "{{env('API_URL')}}api/artwork/getAllArtworks",
-                contentType: 'application/json',
-                dataType: 'json',
-                headers: {
-                    "Authorization": "Bearer " +
-                        "{{$token}}",
-                    "Content-Type": "application/json"
-                },
-                type: 'GET',
-                success: function (artworkList) {
-                    console.log("artwork---", artworkList);
-                    let url = "{{url('/')}}";
-                    for (let i = 0; i <= artworkList.properties.length; i++) {
-                        if (artworkList.properties) {
-                            let data = new Date(artworkList.properties[i].ctime)
-                            $('#artWorkProduct').append(`
-                <li>
-                  <div><img src="${artworkList.properties[i].mediaId.full_url}" width="100%" height="auto" ></div>
-                  <p class="art-work-title"><a href="{{ url('addproducts')}}/${artworkList.properties[i].id}/${artworkList.properties[i].artName}">${artworkList.properties[i].artName}</a></p>
-                  <p class="art-creation-date">${data}</p>
-                </li>
-              `);
-                        } else {
-                            $(".art-works-list").html(`You have not uploaded any Artwork's yet.`);
-                        }
-                    }
-                },
-                error: function (error) {
-                    console.log("artWorkProduct ERROR:", error.responseJSON.message);
-                    $('.art-works-list').html(error.responseJSON.message);
-                }
-            });
-            */
-
         });
-
-        var allTags = @if(isset($id)) {!! $current_artwork->tag_name  !!}; @else []; @endif;
 
         $(function () {
 
@@ -368,22 +515,6 @@
                     $(this).remove();
                 }
             });
-
-            $("#submit_button").on('click', function(){
-                $("#submit_artwork").click();
-                $(this).val("")
-            });
-
-            $("#submit_artwork").on('submit',function (e) {
-                // e.preventDefault();
-
-                $("#tag-suggestions").val(JSON.stringify(allTags)).hide();
-
-                alert("TEST");
-
-                return true;
-            });
-
         });
 
         /* Image preview on select start*/
@@ -393,7 +524,7 @@
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     $(v).attr('src', e.target.result);
-                }
+                };
                 reader.readAsDataURL(input.files[0]);
             }
         }

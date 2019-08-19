@@ -195,13 +195,14 @@
 
     var count = 5000;
     var totalObjs = 20;
-/*
+
     setTimeout(function(){
 
         console.log("here");
 
         $("#image").html("");
 
+        /*
         var img = $('<img />').attr({
             'id': 'myImage',
             'src': myCanvas.toDataURL(),
@@ -210,7 +211,7 @@
             'width': newWidth
         }).appendTo('#image');
 
-        /*
+         */
         let form = document.createElement('form');
 
         let csrf = document.createElement('input');
@@ -226,16 +227,17 @@
 
         data.id = "data";
         data.name = "data";
-        data.value = myCanvas.toDataURL();
+
+        data.value = myCanvas.toSVG();
 
         form.appendChild(csrf);
         form.appendChild(data);
 
         document.body.appendChild(form);
-        form.submit();
+        //form.submit();
 
     }, count);
-    */
+
 
     function setShirtImage(){
 
@@ -414,6 +416,10 @@
             let listItems = [];
 
             if(totalObjs > 0) {
+
+                for(var i in cv.objects){
+                    cv.objects[i].crossOrigin = "Anonymous";
+                }
 
                 myCanvas.loadFromJSON(cv,myCanvas.renderAll.bind(myCanvas), function (o, object) {
                     count = 0;

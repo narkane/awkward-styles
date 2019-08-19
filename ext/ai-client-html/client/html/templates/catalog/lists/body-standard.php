@@ -93,10 +93,14 @@ if( $this->get( 'listProductTotal', 0 ) > 1 )
      
      <div class="owl-carousel home-slider" id="owl-main" style="display:block">
         <div class="item">
-            <img src="images/slider/letsspringbanner.jpg" width="100%">
+            <a href="/product" title="">
+                <img src="images/slider/letsspringbanner.jpg" width="100%">
+            </a>
         </div>
         <div class="item">
-            <img src="images/slider/letsspringbanner2.jpg" width="100%">
+            <a href="/product" title="">
+                <img src="images/slider/letsspringbanner2.jpg" width="100%">
+            </a>
         </div>
     </div>
 

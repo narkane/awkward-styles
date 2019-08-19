@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Services\ArtistStorefrontService;
-//use Auth;
+use Auth;
 use DB;
 use Illuminate\Support\Facades\Input;
 
@@ -32,15 +32,42 @@ class ArtistStorefrontController extends Controller
     public function index(Request $request, $storeId)
     {
 
-        $owner_data = array();
+        $user_id = (Auth::check()) ? Auth::user()->getAuthIdentifier() : 0;
 
-        $storefronts = DB::SELECT('select * from tbl_store_front where id=? order by id DESC LIMIT 1',[$storeId]);
+        $storefronts = \App\Storefront::where('id', '=', $storeId)->orderBy('id','desc')->first();
 
-        if(count($storefronts)>0) {
-            $owner_data = DB::SELECT('select * from users where id=?',[$storefronts[0]->user_id]);
-            $products = DB::SELECT('select p.id,p.code,p.label,t.id,t.designed_image,t.created_by_id,t.artwork_id,t.artwork_image from tbl_art_product t join tbl_products p ON p.id=t.product_id where created_by_id=?',[$storefronts[0]->user_id]);
-        }
+        $owner_data = ($storefronts) ?
+            \App\User::where('id', '=', $storefronts->user_id)->get()
+            : array();
 
-        return view('artiststorefront', ['storefronts'=>$storefronts, 'products'=>$products, 'owner_data'=>$owner_data]);
+        $products = ($storefronts) ?
+            DB::table(DB::raw("tbl_art_product as t"))
+                ->select(DB::raw("p.id,p.code,p.label,t.id,t.designed_image,t.created_by_id,t.artwork_id,t.artwork_image"))
+                ->leftJoin(DB::raw("tbl_products p"), function($join) {
+                    $join->on(DB::raw("p.id"), "=", DB::raw("t.product_id"));
+                })
+                ->where("created_by_id", "=", $storefronts->user_id)
+                ->get()
+            : array();
+
+        // FOLLOWERS
+        $hasFollowers = \App\Follow::where("follow_id", "=", $storefronts->user_id)->count();
+
+        $followers = ($hasFollowers > 0) ? (\App\Follow::find($storefronts->user_id)->where('private_follow','IS','false')
+            ->with('user')
+            ->get()) : array();
+
+
+        // DO YOU FOLLOW?
+        $i_follow = \App\Follow::where("follow_id", "=", $storefronts->user_id)->where("user_id", "=", $user_id)->exists();
+
+        return view('Storefront.artiststorefront', [
+            'storefronts'=>$storefronts,
+            'products'=>$products,
+            'owner_data'=>$owner_data,
+            'followers' => $followers,
+            'total_followers', $hasFollowers,
+            'i_follow' => $i_follow
+        ]);
     }
 }

@@ -4,6 +4,20 @@
     <style>
         .head-top {
             right: 0;
+            position: relative;
+            width: 450px;
+            float:right;
+        }
+        header {
+            position: relative;
+        }
+        .navbar {
+            position: relative;
+            top: 0px;
+        }
+        .header-product-menu {
+            z-index: 8;
+            top: -10px;
         }
     </style>
 
@@ -44,7 +58,7 @@
 
         <div class="col-12">
 
-            <nav class="navbar navbar-expand-lg navbar-light shadow-sm  bg-light ">
+            <nav class="navbar navbar-expand-lg navbar-light shadow-sm  bg-light mb-0">
         <div class="container">
 
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mega-menu" aria-controls="mega-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +105,7 @@
                                     </ul>
                                 </li>
                                 <li class="dropdown-submenu dropdown-submenu-toggle">
-                                    <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Home</a>
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Home Decor</a>
                                     <ul class="dropdown-menu">
                                         <li>
                                             <div class="row">
@@ -166,6 +180,18 @@
                                         //form.action = action_src ;
                                     }</script>
 
+                                <style>
+                                    .admin-link:hover, admin-link:active {
+                                        color: #000000;
+                                        text-decoration: none;
+                                    }
+                                </style>
+                                <?php if(Auth::check() && Auth::user()->siteid > 0): ?>
+                                <li>
+                                    <a href="/admin" type="button" class="fa fa-users-cog admin-link" style="font-size: 25px;"></a>
+                                </li>
+                                <?php endif; ?>
+
                                 <li>
                                     <div class="dropdown">
                                         <a href="#" class="iconlinks dropdown-toggle" id="userdropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="icon-search"></span></a>
@@ -236,35 +262,36 @@
 
             </div>
         </div>
-        <div class="header-product-menu" id="header-product-menu">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo e(url("/product/womens/")); ?>" title="Womens">Women</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo e(url("/product/mens/")); ?>" title="Mens">Mens</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo e(url("/product/girls/")); ?>" title="Girls">Girls</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo e(url("/product/boys/")); ?>" title="Boys">Boys</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo e(url("/product/mugs/")); ?>" title="Mugs">Mugs</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo e(url("/product/hats/")); ?>" title="Hats">Hats</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo e(url("/product/canvas/")); ?>" title="Canvas">Canvas</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo e(url("/product/other/")); ?>" title="Other">Other</a>
-                </li>
-            </ul>
-        </div>
     </nav>
+
+            <div class="header-product-menu navbar navbar-expand-lg mb-0" id="header-product-menu">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo e(url("/product/womens/")); ?>" title="Womens">Women</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo e(url("/product/mens/")); ?>" title="Mens">Mens</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo e(url("/product/girls/")); ?>" title="Girls">Girls</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo e(url("/product/boys/")); ?>" title="Boys">Boys</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo e(url("/product/mugs/")); ?>" title="Mugs">Mugs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo e(url("/product/hats/")); ?>" title="Hats">Hats</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo e(url("/product/canvas/")); ?>" title="Canvas">Canvas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo e(url("/product/other/")); ?>" title="Other">Other</a>
+                    </li>
+                </ul>
+            </div>
 
         </div>
 </header>
