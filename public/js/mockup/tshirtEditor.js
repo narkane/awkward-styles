@@ -1027,7 +1027,7 @@ function addAwkwardImage(src, info = false){
             }
         })(image.toObject);
 
-        // if(info){
+        if(info){
             options = {
                 Width: image.objectWidth/tempRatio[tempRatio.length-1],
                 Height: realH/tempRatio[tempRatio.length-1],
@@ -1047,7 +1047,7 @@ function addAwkwardImage(src, info = false){
             //     x: image.left,
             //     y: image.top
             // }
-        // }
+        }
 
         createListItem(name, 'Image', options);
 
