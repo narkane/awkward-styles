@@ -190,55 +190,9 @@
                         <div class="mock-block-contents">
                             <h2 class="fas fa-tshirt"></h2>
 
-                            <style>
-                            body {font-family: Arial, Helvetica, sans-serif;}
 
-                            /* The Modal (background) */
-                            .modal, .art-model {
-                            display: none; /* Hidden by default */
-                            position: fixed; /* Stay in place */
-                            z-index: 1; /* Sit on top */
-                            padding-top: 100px; /* Location of the box */
-                            left: 0;
-                            top: 0;
-                            width: 100%; /* Full width */
-                            height: 100%; /* Full height */
-                            overflow: auto; /* Enable scroll if needed */
-                            background-color: rgb(0,0,0); /* Fallback color */
-                            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-                            }
-
-                            /* Modal Content */
-                            .modal-content, .art-modal-content {
-                                position: relative;
-                                z-index: -100;
-                                top: 100px;
-                            background-color: #fefefe;
-                            margin: auto;
-                            padding: 20px;
-                            border: 1px solid #888;
-                            width: 80%;
-                            height: 80%;
-                            }
-
-                            /* The Close Button */
-                            .close, .art-close {
-                            color: #aaaaaa;
-                            float: right;
-                            font-size: 28px;
-                            font-weight: bold;
-                            }
-
-                            .art-close:hover,
-                            .art-close:focus,
-                            .close:hover,
-                            .close:focus {
-                            color: #000;
-                            text-decoration: none;
-                            cursor: pointer;
-                            }</style>
                             <button id="myArtBtn">Art</button>
-                            <button id="myBtn">Products</button>
+                            <button id="myPBtn">Products</button>
                         </div>
                     </div>
 
@@ -259,7 +213,7 @@
                         <div id="shirtDiv" class="page"
                              style="position: relative; background-color: rgb(255, 255, 255);">
                                                 
-                            <div id="myArtModal" class="modal">
+                            <!-- <div id="myArtModal" class="modal">
                                 <div class="art-modal-content">
                                     <span class="art-close">&times;</span>
                                     <p>NO ART PAGE!</p>
@@ -272,7 +226,7 @@
                                     <p>SWEET GOD IT WORKS!!!~</p>
                                     <iframe src="/product/select/">whoops!</iframe>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <img id="shirtFacing" src=""/>
                             <div id="shirtDrawingArea"

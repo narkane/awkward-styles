@@ -417,6 +417,8 @@
 
                 myCanvas.loadFromJSON(cv,myCanvas.renderAll.bind(myCanvas), function (o, object) {
                     count = 0;
+                    o.left = o.percentX * groupWidth + groupX;
+                    o.top = o.percentY * groupHeight + groupY;
                         fabric.log(object, o);
                 });
 

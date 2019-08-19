@@ -81,7 +81,7 @@ function init(){
             var amodal = document.getElementById("myArtModal");
 
             // Get the button that opens the modal
-            var btn = document.getElementById("myBtn");
+            var pbtn = document.getElementById("myPBtn");
             var abtn = document.getElementById("myArtBtn");
 
             // Get the <span> element that closes the modal
@@ -89,7 +89,7 @@ function init(){
             var aspan = document.getElementsByClassName("art-close")[0];
 
             // When the user clicks the button, open the modal 
-            btn.onclick = function () {
+            pbtn.onclick = function () {
                 modal.style.display = "block";
             }
             abtn.onclick = function () {
@@ -137,6 +137,8 @@ function init(){
     });
 
     $("#saveMyDesign").on('click', function () {
+        console.log("STORAGE: ");
+        console.log(localStorage);
         let item = canvas.getObjects();
 
         for (let i in prevCanvas) {
@@ -176,7 +178,7 @@ function init(){
             if (obj.type === 'awkward-image' && obj.toObject().src.length > 200) {
                 var startTimer = function () {
                     clearTimeout(timer);
-                    timer = setTimeout(function () { sessionInfo(obj); }, 3000);
+                    sessionInfo(obj);
                 };
                 startTimer();
             } else {
@@ -526,6 +528,9 @@ function clearAll() {
 
 var sessionInfo = function(item, file = null){
 
+    item.percentX = (item.left - groupX) / groupWidth;
+    item.percentY = (item.top - groupY) / groupHeight;
+
     if(item.type === 'awkward-image' && item.toObject().src.length > 200){
 
         var data = new FormData();
@@ -553,7 +558,43 @@ var sessionInfo = function(item, file = null){
             processData: false,
             data: data,
             success: (result) => {
-                console.log(result);
+                $.ajax({
+                    url: "/api/mockgen",
+                    type: 'GET',
+                    method: 'GET',
+                    cache: false,
+                    contentType: 'application/json',
+                    processData: false,
+                    success: (result) => {
+
+                        let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
+
+                        // Merge
+                        if (result != null && Object.keys(result).length) {
+
+                            // If downloaded, remove from site session
+                            if (!cv.objects) { cv.objects = []; }
+                            for (var i in result) {
+                                let l = Object.keys(cv.objects).length;
+                                if (result[i]) {
+                                    cv.objects[l] = result[i];
+                                    console.log(result[i]);
+                                    // removeListItem(result[i].objectName);
+                                    removeSessionItem(result[i].objectName, true);
+                                    // removeItemByName(result[i].objectName);
+                                    // $(document).ready();
+                                }
+                            }
+
+                            localStorage.setItem('canvas', JSON.stringify(cv));
+                        }
+
+
+                    },
+                    error: (error, data) => {
+                        console.log(error);
+                    }
+                });
             },
             error: (error, data) => {
                 console.log(error);
@@ -586,7 +627,7 @@ var sessionInfo = function(item, file = null){
     }
 
     localStorage.setItem('canvas',JSON.stringify(storage));
-
+    console.log(localStorage);
 };
 
 function setShirtImage(imgurl, canvasType = "canvas"){
@@ -994,7 +1035,9 @@ function addAwkwardImage(src, info = false){
                 Height: realH/tempRatio[tempRatio.length-1],
                 x: image.left,
                 y: image.top,
-                DPI: image.width/(image.objectWidth/tempRatio[tempRatio.length-1])
+                DPI: image.width/(image.objectWidth/tempRatio[tempRatio.length-1]),
+                percentX: (image.left - groupX) / groupWidth,
+                percentY: (image.top - groupY) / groupHeight
             };
         } else {
             options = {
@@ -1366,13 +1409,17 @@ fabric.AwkwardImage = fabric.util.createClass(fabric.Image, {
         options && this.set('objectIndex', options.objectIndex);
         options && this.set('objectWidth', options.objectWidth);
         options && this.set('objectHeight', options.objectHeight);
+        options && this.set('percentX', options.percentX);
+        options && this.set('percentY', options.percentY);
     },
     toObject: function (){
         return fabric.util.object.extend(this.callSuper('toObject'), {
             objectName: this.objectName,
             objectIndex: this.objectIndex,
             objectWidth: this.objectWidth,
-            objectHeight: this.objectHeight
+            objectHeight: this.objectHeight,
+            percentX: this.percentX,
+            percentY: this.percentY            
         });
     }
 });
@@ -1398,11 +1445,15 @@ fabric.AwkwardText = fabric.util.createClass(fabric.IText, {
         this.callSuper('initialize', element, options);
         options && this.set('objectName', options.objectName);
         options && this.set('objectIndex', options.objectIndex);
+        options && this.set('percentX', options.percentX);
+        options && this.set('percentY', options.percentY);
     },
     toObject: function (){
         return fabric.util.object.extend(this.callSuper('toObject'), {
             objectName: this.objectName,
-            objectIndex: this.objectIndex
+            objectIndex: this.objectIndex,
+            percentX: this.percentX,
+            percentY: this.percentY
         });
     }
 });
@@ -1430,7 +1481,7 @@ function saveDesign (csrfToken){
 
     design_object.id = "design_object";
     design_object.name = "design_object";
-    design_object.value = localStorage.getItem('canvas');
+    design_object.value = localStorage.getItem("canvas");
 
     form.appendChild(csrf);
     form.appendChild(design_object);
