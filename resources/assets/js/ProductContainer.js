@@ -7,6 +7,11 @@
 require("./bootstrap");
 
 window.Vue = require("vue");
+import Vue from "vue";
+import ProductContainer from "./ProductContainer.vue";
+import Vuetify from "vuetify";
+
+Vue.use(Vuetify);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -14,10 +19,10 @@ window.Vue = require("vue");
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
-Vue.component("searchbar", require("./components/Search.vue"));
+Vue.component("product", require("./components/Product.vue"));
 
-const search = new Vue({
-  el: "#search",
+const ProductContainer = new Vue({
+  el: "#ProductContainer",
   mounted() {
     // console.log("hello world!");
   }

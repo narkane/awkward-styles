@@ -1,4 +1,5 @@
-// import { timeout } from "q";
+// import Vue from ("vue");
+// require('../components/ItemSelect.vue');
 
 var canvas;
 var tshirts = new Array(); //prototype: [{style:'x',color:'white',front:'a',back:'b',price:{tshirt:'12.95',frontPrint:'4.99',backPrint:'4.99',total:'22.47'}}]
@@ -75,7 +76,47 @@ function init(){
         }
 
         if ($(this).attr('id') === 'productSearch') {
-            window.location.href = "/product/mens";
+            // Get the modal
+            var modal = document.getElementById("myModal");
+            var amodal = document.getElementById("myArtModal");
+
+            // Get the button that opens the modal
+            var btn = document.getElementById("myBtn");
+            var abtn = document.getElementById("myArtBtn");
+
+            // Get the <span> element that closes the modal
+            var span = document.getElementsByClassName("close")[0];
+            var aspan = document.getElementsByClassName("art-close")[0];
+
+            // When the user clicks the button, open the modal 
+            btn.onclick = function () {
+                modal.style.display = "block";
+            }
+            abtn.onclick = function () {
+                amodal.style.display = "block";
+            }
+
+            // When the user clicks on <span> (x), close the modal
+            span.onclick = function () {
+                // alert("SCREAMING DOGE!");
+                modal.style.display = "none";
+            }
+            aspan.onclick = function () {
+                // alert("BEAMING DOGE!");
+                amodal.style.display = "none";
+            }
+
+            // When the user clicks anywhere outside of the modal, close it
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+            window.onclick = function (event) {
+                if (event.target == amodal) {
+                    amodal.style.display = "none";
+                }
+            }
         }
     });
 

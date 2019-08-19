@@ -171,6 +171,10 @@ class ProductsController extends Controller
         return view('Products.home');
     }
 
+    public function select(Request $request){
+        return view('Products.select');
+    }
+
     private function locateCatId($search){
         $db = DB::table('tbl_categories_m')
                 ->where('name','=',ucfirst($search))->first();
