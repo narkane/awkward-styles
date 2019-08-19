@@ -13,18 +13,7 @@ export default {
   components: {},
   data() {
     return {
-      app: new PIXI.Application({
-        width: 400,
-        height: 400,
-        backgroundColor: 0x1099bb,
-        transparent: 1
-      }),
-      printData: {
-        x: 100,
-        y: 75,
-        width: 136,
-        height: 136
-      },
+      app: new PIXI.Application({ backgroundColor: 0x1099bb }),
       bunny: PIXI.Sprite.from(blob),
       sprites: [],
       libraryCurrent: 0,
@@ -45,8 +34,6 @@ export default {
 
       // this.app.stage.addChild(this.bunny);
       this.createSprite(blob);
-      this.createSprite(blob);
-      this.spriteData(this.printData);
 
       // Listen for animate update
       this.app.ticker.add(delta => {
@@ -55,12 +42,6 @@ export default {
         // creates frame-independent transformation
         this.sprites[0].rotation += 0.1 * delta;
       });
-    },
-    spriteData(data) {
-      this.sprites[this.librarySelect].x = data.x;
-      this.sprites[this.librarySelect].y = data.y;
-      this.sprites[this.librarySelect].width = data.width;
-      this.sprites[this.librarySelect].height = data.height;
     },
     createSprite: function(art) {
       console.log("loading into this.sprites[" + this.libraryCurrent + "]");

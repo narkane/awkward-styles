@@ -77,6 +77,7 @@ Route::post('/addtobasket', 'MockupgenController@addProduct');
  * Products Page
  */
 Route::group(['prefix' => 'product/'], function($app){
+    $app->get('{category}/{type}/select/', 'ProductsController@select')->name('productSelect');
     $app->get('{category}/{type}', 'ProductsController@index')->name('products');
     $app->get('{category}/', 'ProductsController@index')->name('productNoType');
     $app->get('/', 'ProductsController@home')->name('producthome');

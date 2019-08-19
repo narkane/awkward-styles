@@ -1,6 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('content')
+    <!-- <script src="{{ asset('js/ProductContainer.js') }}"></script> -->
     <script type="text/javascript" src="{{ asset('js/mockup/fabric.js') }}"></script>
     <script type="text/javascript" src="{{ asset('js/mockup/tshirtEditor.js')}}"></script>
     <script type="text/javascript" src="{{ asset('js/mockup/jquery.miniColors.min.js')}}"></script>
@@ -188,11 +189,17 @@
                     <div class="mock-block border-primary" id="productSearch">
                         <div class="mock-block-contents">
                             <h2 class="fas fa-tshirt"></h2>
-                            <p>Products</p>
+
+
+                            <button id="myArtBtn">Art</button>
+                            <button id="myPBtn">Products</button>
                         </div>
                     </div>
 
                 </div>
+                <!-- <div id="ProductContainer">
+                    <product />
+                </div> -->
 
                 <div style="display:none;">
                     <input type="file" accept="image/*" id="fileUpload"/>
@@ -202,8 +209,25 @@
 
                     <div class="container shirt-block" style="padding:50px 0px 0px 0px">
 
+
                         <div id="shirtDiv" class="page"
                              style="position: relative; background-color: rgb(255, 255, 255);">
+                                                
+                            <!-- <div id="myArtModal" class="modal">
+                                <div class="art-modal-content">
+                                    <span class="art-close">&times;</span>
+                                    <p>NO ART PAGE!</p>
+                                </div>
+                            </div>
+
+                            <div id="myModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close">&times;</span>
+                                    <p>SWEET GOD IT WORKS!!!~</p>
+                                    <iframe src="/product/select/">whoops!</iframe>
+                                </div>
+                            </div> -->
+
                             <img id="shirtFacing" src=""/>
                             <div id="shirtDrawingArea"
                                  style="position: absolute;top: 0px;left: 0px;z-index: 10;">
@@ -211,7 +235,6 @@
                                         style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
                             </div>
                         </div>
-
                     </div>
 
                     <div class="catalog-detail-basket">

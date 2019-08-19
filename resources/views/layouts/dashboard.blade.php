@@ -23,7 +23,7 @@
     <link href="{{ asset('css/owl.carousel.min.css') }}" rel="stylesheet" type="text/css" media="all"/>
     <link type="text/css" rel="stylesheet" href="{{ asset('css/app.css') }}">
 
-    <script src="{{asset('js/search.js')}}"></script>
+    <!-- <script src="{{asset('js/search.js')}}"></script> -->
 </head>
 <body>
 

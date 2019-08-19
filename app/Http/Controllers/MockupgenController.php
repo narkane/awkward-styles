@@ -200,6 +200,8 @@ class MockupgenController extends Controller
 
     }
 
+    
+
     /*
     public function addProduct(Request $request){
         $ct = app( 'Aimeos\Shop\Base\Context')->get();
