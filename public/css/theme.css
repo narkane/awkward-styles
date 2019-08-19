@@ -96,12 +96,9 @@ header {
   /* filter: drop-shadow(10px 3px 4px #227722); */
 }
 
-/*
 main {
   margin-top: 150px;
 }
-
- */
 
 footer {
   /*margin-top: 2rem;*/
@@ -502,12 +499,6 @@ section {
   text-transform: uppercase;
 }
 
-.art-works {
-  max-height: 500px;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
 .artist-falowers-list {
   margin: 0;
   padding: 0;
@@ -537,9 +528,8 @@ section {
 }
 
 .artist-lists {
-  background-color: rgba(255, 242, 254, 0.85);
-  padding: 10px;
-  border-radius: 5px;
+  background-color: #f7f4fb;
+  padding: 1.25rem;
 }
 
 .artist-reviews-list {
@@ -589,8 +579,8 @@ section {
 
 .artistprofile .artist-socialshare {
   position: absolute;
-  right: 5%;
-  top: 5%;
+  right: 0;
+  top: 0;
   background-color: #fff;
   font-size: 12px;
   display: block;
@@ -602,54 +592,10 @@ section {
   color: #000;
 }
 
-.artist-image-info {
-  background-color: rgba(0,0,0,0.6);
-
-  width: max-content;
-
-  margin: 0 auto;
-
-  padding: 20px;
-
-  border-radius: 50%;
-}
-
 .artistprofile .artistpic {
   position: relative;
   display: inline-block;
   margin-bottom: 1rem;
-}
-
-.artist-list-headers,
-.artist-list-items,
-.artist-list-headers:first-child,
-.artist-list-headers:last-child,
-.artist-list-headers:active,
-.artist-list-headers:focus {
-  font-size:18px;
-  cursor:pointer;
-  border: 0px !important;
-  /*
-  border-top: 0px !important;
-  border-left: 0px !important;
-  border-right: 0px !important;
-  border-bottom: 1px solid rgba(0,0,0,0.4) !important;
-   */
-}
-
-.artist-list-items {
-  font-size: 12px;
-  border: 0px;
-}
-
-.artist-tab-list {
-  display: table;
-  table-layout: fixed;
-  width: 100%;
-}
-
-.artist-tab-list-item {
-  display:table-cell !important;
 }
 
 .signup {

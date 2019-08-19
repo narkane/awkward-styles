@@ -1,6 +1,3 @@
-// import Vue from ("vue");
-// require('../components/ItemSelect.vue');
-
 var canvas;
 var tshirts = new Array(); //prototype: [{style:'x',color:'white',front:'a',back:'b',price:{tshirt:'12.95',frontPrint:'4.99',backPrint:'4.99',total:'22.47'}}]
 var a;
@@ -38,8 +35,7 @@ var prevCanvas = [
  *        4: rectangle
  */
 
-var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, groupX, groupY, realW, realH, url, pid, size, mainG;
-var tempRatio = [];
+var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, groupX, groupY, realW, realH, url, pid, size;
 var upperLeft = 999;
 var upperTop = 999;
 
@@ -76,47 +72,7 @@ function init(){
         }
 
         if ($(this).attr('id') === 'productSearch') {
-            // Get the modal
-            var modal = document.getElementById("myModal");
-            var amodal = document.getElementById("myArtModal");
-
-            // Get the button that opens the modal
-            var pbtn = document.getElementById("myPBtn");
-            var abtn = document.getElementById("myArtBtn");
-
-            // Get the <span> element that closes the modal
-            var span = document.getElementsByClassName("close")[0];
-            var aspan = document.getElementsByClassName("art-close")[0];
-
-            // When the user clicks the button, open the modal 
-            pbtn.onclick = function () {
-                modal.style.display = "block";
-            }
-            abtn.onclick = function () {
-                amodal.style.display = "block";
-            }
-
-            // When the user clicks on <span> (x), close the modal
-            span.onclick = function () {
-                // alert("SCREAMING DOGE!");
-                modal.style.display = "none";
-            }
-            aspan.onclick = function () {
-                // alert("BEAMING DOGE!");
-                amodal.style.display = "none";
-            }
-
-            // When the user clicks anywhere outside of the modal, close it
-            window.onclick = function (event) {
-                if (event.target == modal) {
-                    modal.style.display = "none";
-                }
-            }
-            window.onclick = function (event) {
-                if (event.target == amodal) {
-                    amodal.style.display = "none";
-                }
-            }
+            window.location.href = "/product/mens";
         }
     });
 
@@ -137,8 +93,6 @@ function init(){
     });
 
     $("#saveMyDesign").on('click', function () {
-        console.log("STORAGE: ");
-        console.log(localStorage);
         let item = canvas.getObjects();
 
         for (let i in prevCanvas) {
@@ -147,11 +101,6 @@ function init(){
 
         for (let i in item) {
             for (let c in prevCanvas) {
-                if(item[i].type==='group')
-                {
-                    // prevCanvas[c].add(allG[c]);
-                    continue;
-                }
                 let obj = $.extend(true, {}, item[i]);
                 obj.lockMovementX = true;
                 obj.lockMovementY = true;
@@ -178,7 +127,7 @@ function init(){
             if (obj.type === 'awkward-image' && obj.toObject().src.length > 200) {
                 var startTimer = function () {
                     clearTimeout(timer);
-                    sessionInfo(obj);
+                    timer = setTimeout(function () { sessionInfo(obj); }, 3000);
                 };
                 startTimer();
             } else {
@@ -230,8 +179,7 @@ function init(){
      * END PAGE FUNCTIONS
      */
 
-    // let tmpOpacity = 0;
-
+    let tmpOpacity = 0;
     canvas.on({
         'object:moving': function (e) {
             canvas.clipPath.opacity = 0.5;
@@ -253,7 +201,7 @@ function init(){
 
         },
         'object:modified': function (e) {
-            canvas.clipPath.opacity = 0.5;
+            canvas.clipPath.opacity = 0.05;
             setCoordinates(e.target);
             if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
                 var startTimer = function () {
@@ -528,9 +476,6 @@ function clearAll() {
 
 var sessionInfo = function(item, file = null){
 
-    item.percentX = (item.left - groupX) / groupWidth;
-    item.percentY = (item.top - groupY) / groupHeight;
-
     if(item.type === 'awkward-image' && item.toObject().src.length > 200){
 
         var data = new FormData();
@@ -558,43 +503,7 @@ var sessionInfo = function(item, file = null){
             processData: false,
             data: data,
             success: (result) => {
-                $.ajax({
-                    url: "/api/mockgen",
-                    type: 'GET',
-                    method: 'GET',
-                    cache: false,
-                    contentType: 'application/json',
-                    processData: false,
-                    success: (result) => {
-
-                        let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
-
-                        // Merge
-                        if (result != null && Object.keys(result).length) {
-
-                            // If downloaded, remove from site session
-                            if (!cv.objects) { cv.objects = []; }
-                            for (var i in result) {
-                                let l = Object.keys(cv.objects).length;
-                                if (result[i]) {
-                                    cv.objects[l] = result[i];
-                                    console.log(result[i]);
-                                    // removeListItem(result[i].objectName);
-                                    removeSessionItem(result[i].objectName, true);
-                                    // removeItemByName(result[i].objectName);
-                                    // $(document).ready();
-                                }
-                            }
-
-                            localStorage.setItem('canvas', JSON.stringify(cv));
-                        }
-
-
-                    },
-                    error: (error, data) => {
-                        console.log(error);
-                    }
-                });
+                console.log(result);
             },
             error: (error, data) => {
                 console.log(error);
@@ -627,7 +536,7 @@ var sessionInfo = function(item, file = null){
     }
 
     localStorage.setItem('canvas',JSON.stringify(storage));
-    console.log(localStorage);
+
 };
 
 function setShirtImage(imgurl, canvasType = "canvas"){
@@ -742,8 +651,7 @@ function setTemplate(main = "main") {
                             originX: "left",
                             originY: "top",
                             stroke: "rgba(255,0,0,1)",
-                            strokeWidth: 1,
-                            opacity: 1
+                            strokeWidth: 1
                         }));
 
                     } else if (result.values[i].shape === 4) {
@@ -757,8 +665,7 @@ function setTemplate(main = "main") {
                             originX: "left",
                             originY: "top",
                             stroke: "rgba(255,0,0,1)",
-                            strokeWidth: 1,
-                            opacity: 1
+                            strokeWidth: 1
                         }));
                     }
                     upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
@@ -766,11 +673,7 @@ function setTemplate(main = "main") {
 
                     uptop = (result.values[i].y < uptop) ? result.values[i].y : uptop;
                     upleft = (result.values[i].x < upleft) ? result.values[i].x : upleft;
-                    
-                    //set templates ratio onto last tempRatio position
-                    console.log(result);
-                    if(main=='main')
-                        tempRatio.push(result.dpi);
+
                 }
             }
 
@@ -792,7 +695,6 @@ function setTemplate(main = "main") {
                 }
 
 
-
                 let tag = main;
                 switch (main) {
                     default: tag = false; break;
@@ -803,13 +705,11 @@ function setTemplate(main = "main") {
                 }
 
                 if (isNaN(main)) {
-                    mainG = g;
                     myCanvas = canvas;
                     $("#upper-canvas").width(newWidth).height(newHeight);
                 } else {
                     myCanvas = prevCanvas[tag];
                 }
-                // allG.push(g);
 
                 myCanvas.clipPath = g;
 
@@ -856,7 +756,6 @@ function setTemplate(main = "main") {
 
 function fromStorage(result = null){
     let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
-    console.log(cv);
 
     // Merge
     if(result != null && Object.keys(result).length){
@@ -884,10 +783,6 @@ function fromStorage(result = null){
         let listItems = [];
 
         if(totalObjs > 0) {
-            console.log(cv.objects);
-            cv.objects = Array.from(cv.objects);
-            cv.objects.unshift(mainG.toObject());
-            console.log(cv.objects);
 
             try{
             canvas.loadFromJSON(cv,canvas.renderAll.bind(canvas), function (o, object) {
@@ -1027,18 +922,10 @@ function addAwkwardImage(src, info = false){
             }
         })(image.toObject);
 
-        if(info){
+        // if(info){
             options = {
-                Width: image.objectWidth/tempRatio[tempRatio.length-1],
-                Height: realH/tempRatio[tempRatio.length-1],
-                x: image.left,
-                y: image.top,
-                DPI: image.width/(image.objectWidth/tempRatio[tempRatio.length-1]),
-                percentX: (image.left - groupX) / groupWidth,
-                percentY: (image.top - groupY) / groupHeight
-            };
-        } else {
-            options = {
+                width: image.objectWidth,
+                height: image.objectHeight,
                 x: image.left,
                 y: image.top
             };
@@ -1047,7 +934,7 @@ function addAwkwardImage(src, info = false){
             //     x: image.left,
             //     y: image.top
             // }
-        }
+        // }
 
         createListItem(name, 'Image', options);
 
@@ -1228,7 +1115,6 @@ function createListItem(id, type, options = null){
         '<div class="row">' +
         '<div class="col-sm-6 object_x">X: ' + options.x + '</div>' +
         '<div class="col-sm-6 object_y">Y: ' + options.y + '</div>' +
-        '<div class="col-sm-6 object_x">DPI: ' + Math.round(options.DPI) + '</div>' +
         '</div>';
 
     delete options.x;
@@ -1237,8 +1123,7 @@ function createListItem(id, type, options = null){
     if(Object.keys(options).length > 0){
         list += '<div class="bg-info p-3 text-light font-weight-bold">';
         for(var a in options){
-            if(a!='DPI')
-            list += "| "+a + ": " + options[a] + "in |";
+            list += a + ": " + options[a] + " ";
         }
         list += '</div>';
     }
@@ -1412,17 +1297,13 @@ fabric.AwkwardImage = fabric.util.createClass(fabric.Image, {
         options && this.set('objectIndex', options.objectIndex);
         options && this.set('objectWidth', options.objectWidth);
         options && this.set('objectHeight', options.objectHeight);
-        options && this.set('percentX', options.percentX);
-        options && this.set('percentY', options.percentY);
     },
     toObject: function (){
         return fabric.util.object.extend(this.callSuper('toObject'), {
             objectName: this.objectName,
             objectIndex: this.objectIndex,
             objectWidth: this.objectWidth,
-            objectHeight: this.objectHeight,
-            percentX: this.percentX,
-            percentY: this.percentY            
+            objectHeight: this.objectHeight
         });
     }
 });
@@ -1466,15 +1347,11 @@ fabric.AwkwardText = fabric.util.createClass(fabric.IText, {
         this.callSuper('initialize', element, options);
         options && this.set('objectName', options.objectName);
         options && this.set('objectIndex', options.objectIndex);
-        options && this.set('percentX', options.percentX);
-        options && this.set('percentY', options.percentY);
     },
     toObject: function (){
         return fabric.util.object.extend(this.callSuper('toObject'), {
             objectName: this.objectName,
-            objectIndex: this.objectIndex,
-            percentX: this.percentX,
-            percentY: this.percentY
+            objectIndex: this.objectIndex
         });
     }
 });
@@ -1502,12 +1379,12 @@ function saveDesign (csrfToken){
 
     design_object.id = "design_object";
     design_object.name = "design_object";
-    design_object.value = localStorage.getItem("canvas");
+    design_object.value = localStorage.getItem('canvas');
 
     form.appendChild(csrf);
     form.appendChild(design_object);
 
     document.body.appendChild(form);
     form.submit();
-    timeout(readDesign(3), 1000);
+
 };
