@@ -51,9 +51,11 @@ class ArtistStorefrontController extends Controller
             : array();
 
         // FOLLOWERS
-        $followers = \App\Follow::find($storefronts->user_id)->where('private_follow','IS','false')
+        $hasFollowers = \App\Follow::where("follow_id", "=", $storefronts->user_id)->count();
+
+        $followers = ($hasFollowers > 0) ? (\App\Follow::find($storefronts->user_id)->where('private_follow','IS','false')
             ->with('user')
-            ->get();
+            ->get()) : array();
 
 
         // DO YOU FOLLOW?
@@ -64,6 +66,7 @@ class ArtistStorefrontController extends Controller
             'products'=>$products,
             'owner_data'=>$owner_data,
             'followers' => $followers,
+            'total_followers', $hasFollowers,
             'i_follow' => $i_follow
         ]);
     }

@@ -31,9 +31,12 @@ class MockupgenController extends Controller
     /**
      * Show the application dashboard.
      *
+     * @param Request $request
+     * @param int $pid      Product ID
+     * @param int $did      Design ID
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $pid)
+    public function index(Request $request, $pid, $did = null)
     {
 
         $art_id = ($request->has('art_id')) ? $request->input('art_id') : 0;
@@ -88,6 +91,18 @@ class MockupgenController extends Controller
             }
         }
 
+        $user_id = (Auth::check()) ? Auth::user()->getAuthIdentifierName() : null;
+
+        $design = null;
+
+        // Get Design if Exists
+        if(!is_null($did)) {
+            $design = \App\ArtistDesigns::find($did)->where(function($query) use($user_id){
+                $query->where('artist_id', '=', $user_id)
+                    ->orWhereNull('artist_id');
+            })->get();
+        }
+
         // Get Image Dimensions
 
         //list($w,$h) = getimagesize((strpos($images[0]->full_url, "http://") ? $images[0]->full_url :
@@ -101,7 +116,8 @@ class MockupgenController extends Controller
             'attributes' => $attributes,
             'variants' => $variants,
             'token' => $this->getToken(),
-            'canvasUrls' => $this->standInImageUrls()
+            'canvasUrls' => $this->standInImageUrls(),
+            'design' => $design
         ]);
     }
 
@@ -148,7 +164,7 @@ class MockupgenController extends Controller
 
     }
 
-    public function save(Request $request, $pid){
+    public function save(Request $request, $pid, $did = null){
 
         /**
          * TODO: Validate User and Input

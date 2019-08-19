@@ -105,7 +105,7 @@
                                     </ul>
                                 </li>
                                 <li class="dropdown-submenu dropdown-submenu-toggle">
-                                    <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Home</a>
+                                    <a href="#" class="dropdown-item dropdown-toggle" data-toggle="dropdown">Home Decor</a>
                                     <ul class="dropdown-menu">
                                         <li>
                                             <div class="row">

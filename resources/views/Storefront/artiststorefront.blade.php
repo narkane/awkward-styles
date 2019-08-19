@@ -235,12 +235,18 @@
             <div class="col-xl-3">
                 <div class="artist-right">
                     <div class="artist-lists">
-                        <h5 class="mb-4">Followers <span class="badge badge-pill badge-dark"> {{ count($followers) }}</span></h5>
+                        <h5 class="mb-4">Followers <span class="badge badge-pill badge-info">@if(isset($total_followers)) {{ $total_followers }} @else {{ count($followers) }} @endif</span></h5>
                         <ul class="artist-falowers-list">
                             @foreach($followers as $follower)
                             <li>
                                 <a href="#">
-                                    <img src="{{ url('/') }}/images/artist-defult.png" alt="">
+                                    @if(isset($follower->image))
+                                        <img src="{{ url('/') }}{{ $follower->image }}" alt="">
+                                    @else
+                                        <h1>
+                                            <i class="fa fa-user-alt" style="color: {{ random_color() }}"></i>
+                                        </h1>
+                                    @endif
                                     <h6>{{ $follower->user[0]->name}}</h6>
                                 </a>
                             </li>
@@ -253,40 +259,14 @@
                         <ul class="artist-reviews-list">
                             <li>
                                 <div class="artist-reviews-row">
-                                    <div class="col-4">
-                                        <img src="{{ url('/') }}/images/artist-defult.png" class="img-fluid rounded" alt="">
-                                    </div>
-                                    <div class="col-8">
-                                        <h6>Praveen</h6>
-                                        <span class="locatin-span text-muted"><span class="icon-map-marker-alt"></span> Borabanda, Hyderabad</span>
-                                    </div>
-
-
-                                </div>
-
-                                <p>Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin.</p>
-
-                            </li>
-                            <li>
-                                <div class="artist-reviews-row">
                                     <div>
-                                        <img src="{{ url('/') }}/images/artist-defult.png" class="img-fluid rounded" alt="">
-                                    </div>
-                                    <div>
-                                        <h6>Praveen</h6>
-                                        <span class="locatin-span text-muted"><span class="icon-map-marker-alt"></span> Borabanda, Hyderabad</span>
-                                    </div>
-
-
-                                </div>
-
-                                <p>Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin.</p>
-
-                            </li>
-                            <li>
-                                <div class="artist-reviews-row">
-                                    <div>
-                                        <img src="{{ url('/') }}/images/artist-defult.png" class="img-fluid rounded" alt="">
+                                        @if(isset($follower->image))
+                                            <img src="{{ url('/') }}{{ $follower->image }}" alt="">
+                                        @else
+                                            <h1>
+                                                <i class="fa fa-user-alt" style="color: {{ random_color() }}"></i>
+                                            </h1>
+                                        @endif
                                     </div>
                                     <div>
                                         <h6>Praveen</h6>

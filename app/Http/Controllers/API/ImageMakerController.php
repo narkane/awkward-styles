@@ -35,18 +35,28 @@ class ImageMakerController extends Controller
         $bottomX = 0;
         $bottomY = 0;
 
-        // Get design
-        $design = \App\ArtistDesigns::where('id', '=', $art_design)->first()->design_data;
+        $design = null;
 
-        $template = (object) array_filter((array) json_decode(
-            \App\Templates::where('pid', '=', $pid)
-                ->where('size', '=', $size)->first()->values));
+        $design_query = \App\ArtistDesigns::where('id', '=', $art_design);
 
-        $image = new \Imagick();
-        $image->setBackgroundColor(new \ImagickPixel('transparent'));
+        if($design_query->first() === null){ die(); } else {
 
-        // Pull Shirt Id
-        $mediaId = ($request->has('mediaId')) ? $request->query('mediaId') : null;
+            // Get design
+            try {
+                $design = json_decode($design_query->first()->design_data);//\App\ArtistDesigns::where('id', '=', $art_design)->first()->design_data);
+            } catch (\Exception $e) {
+                die();
+            }
+
+            $template = (object)array_filter((array)json_decode(
+                \App\Templates::where('pid', '=', $pid)
+                    ->where('size', '=', $size)->first()->values));
+
+            $image = new \Imagick();
+            $image->setBackgroundColor(new \ImagickPixel('transparent'));
+
+            // Pull Shirt Id
+            $mediaId = ($request->has('mediaId')) ? $request->query('mediaId') : null;
 
             try {
                 if ($mediaId) {
@@ -66,21 +76,55 @@ class ImageMakerController extends Controller
                 $imageWidth = $geo['width'];
                 $imageHeight = $geo['height'];
 
-                if(($imageWidth/$newWidth) > ($imageHeight/$newHeight)) {
+                if (($imageWidth / $newWidth) > ($imageHeight / $newHeight)) {
                     $newHeight = $imageHeight / ($imageWidth / $newWidth);
                 } else {
                     $newWidth = $imageWidth / ($imageHeight / $newHeight);
                 }
 
+                $myImages = new \Imagick();
+                $myImages->newImage($newWidth, $newHeight, new \ImagickPixel('transparent'));
+
+                $iLeft = 999;
+                $iTop = 999;
+
+                // Go Through Each Object
+                foreach ($design->objects as $obj) {
+
+                    $iLeft = ($obj->left < $iLeft) ? $obj->left : $iLeft;
+                    $iTop = ($obj->top < $iTop) ? $obj->top : $iTop;
+
+                    // Get Test Image
+                    $designImage = new \Imagick();
+                    $designUrl = (substr($obj->src, 0, 4) === "data") ?
+                        base64_decode(explode(",", $obj->src)[1]) : file_get_contents($this->setPath($obj->src));
+                    $designImage->readImageBlob($designUrl);
+
+                    $designImage->scaleImage(($obj->scaleX * $obj->width), ($obj->scaleY * $obj->height));
+
+                    // RESIZE
+                    //$designImage->resizeImage($obj->width, $obj->height, \Imagick::FILTER_LANCZOS, 0, true);
+
+                    // HANDLE ANGLES
+                    if ($obj->angle > 0) {
+                        $designImage->rotateImage(new \ImagickPixel('transparent'), $obj->angle);
+                    }
+
+                    // HANDLE OPACITY
+                    //$designImage->setImageOpacity($obj->opacity);
+
+                    $myImages->compositeImage($designImage, \Imagick::COMPOSITE_DEFAULT, $obj->left, $obj->top);
+
+                    //$myImages->addImage($designImage);
+                }
+
                 $clipMask = new \Imagick();
                 $clipMask->newImage($newWidth, $newHeight, new \ImagickPixel('rgba(255,255,255,0)'), 'png');
 
-                // Get Test Image
-                $designImage = new \Imagick();
-                $designUrl = file_get_contents($this->setPath('/images/design-images/1.jpg'));
-                $designImage->readImageBlob($designUrl);
+                $clipMask->setImageVirtualPixelMethod(\Imagick::VIRTUALPIXELMETHOD_TRANSPARENT);
+                $clipMask->setImageArtifact('compose:args', "1,0,-0.5,-.5");
 
-                foreach($template as $t){
+                foreach ($template as $t) {
 
                     $topX = ($t->x < $topX) ? $t->x : $topX;
                     $topY = ($t->y < $topY) ? $t->y : $topY;
@@ -88,39 +132,37 @@ class ImageMakerController extends Controller
                     $bottomX = (($t->x + $t->width) > $bottomX) ? ($t->x + $t->width) : $bottomX;
                     $bottomY = (($t->y + $t->height) > $bottomY) ? ($t->y + $t->height) : $bottomY;
 
-                    switch($t->shape){
+                    switch ($t->shape) {
                         default: // Rectangle
                             $clipMask->drawImage(
-                                $this->rectangle($t, $designImage)
+                                $this->rectangle($t)
                             );
                             break;
 
                         case '1':  // Circle
                             $clipMask->drawImage($this->circle(
-                                $t, $designImage));
+                                $t));
                             break;
                     }
 
                 }
 
-                $designImage->resizeImage(($bottomX - $topX), ($bottomY - $topY), \Imagick::FILTER_LANCZOS, 0, true);
+                $clipMask->compositeImage(
+                    $myImages,
+                    \Imagick::COMPOSITE_IN,
+                    ($topX - $iLeft),
+                    ($topY - $iTop),
+                    \Imagick::CHANNEL_ALL);
 
-
-                $clipMask->compositeImage($designImage, \Imagick::COMPOSITE_BLEND, $topX, $topY, \Imagick::CHANNEL_ALL);
-
-                //$designImage->compositeImage($clipMask, \Imagick::COMPOSITE_BLEND, 0, 0);
-
-                //$image->newImage($newWidth, $newHeight, "white", "png");
-
-                $productImage->compositeImage($clipMask, \Imagick::COMPOSITE_OVER, 0,0, \Imagick::CHANNEL_ALL);
+                $productImage->compositeImage($clipMask, \Imagick::COMPOSITE_ATOP, 0, 0, \Imagick::CHANNEL_ALL);
 
                 $image->addImage($productImage);
 
-                //$image->compositeImage($productImage, \Imagick::COMPOSITE_DEFAULT, 0, 0);
 
-               // $image->addImage($productImage);
+            } catch (\Exception $e) {
 
-            } catch (\Exception $e){
+                // DROP SOME ERROR IMAGE
+
 
                 echo "MESSAGE: " . $e->getMessage() . "<br/>";
                 echo "CODE: " . $e->getCode() . "<br/>";
@@ -138,14 +180,14 @@ class ImageMakerController extends Controller
 
                 $image->annotateImage($draw, 20, 50, 0, $e->getMessage());
 
-
             }
 
-        $image->setImageFormat('png');
-        header('Content-type: image/png');
-        echo $image->getImageBlob();
-        $image->destroy();
-        die();
+            $image->setImageFormat('png');
+            header('Content-type: image/png');
+            echo $image->getImageBlob();
+            $image->destroy();
+            die();
+        }
 
     }
 
@@ -166,8 +208,8 @@ class ImageMakerController extends Controller
      */
     private function rectangle($t, $designImage = null){
         $draw = new \ImagickDraw();
-        $draw->setFillColor(new \ImagickPixel("rgba(255,255,255,0)"));
-        $draw->color($t->x, $t->y, \Imagick::PAINT_POINT);
+        //$draw->setFillColor(new \ImagickPixel("rgba(255,255,255,0)"));
+        //$draw->color($t->x, $t->y, \Imagick::PAINT_POINT);
         $draw->rectangle($t->x, $t->y, ($t->x + $t->width), ($t->y + $t->height));
 
         return $draw;
@@ -179,9 +221,12 @@ class ImageMakerController extends Controller
      * @param $designImage
      * @return \ImagickDraw
      */
-    private function circle($t, $designImage){
+    private function circle($t, $designImage = null){
         $draw = new \ImagickDraw();
         $radius = sqrt(($t->width * $t->width) + ($t->height * $t->height)) / sqrt(2);
+
+        //$draw->setFillColor(new \ImagickPixel("rgba(255,255,255,0)"));
+        //$draw->color($t->x, $t->y, \Imagick::PAINT_POINT);
 
         $draw->circle(($t->x + ($t->width / 2)), ($t->y + ($t->height / 2)),
             ($t->x + ($t->width / 2)) + ($radius/2), ($t->y + ($t->height / 2)));

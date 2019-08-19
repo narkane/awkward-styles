@@ -32,7 +32,11 @@ Route::post('/account', 'DashboardController@myAccount')->name('updateAccount');
 Route::get('/artiststorefront/{storeId}', 'ArtistStorefrontController@index')->name('artiststorefront');
 
 Route::get('/mockupgenerator/{pid}', 'MockupgenController@index')->name('mockupgenerator');
+Route::get('/mockupgenerator/{pid}/{design}', 'MockupgenController@index')->name('mockupgeneratorwithdesign');
+
 Route::post('/mockupgenerator/{pid}', 'MockupgenController@save')->name('mockupPost');
+Route::post('/mockupgenerator/{pid}/{design}', 'MockupgenController@save')->name('mockupPostwithdesign');
+
 Route::get('/mockupgenerator/standalone/{pid}/{design}', 'MockupgenController@standalone');
 
 Route::get('/mockupgen', 'MockupgenController@index')->name('mockupgenerator');
