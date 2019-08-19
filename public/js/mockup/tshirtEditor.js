@@ -528,8 +528,10 @@ function clearAll() {
 
 var sessionInfo = function(item, file = null){
 
-    item.percentX = (item.left - groupX) / groupWidth;
-    item.percentY = (item.top - groupY) / groupHeight;
+    item.percentX = ((item.left + (item.width / 2)) - groupX) / groupWidth;
+    item.percentY = ((item.top + (item.height / 2)) - groupY) / groupHeight;
+    item.percentW = item.objectWidth / groupWidth;
+    item.percentH = item.objectHeight / groupHeight;
 
     if(item.type === 'awkward-image' && item.toObject().src.length > 200){
 
@@ -1034,8 +1036,10 @@ function addAwkwardImage(src, info = false){
                 x: image.left,
                 y: image.top,
                 DPI: image.width/(image.objectWidth/tempRatio[tempRatio.length-1]),
-                percentX: (image.left - groupX) / groupWidth,
-                percentY: (image.top - groupY) / groupHeight
+                percentX: ((image.left + (image.objectWidth / 2)) - groupX) / groupWidth,
+                percentY: ((image.top + (image.objectHeight / 2)) - groupY) / groupHeight,
+                percentW: image.objectWidth / groupWidth,
+                percentH: image.objectHeight / groupHeight
             };
         } else {
             options = {
@@ -1414,6 +1418,8 @@ fabric.AwkwardImage = fabric.util.createClass(fabric.Image, {
         options && this.set('objectHeight', options.objectHeight);
         options && this.set('percentX', options.percentX);
         options && this.set('percentY', options.percentY);
+        options && this.set('percentW', options.percentW);
+        options && this.set('percentH', options.percentH);
     },
     toObject: function (){
         return fabric.util.object.extend(this.callSuper('toObject'), {
@@ -1422,7 +1428,9 @@ fabric.AwkwardImage = fabric.util.createClass(fabric.Image, {
             objectWidth: this.objectWidth,
             objectHeight: this.objectHeight,
             percentX: this.percentX,
-            percentY: this.percentY            
+            percentY: this.percentY,
+            percentW: this.percentW,
+            percentH: this.percentH
         });
     }
 });
@@ -1468,13 +1476,17 @@ fabric.AwkwardText = fabric.util.createClass(fabric.IText, {
         options && this.set('objectIndex', options.objectIndex);
         options && this.set('percentX', options.percentX);
         options && this.set('percentY', options.percentY);
+        options && this.set('percentW', options.percentW);
+        options && this.set('percentH', options.percentH);
     },
     toObject: function (){
         return fabric.util.object.extend(this.callSuper('toObject'), {
             objectName: this.objectName,
             objectIndex: this.objectIndex,
             percentX: this.percentX,
-            percentY: this.percentY
+            percentY: this.percentY,
+            percentW: this.percentW,
+            percentH: this.percentH
         });
     }
 });
