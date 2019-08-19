@@ -167,7 +167,10 @@ class ImageMakerController extends Controller
                     \Imagick::CHANNEL_ALL);
                 */
 
-                $productImage->compositeImage($myImages, \Imagick::COMPOSITE_ATOP, 0, 0, \Imagick::CHANNEL_ALL);
+                $productImage->compositeImage($myImages,
+                    \Imagick::COMPOSITE_ATOP,
+                    0,
+                    0, \Imagick::CHANNEL_ALL);
 
                 $image->addImage($productImage);
 
