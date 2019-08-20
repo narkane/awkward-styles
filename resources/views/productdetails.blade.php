@@ -1,13 +1,5 @@
 @extends('layouts.dashboard')
 @section('content')
-    <script>
-        let template = {!! ($template) !!};
-        let design = {!! ($design) !!};
-
-        console.log(JSON.parse(template.values));
-
-        console.log(JSON.parse(design.design_data));
-    </script>
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb bg-white border">
@@ -27,14 +19,10 @@
                     <div class="row">
 
                         <div class="col-sm-3">
-                            @foreach($media as $img)
+                            @foreach(explode(",", $product[0]->image) as $img)
                                 <div>
-                                    @if(!is_null($img->thumbnail))
-                                        <img class="thumbnails" src="{{ $img->thumbnail }}"/>
-                                    @else
-                                        <img class="thumbnails" src="{{ $img->full_url }}"
-                                             style="max-width:100px; max-height: 100px;"/>
-                                    @endif
+                                        <img class="thumbnails" src="{{ createRenderUrl($product[0]->id, "XS", $designID, $img)  }}"
+                                        style="max-width:100px; max-height: 100px;"/>
                                 </div>
                             @endforeach
                         </div>
@@ -42,7 +30,7 @@
                         <div class="col-sm-9 bg-white" id="previewHolder">
                             <div class="catalog-detail-image pt-5">
                                 <div class="image-single" id="add-images" data-pswp="{bgOpacity: 0.75, shareButtons: false}">
-                                    <img id="image-0" src="{{ $media[0]->full_url }}" alt="{{ $product[0]->label }}"/>
+                                    <img id="image-0" src="{{ createRenderUrl($product[0]->id, "XS", $designID)  }}" alt="{{ $product[0]->label }}"/>
                                 </div>
                             </div>
                             <div id="imagePreview"></div>
@@ -766,6 +754,16 @@
     <script type="text/javascript" language="javascript">
         $(document).ready(function () {
 
+            function imageWatcher() {
+                $("#image-0").one('load', function () {
+                    if (this.complete) {
+                        $(this).load(imagePreviewer());
+                    }
+                });
+            }
+
+            imageWatcher();
+
             /**
              * Load Thumbnails into Main Image
              */
@@ -830,24 +828,12 @@
                     '#varient-size option:selected')
                     .text());
 
+                console.log("MediaID: " + newVariant[0].image.split(",")[
+                    0]);
 
-                $.ajax({
-                    url: "{{env('API_URL')}}api/media/getById/" +
-                        newVariant[0].image.split(",")[
-                            0],
-                    contentType: 'application/json',
-                    dataType: 'json',
-                    headers: {
-                        "Authorization": "Bearer " +
-                            token,
-                        "Content-Type": "application/json"
-                    },
-                    type: 'GET',
-                    success: function (images) {
-                        $("#add-images").html('<img id="image-0" src="' + images.properties.full_url + '" alt="{{ $product[0]->label }}"/><div id="imagePreview"></div>');
-                        imagePreviewer();
-                    }
-                });
+                $("#add-images").html('<img id="image-0" src="{{ URL("/") }}/api/designs/images/{{ $product[0]->id }}/XS/{{ $designID }}/' + newVariant[0].image.split(",")[0] + '" alt="{{ $product[0]->label }}"/><div id="imagePreview"></div>');
+                imageWatcher();
+
                 e.preventDefault();
             });
 
@@ -945,8 +931,7 @@
                         var newHtml = '';
 
                         for (var i = 0; i < products.length; i++) {
-                            newHtml += '<div class="d-inline p-4">' +
-                                '<img src="' + products[i].full_url + '" style="max-height:250px" alt="' + products[i].label + '"/>' +
+                            newHtml += '<div class="d-inline p-4"><img src="{{ URL("/") }}/api/designs/images/' + products[i].id + '/XS/{{ $designID }}" style="max-height:250px" alt="' + products[i].label + '"/>' +
                                 '</div>';
                         }
 
@@ -1071,8 +1056,6 @@
                     return {x: x, y: y};
                 }
             }
-
-            imagePreviewer();
 
             setTimeout(function(){
                 $(".content", $(this).delegateTarget).slideToggle();

@@ -177,6 +177,7 @@ Route::group(['prefix' => 'api/'], function($app){
      * GENERATE IMAGE
      */
     $app->get('designs/images/{pid}/{size}/{design_id}', 'API\ImageMakerController@index')->name('imageMaker');
+    $app->get('designs/images/{pid}/{size}/{design_id}/{mediaid}', 'API\ImageMakerController@index')->name('imageMaker');
 
     /**
      * REMOVE ARTWORK
