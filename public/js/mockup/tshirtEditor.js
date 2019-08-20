@@ -527,9 +527,8 @@ function clearAll() {
 }
 
 var sessionInfo = function(item, file = null){
-
-    item.percentX = ((item.left + (item.width / 2)) - groupX) / groupWidth;
-    item.percentY = ((item.top + (item.height / 2)) - groupY) / groupHeight;
+    item.percentX = ((item.left + (item.objectWidth / 2)) - groupX) / groupWidth;
+    item.percentY = ((item.top + (item.objectHeight / 2)) - groupY) / groupHeight;
     item.percentW = item.objectWidth / groupWidth;
     item.percentH = item.objectHeight / groupHeight;
 
