@@ -73,18 +73,6 @@ class ProductDetailsController extends Controller
                     ->where("productId","=",$productId)
                     ->get();
 
-        /**
-         * TODO: Update in database and code to collect designer information.
-         */
-        $designerTemplates = DB::table("tbl_art_work")
-                        ->select(DB::raw("tbl_art_work.*, tbl_media_library.full_url"))
-                        ->leftJoin("tbl_media_library", function($join){
-                            $join->on(DB::raw("tbl_media_library.id"), "=", DB::raw("tbl_art_work.mediaid"));
-                        })
-                        ->where('is_awkwardstyle','=','1')
-                        ->take(5)
-                        ->get();
-
         foreach($attributes as $key => $attr){
             foreach($variants as $vars){
                 if($attr->code1 == $vars->color_code_1 && ($vars->image == null || empty($vars->image))){
@@ -93,13 +81,18 @@ class ProductDetailsController extends Controller
             }
         }
 
-        $design = ($designId) ? ArtistDesigns::where('id',$designId)->first() : null;
+        if($designId){
+            $design = ArtistDesigns::where('id',$designId)->first();
+
+            $designerTemplates = $this->getDesignerArt($design->artist_id);
+        } else {
+            $designerTemplates = $this->getDesignerArt();
+        }
 
         $template = Templates::where('pid',$productId)->first();
 
         return view('productdetails', [
             'user_id' => (Auth::check()) ? Auth::user()->getAuthIdentifier() : false,
-            'design' => $design,
             'template' => $template,
             'product_id' => $productId,
             'product' => $product,
@@ -107,8 +100,23 @@ class ProductDetailsController extends Controller
             'details' => $details,
             'media' => $media,
             'attributes' => $attributes,
-            'designerTemplates' => $designerTemplates
+            'designerTemplates' => $designerTemplates,
+            'designID' => $designId
         ]);
+    }
+
+    private function getDesignerArt($id = 0){
+        $db = DB::table("tbl_art_work")
+            ->select(DB::raw("tbl_art_work.*, tbl_media_library.full_url"))
+            ->leftJoin("tbl_media_library", function($join){
+                $join->on(DB::raw("tbl_media_library.id"), "=", DB::raw("tbl_art_work.mediaid"));
+            })
+            ->where('is_private', '=', '0');
+
+        if($id != 0){
+            $db = $db->where(DB::raw('tbl_art_work.parentid'), '=', $id);
+        }
+        return $db->take(5)->get();
     }
 
     /**

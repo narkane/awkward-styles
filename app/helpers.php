@@ -11,3 +11,7 @@ function random_color(){
 
     return $color;
 }
+
+function createRenderUrl($pid, $size, $design, $mediaId = null ){
+    return URL("/") . "/api/designs/images/" .$pid."/".$size."/".$design."/".$mediaId;
+}
