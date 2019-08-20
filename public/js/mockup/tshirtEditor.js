@@ -38,10 +38,16 @@ var prevCanvas = [
  *        4: rectangle
  */
 
-var imageWidth, imageHeight, newWidth, newHeight, groupWidth, groupHeight, groupX, groupY, realW, realH, url, pid, size, mainG;
+var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH;
+var groupWidth=[];
+var groupHeight=[];
+var groupX=[]; 
+var groupY=[];
+var groupN=[];
 var tempRatio = [];
 var upperLeft = 999;
 var upperTop = 999;
+var mainc;
 
 var templateVars = {
     pid: 0,
@@ -162,6 +168,42 @@ function init(){
                 // let newH = obj.aCoords.bl.y - obj.aCoords.tl.y;
                 // console.log(newW);
                 // console.log(newH);
+                //
+                let scalewidth = percentW * groupWidth[groupN.findIndex((element)=>{return element==c})];
+                let scaleheight = percentH * groupHeight[groupN.findIndex((element)=>{return element==c})];
+                if(scalewidth < scaleheight)
+                {
+                    scaleheight = scalewidth;
+                }else{
+                    scalewidth = scaleheight;
+                }
+                obj.scaleToWidth(scalewidth);
+                obj.scaleToHeight(scaleheight);
+                obj.objectWidth = obj.aCoords.tr.x - obj.aCoords.tl.x;
+                obj.objectHeight = obj.aCoords.bl.y - obj.aCoords.tl.y;
+                console.log('dogslunch');
+                obj.left = (groupX[groupN.findIndex((element)=>{return element==c})] + (groupWidth[groupN.findIndex((element)=>{return element==c})] * percentX) - (obj.objectWidth / 2));
+                obj.top = (groupY[groupN.findIndex((element)=>{return element==c})] + (groupHeight[groupN.findIndex((element)=>{return element==c})] * percentY) - (obj.objectHeight / 2));
+                let dat = {
+                    sW: scalewidth,
+                    sH: scaleheight,
+                    oL: obj.left,
+                    oT: obj.top,
+                    pX: percentX,
+                    pY: percentY,
+                    pW: percentW,
+                    pH: percentH,
+                    gX: groupX,
+                    gY: groupY,
+                    gW: groupWidth,
+                    gH: groupHeight,
+                    oW: obj.objectWidth,
+                    oH: obj.objectHeight,
+                    cID: c,
+                    gN: groupN,
+                    gNc: groupN.findIndex((element) => { return element == c })
+                }
+                console.log(dat);
                 // obj.left = (prevCanvas[c].width - newW) * 0.5; 
                 // obj.top = (prevCanvas[c].height - newH) * 0.5;
                 prevCanvas[c].add(obj);
@@ -258,7 +300,7 @@ function init(){
             if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
                 var startTimer = function () {
                     clearTimeout(timer);
-                    timer = setTimeout(function () { sessionInfo(e.target); }, 3000);
+                    sessionInfo(e.target);
                 };
                 startTimer();
             } else {
@@ -527,10 +569,21 @@ function clearAll() {
 }
 
 var sessionInfo = function(item, file = null){
-    item.percentX = ((item.left + (item.objectWidth / 2)) - groupX) / groupWidth;
-    item.percentY = ((item.top + (item.objectHeight / 2)) - groupY) / groupHeight;
-    item.percentW = item.objectWidth / groupWidth;
-    item.percentH = item.objectHeight / groupHeight;
+    item.objectWidth = item.aCoords.tr.x - item.aCoords.tl.x;
+    item.objectHeight = item.aCoords.bl.y - item.aCoords.tl.y;
+
+    item.percentX = ((item.left + (item.objectWidth / 2)) - groupX[mainc]) / groupWidth[mainc];
+    item.percentY = ((item.top + (item.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc];
+    item.percentW = item.objectWidth / groupWidth[mainc];
+    item.percentH = item.objectHeight / groupHeight[mainc];
+
+    percentX = item.percentX;
+    percentY = item.percentY;
+    percentW = item.percentW;
+    percentH = item.percentH;
+
+    console.log(item.percentX);
+    console.log(item.percentW);
 
     if(item.type === 'awkward-image' && item.toObject().src.length > 200){
 
@@ -637,6 +690,7 @@ function setShirtImage(imgurl, canvasType = "canvas"){
 
     var tag = false;
 
+    
     switch(canvasType) {
         default: tag = "main"; break;
         case 0: tag = 1456; break;
@@ -644,7 +698,7 @@ function setShirtImage(imgurl, canvasType = "canvas"){
         case 2: tag = 1402; break;
         case 3: tag = 1455; break;
     }
-
+    
     //setup front side canvas
     if(isNaN(canvasType)) {
         canvas = canvasToUse = new fabric.Canvas('tcanvas', {
@@ -666,41 +720,43 @@ function setShirtImage(imgurl, canvasType = "canvas"){
             preserveObjectStacking: true
         })
     }
-
+    
     let img = new Image();
-
+    
     img.onload = function(){
-
+        
         imageWidth = img.width;
         imageHeight = img.height;
 
         console.log("Width: " + imageWidth);
         console.log("Height: " + imageHeight);
-
+        
         newWidth = 400;
         newHeight = 400;
-
+        
         if((imageWidth/newWidth) > (imageHeight/newHeight)) {
             newHeight = imageHeight / (imageWidth / newWidth);
         } else {
             newWidth = imageWidth / (imageHeight / newHeight);
         }
-
+        
         $("#" + ((!isNaN(tag)) ? tag + "_image" : "shirtFacing")).css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
-
+        
         $("#" + ((!isNaN(tag)) ? tag + "_div"  : "shirtDiv")).css({'width': newWidth, 'height': newHeight});
-
+        
         var drawingArea = "#" + ((!isNaN(tag)) ? tag + "_area" : "shirtDrawingArea");
-
+        
         $(drawingArea).css({'width': newWidth, 'height': newHeight});
         $(drawingArea).find(".canvas-container").css({'width': newWidth, 'height': newHeight});
         canvasToUse.setHeight(newHeight);
         canvasToUse.setWidth(newWidth);
-
+        
         setTemplate(tag);
-
+        groupN.push(canvasType);
+        mainc = groupN.findIndex((element) => { return element == "canvas" });
+        
         img = null;
-
+        
     };
 
     img.src = imgurl;
@@ -764,12 +820,13 @@ function setTemplate(main = "main") {
                     }
                     upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
                     upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
-
+                    
                     uptop = (result.values[i].y < uptop) ? result.values[i].y : uptop;
                     upleft = (result.values[i].x < upleft) ? result.values[i].x : upleft;
                     
                     //set templates ratio onto last tempRatio position
                     console.log(result);
+                    // groupP.push(result.pid);
                     if(main=='main')
                         tempRatio.push(result.dpi);
                 }
@@ -785,12 +842,12 @@ function setTemplate(main = "main") {
                     opacity: 0.3
                 });
 
-                if (main == "main") {
-                    groupX = g.left;
-                    groupY = g.top;
-                    groupWidth = g.width;
-                    groupHeight = g.height;
-                }
+                // if (main == "main") {
+                    groupX.push(g.left);
+                    groupY.push(g.top);
+                    groupWidth.push(g.width);
+                    groupHeight.push(g.height);
+                // }
 
 
 
@@ -940,13 +997,13 @@ var radius = function (a, b) {
 };
 
 var centerX = function(){
-    var x = Math.round(upperLeft + (groupWidth/3));
+    var x = Math.round(upperLeft + (groupWidth[mainc]/3));
     console.log("CENTERX: " + x);
     return x;
 };
 
 var centerY = function(){
-    var y = Math.round(upperTop + (groupHeight/2));
+    var y = Math.round(upperTop + (groupHeight[mainc]/2));
     console.log("CENTERY: " + y);
     return y;
 };
@@ -961,12 +1018,12 @@ function addAwkwardImage(src, info = false){
     let objInd = objectIndex++;
 
     console.log('used by image:');
-    console.log(groupX, groupY);
+    console.log(groupX[mainc], groupY[mainc]);
     try{
     fabric.AwkwardImage.fromURL(src, function (image) {
         image.set({
-            left: (groupWidth/2 + groupX),     //(newWidth / 3),
-            top: (groupHeight/2 + groupY),    //(newHeight / 3),
+            left: (groupWidth[mainc]/2 + groupX[mainc]),     //(newWidth / 3),
+            top: (groupHeight[mainc]/2 + groupY[mainc]),    //(newHeight / 3),
             angle: 0,
             // padding: 10,
             cornersize: 10,
@@ -987,14 +1044,14 @@ function addAwkwardImage(src, info = false){
         realH = h * image.scaleY;//image.aCoords.bl.y - image.aCoords.tl.y;
 
         // if image is oversized...
-        if (realW > groupWidth || realH > groupHeight) {
+        if (realW > groupWidth[mainc] || realH > groupHeight[mainc]) {
             console.log("toobig...");
             // if mainly over width ELSE mainly over by height
-            if (realW - groupWidth > realH - groupHeight) {
-                downRatio = realW / groupWidth;
+            if (realW - groupWidth[mainc] > realH - groupHeight[mainc]) {
+                downRatio = realW / groupWidth[mainc];
                 console.log(downRatio);
             } else {
-                downRatio = realH / groupHeight;
+                downRatio = realH / groupHeight[mainc];
                 console.log(downRatio);
             }
             realW = realW / downRatio;
@@ -1010,8 +1067,8 @@ function addAwkwardImage(src, info = false){
         }
 
         //CENTER IMAGE on TEMPLATE +10 for controls size
-        image.left = (groupWidth / 2 + groupX) - (realW / 2);
-        image.top = (groupHeight / 2 + groupY) - (realH / 2);
+        image.left = (groupWidth[mainc] / 2 + groupX[mainc]) - (realW / 2);
+        image.top = (groupHeight[mainc] / 2 + groupY[mainc]) - (realH / 2);
 
 
         image.objectWidth = w*image.scaleX;
@@ -1035,11 +1092,15 @@ function addAwkwardImage(src, info = false){
                 x: image.left,
                 y: image.top,
                 DPI: image.width/(image.objectWidth/tempRatio[tempRatio.length-1]),
-                percentX: ((image.left + (image.objectWidth / 2)) - groupX) / groupWidth,
-                percentY: ((image.top + (image.objectHeight / 2)) - groupY) / groupHeight,
-                percentW: image.objectWidth / groupWidth,
-                percentH: image.objectHeight / groupHeight
+                percentX: ((image.left + (image.objectWidth / 2)) - groupX[mainc]) / groupWidth[mainc],
+                percentY: ((image.top + (image.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc],
+                percentW: image.objectWidth / groupWidth[mainc],
+                percentH: image.objectHeight / groupHeight[mainc]
             };
+            percentX = options.percentX;
+            percentY = options.percentY;
+            percentW = options.percentW;
+            percentH = options.percentH;
         } else {
             options = {
                 x: image.left,
