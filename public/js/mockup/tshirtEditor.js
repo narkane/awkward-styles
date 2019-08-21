@@ -984,7 +984,7 @@ function fromStorage(result = null){
                 if(listItems[object.objectIndex]){
                     listItems[object.objectIndex].push(object)
                 } else {
-                    listItems[listItems.length] = [object];
+                    listItems[object.objectIndex] = [object];
                 }
                 console.log(listItems);
 
@@ -994,7 +994,7 @@ function fromStorage(result = null){
                             console.log(i);
                             console.log(j);
                             console.log(listItems[i][j]);
-                            if(listItems[i][j].type !== "group"){
+                            // if(listItems[i][j].type !== "group"){
                             createListItem(listItems[i][j].objectName,
                                 ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
                                 ((listItems[i][j].type === "awkward-image") ?
@@ -1009,7 +1009,7 @@ function fromStorage(result = null){
                                         y: listItems[i][j].top
                                     } )
                             );
-                        }}
+                        }
                     }
                 }
                 fabric.log(object, o);
