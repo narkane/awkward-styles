@@ -166,7 +166,7 @@
 
                 <div class="col-md-2">
 
-                    <div class="mock-block border-primary" id="show-text-editor" data-toggle="text-editor">
+                    <div type="button" class="mock-block border-primary" id="show-text-editor" data-toggle="text-editor">
                         <div class="mock-block-contents">
                             <h2 class="far fa-edit"></h2>
                             <p>Add Text</p>
@@ -179,14 +179,14 @@
                         </div>
                     </div>
 
-                    <div class="mock-block border-primary" id="imageUpload" data-target="#fileUpload">
+                    <div type="button" class="mock-block border-primary" id="imageUpload" data-target="#fileUpload">
                         <div class="mock-block-contents">
                             <h1 class="fas fa-upload"></h1>
                             <p>Upload Image</p>
                         </div>
                     </div>
 
-                    <div class="mock-block border-primary" id="productSearch">
+                    <div type="button" class="mock-block border-primary" id="productSearch">
                         <div class="mock-block-contents">
                             <h2 class="fas fa-tshirt"></h2>
 
@@ -213,7 +213,7 @@
                         <div id="shirtDiv" class="page"
                              style="position: relative; background-color: rgb(255, 255, 255);">
                                                 
-                            <!-- <div id="myArtModal" class="modal">
+                            <div id="myArtModal" class="modal">
                                 <div class="art-modal-content">
                                     <span class="art-close">&times;</span>
                                     <p>NO ART PAGE!</p>
@@ -226,7 +226,7 @@
                                     <p>SWEET GOD IT WORKS!!!~</p>
                                     <iframe src="/product/select/">whoops!</iframe>
                                 </div>
-                            </div> -->
+                            </div>
 
                             <img id="shirtFacing" src=""/>
                             <div id="shirtDrawingArea"

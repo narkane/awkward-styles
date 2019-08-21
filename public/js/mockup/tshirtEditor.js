@@ -38,7 +38,7 @@ var prevCanvas = [
  *        4: rectangle
  */
 
-var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH;
+var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH, dpi;
 var groupWidth=[];
 var groupHeight=[];
 var groupX=[]; 
@@ -142,15 +142,24 @@ function init(){
         console.log($(this).attr('src'));
     });
 
-    $("#saveMyDesign").on('click', function () {
+    $("#saveMyDesign").on('click', function (e)
+    {
+        console.log(dpi);
+    if(dpi < 96){
+        alert("Your current DPI is too low.\nScale down your image or upload a larger/higher quality image please.\nDPI: " + dpi);
+        e.stopPropagation();
+        e.preventDefault();
+        // return -1;
+    }else{
         console.log("STORAGE: ");
         console.log(localStorage);
+        console.log(dpi);
         let item = canvas.getObjects();
-
+        
         for (let i in prevCanvas) {
             prevCanvas[i].clear();
         }
-
+        
         for (let i in item) {
             for (let c in prevCanvas) {
                 if(item[i].type==='group')
@@ -159,6 +168,7 @@ function init(){
                     continue;
                 }
                 let obj = $.extend(true, {}, item[i]);
+                console.log(item[i].dpi);
                 obj.lockMovementX = true;
                 obj.lockMovementY = true;
                 // console.log("YO HERE IT IS (canvas width):");
@@ -181,7 +191,7 @@ function init(){
                 obj.scaleToHeight(scaleheight);
                 obj.objectWidth = obj.aCoords.tr.x - obj.aCoords.tl.x;
                 obj.objectHeight = obj.aCoords.bl.y - obj.aCoords.tl.y;
-                console.log('dogslunch');
+                // console.log('dogslunch');
                 obj.left = (groupX[groupN.findIndex((element)=>{return element==c})] + (groupWidth[groupN.findIndex((element)=>{return element==c})] * percentX) - (obj.objectWidth / 2));
                 obj.top = (groupY[groupN.findIndex((element)=>{return element==c})] + (groupHeight[groupN.findIndex((element)=>{return element==c})] * percentY) - (obj.objectHeight / 2));
                 let dat = {
@@ -210,7 +220,7 @@ function init(){
             }
         }
 
-    });
+    }});
 
     $(document).on('input', "#imageOpacity", function () {
         let obj = canvas.getActiveObject();
@@ -276,7 +286,7 @@ function init(){
 
     canvas.on({
         'object:moving': function (e) {
-            canvas.clipPath.opacity = 0.5;
+            // canvas.clipPath.opacity = 0.5;
             /*
             // Set objects?
             for(var c in prevCanvas){
@@ -295,12 +305,22 @@ function init(){
 
         },
         'object:modified': function (e) {
-            canvas.clipPath.opacity = 0.5;
+            // canvas.clipPath.opacity = 0.5;
             setCoordinates(e.target);
             if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
                 var startTimer = function () {
                     clearTimeout(timer);
                     sessionInfo(e.target);
+                    if (dpi < 96) {
+                        // $("#" + e.target.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + " - BAD</div >");
+                        $("#" + e.target.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff2222"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - BAD</div ></div>");
+                    } else if (dpi < 145) {
+                        // $("#" + e.target.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + "-OKAY</div >");
+                        $("#" + e.target.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#3399ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - GOOD</div ></div>");
+                    } else {
+                        // $("#" + e.target.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + "-GREAT</div >");
+                        $("#" + e.target.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#33ff44"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - GREAT</div ></div>");
+                    }
                 };
                 startTimer();
             } else {
@@ -576,11 +596,13 @@ var sessionInfo = function(item, file = null){
     item.percentY = ((item.top + (item.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc];
     item.percentW = item.objectWidth / groupWidth[mainc];
     item.percentH = item.objectHeight / groupHeight[mainc];
+    item.dpi = item.width / (item.objectWidth / tempRatio[tempRatio.length-1]);
 
     percentX = item.percentX;
     percentY = item.percentY;
     percentW = item.percentW;
     percentH = item.percentH;
+    dpi = item.dpi;
 
     console.log(item.percentX);
     console.log(item.percentW);
@@ -625,7 +647,7 @@ var sessionInfo = function(item, file = null){
 
                         // Merge
                         if (result != null && Object.keys(result).length) {
-
+                            
                             // If downloaded, remove from site session
                             if (!cv.objects) { cv.objects = []; }
                             for (var i in result) {
@@ -639,11 +661,11 @@ var sessionInfo = function(item, file = null){
                                     // $(document).ready();
                                 }
                             }
-
+                            
                             localStorage.setItem('canvas', JSON.stringify(cv));
                         }
-
-
+                        
+                        
                     },
                     error: (error, data) => {
                         console.log(error);
@@ -758,6 +780,7 @@ function setShirtImage(imgurl, canvasType = "canvas"){
         img = null;
         
     };
+    console.log('dogDOG');
 
     img.src = imgurl;
 }
@@ -886,15 +909,18 @@ function setTemplate(main = "main") {
                     contentType: 'application/json',
                     processData: false,
                     success: (result) => {
-
                         fromStorage(result);
-
+                        
+                        // let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
+                        
+                        
                     },
                     error: (error, data) => {
                         console.log(error);
                         fromStorage();
                     }
                 });
+                // myCanvas.add(mainG);
             }
 
         },
@@ -914,7 +940,11 @@ function setTemplate(main = "main") {
 
 function fromStorage(result = null){
     let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
-    console.log(cv);
+    // console.log(cv);
+    console.log(cv.objects);
+    cv.objects = Array.from(cv.objects);
+    cv.objects.unshift(mainG.toObject());
+    console.log(cv.objects);
 
     // Merge
     if(result != null && Object.keys(result).length){
@@ -942,25 +972,29 @@ function fromStorage(result = null){
         let listItems = [];
 
         if(totalObjs > 0) {
-            console.log(cv.objects);
-            cv.objects = Array.from(cv.objects);
-            cv.objects.unshift(mainG.toObject());
-            console.log(cv.objects);
 
             try{
             canvas.loadFromJSON(cv,canvas.renderAll.bind(canvas), function (o, object) {
 
                 count++;
 
+                console.log("-=-=-=-=-");
+                console.log(object.objectIndex);
+
                 if(listItems[object.objectIndex]){
                     listItems[object.objectIndex].push(object)
                 } else {
-                    listItems[object.objectIndex] = [object];
+                    listItems[listItems.length] = [object];
                 }
+                console.log(listItems);
 
                 if(count === totalObjs){
                     for(var i in listItems){
                         for(var j in listItems[i]){
+                            console.log(i);
+                            console.log(j);
+                            console.log(listItems[i][j]);
+                            if(listItems[i][j].type !== "group"){
                             createListItem(listItems[i][j].objectName,
                                 ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
                                 ((listItems[i][j].type === "awkward-image") ?
@@ -975,7 +1009,7 @@ function fromStorage(result = null){
                                         y: listItems[i][j].top
                                     } )
                             );
-                        }
+                        }}
                     }
                 }
                 fabric.log(object, o);
@@ -1088,7 +1122,7 @@ function addAwkwardImage(src, info = false){
         if(info){
             options = {
                 Width: image.objectWidth/tempRatio[tempRatio.length-1],
-                Height: realH/tempRatio[tempRatio.length-1],
+                Height: image.objectHeight/tempRatio[tempRatio.length-1],
                 x: image.left,
                 y: image.top,
                 DPI: image.width/(image.objectWidth/tempRatio[tempRatio.length-1]),
@@ -1101,6 +1135,9 @@ function addAwkwardImage(src, info = false){
             percentY = options.percentY;
             percentW = options.percentW;
             percentH = options.percentH;
+            image.dpi = options.DPI;
+            dpi = image.dpi;
+
         } else {
             options = {
                 x: image.left,
@@ -1108,12 +1145,24 @@ function addAwkwardImage(src, info = false){
             };
         // } else {
             // options = {
-            //     x: image.left,
+                //     x: image.left,
             //     y: image.top
             // }
         }
 
+
         createListItem(name, 'Image', options);
+
+        if (dpi < 96) {
+            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + " - BAD</div >");
+            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - BAD</div ></div>");
+        } else if (dpi < 145) {
+            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + "-OKAY</div >");
+            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - GOOD</div ></div>");
+        } else {
+            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + "-GREAT</div >");
+            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - GREAT</div ></div>");
+        }
 
         // image.scaleToWidth(newWidth);
         //image.scale(getRandomNum(0.1, 0.25)).setCoords();
@@ -1123,7 +1172,7 @@ function addAwkwardImage(src, info = false){
             prevCanvas[a].add(image);
         }
 
-        canvas.add(image);
+        // canvas.add(image);
 
         console.log(prevCanvas[0].toObject());
 
@@ -1292,19 +1341,27 @@ function createListItem(id, type, options = null){
         '<div class="row">' +
         '<div class="col-sm-6 object_x">X: ' + options.x + '</div>' +
         '<div class="col-sm-6 object_y">Y: ' + options.y + '</div>' +
-        '<div class="col-sm-6 object_x">DPI: ' + Math.round(options.DPI) + '</div>' +
-        '</div>';
-
-    delete options.x;
-    delete options.y;
-
-    if(Object.keys(options).length > 0){
-        list += '<div class="bg-info p-3 text-light font-weight-bold">';
-        for(var a in options){
-            if(a!='DPI')
-            list += "| "+a + ": " + options[a] + "in |";
-        }
-        list += '</div>';
+        '</div><div class="object_bg">';
+        
+        delete options.x;
+        delete options.y;
+        
+        if(Object.keys(options).length > 0){
+            if (dpi < 96) {
+                list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000">';
+                list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - BAD</div>';
+            } else if (dpi < 145) {
+                list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff">';
+                list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - GOOD</div>';
+            } else {
+                list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00">';
+                list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - GREAT</div>';
+            }
+            list += '</div></div>';
+        // for(var a in options){
+        //     if(a!='DPI')
+        //     list += "| "+a + ": " + options[a] + "in |";
+        // }
     }
 
     list += '</li>';
