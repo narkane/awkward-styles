@@ -1172,7 +1172,7 @@ function addAwkwardImage(src, info = false){
             prevCanvas[a].add(image);
         }
 
-        // canvas.add(image);
+        canvas.add(image);
 
         console.log(prevCanvas[0].toObject());
 
