@@ -4,6 +4,7 @@
     <script type="text/javascript" src="<?php echo e(asset('js/mockup/jquery.miniColors.min.js')); ?>"></script>
     <script type="text/javascript" src="<?php echo e(asset('js/mockup/color-picker.min.js')); ?>"></script>
     <link type="text/css" rel="stylesheet" href="<?php echo e(url('/')); ?>/packages/aimeos/shop/themes/elegance/aimeos.css">
+    <link href="https://fonts.googleapis.com/css?family=<?php echo e($googleFontLink); ?>&display=swap" rel="stylesheet">
     <link href="<?php echo e(asset('css/color-picker.min.css')); ?>" rel="stylesheet"/>
     <style type="text/css">
         .footer {
@@ -14,7 +15,7 @@
         }
 
         body {
-            padding-top: 60px;
+            /* padding-top: 60px; */
         }
 
         .color-preview {
@@ -36,61 +37,12 @@
             -ms-transform: rotate(90deg);
         }
 
-        .Arial {
-            font-family: "Arial";
-        }
+        <?php $__currentLoopData = $googleFontList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $name => $css): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <?php echo e(".".str_replace(" ", "_", $name)); ?> {
+            <?php echo $css; ?>
 
-        .Helvetica {
-            font-family: "Helvetica";
         }
-
-        .MyriadPro {
-            font-family: "Myriad Pro";
-        }
-
-        .Delicious {
-            font-family: "Delicious";
-        }
-
-        .Verdana {
-            font-family: "Verdana";
-        }
-
-        .Georgia {
-            font-family: "Georgia";
-        }
-
-        .Courier {
-            font-family: "Courier";
-        }
-
-        .ComicSansMS {
-            font-family: "Comic Sans MS";
-        }
-
-        .Impact {
-            font-family: "Impact";
-        }
-
-        .Monaco {
-            font-family: "Monaco";
-        }
-
-        .Optima {
-            font-family: "Optima";
-        }
-
-        .HoeflerText {
-            font-family: "Hoefler Text";
-        }
-
-        .Plaster {
-            font-family: "Plaster";
-        }
-
-        .Engagement {
-            font-family: "Engagement";
-        }
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
         .mock-block {
             border: 1px solid #000000;
@@ -339,47 +291,13 @@
                                     title="Font Style"><i class="icon-font" style="width:19px;height:19px;"></i>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="font-family-X">
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Arial');"
-                                       class="Arial">Arial</a></li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Helvetica');"
-                                       class="Helvetica">Helvetica</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Myriad Pro');"
-                                       class="MyriadPro">Myriad
-                                        Pro</a></li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Delicious');"
-                                       class="Delicious">Delicious</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Verdana');"
-                                       class="Verdana">Verdana</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Georgia');"
-                                       class="Georgia">Georgia</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Courier');"
-                                       class="Courier">Courier</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Comic Sans MS');"
-                                       class="ComicSansMS">Comic
-                                        Sans MS</a></li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Impact');"
-                                       class="Impact">Impact</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Monaco');"
-                                       class="Monaco">Monaco</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Optima');"
-                                       class="Optima">Optima</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Hoefler Text');"
-                                       class="Hoefler Text">Hoefler
-                                        Text</a></li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Plaster');"
-                                       class="Plaster">Plaster</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Engagement');"
-                                       class="Engagement">Engagement</a>
-                                </li>
+
+                                <?php $__currentLoopData = $googleFontList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $name => $css): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <li>
+                                        <a tabindex="-1" href="javascript:void(0)" onclick="setFont('<?php echo e($name); ?>');"
+                                           class="<?php echo e(str_replace(" ", "_", $name)); ?>"><?php echo e($name); ?></a>
+                                    </li>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </ul>
 
                         </div>
@@ -597,4 +515,5 @@
     </script>
 
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('layouts.dashboard', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>

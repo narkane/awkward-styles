@@ -9,9 +9,6 @@ use App\Http\Controllers\Controller;
 class ImageMakerController extends Controller
 {
 
-    private $templateW = 999;
-    private $templateH = 999;
-
     private $info = null;
 
     private $templateExists = true;
@@ -29,31 +26,29 @@ class ImageMakerController extends Controller
      * @param @mediaId
      * @throws \ImagickException
      */
-    public function index(Request $request, $pid, $size, $art_design, $mediaId = null)
+    public function index(Request $request, $pid, $size, $art_design = 0, $mediaId = null)
     {
 
         $newWidth = 400;
         $newHeight = 400;
-        $imageWidth = 0;
-        $imageHeight = 0;
-        $groupWidth = 0;
-        $groupHeight = 0;
         $topX = 999;
         $topY = 999;
         $bottomX = 0;
         $bottomY = 0;
-
-        $msgX = 0;
-        $msgT = 0;
 
         $design = null;
 
             // Get design
             try {
 
-                $design_query = \App\ArtistDesigns::where('id', '=', $art_design);
+                if($art_design != 0) {
+                    $design_query = \App\ArtistDesigns::where('id', '=', $art_design);
 
-                $design = json_decode($design_query->first()->design_data);//\App\ArtistDesigns::where('id', '=', $art_design)->first()->design_data);
+                    $design = json_decode($design_query->first()->design_data);//\App\ArtistDesigns::where('id', '=', $art_design)->first()->design_data);
+                } else {
+                    $design = new \stdClass();
+                    $design->objects = [];
+                }
 
                 $template = \App\Templates::where('pid', '=', $pid)
                         ->where('size', '=', $size);
@@ -66,6 +61,7 @@ class ImageMakerController extends Controller
 
                 $image = new \Imagick();
                 $image->setBackgroundColor(new \ImagickPixel('transparent'));
+                $image->setResolution(300,300);
 
                 if (!is_null($mediaId)) {
                     //if (ProductInformation::verifyMediaToProduct($pid, $mediaId)) {
@@ -131,8 +127,6 @@ class ImageMakerController extends Controller
                     $bottomY = $topY * 2;
 
                     $drawRect = new \ImagickDraw();
-                    //$draw->setFillColor(new \ImagickPixel("rgba(255,255,255,0)"));
-                    //$draw->color($t->x, $t->y, \Imagick::PAINT_POINT);
                     $drawRect->rectangle($topX, $topY, $bottomX, $bottomY);
 
                     $clipMask->drawImage($drawRect);
@@ -146,24 +140,50 @@ class ImageMakerController extends Controller
 
                 $iLeft = 999;
                 $iTop = 999;
-
                 // Go Through Each Object
                 foreach ($design->objects as $obj) {
 
-                    if (!isset($obj->src) || $obj->src === null) {
+                    if ($obj->type === 'awkward-image' && (!isset($obj->src) || $obj->src === null)) {
                         continue;
                     }
 
                     $iLeft = ($obj->left < $iLeft) ? $obj->left : $iLeft;
                     $iTop = ($obj->top < $iTop) ? $obj->top : $iTop;
 
-                    // Get Test Image
                     $designImage = new \Imagick();
-                    $designUrl = (substr($obj->src, 0, 4) === "data") ?
-                        base64_decode(explode(",", $obj->src)[1]) : file_get_contents($this->setPath($obj->src));
-                    $designImage->readImageBlob($designUrl);
 
-                    $artGeo = $designImage->getImageGeometry();
+                    if($obj->type === 'awkward-image') {
+                        //continue;
+                        // Get Test Image
+                        $designUrl = (substr($obj->src, 0, 4) === "data") ?
+                            base64_decode(explode(",", $obj->src)[1]) : file_get_contents($this->setPath($obj->src));
+                        $designImage->readImageBlob($designUrl);
+
+                    } else {
+
+                        $designImage->newImage($obj->width, $obj->height, new \ImagickPixel('transparent'));
+                        $designImage->setImageFormat('png');
+
+                        $draw = new \ImagickDraw();
+                        $draw->setGravity(\Imagick::GRAVITY_NORTHEAST);
+                        $draw->setFillColor(new \ImagickPixel($obj->fill));
+
+                        $draw->setFont($this->findFont($obj->fontFamily));
+                        $draw->setFontSize($obj->fontSize);
+                        if($obj->fontWeight !== null || !empty($obj->fontWeight)) {
+                            $draw->setFontWeight(800);
+                        }
+
+                        if($obj->fontStyle !== "normal"){
+                            $draw->setFontStyle(\Imagick::STYLE_ITALIC);
+                        }
+
+                        $draw->setTextDecoration(($obj->underline) ? \Imagick::DECORATION_UNDERLINE : \Imagick::DECORATION_NO);
+
+                        $designImage->annotateImage($draw,
+                            0, 0, $obj->angle, $obj->text);
+
+                    }
 
                     $scaleW = $obj->percentW * $groupWidth;
                     $scaleH = $obj->percentH * $groupHeight;
@@ -175,40 +195,13 @@ class ImageMakerController extends Controller
                         $designImage->rotateImage(new \ImagickPixel('transparent'), $obj->angle);
                     }
 
-                    //$compositeW = (((($groupWidth * $obj->percentX) + $topX)/2) - ($designImage->getImageWidth() / 2));
-                    //$compositeH = (((($groupHeight * $obj->percentY) + $topY)/2) - ($designImage->getImageHeight() / 2));
-                    //$compositeW = (($groupWidth * $obj->percentX));
-                    //$compositeH = (($groupHeight * $obj->percentY));
-                    $compositeW = ($topX + ($groupWidth * $obj->percentX) - ($designImage->getImageWidth()/2));
-                    $compositeH = ($topY + ($groupHeight * $obj->percentY) - ($designImage->getImageHeight()/2));
+                    $compositeW = ($topX + ($groupWidth * $obj->percentX) - ($designImage->getImageWidth() / 2));
+                    $compositeH = ($topY + ($groupHeight * $obj->percentY) - ($designImage->getImageHeight() / 2));
 
                     $myImages->compositeImage(
                         $designImage, \Imagick::COMPOSITE_DEFAULT,
                         $compositeW,
                         $compositeH);
-
-                    /*
-                    $this->info = array(
-                        "groupW" => $groupWidth,
-                        "groupH" => $groupHeight,
-                        "topX" => $topX,
-                        "topY" => $topY,
-                        "bottomX" => $bottomX,
-                        "bottomY" => $bottomY,
-                        "obj->W" => $obj->objectWidth,
-                        "obj->H" => $obj->objectHeight,
-                        "imageW" => $designImage->getImageWidth(),
-                        "imageH" => $designImage->getImageHeight(),
-                        "scaleW" => $scaleW,
-                        "scaleH" => $scaleH,
-                        "x" => $compositeW,
-                        "Y" =>$compositeH
-                    );
-
-                    array_push($this->info, $obj);
-                    die(var_dump($this->info));
-                    */
-
 
                     //$myImages->addImage($designImage);
                 }
@@ -233,41 +226,32 @@ class ImageMakerController extends Controller
             } catch (\Exception $e) {
 
                 // DROP SOME ERROR IMAGE
-                /*
+
+
+                $this->info = "b";
+
                 echo "MESSAGE: " . $e->getMessage() . "<br/>";
                 echo "CODE: " . $e->getCode() . "<br/>";
                 echo "FILE: " . $e->getFile() . "<br/>";
                 echo "LINE: " . $e->getLine() . "<br/>";
                 die();
-
-                /*
-                // Create Error Image
-                $draw = new \ImagickDraw();
-
-                $image->newImage(400, 400, new \ImagickPixel('#ffffff'));
-
-                $draw->setFont('Arial');
-                $draw->setFontSize(10);
-
-                $image->annotateImage($draw, 20, 50, 0, $e->getMessage());
-                */
+/*
 
                 $image = new \Imagick();
                 $errorImg = file_get_contents(public_path() . "/images/error_image.png");
                 $image->readImageBlob($errorImg);
                 $image->adaptiveResizeImage(400,400,true);
-
+                */
             }
+
+        if(is_null($this->info)) {
 
             $image->setImageFormat('png');
-
-            // FOR ERROR PURPOSES
-            if(is_null($this->info)) {
-                header('Content-type: image/png');
-                echo $image->getImageBlob();
-            }
+            header('Content-type: image/png');
+            echo $image->getImageBlob();
             $image->destroy();
             die();
+        }
 
     }
 
@@ -325,4 +309,25 @@ class ImageMakerController extends Controller
         return $draw;
     }
 
+    /**
+     * Creates font file if it doesn't exist, or reads it if it does.
+     * @param $fontName
+     * @return string
+     */
+    private function findFont($fontName){
+        $tffFile = fullPublicPath(['fonts','google']) . DIRECTORY_SEPARATOR
+            . str_replace(" ", "_", $fontName) . '.ttf';
+
+        if(!file_exists($tffFile)){
+            $fontUrl = 'http://fonts.googleapis.com/css?family=' . str_replace(" ", "+", $fontName);
+            $fontDescription = file_get_contents($fontUrl);
+            $startStr = 'url(';
+            $startStrLen = strlen($startStr);
+            $start = strpos($fontDescription, $startStr) + $startStrLen;
+            $end = strpos($fontDescription, ')', $start);
+            $tffUrl = substr($fontDescription, $start, $end - $start);
+            file_put_contents($tffFile, file_get_contents($tffUrl));
+        }
+        return $tffFile;
+    }
 }

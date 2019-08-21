@@ -1,12 +1,12 @@
 @extends('layouts.dashboard')
 
 @section('content')
-    <!-- <script src="{{ asset('js/ProductContainer.js') }}"></script> -->
     <script type="text/javascript" src="{{ asset('js/mockup/fabric.js') }}"></script>
     <script type="text/javascript" src="{{ asset('js/mockup/tshirtEditor.js')}}"></script>
     <script type="text/javascript" src="{{ asset('js/mockup/jquery.miniColors.min.js')}}"></script>
     <script type="text/javascript" src="{{ asset('js/mockup/color-picker.min.js') }}"></script>
     <link type="text/css" rel="stylesheet" href="{{ url('/') }}/packages/aimeos/shop/themes/elegance/aimeos.css">
+    <link href="https://fonts.googleapis.com/css?family={{ $googleFontLink }}&display=swap" rel="stylesheet">
     <link href="{{ asset('css/color-picker.min.css') }}" rel="stylesheet"/>
     <style type="text/css">
         .footer {
@@ -17,7 +17,7 @@
         }
 
         body {
-            padding-top: 60px;
+            /* padding-top: 60px; */
         }
 
         .color-preview {
@@ -39,61 +39,11 @@
             -ms-transform: rotate(90deg);
         }
 
-        .Arial {
-            font-family: "Arial";
+        @foreach($googleFontList as $name => $css)
+        {{ ".".str_replace(" ", "_", $name) }} {
+            {!! $css !!}
         }
-
-        .Helvetica {
-            font-family: "Helvetica";
-        }
-
-        .MyriadPro {
-            font-family: "Myriad Pro";
-        }
-
-        .Delicious {
-            font-family: "Delicious";
-        }
-
-        .Verdana {
-            font-family: "Verdana";
-        }
-
-        .Georgia {
-            font-family: "Georgia";
-        }
-
-        .Courier {
-            font-family: "Courier";
-        }
-
-        .ComicSansMS {
-            font-family: "Comic Sans MS";
-        }
-
-        .Impact {
-            font-family: "Impact";
-        }
-
-        .Monaco {
-            font-family: "Monaco";
-        }
-
-        .Optima {
-            font-family: "Optima";
-        }
-
-        .HoeflerText {
-            font-family: "Hoefler Text";
-        }
-
-        .Plaster {
-            font-family: "Plaster";
-        }
-
-        .Engagement {
-            font-family: "Engagement";
-        }
+        @endforeach
 
         .mock-block {
             border: 1px solid #000000;
@@ -166,7 +116,7 @@
 
                 <div class="col-md-2">
 
-                    <div type="button" class="mock-block border-primary" id="show-text-editor" data-toggle="text-editor">
+                    <div class="mock-block border-primary" id="show-text-editor" data-toggle="text-editor">
                         <div class="mock-block-contents">
                             <h2 class="far fa-edit"></h2>
                             <p>Add Text</p>
@@ -179,27 +129,21 @@
                         </div>
                     </div>
 
-                    <div type="button" class="mock-block border-primary" id="imageUpload" data-target="#fileUpload">
+                    <div class="mock-block border-primary" id="imageUpload" data-target="#fileUpload">
                         <div class="mock-block-contents">
                             <h1 class="fas fa-upload"></h1>
                             <p>Upload Image</p>
                         </div>
                     </div>
 
-                    <div type="button" class="mock-block border-primary" id="productSearch">
+                    <div class="mock-block border-primary" id="productSearch">
                         <div class="mock-block-contents">
                             <h2 class="fas fa-tshirt"></h2>
-
-
-                            <button id="myArtBtn">Art</button>
-                            <button id="myPBtn">Products</button>
+                            <p>Products</p>
                         </div>
                     </div>
 
                 </div>
-                <!-- <div id="ProductContainer">
-                    <product />
-                </div> -->
 
                 <div style="display:none;">
                     <input type="file" accept="image/*" id="fileUpload"/>
@@ -209,25 +153,8 @@
 
                     <div class="container shirt-block" style="padding:50px 0px 0px 0px">
 
-
                         <div id="shirtDiv" class="page"
                              style="position: relative; background-color: rgb(255, 255, 255);">
-                                                
-                            <div id="myArtModal" class="modal">
-                                <div class="art-modal-content">
-                                    <span class="art-close">&times;</span>
-                                    <p>NO ART PAGE!</p>
-                                </div>
-                            </div>
-
-                            <div id="myModal" class="modal">
-                                <div class="modal-content">
-                                    <span class="close">&times;</span>
-                                    <p>SWEET GOD IT WORKS!!!~</p>
-                                    <iframe src="/product/select/">whoops!</iframe>
-                                </div>
-                            </div>
-
                             <img id="shirtFacing" src=""/>
                             <div id="shirtDrawingArea"
                                  style="position: absolute;top: 0px;left: 0px;z-index: 10;">
@@ -235,6 +162,7 @@
                                         style="-webkit-user-select: none; max-width:400px; max-height: 400px;"></canvas>
                             </div>
                         </div>
+
                     </div>
 
                     <div class="catalog-detail-basket">
@@ -364,47 +292,13 @@
                                     title="Font Style"><i class="icon-font" style="width:19px;height:19px;"></i>
                             </button>
                             <ul class="dropdown-menu" role="menu" aria-labelledby="font-family-X">
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Arial');"
-                                       class="Arial">Arial</a></li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Helvetica');"
-                                       class="Helvetica">Helvetica</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Myriad Pro');"
-                                       class="MyriadPro">Myriad
-                                        Pro</a></li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Delicious');"
-                                       class="Delicious">Delicious</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Verdana');"
-                                       class="Verdana">Verdana</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Georgia');"
-                                       class="Georgia">Georgia</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Courier');"
-                                       class="Courier">Courier</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Comic Sans MS');"
-                                       class="ComicSansMS">Comic
-                                        Sans MS</a></li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Impact');"
-                                       class="Impact">Impact</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Monaco');"
-                                       class="Monaco">Monaco</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Optima');"
-                                       class="Optima">Optima</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Hoefler Text');"
-                                       class="Hoefler Text">Hoefler
-                                        Text</a></li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Plaster');"
-                                       class="Plaster">Plaster</a>
-                                </li>
-                                <li><a tabindex="-1" href="javascript:void(0)" onclick="setFont('Engagement');"
-                                       class="Engagement">Engagement</a>
-                                </li>
+
+                                @foreach($googleFontList as $name => $css)
+                                    <li>
+                                        <a tabindex="-1" href="javascript:void(0)" onclick="setFont('{{ $name }}');"
+                                           class="{{ str_replace(" ", "_", $name) }}">{{$name}}</a>
+                                    </li>
+                                @endforeach
                             </ul>
 
                         </div>
