@@ -165,7 +165,7 @@ class ImageMakerController extends Controller
                         $designImage->setImageCompressionQuality(100);
                     } else {
 
-                        $designImage->newImage($obj->width, $obj->height, new \ImagickPixel('transparent'));
+                        $designImage->newImage($obj->width * $obj->scaleX, $obj->height * $obj->scaleY, new \ImagickPixel('transparent'));
                         //$designImage->setResolution(10000,10000);
                         $designImage->setImageFormat('png');
 
@@ -235,7 +235,7 @@ class ImageMakerController extends Controller
 
                 // DROP SOME ERROR IMAGE
 
-/*
+
                 $this->info = "b";
 
                 echo "MESSAGE: " . $e->getMessage() . "<br/>";
@@ -243,13 +243,13 @@ class ImageMakerController extends Controller
                 echo "FILE: " . $e->getFile() . "<br/>";
                 echo "LINE: " . $e->getLine() . "<br/>";
                 die();
-/*/
+/*
 
                 $image = new \Imagick();
                 $errorImg = file_get_contents(public_path() . "/images/error_image.png");
                 $image->readImageBlob($errorImg);
                 $image->adaptiveResizeImage(400,400,true);
-
+*/
             }
 
         if(is_null($this->info)) {
@@ -324,10 +324,12 @@ class ImageMakerController extends Controller
      */
     private function findFont($fontName){
         $tffFile = fullPublicPath(['fonts','google']) . DIRECTORY_SEPARATOR
-            . str_replace(" ", "_", $fontName) . '.ttf';
+            . str_replace("'", "", str_replace('"', "",
+                str_replace(" ", "_", $fontName))) . '.ttf';
 
         if(!file_exists($tffFile)){
-            $fontUrl = 'http://fonts.googleapis.com/css?family=' . str_replace(" ", "+", $fontName);
+            $fontUrl = 'http://fonts.googleapis.com/css?family=' . str_replace("'", "", str_replace('"', "",
+                    str_replace(" ", "+", $fontName)));
             $fontDescription = file_get_contents($fontUrl);
             $startStr = 'url(';
             $startStrLen = strlen($startStr);
