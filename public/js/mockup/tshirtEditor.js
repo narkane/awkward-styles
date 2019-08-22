@@ -1073,7 +1073,7 @@ function addAwkwardImage(src, info = false){
     console.log(loaded);
     setTimeout(() => {
         loaded = true;
-    }, 4000);
+    }, 8000);
 
     let name = randomString();
     let objInd = objectIndex++;
