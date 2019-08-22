@@ -76,3 +76,13 @@
 [22-Aug-2019 16:48:15 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'excel' (tried: ext\excel (The specified module could not be found.), ext\php_excel.dll (The specified module could not be found.)) in Unknown on line 0
 [22-Aug-2019 16:48:17 UTC] PHP Warning:  Module 'imagick' already loaded in Unknown on line 0
 [22-Aug-2019 16:48:21 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdflib' (tried: ext\pdflib (The specified module could not be found.), ext\php_pdflib.dll (The specified module could not be found.)) in Unknown on line 0
+[22-Aug-2019 20:27:24 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'oci8_12c' (tried: ext\oci8_12c (The specified module could not be found.), ext\php_oci8_12c.dll (The specified module could not be found.)) in Unknown on line 0
+[22-Aug-2019 20:27:24 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdo_oci' (tried: ext\pdo_oci (The specified module could not be found.), ext\php_pdo_oci.dll (The specified module could not be found.)) in Unknown on line 0
+[22-Aug-2019 20:27:24 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'excel' (tried: ext\excel (The specified module could not be found.), ext\php_excel.dll (The specified module could not be found.)) in Unknown on line 0
+[22-Aug-2019 20:27:24 UTC] PHP Warning:  Module 'imagick' already loaded in Unknown on line 0
+[22-Aug-2019 20:27:24 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdflib' (tried: ext\pdflib (The specified module could not be found.), ext\php_pdflib.dll (The specified module could not be found.)) in Unknown on line 0
+[22-Aug-2019 21:28:46 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'oci8_12c' (tried: ext\oci8_12c (The specified module could not be found.), ext\php_oci8_12c.dll (The specified module could not be found.)) in Unknown on line 0
+[22-Aug-2019 21:28:46 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdo_oci' (tried: ext\pdo_oci (The specified module could not be found.), ext\php_pdo_oci.dll (The specified module could not be found.)) in Unknown on line 0
+[22-Aug-2019 21:28:46 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'excel' (tried: ext\excel (The specified module could not be found.), ext\php_excel.dll (The specified module could not be found.)) in Unknown on line 0
+[22-Aug-2019 21:28:46 UTC] PHP Warning:  Module 'imagick' already loaded in Unknown on line 0
+[22-Aug-2019 21:28:46 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdflib' (tried: ext\pdflib (The specified module could not be found.), ext\php_pdflib.dll (The specified module could not be found.)) in Unknown on line 0
