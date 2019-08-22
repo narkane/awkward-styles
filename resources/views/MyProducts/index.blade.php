@@ -75,16 +75,40 @@
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-3">
-                            Art
-                            <br/>
-                            Products
+                        <div class="col-3 border-right">
+                            <ul class="list-group">
+                                <li class="list-group-item" onclick="openDiv('art')">
+                                    <h4>
+                                       Art
+                                    </h4>
+                                    <small>Select art</small>
+                                </li>
+                                <li class="list-group-item" onclick="openDiv('product')">
+                                    <h4>
+                                        Product
+                                    </h4>
+                                    <small>Select A Product</small>
+                                </li>
                         </div>
                         <div class="col-9">
-                            <div class="row">
+                            <div class="row product-detail" id="artDiv" style="overflow-y: scroll">
+                                @foreach($artworks as $artwork)
+                                    <div class="col-3" style="max-width: 300px">
+                                        <div class="card p-3">
+                                            <img src="{{ $artwork->url }}" class="card-img-top"
+                                                 style="max-width: 150px; max-height: 150px;"
+                                                id="{{ $artwork->id }}">
+                                            <div class="body text-center">
+                                                <h5>{{ $artwork->artname}}</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div class="row product-detail" id="productDiv">
                                 @foreach($items as $type => $data)
                                 <div class="col-3" style="max-width: 300px;">
-                                    <a href="/mockupgenerator/{{ $data[0] }}" title="{{ $type }}">
+                                    <a href="/mockupgenerator/{{ $data[0] }}" title="{{ $type }}" class="img_url">
                                         <img src="{{ $data[1] }}" style="max-width: 300px; max-height: 300px;"/>
                                         <h4 style="text-align: center">{{ strtoupper($type) }}</h4>
                                     </a>
@@ -102,5 +126,69 @@
 </div>
 <script>
 
+    function openDiv(type){
+        // Types are Art and Product
+        productDiv = $("#productDiv");
+        artDiv = $("#artDiv");
+
+        if(type === 'art'){
+            productDiv.hide();
+            artDiv.show();
+        } else {
+            productDiv.show();
+            artDiv.hide();
+        }
+    }
+
+    function removeFromSelected(id){
+        for(let i in artSelected){
+            if(artSelected[i] === id){
+                artSelected.splice(i,1);
+                i--;
+            }
+        }
+    }
+
+    function appendToUrl(){
+        let artworkUrl = "?";
+        for(let i in artSelected){
+            artworkUrl += "art=" + artSelected[i] + "&";
+        }
+
+        $(".img_url").each(function(){
+           // $(this).attr('src', )
+        });
+    }
+
+    openDiv('art');
+
+    var artSelected = [];
+
+    $(document).ready(function(){
+        $(".card-img-top").on('click', function(){
+            if($(this).parent().hasClass('img_selected')){
+                $(this).parent().removeClass('img_selected');
+                removeFromSelected($(this).attr('id'));
+            } else {
+                $(this).parent().addClass('img_selected');
+                artSelected.push($(this).attr('id'));
+            }
+        });
+    });
+
 </script>
+    <style>
+        .img_selected {
+            background-color: rgba(0,150,255,0.5);
+        }
+
+        .list-group-item {
+            cursor: pointer;
+        }
+
+        .list-group-item:hover,
+        .list-group-item:active {
+            background-color: rgba(0,150,255,0.5);
+        }
+    </style>
 @endsection

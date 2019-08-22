@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Artwork;
 use App\ProductInformation;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -56,12 +57,18 @@ class AddProductsController extends Controller
             $items[$type] = [$pid, ProductInformation::mediaById($pid)[0]->url];
         }
 
+        $artworks = Artwork::where('parentid', '=', $user_id)->get();
+
+        foreach($artworks as $k => $artwork){
+            $artworks[$k]->url = \App\Media::getUrlById($artwork->mediaid);
+        }
 
             return view('MyProducts.index', [
                 'menu' => 'stores',
                 'menuitem' => 'products',
                 'user' => $user_id,
-                'items' => $items
+                'items' => $items,
+                'artworks' => $artworks
             ]);
     }
 
