@@ -83,7 +83,7 @@
                         <div class="col-9">
                             <div class="row">
                                 @foreach($items as $type => $data)
-                                <div class="col-3">
+                                <div class="col-3" style="max-width: 300px;">
                                     <a href="/mockupgenerator/{{ $data[0] }}" title="{{ $type }}">
                                         <img src="{{ $data[1] }}" style="max-width: 300px; max-height: 300px;"/>
                                         <h4 style="text-align: center">{{ strtoupper($type) }}</h4>

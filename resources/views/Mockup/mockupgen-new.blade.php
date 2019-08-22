@@ -168,7 +168,7 @@
                                 <div class="modal-content">
                                     <span class="close">&times;</span>
                                     <p>SWEET GOD IT WORKS!!!~</p>
-                                    <iframe src="/product/select/">whoops!</iframe>
+                                    <iframe width="75%" src="/select/mens/">whoops!</iframe>
                                 </div>
                             </div>
 

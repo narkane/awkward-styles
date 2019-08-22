@@ -217,12 +217,12 @@ class MockupgenController extends Controller
 
         // For Artist
         $is_public = ($request->has('is_public')) ? $request->input('is_public') : true;
-        $storefront_id = ($request->has('storefront_id')) ? $request->input('storefront_id') : null;
+        $storefronts = ($request->has('storefront')) ? $request->input('storefront') : null;
         $design_id = ($request->has('design_id')) ? $request->input('design_id') : null;
 
         // Create Object
         $design = ArtistDesigns::createDesign(
-            $design_data, $pid, $user_id, $storefront_id, $is_public, $design_id
+            $design_data, $pid, $user_id, $storefronts, $is_public, $design_id
         );
 
         if($design){

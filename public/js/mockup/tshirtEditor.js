@@ -99,6 +99,7 @@ function init(){
             pbtn.onclick = function () {
                 modal.style.display = "block";
             }
+
             abtn.onclick = function () {
                 amodal.style.display = "block";
             }
