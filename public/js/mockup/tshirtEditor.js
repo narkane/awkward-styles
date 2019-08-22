@@ -164,6 +164,7 @@ function init(){
     }else{
         console.log("STORAGE: ");
         console.log(localStorage);
+        if(localStorage.length==0){alert('it broke!');}
         console.log(dpi);
         let item = canvas.getObjects();
         
