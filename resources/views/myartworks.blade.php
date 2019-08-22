@@ -35,6 +35,9 @@
     </style>
     <div class="container">
 
+        <div id="flash_message">
+        </div>
+
         <div class="row">
             <div class="col-md-3">
                 @include('menu');
@@ -188,7 +191,7 @@
                                         @endif
                                         <div class="mt-3">
                                             <img @if(isset($id)) src="{{ $current_artwork->artwork }}"
-                                                 @else src="images/blank.jpg" @endif id="artwork_image" width="80"
+                                                 @else src="images/paint_splatter.png" @endif id="artwork_image" width="80"
                                                  height="80"
                                                  class="img-fluid" alt=""/>
                                         </div>
@@ -456,7 +459,16 @@
                     },
                     success: (result) => {
                         console.log(result);
-                        $("#delete_" + id).closest("li").remove();
+
+                        let flash = $("#flash_message");
+
+                        if(result.status !== "error") {
+                            $("#delete_" + id).closest("li").remove();
+                            flash.html('<div class="alert-success">' + result.msg + '</div>');
+                        } else {
+                            flash.html('<div class="alert-danger">' + result.msg + '</div>');
+                        }
+                        $('html,body').animate({ scrollTop: 0 }, 'fast');
                     },
                     error: (err, data) => {
                         console.log("ERROR: " + JSON.stringify(err));

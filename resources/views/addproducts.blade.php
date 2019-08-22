@@ -19,13 +19,13 @@ if( selectedproducts.length == 0) {
 } else {
   if(selectedproducts.indexOf(v) != -1){
     if(selectedproducts.indexOf(','+v) != -1){
-    selectedproducts = selectedproducts.replace(','+v, '');  
+    selectedproducts = selectedproducts.replace(','+v, '');
     } else if(selectedproducts.indexOf(v+',') != -1) {
-    selectedproducts = selectedproducts.replace(v+',', '');  
+    selectedproducts = selectedproducts.replace(v+',', '');
     } else {
-    selectedproducts = selectedproducts.replace(v, '');  
+    selectedproducts = selectedproducts.replace(v, '');
     }
-    $('#storeproducts').val(selectedproducts);  
+    $('#storeproducts').val(selectedproducts);
   } else {
   $('#storeproducts').val(selectedproducts+','+v);
 }
@@ -45,13 +45,13 @@ if( selectedBrands.length == 0) {
 } else {
   if(selectedBrands.indexOf(v) != -1){
     if(selectedBrands.indexOf(','+v) != -1){
-    selectedBrands = selectedBrands.replace(','+v, '');  
+    selectedBrands = selectedBrands.replace(','+v, '');
     } else if(selectedBrands.indexOf(v+',') != -1) {
-    selectedBrands = selectedBrands.replace(v+',', '');  
+    selectedBrands = selectedBrands.replace(v+',', '');
     } else {
-    selectedBrands = selectedBrands.replace(v, '');  
+    selectedBrands = selectedBrands.replace(v, '');
     }
-    $('#storeBrands').val(selectedBrands);  
+    $('#storeBrands').val(selectedBrands);
   } else {
   $('#storeBrands').val(selectedBrands+','+v);
 }

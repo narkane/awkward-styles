@@ -19,9 +19,9 @@
                         <li><a href="#">My Products</a></li>
                     </ul>
                     <div class="float-right">
-                        <a href="/addproducts/new" alt="Add New Product" title="Add New Product" type="button" class="btn btn-secondary">
+                        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#itemListModal">
                             Add New Product
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -62,6 +62,43 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal -->
+    <div class="modal" id="itemListModal" tabindex="-1" role="dialog" aria-labelledby="itemModalLabel" aria-hidden="true">
+        <div class="modal-dialog w-75 mw-100" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="itemModalLabel">Select A Product Type</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-3">
+                            Art
+                            <br/>
+                            Products
+                        </div>
+                        <div class="col-9">
+                            <div class="row">
+                                @foreach($items as $type => $data)
+                                <div class="col-3">
+                                    <a href="/mockupgenerator/{{ $data[0] }}" title="{{ $type }}">
+                                        <img src="{{ $data[1] }}" style="max-width: 300px; max-height: 300px;"/>
+                                        <h4 style="text-align: center">{{ strtoupper($type) }}</h4>
+                                    </a>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 <script>
 

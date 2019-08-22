@@ -7,6 +7,7 @@ use Aimeos\Shop\Base\Aimeos;
 use Aimeos\Shop\Controller\BasketController;
 use App\ArtistDesigns;
 use App\ProductInformation;
+use App\Storefront;
 use Illuminate\Http\Request;
 use App\Http\Services\MockupgenService;
 use DB;
@@ -91,7 +92,7 @@ class MockupgenController extends Controller
             }
         }
 
-        $user_id = (Auth::check()) ? Auth::user()->getAuthIdentifierName() : null;
+        $user_id = (Auth::check()) ? Auth::user()->getAuthIdentifier() : null;
 
         $design = null;
 
@@ -103,6 +104,13 @@ class MockupgenController extends Controller
             })->get();
         }
 
+        // List Storefronts if user is logged in
+        $storefronts = null;
+
+        if(Auth::check()){
+            $storefronts = Storefront::where("user_id", "=", $user_id)->get();
+        }
+
         // Get Image Dimensions
 
         //list($w,$h) = getimagesize((strpos($images[0]->full_url, "http://") ? $images[0]->full_url :
@@ -110,6 +118,7 @@ class MockupgenController extends Controller
 
         $googleList = googleFontList();
         $googleLink = str_replace(" ", "+", implode("|",array_keys($googleList)));
+
 
         return view('Mockup.mockupgen-new', [
             'art' => $art,
@@ -120,6 +129,7 @@ class MockupgenController extends Controller
             'variants' => $variants,
             'token' => $this->getToken(),
             'canvasUrls' => $this->standInImageUrls(),
+            'storefronts' => $storefronts,
             'design' => $design,
             'googleFontList' => googleFontList(),
             'googleFontLink' => $googleLink

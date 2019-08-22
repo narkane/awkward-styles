@@ -140,7 +140,9 @@
 
                             @foreach($request as $prod)
                                 @if(!empty($prod->full_url))
-                                <a class="product-content p-2 text-center d-block" href="/mockupgenerator/{{ $prod->id }}">
+                                <a class="product-content p-2 text-center d-block"
+                                   @if($select == '/product/')href="/mockupgenerator/{{ $prod->id }}"
+                                    @else href="javascript:void(0)" onclick="productImage({{ $prod->id }}, 'XS', '{{ $prod->full_url }}');" @endif>
                                     <img src="{{$prod->full_url}}" class="product-image" style="max-width: 400; max-height: 400;">
                                     <h6 class="product-detals">{{$prod->label}}</h6>
                                     <h4 class="product-price">$ {{number_format((float)$prod->salePrice, 2, '.', '')}}</h4>
