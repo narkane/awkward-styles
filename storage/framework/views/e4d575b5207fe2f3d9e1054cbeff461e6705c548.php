@@ -46,6 +46,9 @@
                                         <a href="<?php echo  url('addproducts') ; ?>" <?php if(isset($menuitem)&&$menuitem == 'products') echo 'style="background-color: #f5f5f5;"'; ?>> <span class="icon-store"></span><label>Manage Products</label> </a>
                                     </li>
                                     <li>
+                                        <a href="<?php echo  url('managedesigns') ; ?>" <?php if(isset($menuitem)&&$menuitem == 'designs') echo 'style="background-color: #f5f5f5;"'; ?>> <span class="icon-store"></span><label>Manage Designs</label> </a>
+                                    </li>
+                                    <li>
                                         <a href="<?php echo  url('createstore') ; ?>" <?php if(isset($menuitem)&&$menuitem == 'createstore') echo'style="background-color: #f5f5f5;"';?>> <span class="icon-store"></span><label>Manage Stores</label> </a>
                                     </li>
                                 </ul>

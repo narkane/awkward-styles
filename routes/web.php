@@ -73,6 +73,8 @@ Route::get('/ordertracking', 'OrdersTrackingController@ordertracking')->name('or
 
 Route::post('/addtobasket', 'MockupgenController@addProduct');
 
+Route::get('/managedesigns', 'ManageDesignsController@index')->name('manageDesigns');
+
 /**
  * Products Page
  */

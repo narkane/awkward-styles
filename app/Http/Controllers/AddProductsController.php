@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Artwork;
 use App\ProductInformation;
+use App\Storefront;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use DB;
@@ -31,16 +32,6 @@ class AddProductsController extends Controller
         $user_id = Auth::user()->getAuthIdentifier();
 
         // TODO: Add settings to contorl the actual item images to be shown
-        /*
-        // pillow 1456
-        // hat 1402
-        // shirt 112
-        // hoodie 111
-        // bag 333
-        // canvas 1455
-        // cup
-        */
-
         $pidList = [
             "shirt" => 112,
             "hoodie" => 111,
@@ -63,12 +54,19 @@ class AddProductsController extends Controller
             $artworks[$k]->url = \App\Media::getUrlById($artwork->mediaid);
         }
 
+        // Get Storefront IDS
+        $storefronts = Storefront::select("id","name")->where('user_id', '=', $user_id)->get();
+
+        // Get Products
+
+
             return view('MyProducts.index', [
                 'menu' => 'stores',
                 'menuitem' => 'products',
                 'user' => $user_id,
                 'items' => $items,
-                'artworks' => $artworks
+                'artworks' => $artworks,
+                'storefronts' => $storefronts
             ]);
     }
 

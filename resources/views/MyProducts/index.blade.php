@@ -28,7 +28,18 @@
                 <div class="row bg-white mt-4 my-accont-forms p-4">
                     <div class="col-md-12">
 
-                        <h5>My Products</h5>
+                        <div class="row">
+                            <div class="col-8">
+                                <h5>My Products</h5>
+                            </div>
+                            <div class="col-4 text-right">
+                                <select name="storesort" id="storesort">
+                                    <option value="all">View All Products</option>
+                                    @foreach($storefronts as $storefront)
+                                        <option value="{{ $storefront->id }}">{{ $storefront->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
                         <div class="row products-row" id="art-product-list">
 
@@ -157,7 +168,7 @@
 
         $(".img_url").each(function(){
             let src = $(this).attr('href').split("?")[0];
-           // $(this).attr('src', )
+            $(this).attr('href', src + artworkUrl.substring(0,artworkUrl.length - 1));
         });
     }
 
@@ -174,6 +185,22 @@
                 $(this).parent().addClass('img_selected');
                 artSelected.push($(this).attr('id'));
             }
+            appendToUrl();
+        });
+
+        $("#storesort").on('change', function(){
+
+            let params = '{{ app('request')->input('sort') }}';
+           // Append To This URL
+           let url = '{{ url()->current() }}';
+           let val = $(this).val();
+
+           if(params === '' && val !== 'all' && val !== params){
+               window.location.href = url + "?sort=" + val;
+           }
+           if(params !== '' && val === 'all'){
+               window.location.href = url;
+           }
         });
     });
 
