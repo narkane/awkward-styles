@@ -45,12 +45,14 @@ function createRenderUrl($pid, $size, $design, $mediaId = null)
  *
  * $arr['images','test'] = public_path() "/images/test" etc.
  * @param $arr
+ * @return string
  */
 function fullPublicPath($arr){
     $str = public_path();
     foreach($arr as $dir) {
         $str .= DIRECTORY_SEPARATOR.ltrim($dir, DIRECTORY_SEPARATOR);
     }
+    return $str;
 }
 
 /**
