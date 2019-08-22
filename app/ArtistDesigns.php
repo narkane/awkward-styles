@@ -9,7 +9,7 @@ class ArtistDesigns extends Model
     public $table = "tbl_art_designs";
 
     public $fillable = [
-        'id', 'artist_id', 'product_id', 'storefront_id', 'is_public', 'design_data'
+        'id', 'artist_id', 'product_id', 'storefronts', 'is_public', 'design_data'
     ];
 
     /**
@@ -31,7 +31,7 @@ class ArtistDesigns extends Model
                 'id' => $id, 'artist_id' => $artist_id],[
                     'design_data' => $design_data,
                     'product_id' => $product_id,
-                    'storefront_id' => $storefront_id,
+                    'storefronts' => $storefront_id,
                     'is_public' => $is_public
             ]);
         } else {
@@ -39,7 +39,7 @@ class ArtistDesigns extends Model
                 'artist_id' => $artist_id,
                 'design_data' => $design_data,
                 'product_id' => $product_id,
-                'storefront_id' => $storefront_id,
+                'storefronts' => $storefront_id,
                 'is_public' => $is_public
             ]);
         }

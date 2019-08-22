@@ -156,6 +156,7 @@
         }
 
         $(".img_url").each(function(){
+            let src = $(this).attr('href').split("?")[0];
            // $(this).attr('src', )
         });
     }
