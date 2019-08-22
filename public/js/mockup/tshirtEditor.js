@@ -38,14 +38,15 @@ var prevCanvas = [
  *        4: rectangle
  */
 
-var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH, dpi;
+var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH;
 var groupWidth=[];
 var groupHeight=[];
 var groupX=[]; 
 var groupY=[];
 var groupN=[];
 var tempRatio = [];
-var srcA = [];
+var storefront = [];
+var dpi = {};
 var upperLeft = 999;
 var upperTop = 999;
 var mainc;
@@ -146,9 +147,15 @@ function init(){
 
     $("#saveMyDesign").on('click', function (e)
     {
+        let anyFailed = false;
         console.log(dpi);
-    if(dpi < 96){
-        alert("Your current DPI is too low.\nScale down your image or upload a larger/higher quality image please.\nDPI: " + dpi);
+    for(i in dpi){
+        if(dpi[i] < 96){
+            alert("Your current DPI is too low.\nScale down your image or upload a larger/higher quality image please.\nDPI: " + dpi[i]);
+            anyFailed = true;
+        }
+    }
+    if(anyFailed == true){
         e.stopPropagation();
         e.preventDefault();
         // return -1;
@@ -313,16 +320,6 @@ function init(){
                 var startTimer = function () {
                     clearTimeout(timer);
                     sessionInfo(e.target);
-                    if (dpi < 96) {
-                        // $("#" + e.target.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + " - BAD</div >");
-                        $("#" + e.target.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff2222"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - BAD</div ></div>");
-                    } else if (dpi < 145) {
-                        // $("#" + e.target.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + "-OKAY</div >");
-                        $("#" + e.target.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#3399ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - GOOD</div ></div>");
-                    } else {
-                        // $("#" + e.target.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + "-GREAT</div >");
-                        $("#" + e.target.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#33ff44"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - GREAT</div ></div>");
-                    }
                 };
                 startTimer();
             } else {
@@ -604,10 +601,22 @@ var sessionInfo = function(item, file = null){
     percentY = item.percentY;
     percentW = item.percentW;
     percentH = item.percentH;
-    dpi = item.dpi;
+    dpi[item.objectName] = item.dpi;
 
     console.log(item.percentX);
     console.log(item.percentW);
+    console.log(item.dpi);
+
+    if (dpi[item.objectName] < 96) {
+        // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + " - BAD</div >");
+        $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff2222"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - BAD</div ></div>");
+    } else if (dpi[item.objectName] < 145) {
+        // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + "-OKAY</div >");
+        $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#3399ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - GOOD</div ></div>");
+    } else {
+        // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + "-GREAT</div >");
+        $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#33ff44"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - GREAT</div ></div>");
+    }
 
     if(item.type === 'awkward-image' && item.toObject().src.length > 200){
 
@@ -1142,7 +1151,7 @@ function addAwkwardImage(src, info = false){
             percentW = options.percentW;
             percentH = options.percentH;
             image.dpi = options.DPI;
-            dpi = image.dpi;
+            dpi[image.objectName] = image.dpi;
 
         } else {
             options = {
@@ -1159,15 +1168,15 @@ function addAwkwardImage(src, info = false){
 
         createListItem(name, 'Image', options);
 
-        if (dpi < 96) {
-            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + " - BAD</div >");
-            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - BAD</div ></div>");
-        } else if (dpi < 145) {
-            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + "-OKAY</div >");
-            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - GOOD</div ></div>");
+        if (dpi[image.objectName] < 96) {
+            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + " - BAD</div >");
+            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - BAD</div ></div>");
+        } else if (dpi[image.objectName] < 145) {
+            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + "-OKAY</div >");
+            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - GOOD</div ></div>");
         } else {
-            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi) + "-GREAT</div >");
-            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi) + " - GREAT</div ></div>");
+            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + "-GREAT</div >");
+            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - GREAT</div ></div>");
         }
 
         // image.scaleToWidth(newWidth);
@@ -1622,28 +1631,48 @@ fabric.AwkwardText.async = true;
 
 function saveDesign (csrfToken){
 
+    var stores = document.getElementsByName("storefront");
+
+
     let form = document.createElement('form');
 
     let csrf = document.createElement('input');
     let design_object = document.createElement('input');
-
+    
     form.method = "POST";
     form.action = "";
-
+    
     csrf.id = "_token";
     csrf.name = "_token";
     csrf.value = csrfToken;
     csrf.hidden = true;
-
+    
     design_object.id = "design_object";
     design_object.name = "design_object";
     design_object.value = localStorage.getItem("canvas");
-
+    
     form.appendChild(csrf);
     form.appendChild(design_object);
 
+    for (let i = 0; i < stores.length; i++) {
+        if (stores[i].checked) {
+            storefront.push(stores[i].value);
+            console.log("STORE #s - Were set for departure!");
+            console.log(storefront);
+        }
+    }
+    if(storefront.length != 0){
+        console.log(stores);
+        let sf = document.createElement('input');
+        sf.id = "storefront";
+        sf.name = "storefront";
+        sf.value = storefront;
+        form.appendChild(sf);
+        console.log(sf.value);
+    }
+
     document.body.appendChild(form);
-    // console.log(design_object.value);
+    console.log(design_object.value);
     form.submit();
-    timeout(readDesign(3), 1000);
+    // timeout(readDesign(3), 1000);
 };
