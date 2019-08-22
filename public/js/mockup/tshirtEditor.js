@@ -1672,7 +1672,7 @@ function saveDesign (csrfToken){
     }
 
     document.body.appendChild(form);
-    // console.log(design_object.value);
-    form.submit();
+    console.log(design_object.value);
+    // form.submit();
     // timeout(readDesign(3), 1000);
 };
