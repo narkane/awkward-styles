@@ -162,7 +162,6 @@ function init(){
         e.preventDefault();
         // return -1;
     }else{
-        setTimeout(() => {    
         console.log("STORAGE: ");
         console.log(localStorage);
         if (localStorage.length == 0) { alert('it broke!'); }
@@ -232,8 +231,6 @@ function init(){
                 prevCanvas[c].add(obj);
             }
         }
-
-        }, 3000);
     }
     });
 
