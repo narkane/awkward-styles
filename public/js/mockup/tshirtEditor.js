@@ -39,7 +39,6 @@ var prevCanvas = [
  */
 
 var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH;
-var loaded=[];
 var groupWidth=[];
 var groupHeight=[];
 var groupX=[]; 
@@ -132,7 +131,6 @@ function init(){
 
     $("#fileUpload").on('change', function (e) {
         if (e.target.files && e.target.files[0]) {
-            loaded.push(false);
             var reader = new FileReader();
 
             reader.onload = function () {
@@ -164,7 +162,7 @@ function init(){
     }else{
         console.log("STORAGE: ");
         console.log(localStorage);
-        if(localStorage.length==0){alert('it broke!');}
+        if (localStorage.length == 0) { alert('it broke!'); }
         console.log(dpi);
         let item = canvas.getObjects();
         
@@ -318,7 +316,6 @@ function init(){
         },
         'object:modified': function (e) {
             // canvas.clipPath.opacity = 0.5;
-            if(loaded[loaded.length-1]==true){
             setCoordinates(e.target);
             // if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
                 // var startTimer = function () {
@@ -328,9 +325,6 @@ function init(){
                 // startTimer();
             // } else {
                 sessionInfo(e.target);
-            }else{
-                alert('PATIENCE!');
-            }
             // }
         },
         'selection:updated': onObjectSelected,
@@ -423,7 +417,6 @@ function init(){
 
     $(".design-images").click(function (e) {
         var el = e.target;
-        loaded.push(false);
         addAwkwardImage(el.src);
     });
 
@@ -1200,12 +1193,6 @@ function addAwkwardImage(src, info = false){
         console.log(prevCanvas[0].toObject());
 
         sessionInfo(image, info);
-        for(each in loaded){
-            if(loaded[each]==false){
-                loaded[each]=true;
-                break;
-            }
-        }
     });
     }catch(e){
         console.log("BREEEAKER!");
