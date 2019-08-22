@@ -599,9 +599,21 @@ var sessionInfo = function(item, file = null){
     item.percentW = item.objectWidth / groupWidth[mainc];
     item.percentH = item.objectHeight / groupHeight[mainc];
     if (item.type === 'awkward-image')
-    {item.dpi = item.width / (item.objectWidth / tempRatio[tempRatio.length-1]);
-    dpi[item.objectName] = item.dpi;
-    console.log(item.dpi);}
+    {
+        item.dpi = item.width / (item.objectWidth / tempRatio[tempRatio.length-1]);
+        dpi[item.objectName] = item.dpi;
+        console.log(item.dpi);
+        if (dpi[item.objectName] < 96) {
+            // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + " - BAD</div >");
+            $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff2222"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - BAD</div ></div>");
+        } else if (dpi[item.objectName] < 145) {
+            // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + "-OKAY</div >");
+            $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#3399ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - GOOD</div ></div>");
+        } else {
+            // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + "-GREAT</div >");
+            $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#33ff44"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - GREAT</div ></div>");
+        }
+    }
 
     percentX = item.percentX;
     percentY = item.percentY;
@@ -610,17 +622,6 @@ var sessionInfo = function(item, file = null){
 
     console.log(item.percentX);
     console.log(item.percentW);
-
-    if (dpi[item.objectName] < 96) {
-        // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + " - BAD</div >");
-        $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff2222"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - BAD</div ></div>");
-    } else if (dpi[item.objectName] < 145) {
-        // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + "-OKAY</div >");
-        $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#3399ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - GOOD</div ></div>");
-    } else {
-        // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + "-GREAT</div >");
-        $("#" + item.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#33ff44"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[item.objectName]) + " - GREAT</div ></div>");
-    }
 
     if(item.type === 'awkward-image' && item.toObject().src.length > 200){
 
@@ -1154,24 +1155,23 @@ function addAwkwardImage(src, info = false){
             percentY = options.percentY;
             percentW = options.percentW;
             percentH = options.percentH;
-            image.dpi = options.DPI;
-            dpi[image.objectName] = image.dpi;
-
         } else {
             options = {
                 x: image.left,
-                y: image.top
+                y: image.top,
+                DPI: image.width / (image.objectWidth / tempRatio[tempRatio.length - 1]),
             };
-        // } else {
-            // options = {
-                //     x: image.left,
-            //     y: image.top
-            // }
-        }
-
-
-        createListItem(name, 'Image', options);
-
+            // } else {
+                // options = {
+                    //     x: image.left,
+                    //     y: image.top
+                    // }
+                }
+                image.dpi = options.DPI;
+                dpi[image.objectName] = image.dpi;
+                
+                createListItem(name, 'Image', options);
+                
         if (dpi[image.objectName] < 96) {
             // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + " - BAD</div >");
             $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - BAD</div ></div>");
