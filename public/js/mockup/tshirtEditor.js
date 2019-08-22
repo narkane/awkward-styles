@@ -45,6 +45,7 @@ var groupX=[];
 var groupY=[];
 var groupN=[];
 var tempRatio = [];
+var srcA = [];
 var upperLeft = 999;
 var upperTop = 999;
 var mainc;
@@ -611,7 +612,6 @@ var sessionInfo = function(item, file = null){
 
         var data = new FormData();
         var obj = item.toObject();
-        delete obj.src;
 
         obj.objectIndex = canvas.getObjects().indexOf(item);
 
@@ -642,28 +642,34 @@ var sessionInfo = function(item, file = null){
                     contentType: 'application/json',
                     processData: false,
                     success: (result) => {
+                        // canvas.remove(item);
+                        // result.pop())
+                        findItemByName(obj.objectName).setSrc(result[obj.objectName].src);
+                        
+                        // let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
 
-                        let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
-
-                        // Merge
-                        if (result != null && Object.keys(result).length) {
+                        // // Merge
+                        // if (result != null && Object.keys(result).length) {
                             
-                            // If downloaded, remove from site session
-                            if (!cv.objects) { cv.objects = []; }
-                            for (var i in result) {
-                                let l = Object.keys(cv.objects).length;
-                                if (result[i]) {
-                                    cv.objects[l] = result[i];
-                                    console.log(result[i]);
+                        //     // If downloaded, remove from site session
+                        //     if (!cv.objects) { cv.objects = []; }
+                        //     for (var i in result) {
+                        //         let l = Object.keys(cv.objects).length;
+                        //         if (result[i]) {
+                        //             cv.objects[l] = result[i];
+                        //             console.log(result[i]);
                                     // removeListItem(result[i].objectName);
-                                    removeSessionItem(result[i].objectName, true);
+                                    // srcA.push(result[i].src);
+                                    removeSessionItem(result[obj.objectName].objectName, true);
                                     // removeItemByName(result[i].objectName);
                                     // $(document).ready();
-                                }
-                            }
+                        //         }
+                        //     }
                             
-                            localStorage.setItem('canvas', JSON.stringify(cv));
-                        }
+                        //     localStorage.setItem('canvas', JSON.stringify(cv));
+                        //     console.log("SCREAMINGMEEMEE!!!~");
+                        //     console.log(localStorage);
+                        // }
                     },
                     error: (error, data) => {
                         console.log(error);
@@ -699,7 +705,8 @@ var sessionInfo = function(item, file = null){
         let l = (storage.objects.length) ? storage.objects.length : 0;
         storage.objects[l] = itemObject;
     }
-
+    console.log("DSAGRDGHERACSDF");
+    console.log(storage);
     localStorage.setItem('canvas',JSON.stringify(storage));
     console.log(localStorage);
 };
@@ -1552,26 +1559,26 @@ fabric.AwkwardImage = fabric.util.createClass(fabric.Image, {
 
 fabric.AwkwardImage.fromObject = function (object, callback) {
     // let url = object.src;
-    $.ajax({
-        url: object.src,
-        success: function (data, textStatus) {
-            // URL is good
+    // $.ajax({
+    //     url: object.src,
+    //     success: function (data, textStatus) {
+    //         // URL is good
             fabric.util.loadImage(object.src, function(img) {
             callback && callback(new fabric.AwkwardImage(img,object));
             });
-        }, error: function (jqXHR, textStatus, errorThrown) {
-            // URL is bad
-            console.log("...inner break :(");
-            console.log(errorThrown);
-            // clearAll();
-            fromStorage();
-            // $("#clearAll").click();
-            // setTimeout(function () {$("#drawingArea").click();}, 50);
-            // location.reload(true);
-            // init();
-            setTimeout(function () { canvas.renderAll(); }, 50);
-            // canvas.
-        }});
+        // }, error: function (jqXHR, textStatus, errorThrown) {
+        //     // URL is bad
+        //     console.log("...inner break :(");
+        //     console.log(errorThrown);
+        //     // clearAll();
+        //     fromStorage();
+        //     // $("#clearAll").click();
+        //     // setTimeout(function () {$("#drawingArea").click();}, 50);
+        //     // location.reload(true);
+        //     // init();
+        //     setTimeout(function () { canvas.renderAll(); }, 50);
+        //     // canvas.
+        // }});
 };
 
 fabric.AwkwardImage.fromURL = function (url, callback, imageOptions){
@@ -1635,6 +1642,7 @@ function saveDesign (csrfToken){
     form.appendChild(design_object);
 
     document.body.appendChild(form);
+    // console.log(design_object.value);
     form.submit();
     timeout(readDesign(3), 1000);
 };
