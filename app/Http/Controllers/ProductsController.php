@@ -42,6 +42,8 @@ class ProductsController extends Controller
 
     public function index(Request $request, $category, $type = null){
 
+        $select = (explode("/", $request->path())[0] == "select") ? true : false;
+
         $this->take = ($request->has('count') && in_array($request->get('count'), $this->countArray)) ? $request->get('count') :
             ((!is_null(session()->get('totalCount', null)) ? session()->get('totalCount') : 25));
 
@@ -146,7 +148,7 @@ class ProductsController extends Controller
         }
 
         if (isset($tags)) {
-            return view('Products.products', [
+            return view('Products.products' , [
                 'category' => $category,
                 'type' => $type,
                 'request' => $tags,
@@ -160,7 +162,9 @@ class ProductsController extends Controller
                 'url' => $url,
                 'take' => $this->take,
                 'category_list' => $this->cats,
-                'cloth_cats' => $this->clothCats
+                'cloth_cats' => $this->clothCats,
+                'headUrl' => ($select) ? 'layouts.smallhead' : 'layouts.dashboard',
+                'select' => ($select == false) ? "/product/" : "/select/"
             ]);
         }
         return view('Products.products', ['request' => null]);

@@ -108,6 +108,9 @@ class MockupgenController extends Controller
         //list($w,$h) = getimagesize((strpos($images[0]->full_url, "http://") ? $images[0]->full_url :
         //URL::to("/") . $images[0]->full_url));
 
+        $googleList = googleFontList();
+        $googleLink = str_replace(" ", "+", implode("|",array_keys($googleList)));
+
         return view('Mockup.mockupgen-new', [
             'art' => $art,
             'images' => $images,
@@ -117,11 +120,21 @@ class MockupgenController extends Controller
             'variants' => $variants,
             'token' => $this->getToken(),
             'canvasUrls' => $this->standInImageUrls(),
-            'design' => $design
+            'design' => $design,
+            'googleFontList' => googleFontList(),
+            'googleFontLink' => $googleLink
         ]);
     }
 
-    public function standAlone(Request $request, $pid, $designId){
+    /**
+     * Used for a standalone Canvas
+     * @param Request $request
+     * @param $pid
+     * @param $designId
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function standAlone(Request $request, $pid, $designId)
+    {
         $art_design = ArtistDesigns::where('id', $designId)->first();
 
         $product = DB::table('tbl_products')
@@ -130,24 +143,30 @@ class MockupgenController extends Controller
             ->get();
 
         $images = DB::table('tbl_media_library')
-            ->select("full_url","thumbnail")
-            ->whereIn("id", explode(",", $product[0]->image) )
+            ->select("full_url", "thumbnail")
+            ->whereIn("id", explode(",", $product[0]->image))
             ->get();
 
         return view('Mockup.standalone', [
             'images' => $images,
             'pid' => $pid,
             'art_design' => $art_design
-            ]);
+        ]);
+
     }
 
+    /**
+     * Items to be displayed on the MockupGenerator page
+     * @return array
+     */
     private function standInImageUrls(){
-
         /*
+        // pillow 1456
         // hat 1402
         // shirt 112
         // hoodie 111
         // bag 333
+        // canvas 1455
         // cup
         */
 
@@ -161,9 +180,15 @@ class MockupgenController extends Controller
         //$urls['cup'] = "/images/mug.jpg";
 
         return $urls;
-
     }
 
+    /**
+     * Save the design
+     * @param Request $request
+     * @param $pid
+     * @param null $did
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function save(Request $request, $pid, $did = null){
 
         /**
@@ -199,22 +224,5 @@ class MockupgenController extends Controller
         return (($design) ? redirect('/product-details/' . $pid . '/' . $design) : redirect()->route('mockupgenerator'));
 
     }
-
-    
-
-    /*
-    public function addProduct(Request $request){
-        $ct = app( 'Aimeos\Shop\Base\Context')->get();
-        try {
-
-            $basket = \Aimeos\Controller\Frontend\Factory::createController($ct, 'basket')->get();
-            $basket->addProduct($request->input('pid'));
-        } catch (Exception $e) {
-            die($e->getMessage());
-        }
-
-    }
-    */
-
 
 }
