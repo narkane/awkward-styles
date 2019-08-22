@@ -1664,15 +1664,15 @@ function saveDesign (csrfToken){
     if(storefront.length != 0){
         console.log(stores);
         let sf = document.createElement('input');
-        sf.id = "storeFront[]";
-        sf.name = "storeFront";
+        // sf.id = "storeFront[]";
+        sf.name = "storeFront[]";
         sf.value = storefront;
         form.appendChild(sf);
-        console.log(sf.value);
+        // console.log(sf.value);
     }
 
     document.body.appendChild(form);
-    console.log(design_object.value);
+    // console.log(design_object.value);
     form.submit();
     // timeout(readDesign(3), 1000);
 };
