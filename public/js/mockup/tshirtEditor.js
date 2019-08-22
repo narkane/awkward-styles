@@ -664,8 +664,6 @@ var sessionInfo = function(item, file = null){
                             
                             localStorage.setItem('canvas', JSON.stringify(cv));
                         }
-                        
-                        
                     },
                     error: (error, data) => {
                         console.log(error);
@@ -939,88 +937,88 @@ function setTemplate(main = "main") {
 
 
 function fromStorage(result = null){
-    // let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
-    // // console.log(cv);
-    // console.log(cv.objects);
-    // // cv.objects = Array.from(cv.objects);
-    // // cv.objects.unshift(mainG.toObject());
-    // console.log(cv.objects);
+    let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
+    // console.log(cv);
+    console.log(cv.objects);
+    // cv.objects = Array.from(cv.objects);
+    // cv.objects.unshift(mainG.toObject());
+    console.log(cv.objects);
 
-    // // Merge
-    // if(result != null && Object.keys(result).length){
+    // Merge
+    if(result != null && Object.keys(result).length){
 
-    //     // If downloaded, remove from site session
-    //     if(!cv.objects) { cv.objects = []; }
-    //     for(var i in result){
-    //         let l = Object.keys(cv.objects).length;
-    //         if(result[i]) {
-    //             cv.objects[l] = result[i];
-    //             console.log(result[i]);
-    //             // removeListItem(result[i].objectName);
-    //             removeSessionItem(result[i].objectName, true);
-    //             // removeItemByName(result[i].objectName);
-    //             // $(document).ready();
-    //         }
-    //     }
-    // }
+        // If downloaded, remove from site session
+        if(!cv.objects) { cv.objects = []; }
+        for(var i in result){
+            let l = Object.keys(cv.objects).length;
+            if(result[i]) {
+                cv.objects[l] = result[i];
+                console.log(result[i]);
+                // removeListItem(result[i].objectName);
+                removeSessionItem(result[i].objectName, true);
+                // removeItemByName(result[i].objectName);
+                // $(document).ready();
+            }
+        }
+    }
 
-    // if(cv.objects && Object.keys(cv.objects).length > 0){
+    if(cv.objects && Object.keys(cv.objects).length > 0){
 
-    //     let totalObjs = Object.keys(cv.objects).length;
-    //     let count = 0;
+        let totalObjs = Object.keys(cv.objects).length;
+        let count = 0;
 
-    //     let listItems = [];
+        let listItems = [];
 
-    //     if(totalObjs > 0) {
+        if(totalObjs > 0) {
 
-    //         try{
-    //         canvas.loadFromJSON(cv,canvas.renderAll.bind(canvas), function (o, object) {
+            try{
+            canvas.loadFromJSON(cv,canvas.renderAll.bind(canvas), function (o, object) {
 
-    //             count++;
+                count++;
 
-    //             console.log("-=-=-=-=-");
-    //             console.log(object.objectIndex);
+                console.log("-=-=-=-=-");
+                console.log(object.objectIndex);
 
-    //             if(listItems[object.objectIndex]){
-    //                 listItems[object.objectIndex].push(object)
-    //             } else {
-    //                 listItems[object.objectIndex] = [object];
-    //             }
-    //             console.log(listItems);
+                if(listItems[object.objectIndex]){
+                    listItems[object.objectIndex].push(object)
+                } else {
+                    listItems[object.objectIndex] = [object];
+                }
+                console.log(listItems);
 
-    //             if(count === totalObjs){
-    //                 for(var i in listItems){
-    //                     for(var j in listItems[i]){
-    //                         console.log(i);
-    //                         console.log(j);
-    //                         console.log(listItems[i][j]);
-    //                         if(listItems[i][j].type !== "group"){
-    //                         createListItem(listItems[i][j].objectName,
-    //                             ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
-    //                             ((listItems[i][j].type === "awkward-image") ?
-    //                                 {
-    //                                     width: listItems[i][j].objectWidth*listItems[i][j].scaleX,
-    //                                     height: listItems[i][j].objectHeight*listItems[i][j].scaleY,
-    //                                     x: listItems[i][j].left,
-    //                                     y: listItems[i][j].top
-    //                                 } :
-    //                                 {
-    //                                     x: listItems[i][j].left,
-    //                                     y: listItems[i][j].top
-    //                                 } )
-    //                         );
-    //                     }}
-    //                 }
-    //             }
-    //             fabric.log(object, o);
-    //         });
-    //         } catch (e) {
-    //             console.log("...inner break :(");
-    //             console.log(e);
-    //             // $("#clearAll").click();
-    //         }
-    //     }
-    // }
+                if(count === totalObjs){
+                    for(var i in listItems){
+                        for(var j in listItems[i]){
+                            console.log(i);
+                            console.log(j);
+                            console.log(listItems[i][j]);
+                            if(listItems[i][j].type !== "group"){
+                            createListItem(listItems[i][j].objectName,
+                                ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
+                                ((listItems[i][j].type === "awkward-image") ?
+                                    {
+                                        width: listItems[i][j].objectWidth*listItems[i][j].scaleX,
+                                        height: listItems[i][j].objectHeight*listItems[i][j].scaleY,
+                                        x: listItems[i][j].left,
+                                        y: listItems[i][j].top
+                                    } :
+                                    {
+                                        x: listItems[i][j].left,
+                                        y: listItems[i][j].top
+                                    } )
+                            );
+                        }}
+                    }
+                }
+                fabric.log(object, o);
+            });
+            } catch (e) {
+                console.log("...inner break :(");
+                console.log(e);
+                // $("#clearAll").click();
+            }
+        }
+    }
 }
 
 var radius = function (a, b) {
