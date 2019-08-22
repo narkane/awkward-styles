@@ -1664,8 +1664,8 @@ function saveDesign (csrfToken){
     if(storefront.length != 0){
         console.log(stores);
         let sf = document.createElement('input');
-        sf.id = "storefront";
-        sf.name = "storefront";
+        sf.id = "storeFront[]";
+        sf.name = "storeFront";
         sf.value = storefront;
         form.appendChild(sf);
         console.log(sf.value);
