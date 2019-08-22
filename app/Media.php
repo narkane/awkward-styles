@@ -17,4 +17,8 @@ class Media extends Model
         $media = self::where('id', '=', $id)->first();
         return ($media) ? $media->full_url : null;
     }
+
+    public function artwork() {
+        return $this->belongsTo('App\Artwork', 'mediaid','id');
+    }
 }

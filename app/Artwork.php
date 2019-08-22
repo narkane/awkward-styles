@@ -11,4 +11,8 @@ class Artwork extends Model
     public $guarded = ['id'];
 
     public $timestamps = false;
+
+    public function media() {
+        return $this->hasOne('App\Media', 'id', 'mediaid');
+    }
 }
