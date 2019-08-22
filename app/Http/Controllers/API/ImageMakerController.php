@@ -235,7 +235,7 @@ class ImageMakerController extends Controller
 
                 // DROP SOME ERROR IMAGE
 
-
+/*
                 $this->info = "b";
 
                 echo "MESSAGE: " . $e->getMessage() . "<br/>";
@@ -243,13 +243,13 @@ class ImageMakerController extends Controller
                 echo "FILE: " . $e->getFile() . "<br/>";
                 echo "LINE: " . $e->getLine() . "<br/>";
                 die();
-/*
+/*/
 
                 $image = new \Imagick();
                 $errorImg = file_get_contents(public_path() . "/images/error_image.png");
                 $image->readImageBlob($errorImg);
                 $image->adaptiveResizeImage(400,400,true);
-*/
+//*/
             }
 
         if(is_null($this->info)) {
@@ -328,12 +328,9 @@ class ImageMakerController extends Controller
                 str_replace(" ", "_", $fontName))) . '.ttf';
 
         if(!file_exists($tffFile)){
-<<<<<<< HEAD
             $fontUrl = 'http://fonts.googleapis.com/css?family=' .
-                str_replace("'", "", str_replace('"', "",
-=======
-            $fontUrl = 'http://fonts.googleapis.com/css?family=' . str_replace("'", "", str_replace('"', "",
->>>>>>> cce9b7d87051f13f9db1a69b871b567f57790b86
+                str_replace("'", "",
+                    str_replace('"', "",
                     str_replace(" ", "+", $fontName)));
             $fontDescription = file_get_contents($fontUrl);
             $startStr = 'url(';
