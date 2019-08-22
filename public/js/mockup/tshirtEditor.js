@@ -147,6 +147,7 @@ function init(){
 
     $("#saveMyDesign").on('click', function (e)
     {
+        if(localStorage.length!=0){
         let anyFailed = false;
         console.log(dpi);
     for(i in dpi){
@@ -230,7 +231,7 @@ function init(){
             }
         }
 
-    }});
+    }}});
 
     $(document).on('input', "#imageOpacity", function () {
         let obj = canvas.getActiveObject();
