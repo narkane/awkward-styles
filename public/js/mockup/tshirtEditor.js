@@ -161,7 +161,7 @@ function init(){
             anyFailed = true;
         }
     }
-    if(anyFailed == true && loaded == false){
+    if(anyFailed == true || loaded == false){
         e.stopPropagation();
         e.preventDefault();
         // return -1;
