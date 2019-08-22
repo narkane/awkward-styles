@@ -38,6 +38,7 @@ var prevCanvas = [
  *        4: rectangle
  */
 
+var loaded = true;
 var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH;
 var groupWidth=[];
 var groupHeight=[];
@@ -149,16 +150,17 @@ function init(){
     {
         let anyFailed = false;
         console.log(dpi);
-            if(localStorage.length==0){
-                anyFailed = true;
-            }
+            // if(localStorage.length==0){
+            //     anyFailed = true;
+            //     alert('please operate slowly');
+            // }
     for(i in dpi){
         if(dpi[i] < 96){
             alert("Your current DPI is too low.\nScale down your image or upload a larger/higher quality image please.\nDPI: " + dpi[i]);
             anyFailed = true;
         }
     }
-    if(anyFailed == true){
+    if(anyFailed == true && loaded != false){
         e.stopPropagation();
         e.preventDefault();
         // return -1;
@@ -1066,6 +1068,10 @@ $(document).ready(function () {
 });//doc ready
 
 function addAwkwardImage(src, info = false){
+    loaded = false;
+    setTimeout(() => {
+        loaded = true;
+    }, 4000);
 
     let name = randomString();
     let objInd = objectIndex++;
