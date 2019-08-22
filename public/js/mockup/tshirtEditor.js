@@ -148,6 +148,7 @@ function init(){
 
     $("#saveMyDesign").on('click', function (e)
     {
+        console.log(loaded);
         let anyFailed = false;
         console.log(dpi);
             // if(localStorage.length==0){
@@ -1069,6 +1070,7 @@ $(document).ready(function () {
 
 function addAwkwardImage(src, info = false){
     loaded = false;
+    console.log(loaded);
     setTimeout(() => {
         loaded = true;
     }, 4000);
