@@ -1,3 +1,5 @@
+import { timeout } from "q";
+
 // import Vue from ("vue");
 // require('../components/ItemSelect.vue');
 
@@ -38,7 +40,6 @@ var prevCanvas = [
  *        4: rectangle
  */
 
-var loaded = true;
 var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH;
 var groupWidth=[];
 var groupHeight=[];
@@ -148,24 +149,20 @@ function init(){
 
     $("#saveMyDesign").on('click', function (e)
     {
-        console.log(loaded);
         let anyFailed = false;
         console.log(dpi);
-            // if(localStorage.length==0){
-            //     anyFailed = true;
-            //     alert('please operate slowly');
-            // }
     for(i in dpi){
         if(dpi[i] < 96){
             alert("Your current DPI is too low.\nScale down your image or upload a larger/higher quality image please.\nDPI: " + dpi[i]);
             anyFailed = true;
         }
     }
-    if(anyFailed == true || loaded == false){
+    if(anyFailed == true){
         e.stopPropagation();
         e.preventDefault();
         // return -1;
     }else{
+        setTimeout(() => {    
         console.log("STORAGE: ");
         console.log(localStorage);
         if (localStorage.length == 0) { alert('it broke!'); }
@@ -236,7 +233,9 @@ function init(){
             }
         }
 
-    }});
+        }, 3000);
+    }
+    });
 
     $(document).on('input', "#imageOpacity", function () {
         let obj = canvas.getActiveObject();
@@ -1069,11 +1068,6 @@ $(document).ready(function () {
 });//doc ready
 
 function addAwkwardImage(src, info = false){
-    loaded = false;
-    console.log(loaded);
-    setTimeout(() => {
-        loaded = true;
-    }, 8000);
 
     let name = randomString();
     let objInd = objectIndex++;
