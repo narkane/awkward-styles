@@ -47,7 +47,7 @@
                                         @foreach($designs as $design)
                                                 <div class="col item">
                                                     <div class="product-grid">
-                                                        <div class="product-image">
+                                                        <div class="product-image border rounded">
                                                             <a href="{{url('/')}}/product-details/">
                                                                 <img src="{{ URL("api/designs/images") }}/{{ $design->product_id }}/XS/{{ $design->id }}"
                                                                 style="max-width: 300px; max-height: 300px;" />

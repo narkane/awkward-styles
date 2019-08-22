@@ -18,12 +18,11 @@ class ManageDesignsController extends Controller
 
        if($sort !== null || is_numeric($sort)){
            $designs = ArtistDesigns::where("artist_id", "=", $user_id)
-               ->whereRaw("FIND_IN_SET('?',storefronts)",[$sort])
+               ->whereRaw("FIND_IN_SET(?,storefronts)",[$sort])
                ->get();
        } else {
            $designs = ArtistDesigns::where("artist_id", "=", $user_id)->get();
        }
-
 
         // Get Storefront IDS
         $storefronts = Storefront::select("id","name")->where('user_id', '=', $user_id)->get();
