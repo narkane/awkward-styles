@@ -147,9 +147,11 @@ function init(){
 
     $("#saveMyDesign").on('click', function (e)
     {
-        if(localStorage.length!=0){
         let anyFailed = false;
         console.log(dpi);
+            if(localStorage.length==0){
+                anyFailed = true;
+            }
     for(i in dpi){
         if(dpi[i] < 96){
             alert("Your current DPI is too low.\nScale down your image or upload a larger/higher quality image please.\nDPI: " + dpi[i]);
@@ -231,7 +233,7 @@ function init(){
             }
         }
 
-    }}});
+    }});
 
     $(document).on('input', "#imageOpacity", function () {
         let obj = canvas.getActiveObject();
