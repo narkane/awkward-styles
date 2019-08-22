@@ -137,6 +137,7 @@ class ImageMakerController extends Controller
 
                 $myImages = new \Imagick();
                 $myImages->newImage($newWidth, $newHeight, new \ImagickPixel('transparent'));
+               // $myImages->setResolution(10000,10000);
 
                 $iLeft = 999;
                 $iTop = 999;
@@ -159,9 +160,13 @@ class ImageMakerController extends Controller
                             base64_decode(explode(",", $obj->src)[1]) : file_get_contents($this->setPath($obj->src));
                         $designImage->readImageBlob($designUrl);
 
+                        //$designImage->adaptiveBlurImage(0, 10, \Imagick::ALPHACHANNEL_TRANSPARENT);
+
+                        $designImage->setImageCompressionQuality(100);
                     } else {
 
                         $designImage->newImage($obj->width, $obj->height, new \ImagickPixel('transparent'));
+                        //$designImage->setResolution(10000,10000);
                         $designImage->setImageFormat('png');
 
                         $draw = new \ImagickDraw();
@@ -188,7 +193,8 @@ class ImageMakerController extends Controller
                     $scaleW = $obj->percentW * $groupWidth;
                     $scaleH = $obj->percentH * $groupHeight;
 
-                    $designImage->adaptiveResizeImage($scaleW, $scaleH, true);
+                    $designImage->scaleImage($scaleW, $scaleH, true);
+                    //$designImage->adaptiveResizeImage($scaleW, $scaleH, true);
 
                     // HANDLE ANGLES
                     if ($obj->angle > 0) {
@@ -199,7 +205,9 @@ class ImageMakerController extends Controller
                     $compositeH = ($topY + ($groupHeight * $obj->percentY) - ($designImage->getImageHeight() / 2));
 
                     $myImages->compositeImage(
-                        $designImage, \Imagick::COMPOSITE_DEFAULT,
+                        $designImage,
+                        \Imagick::COMPOSITE_XOR,
+                        //\Imagick::COMPOSITE_DEFAULT,
                         $compositeW,
                         $compositeH);
 
@@ -227,7 +235,7 @@ class ImageMakerController extends Controller
 
                 // DROP SOME ERROR IMAGE
 
-
+      /*
                 $this->info = "b";
 
                 echo "MESSAGE: " . $e->getMessage() . "<br/>";
@@ -235,13 +243,13 @@ class ImageMakerController extends Controller
                 echo "FILE: " . $e->getFile() . "<br/>";
                 echo "LINE: " . $e->getLine() . "<br/>";
                 die();
-/*
+/*/
 
                 $image = new \Imagick();
                 $errorImg = file_get_contents(public_path() . "/images/error_image.png");
                 $image->readImageBlob($errorImg);
                 $image->adaptiveResizeImage(400,400,true);
-                */
+
             }
 
         if(is_null($this->info)) {
@@ -329,5 +337,73 @@ class ImageMakerController extends Controller
             file_put_contents($tffFile, file_get_contents($tffUrl));
         }
         return $tffFile;
+    }
+
+    private function creases($t){
+        function getAverageColorString(\Imagick $imagick) {
+
+            $tshirtCrop = clone $imagick;
+            $tshirtCrop->cropimage(100, 100, 90, 50);
+            $stats = $tshirtCrop->getImageChannelStatistics();
+            $averageRed = $stats[\Imagick::CHANNEL_RED]['mean'];
+            $averageRed = intval(255 * $averageRed / \Imagick::getQuantum());
+            $averageGreen = $stats[\Imagick::CHANNEL_GREEN]['mean'];
+            $averageGreen = intval(255 * $averageGreen / \Imagick::getQuantum());
+            $averageBlue = $stats[\Imagick::CHANNEL_BLUE]['mean'];
+            $averageBlue = intval(255 * $averageBlue / \Imagick::getQuantum());
+            $colorString = "rgb($averageRed, $averageGreen, $averageBlue)";
+
+            return $colorString;
+        }
+
+
+        $tshirt = new \Imagick(realpath("../images/tshirt/tshirt.jpg"));
+        $logo = new \Imagick(realpath("../images/tshirt/Logo.png"));
+        $logo->resizeImage(100, 100, \Imagick::FILTER_LANCZOS, 1, TRUE);
+
+        $tshirt->setImageFormat('png');
+
+//First lets find the creases
+//Get the average color of the tshirt and make a new image from it.
+        $colorString = getAverageColorString($tshirt);
+        $creases = new \Imagick();
+        $creases->newpseudoimage(
+            $tshirt->getImageWidth(),
+            $tshirt->getImageHeight(),
+            "XC:".$colorString
+        );
+
+//Composite difference finds the creases
+        $creases->compositeimage($tshirt, \Imagick::COMPOSITE_DIFFERENCE, 0, 0);
+        $creases->setImageFormat('png');
+//We need the image negated for the maths to work later.
+        $creases->negateimage(true);
+//We also want "no crease" to equal 50% gray later
+//$creases->brightnessContrastImage(-50, 0); //This isn't in Imagick head yet, but is more sensible than the modulate function.
+        $creases->modulateImage(50, 100, 100);
+
+//Copy the logo into an image the same size as the shirt image
+//to make life easier
+        $logoCentre = new \Imagick();
+        $logoCentre->newpseudoimage(
+            $tshirt->getImageWidth(),
+            $tshirt->getImageHeight(),
+            "XC:none"
+        );
+        $logoCentre->setImageFormat('png');
+        $logoCentre->compositeimage($logo, \Imagick::COMPOSITE_SRCOVER, 110, 75);
+
+//Save a copy of the tshirt sized logo
+        $logoCentreMask = clone $logoCentre;
+
+//Blend the creases with the logo
+        $logoCentre->compositeimage($creases, \Imagick::COMPOSITE_MODULATE, 0, 0);
+
+//Mask the logo so that only the pixels under the logo come through
+        $logoCentreMask->compositeimage($logoCentre, \Imagick::COMPOSITE_SRCIN, 0, 0);
+
+//Composite the creased logo onto the shirt
+        $tshirt->compositeimage($logoCentreMask, \Imagick::COMPOSITE_DEFAULT, 0, 0);
+
     }
 }
