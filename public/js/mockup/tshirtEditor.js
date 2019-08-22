@@ -1634,10 +1634,10 @@ function saveDesign (csrfToken){
     var stores = document.getElementsByName("storefront");
 
 
-    let form = document.createElement('form');
+    var form = document.createElement('form');
 
-    let csrf = document.createElement('input');
-    let design_object = document.createElement('input');
+    var csrf = document.createElement('input');
+    var design_object = document.createElement('input');
     
     form.method = "POST";
     form.action = "";
@@ -1663,16 +1663,16 @@ function saveDesign (csrfToken){
     }
     if(storefront.length != 0){
         console.log(stores);
-        let sf = document.createElement('input');
-        sf.id = "storeFront[]";
-        sf.name = "storeFront[]";
-        sf.value = storefront;
+        var sf = document.createElement('input');
+        sf.id = "storeFront";
+        sf.name = "storeFront";
+        sf.value = JSON.stringify(storefront);
         form.appendChild(sf);
-        // console.log(sf.value);
+        console.log(sf.value);
     }
-
-    document.body.appendChild(form);
+    
     console.log(design_object.value);
-    // form.submit();
+    document.body.appendChild(form);
+    form.submit();
     // timeout(readDesign(3), 1000);
 };

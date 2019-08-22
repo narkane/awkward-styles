@@ -8,7 +8,7 @@
           @change="()=>{dataChange(template.geo);}"
         >
           <option selected value="4">Rectangle</option>
-          <option value="2">Custom</option>
+          <!-- <option value="2">Custom</option> -->
           <option value="1">Circle</option>
         </select>
       </v-flex>
