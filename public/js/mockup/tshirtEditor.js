@@ -598,17 +598,18 @@ var sessionInfo = function(item, file = null){
     item.percentY = ((item.top + (item.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc];
     item.percentW = item.objectWidth / groupWidth[mainc];
     item.percentH = item.objectHeight / groupHeight[mainc];
-    item.dpi = item.width / (item.objectWidth / tempRatio[tempRatio.length-1]);
+    if (item.type === 'awkward-image')
+    {item.dpi = item.width / (item.objectWidth / tempRatio[tempRatio.length-1]);
+    dpi[item.objectName] = item.dpi;
+    console.log(item.dpi);}
 
     percentX = item.percentX;
     percentY = item.percentY;
     percentW = item.percentW;
     percentH = item.percentH;
-    dpi[item.objectName] = item.dpi;
 
     console.log(item.percentX);
     console.log(item.percentW);
-    console.log(item.dpi);
 
     if (dpi[item.objectName] < 96) {
         // $("#" + item.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[item.objectName]) + " - BAD</div >");
