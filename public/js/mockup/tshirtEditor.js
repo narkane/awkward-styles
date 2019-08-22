@@ -236,15 +236,15 @@ function init(){
         if (obj.type === 'awkward-image' || obj.type === 'awkward-text') {
             obj.setOpacity(($(this).val() / 100));
             canvas.renderAll();
-            if (obj.type === 'awkward-image' && obj.toObject().src.length > 200) {
-                var startTimer = function () {
-                    clearTimeout(timer);
-                    sessionInfo(obj);
-                };
-                startTimer();
-            } else {
+            // if (obj.type === 'awkward-image' && obj.toObject().src.length > 200) {
+                // var startTimer = function () {
+                    // clearTimeout(timer);
+                    // sessionInfo(obj);
+                // };
+                // startTimer();
+            // } else {
                 sessionInfo(obj);
-            }
+            // }
         }
     });
 
@@ -316,15 +316,15 @@ function init(){
         'object:modified': function (e) {
             // canvas.clipPath.opacity = 0.5;
             setCoordinates(e.target);
-            if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
-                var startTimer = function () {
-                    clearTimeout(timer);
-                    sessionInfo(e.target);
-                };
-                startTimer();
-            } else {
+            // if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
+                // var startTimer = function () {
+                    // clearTimeout(timer);
+                    // sessionInfo(e.target);
+                // };
+                // startTimer();
+            // } else {
                 sessionInfo(e.target);
-            }
+            // }
         },
         'selection:updated': onObjectSelected,
         'selection:cleared': onSelectedCleared
