@@ -33,6 +33,9 @@
     </style>
     <div class="container">
 
+        <div id="flash_message">
+        </div>
+
         <div class="row">
             <div class="col-md-3">
                 <?php echo $__env->make('menu', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>;
@@ -188,7 +191,7 @@
                                         <?php endif; ?>
                                         <div class="mt-3">
                                             <img <?php if(isset($id)): ?> src="<?php echo e($current_artwork->artwork); ?>"
-                                                 <?php else: ?> src="images/blank.jpg" <?php endif; ?> id="artwork_image" width="80"
+                                                 <?php else: ?> src="images/paint_splatter.png" <?php endif; ?> id="artwork_image" width="80"
                                                  height="80"
                                                  class="img-fluid" alt=""/>
                                         </div>
@@ -457,7 +460,16 @@
                     },
                     success: (result) => {
                         console.log(result);
-                        $("#delete_" + id).closest("li").remove();
+
+                        let flash = $("#flash_message");
+
+                        if(result.status !== "error") {
+                            $("#delete_" + id).closest("li").remove();
+                            flash.html('<div class="alert-success">' + result.msg + '</div>');
+                        } else {
+                            flash.html('<div class="alert-danger">' + result.msg + '</div>');
+                        }
+                        $('html,body').animate({ scrollTop: 0 }, 'fast');
                     },
                     error: (err, data) => {
                         console.log("ERROR: " + JSON.stringify(err));

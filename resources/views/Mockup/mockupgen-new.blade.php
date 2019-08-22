@@ -139,7 +139,8 @@
                     <div class="mock-block border-primary" id="productSearch">
                         <div class="mock-block-contents">
                             <h2 class="fas fa-tshirt"></h2>
-                            <p>Products</p>
+                            <button id="myArtBtn">Art</button>
+                            <button id="myPBtn">Products</button>
                         </div>
                     </div>
 
@@ -155,6 +156,23 @@
 
                         <div id="shirtDiv" class="page"
                              style="position: relative; background-color: rgb(255, 255, 255);">
+
+                            <div id="myArtModal" class="modal">
+                                <div class="art-modal-content">
+                                    <span class="art-close">&times;</span>
+                                    <p>NO ART PAGE!</p>
+                                </div>
+                            </div>
+
+                            <div id="myModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close">&times;</span>
+                                    <p>SWEET GOD IT WORKS!!!~</p>
+                                    <iframe src="/product/select/">whoops!</iframe>
+                                </div>
+                            </div>
+
+
                             <img id="shirtFacing" src=""/>
                             <div id="shirtDrawingArea"
                                  style="position: absolute;top: 0px;left: 0px;z-index: 10;">
@@ -256,7 +274,7 @@
                         <div class="card-header">
 
                             <textarea class="form-control w-100" id="text-string"
-                                      placeholder="Enter your text here.."></textarea>
+                                      placeholder="Enter your text here.." style="font-family:'Source Code Pro';"></textarea>
                             <input type="button" class="btn mx-auto" id="add-text" value="Add/Edit Text"/>
 
                         </div>
@@ -305,21 +323,25 @@
 
                     </div>
 
+                    @if($storefronts != null && $storefronts->isNotEmpty())
                     <div class="card">
                         <div class="card-header">
-                            Checkout
+                            Add To Store Front
                         </div>
                         <div class="card-body">
-                            <form name="checkout" method="POST" action="{{ url('/basket') }}">
-                                {{ csrf_field() }}
-                                <input type="hidden" name="b_prod[0][prodid]" value="{{ $pid }}"/>
-
-                                <button type="submit" name="submit" id="submitCheckout">
-                                    Checkout
-                                </button>
-                            </form>
+                            @foreach($storefronts as $storefront)
+                                <div class="row">
+                                    <div class="col-3 form-check">
+                                        <input type="checkbox" name="storefront" value="{{ $storefront->id }}" class="form-check-input"/>
+                                    </div>
+                                    <div class="col-9">
+                                        {{ $storefront->name }}
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
+                    @endif
                 </div>
             </div>
         </section>
@@ -450,6 +472,14 @@
             size: 'XS',
             url: null
         };
+
+        function productImage(product_id, product_size, product_url){
+            templateVars.pid = product_id;
+            templateVars.size = product_size;
+            templateVars.url = product_url;
+
+            setShirtImage(product_url);
+        }
 
         // MAIN IMAGE
         setShirtImage('{{ $images[0]->full_url }}');

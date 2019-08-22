@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\ProductInformation;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use DB;
@@ -28,15 +29,41 @@ class AddProductsController extends Controller
     {
         $user_id = Auth::user()->getAuthIdentifier();
 
+        // TODO: Add settings to contorl the actual item images to be shown
+        /*
+        // pillow 1456
+        // hat 1402
+        // shirt 112
+        // hoodie 111
+        // bag 333
+        // canvas 1455
+        // cup
+        */
+
+        $pidList = [
+            "shirt" => 112,
+            "hoodie" => 111,
+            "hat" => 1402,
+            "bag" => 333,
+            "pillow" => 1456,
+            "canvas" => 1455,
+            //"cup" => 000
+        ];
+
+        $items = [];
+
+        foreach($pidList as $type => $pid){
+            $items[$type] = [$pid, ProductInformation::mediaById($pid)[0]->url];
+        }
 
 
             return view('MyProducts.index', [
                 'menu' => 'stores',
                 'menuitem' => 'products',
-                'user' => $user_id
+                'user' => $user_id,
+                'items' => $items
             ]);
     }
-
 
     /*
      *
