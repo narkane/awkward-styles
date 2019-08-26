@@ -129,9 +129,15 @@
                     </div>
 
                     <div class="mock-block border-primary" id="imageUpload" data-target="#fileUpload">
+                            <div class="mock-block-contents">
+                                <h1 class="fas fa-upload"></h1>
+                                <p>Upload Image</p>
+                            </div>
+                        </div>
+
+                    <div class="mock-block border-primary" id="uploadBlocker" style="display:none;">
                         <div class="mock-block-contents">
-                            <h1 class="fas fa-upload"></h1>
-                            <p>Upload Image</p>
+                            <h4>Processing..</h4>
                         </div>
                     </div>
 

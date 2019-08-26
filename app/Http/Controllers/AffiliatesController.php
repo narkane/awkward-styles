@@ -23,6 +23,11 @@ class AffiliatesController extends Controller
      */
     public function index()
     {
-        return view('affiliates');
+        return view('Affiliates.affiliates');
+    }
+
+    public function dashboard(){
+        return view('Affiliates.dashboard');
     }
 }
+

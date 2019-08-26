@@ -136,6 +136,9 @@ function init(){
             var reader = new FileReader();
 
             reader.onload = function () {
+                $(this).prop('disabled', true);
+                $("#imageUpload").css("display", "none");
+                $("#uploadBlocker").css('display','block');
                 addAwkwardImage(reader.result, e.target.files[0]);
             };
 
@@ -659,46 +662,76 @@ var sessionInfo = function(item, file = null){
                     success: (result) => {
                         // canvas.remove(item);
                         // result.pop())
-                        findItemByName(obj.objectName).setSrc(result[obj.objectName].src);
+
+                        if(result[obj.objectName])
+                        {
+                            canvas.add(item);
+                            findItemByName(obj.objectName).setSrc(result[obj.objectName].src);
+                            canvas.renderAll();
+
+                            sessioner(item);
+                        }
+
+                        $(this).prop('disabled', false);
+                        $("#imageUpload").css("display", "block");
+                        $("#uploadBlocker").css('display','none');
+
+                        return true;
                         
                         // let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
 
-                        // // Merge
+                        // Merge
                         // if (result != null && Object.keys(result).length) {
-                            
+                        //
                         //     // If downloaded, remove from site session
                         //     if (!cv.objects) { cv.objects = []; }
-                        //     for (var i in result) {
-                        //         let l = Object.keys(cv.objects).length;
-                        //         if (result[i]) {
-                        //             cv.objects[l] = result[i];
-                        //             console.log(result[i]);
-                                    // removeListItem(result[i].objectName);
-                                    // srcA.push(result[i].src);
-                                    removeSessionItem(result[obj.objectName].objectName, true);
-                                    // removeItemByName(result[i].objectName);
-                                    // $(document).ready();
-                        //         }
-                        //     }
-                            
+                        //     cv.objects[obj.objectName] = result[obj.objectName];
+                        //     removeSessionItem(result[obj.objectName].objectName, true);
+                        //
+                        //     // for (var i in result) {
+                        //     //     let l = Object.keys(cv.objects).length;
+                        //     //     if (result[i]) {
+                        //     //         cv.objects[l] = result[i];
+                        //     //         console.log(result[i]);
+                        //     //         removeListItem(result[i].objectName);
+                        //     //         srcA.push(result[i].src);
+                        //     //         removeSessionItem(result[obj.objectName].objectName, true);
+                        //     //         removeItemByName(result[i].objectName);
+                        //     //         $(document).ready();
+                        //     //     }
+                        //     // }
+                        //
                         //     localStorage.setItem('canvas', JSON.stringify(cv));
                         //     console.log("SCREAMINGMEEMEE!!!~");
                         //     console.log(localStorage);
                         // }
+
                     },
                     error: (error, data) => {
                         console.log(error);
+
+                        $(this).prop('disabled', false);
+                        $("#imageUpload").css("display", "block");
+                        $("#uploadBlocker").css('display','none');
                     }
                 });
             },
             error: (error, data) => {
                 console.log(error);
+
+                $(this).prop('disabled', false);
+                $("#imageUpload").css("display", "block");
+                $("#uploadBlocker").css('display','none');
             }
         });
+    } else {
 
-        return true;
+        sessioner(item);
+
     }
+};
 
+function sessioner(item){
     let storage = (localStorage.getItem('canvas')) ? JSON.parse(localStorage.getItem('canvas')) : {};
 
     storage.objects = (storage.objects) ? storage.objects : [];
@@ -724,7 +757,7 @@ var sessionInfo = function(item, file = null){
     console.log(storage);
     localStorage.setItem('canvas',JSON.stringify(storage));
     console.log(localStorage);
-};
+}
 
 function setShirtImage(imgurl, canvasType = "canvas"){
 
@@ -1185,13 +1218,15 @@ function addAwkwardImage(src, info = false){
 
         // image.scaleToWidth(newWidth);
         //image.scale(getRandomNum(0.1, 0.25)).setCoords();
-        canvas.add(image);
+        //canvas.add(image);
 
         for(var a in prevCanvas){
             prevCanvas[a].add(image);
         }
 
-        canvas.add(image);
+        if(image.src > 100) {
+            canvas.add(image);
+        }
 
         console.log(prevCanvas[0].toObject());
 

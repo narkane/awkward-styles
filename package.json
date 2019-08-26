@@ -20,10 +20,13 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.9.0",
+        "bootstrap-vue": "^2.0.0-rc.28",
         "pixi.js": "^5.0.4",
         "three": "^0.106.2",
         "three.js": "^0.77.1",
         "vue-carousel": "^0.18.0",
+        "vue-clipboard2": "^0.3.0",
+        "vue-graph": "^0.8.5",
         "vuetify": "^1.5.16",
         "vuetify-upload-button": "^2.0.2"
     }

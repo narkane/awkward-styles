@@ -22,6 +22,8 @@ Auth::routes();
 
 ###jthummel
 Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
+Route::get('/affiliates/dashboard', 'AffiliatesController@dashboard')->name('affiliateDashboard');
+
 Route::get('/comingsoon', 'ComingSoonController@index')->name('comingsoon');
 Route::get('/search/{id}', 'SearchController@index')->name('search-results');
 Route::get('/thetool/{productId}', 'ToolController@index')->name('thetool');

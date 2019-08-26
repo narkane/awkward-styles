@@ -1,0 +1,184 @@
+<template>
+    <div id="affiliatedb">
+        <b-navbar toggleable="lg" type="light" variant="light" class="row navbar-bg mx-0">
+            <b-navbar-brand>
+                Awkward Styles
+            </b-navbar-brand>
+            <b-navbar-toggle target="navbarSupportedContent">
+                <span class="navbar-toggler-icon"></span>
+            </b-navbar-toggle>
+
+            <b-collapse id="navbarSupportedContent">
+                <b-navbar-nav class="mr-auto">
+                    <b-nav-item href="#" @click="current = 'Dashboard'">
+                        Dashboard
+                    </b-nav-item>
+                    <b-nav-item href="#" @click="current = 'wallet'">
+                        My Wallet
+                    </b-nav-item>
+                    <b-nav-item href="#" @click="current = 'report'">
+                        Purchase Report
+                    </b-nav-item>
+                </b-navbar-nav>
+                <form class="form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                </form>
+            </b-collapse>
+
+        </b-navbar>
+
+        <div class="row main p-0 m-0">
+            <div v-if="showSidebar === true" style="position:relative;">
+                <i class="fa fa-chevron-circle-left" id="sideSlideLeft"
+                   @click="showSidebar = false"></i>
+                <div class="col sidebar p-0">
+                    <div class="SidebarComponent">
+                        <div class="container-fluid sideBarDiv" @click="current = 'Dashboard'">
+                            <i class="fa fa-tachometer-alt pr-2"></i>
+                            <small class="sideText">Dashboard</small>
+                        </div>
+                        <div class="container-fluid sideBarDiv" @click="current = 'wallet'">
+                            <i class="fa fa-wallet pr-2"></i>
+                            <small class="sideText">My Wallet</small>
+                        </div>
+                        <div class="container-fluid sideBarDiv" @click="current = 'report'">
+                            <i class="fa fa-file-invoice pr-2"></i>
+                            <small class="sideText">Purchase Report</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-else-if="showSidebar === false" style="position:relative;">
+                <i class="fa fa-chevron-circle-right" id="sideSlideRight"
+                   @click="showSidebar = true"></i>
+                <div class="col sidebar-thin p-0">
+                    <div class="SidebarComponent" v-if="!showSidebar">
+                        <div class="container-fluid sideBarDiv text-center" title="Dashboard"
+                             @click="current = 'Dashboard'">
+                            <h4 class="fa fa-tachometer-alt" alt="Dashboard"></h4>
+                        </div>
+                        <div class="container-fluid sideBarDiv text-center" title="My Wallet"
+                             @click="current = 'Wallet'">
+                            <h4 class="fa fa-wallet"></h4>
+                        </div>
+                        <div class="container-fluid sideBarDiv text-center" title="Purchase Reports">
+                            <h4 class="fa fa-file-invoice"></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col contentArea">
+                <component v-bind:is="current"></component>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+
+    import Vue from 'vue';
+    import App from './Affiliates.vue';
+
+    // Clipboard
+    import Clipboard from 'vue-clipboard2';
+
+    // Bootstrap Vue
+    import BootstrapVue from 'bootstrap-vue';
+
+    // Bootstrap CSS files
+    import 'bootstrap/dist/css/bootstrap.css';
+    import 'bootstrap-vue/dist/bootstrap-vue.css';
+
+    // Vue Graph
+    import VueGraph from 'vue-graph';
+
+    Vue.config.productionTip = true;
+
+    Vue.use(Clipboard);
+    Vue.use(BootstrapVue);
+    Vue.use(VueGraph);
+
+    export const nv = new Vue();
+
+    // Dashboard
+    import DashboardComponent from './components/DashboardComponent.vue';
+
+    // Wallet
+    import WalletComponent from './components/WalletComponent.vue';
+
+    export default {
+        name: 'affiliatedb',
+
+        data() {
+            return {
+                current: 'Dashboard',
+                showSidebar: true
+
+            }
+        },
+
+        components: {
+            'Dashboard': DashboardComponent,
+            'Wallet': WalletComponent
+        },
+
+        mounted() {
+            this.$root.$on('bv::collapse::state', (collapseId, isJustShown) => {
+                let id = collapseId.split("-");
+                let up = $("#" + id[1] + "-up");
+                let down = $("#" + id[1] + "-down");
+
+                up.css('display', ((!isJustShown) ? 'none' : 'block'));
+
+
+                down.css('display', ((!isJustShown) ? 'block' : 'none'));
+
+                console.log('collapseId:', collapseId)
+                console.log('isJustShown:', isJustShown)
+            });
+        }
+    };
+</script>
+
+<style>
+
+    .sideBarDiv {
+        padding: 5px;
+        cursor: pointer;
+        color: rgba(0,0,0,0.5);
+    }
+
+    .sideBarDiv:hover {
+        background-color: lightblue;
+        color: #000;
+    }
+
+    #sideSlideLeft, #sideSlideRight {
+        position: absolute;
+        right: -8px;
+        top: 50vh;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    a.sideText{
+        color: #000000;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    a.sideText:hover, a.sideText::selection,
+    a.sideText:active {
+        color: darkblue;
+        text-decoration: none;
+        font-size: 12px;
+    }
+
+    .fa-copy {
+        cursor: pointer;
+    }
+
+</style>

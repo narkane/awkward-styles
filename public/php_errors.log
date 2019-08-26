@@ -1744,3 +1744,27 @@
 [22-Aug-2019 22:19:47 UTC] PHP  53. App\Http\Controllers\API\ImageMakerController->index() D:\wamp64\www\awkward-styles\vendor\laravel\framework\src\Illuminate\Routing\Controller.php:54
 [22-Aug-2019 22:19:47 UTC] PHP  54. file_get_contents() D:\wamp64\www\awkward-styles\app\Http\Controllers\API\ImageMakerController.php:160
 [22-Aug-2019 22:19:47 UTC] PHP  55. Illuminate\Foundation\Bootstrap\HandleExceptions->handleError() D:\wamp64\www\awkward-styles\app\Http\Controllers\API\ImageMakerController.php:160
+[23-Aug-2019 00:25:13 UTC] PHP Warning:  POST Content-Length of 11585139 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
+[23-Aug-2019 00:27:27 UTC] PHP Warning:  POST Content-Length of 12495408 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
+[23-Aug-2019 00:37:14 UTC] PHP Warning:  POST Content-Length of 18589711 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
+[23-Aug-2019 00:38:54 UTC] PHP Warning:  POST Content-Length of 17797615 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
+[23-Aug-2019 00:42:46 UTC] PHP Warning:  POST Content-Length of 19909250 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
+[23-Aug-2019 00:43:52 UTC] PHP Warning:  POST Content-Length of 19060206 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
+[23-Aug-2019 21:01:03 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'oci8_12c' (tried: ext\oci8_12c (The specified module could not be found.), ext\php_oci8_12c.dll (The specified module could not be found.)) in Unknown on line 0
+[23-Aug-2019 21:01:03 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdo_oci' (tried: ext\pdo_oci (The specified module could not be found.), ext\php_pdo_oci.dll (The specified module could not be found.)) in Unknown on line 0
+[23-Aug-2019 21:01:03 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'excel' (tried: ext\excel (The specified module could not be found.), ext\php_excel.dll (The specified module could not be found.)) in Unknown on line 0
+[23-Aug-2019 21:01:03 UTC] PHP Warning:  Module 'imagick' already loaded in Unknown on line 0
+[23-Aug-2019 21:01:03 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdflib' (tried: ext\pdflib (The specified module could not be found.), ext\php_pdflib.dll (The specified module could not be found.)) in Unknown on line 0
+[23-Aug-2019 21:01:04 UTC] PHP Notice:  PHP Startup: The cli-server SAPI is not supported by pthreads in Unknown on line 0
+[23-Aug-2019 21:06:12 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'oci8_12c' (tried: ext\oci8_12c (The specified module could not be found.), ext\php_oci8_12c.dll (The specified module could not be found.)) in Unknown on line 0
+[23-Aug-2019 21:06:12 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdo_oci' (tried: ext\pdo_oci (The specified module could not be found.), ext\php_pdo_oci.dll (The specified module could not be found.)) in Unknown on line 0
+[23-Aug-2019 21:06:12 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'excel' (tried: ext\excel (The specified module could not be found.), ext\php_excel.dll (The specified module could not be found.)) in Unknown on line 0
+[23-Aug-2019 21:06:12 UTC] PHP Warning:  Module 'imagick' already loaded in Unknown on line 0
+[23-Aug-2019 21:06:12 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdflib' (tried: ext\pdflib (The specified module could not be found.), ext\php_pdflib.dll (The specified module could not be found.)) in Unknown on line 0
+[23-Aug-2019 21:06:12 UTC] PHP Notice:  PHP Startup: The cli-server SAPI is not supported by pthreads in Unknown on line 0
+[26-Aug-2019 17:42:22 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'oci8_12c' (tried: ext\oci8_12c (The specified module could not be found.), ext\php_oci8_12c.dll (The specified module could not be found.)) in Unknown on line 0
+[26-Aug-2019 17:42:22 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdo_oci' (tried: ext\pdo_oci (The specified module could not be found.), ext\php_pdo_oci.dll (The specified module could not be found.)) in Unknown on line 0
+[26-Aug-2019 17:42:22 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'excel' (tried: ext\excel (The specified module could not be found.), ext\php_excel.dll (The specified module could not be found.)) in Unknown on line 0
+[26-Aug-2019 17:42:22 UTC] PHP Warning:  Module 'imagick' already loaded in Unknown on line 0
+[26-Aug-2019 17:42:22 UTC] PHP Warning:  PHP Startup: Unable to load dynamic library 'pdflib' (tried: ext\pdflib (The specified module could not be found.), ext\php_pdflib.dll (The specified module could not be found.)) in Unknown on line 0
+[26-Aug-2019 17:42:22 UTC] PHP Notice:  PHP Startup: The cli-server SAPI is not supported by pthreads in Unknown on line 0

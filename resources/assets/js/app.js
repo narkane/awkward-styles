@@ -24,6 +24,7 @@ Vue.component("comingsoon", require("./components/Comingsoon.vue"));
 Vue.component("example", require("./components/Example.vue"));
 Vue.component("searchbar", require("./components/Search.vue"));
 Vue.component("thetool", require("./App.vue"));
+Vue.component("affiliatedb", require("./Affiliates.vue"));
 
 const app = new Vue({
   el: "#app",
