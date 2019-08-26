@@ -5,15 +5,51 @@
 
             <div class="col">
 
-                <graph-treemap :width="800"
-                               :height="800"
-                               :text-align="'right'"
-                               :text-vertical-align="'bottom'"
-                               :colors="[ '#EC2500', '#ECE100', '#EC9800', '#9EDE00' ]"
-                               :values="values">
-                    <note :text="'Treemap Chart'" :align="'left'"></note>
-                    <tooltip :position="'top'"></tooltip>
-                </graph-treemap>
+                <b-jumbotron class="profit-gradient text-center box-shadow">
+                    <h3>Your Profits</h3>
+                    <h1>$0.00</h1>
+                </b-jumbotron>
+            </div>
+
+            <div class="col">
+
+                <b-card no-body class="box-shadow">
+                    <b-card-header header-tag="weekSales">
+                        <span class="card-title">
+                            Sales By Week
+                        </span>
+                    </b-card-header>
+                    <b-card-body>
+                        Graph
+                    </b-card-body>
+                </b-card>
+
+            </div>
+
+            <div class="col">
+
+                <b-card no-body class="box-shadow">
+                    <b-card-header header-tag="monthSales">
+                        <span class="card-title">
+                            Sales By Month
+                        </span>
+                    </b-card-header>
+                    <b-card-body>
+                        Graph
+                    </b-card-body>
+                </b-card>
+
+            </div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col">
+
+                <b-jumbotron class="box-shadow text-center">
+                    Other Affiliate Information
+                </b-jumbotron>
 
             </div>
 
@@ -61,4 +97,9 @@
 </script>
 
 <style scoped>
+    .profit-gradient {
+        color: #fff;
+        text-shadow: 2px 2px 4px #000, -2px -2px 4px #000;
+        background-image: radial-gradient(circle, #dbff00, #76ca75);
+    }
 </style>

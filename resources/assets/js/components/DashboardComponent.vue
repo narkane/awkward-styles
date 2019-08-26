@@ -3,8 +3,8 @@
 
         <div class="row">
 
-            <div class="col">
-                <b-card no-body class="p-0 m-4">
+            <div class="col p-0 m-4 box-shadow">
+                <b-card no-body class="p-0 m-0">
 
                     <b-card-header header-tag="header">
                             <span class="card-title">
@@ -129,8 +129,8 @@
                 </b-card>
             </div>
 
-            <div class="col">
-                <b-card no-body class="p-0 m-4">
+            <div class="col p-0 m-4 box-shadow">
+                <b-card no-body class="p-0 m-0">
 
                     <b-card-header header-tag="header">
                         <span class="card-title">
@@ -259,9 +259,9 @@
         </div>
 
         <div class="row">
-            <div class="col">
+            <div class="col p-0 m-4 box-shadow">
 
-                <b-card no-body class="p-0 m-4">
+                <b-card no-body class="p-0 m-0">
                     <b-card-header header-tag="header">
                         <span class="card-title">
                             Featured

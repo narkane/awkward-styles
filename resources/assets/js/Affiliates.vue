@@ -145,6 +145,15 @@
 
 <style>
 
+    /* Cast Shadow Under ALL Div */
+    .box-shadow {
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.6);
+    }
+
+    #affiliatedb {
+        height: 100%;
+    }
+
     .sideBarDiv {
         padding: 5px;
         cursor: pointer;
