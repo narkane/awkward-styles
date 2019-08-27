@@ -3,7 +3,7 @@
 
         <div class="row">
 
-            <div class="col p-0 m-4 box-shadow">
+            <div class="col p-0 m-4 box-shadow h-100">
                 <b-card no-body class="p-0 m-0">
 
                     <b-card-header header-tag="header">
@@ -129,7 +129,7 @@
                 </b-card>
             </div>
 
-            <div class="col p-0 m-4 box-shadow">
+            <div class="col p-0 m-4 box-shadow h-100">
                 <b-card no-body class="p-0 m-0">
 
                     <b-card-header header-tag="header">

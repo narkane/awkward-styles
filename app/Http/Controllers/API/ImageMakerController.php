@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\ProductInformation;
+use Illuminate\Contracts\Logging\Log;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -165,12 +166,14 @@ class ImageMakerController extends Controller
                         $designImage->setImageCompressionQuality(100);
                     } else {
 
-                        $designImage->newImage($obj->width * $obj->scaleX, $obj->height * $obj->scaleY, new \ImagickPixel('transparent'));
+                        $designImage->newImage(($obj->width), ($obj->height), new \ImagickPixel('transparent'));
+                        //$designImage->newImage($imageWidth,$imageHeight, new \ImagickPixel('transparent'));
+
                         //$designImage->setResolution(10000,10000);
                         $designImage->setImageFormat('png');
 
                         $draw = new \ImagickDraw();
-                        $draw->setGravity(\Imagick::GRAVITY_NORTHEAST);
+                        $draw->setGravity(\Imagick::GRAVITY_NORTHWEST);
                         $draw->setFillColor(new \ImagickPixel($obj->fill));
 
                         $draw->setFont($this->findFont($obj->fontFamily));
@@ -179,30 +182,50 @@ class ImageMakerController extends Controller
                             $draw->setFontWeight(800);
                         }
 
-                        if($obj->fontStyle !== "normal"){
+                        if($obj->fontStyle !== "normal") {
                             $draw->setFontStyle(\Imagick::STYLE_ITALIC);
                         }
 
                         $draw->setTextDecoration(($obj->underline) ? \Imagick::DECORATION_UNDERLINE : \Imagick::DECORATION_NO);
 
+                        //$obj->width = $obj->width - ($obj->width * 2);
+
                         $designImage->annotateImage($draw,
-                            0, 0, $obj->angle, $obj->text);
+                            //($topX + ($groupWidth * $obj->percentX) - (($obj->width * $obj->scaleX) / 2)),
+                            //($topY + ($groupHeight * $obj->percentY) - (($obj->height * $obj->scaleY) / 2)),
+                            0,-9,$obj->angle,
+                            $obj->text);
 
                     }
 
-                    $scaleW = $obj->percentW * $groupWidth;
-                    $scaleH = $obj->percentH * $groupHeight;
+//                    if($obj->type === 'awkward-image') {
 
-                    $designImage->scaleImage($scaleW, $scaleH, true);
-                    //$designImage->adaptiveResizeImage($scaleW, $scaleH, true);
+                        $scaleW = (($obj->percentW * $groupWidth) === $designImage->getImageWidth()) ? $design->getImageWidth() : $obj->percentW * $groupWidth;
+                        $scaleH = (($obj->percentH * $groupHeight) === $designImage->getImageHeight()) ? $design->getImageHeight() : $obj->percentH * $groupHeight;
+                        $designImage->scaleImage($scaleW, $scaleH);
+                       //$designImage->adaptiveResizeImage($scaleW, $scaleH, true);
+
+
+//                   }// else {
+//
+//                        $compositeW = 0;
+//                        $compositeH = 0;
+//
+//                    }
+                    $compositeW = ($topX + ($groupWidth * $obj->percentX) - ($designImage->getImageWidth() / 2));
+                    $compositeH = ($topY + ($groupHeight * $obj->percentY) -
+                        ((
+                            ($obj->type === 'awkward-image') ?
+                                $designImage->getImageHeight() :
+                                ($obj->height * $obj->scaleY)
+                            ) / 2
+                        ));
+
 
                     // HANDLE ANGLES
                     if ($obj->angle > 0) {
                         $designImage->rotateImage(new \ImagickPixel('transparent'), $obj->angle);
                     }
-
-                    $compositeW = ($topX + ($groupWidth * $obj->percentX) - ($designImage->getImageWidth() / 2));
-                    $compositeH = ($topY + ($groupHeight * $obj->percentY) - ($designImage->getImageHeight() / 2));
 
                     $myImages->compositeImage(
                         $designImage,
@@ -234,22 +257,21 @@ class ImageMakerController extends Controller
             } catch (\Exception $e) {
 
                 // DROP SOME ERROR IMAGE
+                //$this->info = "b";
 
+                $info = "MESSAGE: " . $e->getMessage() . "<br/>\r\n" .
+                "CODE: " . $e->getCode() . "<br/>\r\n" .
+                "FILE: " . $e->getFile() . "<br/>\r\n" .
+                "LINE: " . $e->getLine() . "<br/><br/>";
+
+                Log::info("Image Render Failure", $info);
 /*
-                $this->info = "b";
-
-                echo "MESSAGE: " . $e->getMessage() . "<br/>";
-                echo "CODE: " . $e->getCode() . "<br/>";
-                echo "FILE: " . $e->getFile() . "<br/>";
-                echo "LINE: " . $e->getLine() . "<br/>";
-                die();
-/*/
 
                 $image = new \Imagick();
                 $errorImg = file_get_contents(public_path() . "/images/error_image.png");
                 $image->readImageBlob($errorImg);
                 $image->adaptiveResizeImage(400,400,true);
-//*/
+*/
             }
 
         if(is_null($this->info)) {
