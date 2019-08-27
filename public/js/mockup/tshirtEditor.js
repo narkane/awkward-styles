@@ -41,11 +41,11 @@ var prevCanvas = [
  */
 
 var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH;
-var groupWidth=[];
-var groupHeight=[];
-var groupX=[]; 
-var groupY=[];
-var groupN=[];
+var groupWidth = [];
+var groupHeight = [];
+var groupX = [];
+var groupY = [];
+var groupN = [];
 var tempRatio = [];
 var storefront = [];
 var dpi = {};
@@ -59,7 +59,7 @@ var templateVars = {
     size: 'L'
 };
 
-function init(){
+function init() {
     /**
      * 
  * START PAGE FUNCTIONS
@@ -136,9 +136,6 @@ function init(){
             var reader = new FileReader();
 
             reader.onload = function () {
-                $(this).prop('disabled', true);
-                $("#imageUpload").css("display", "none");
-                $("#uploadBlocker").css('display','block');
                 addAwkwardImage(reader.result, e.target.files[0]);
             };
 
@@ -150,91 +147,88 @@ function init(){
         console.log($(this).attr('src'));
     });
 
-    $("#saveMyDesign").on('click', function (e)
-    {
+    $("#saveMyDesign").on('click', function (e) {
         let anyFailed = false;
         console.log(dpi);
-    for(i in dpi){
-        if(dpi[i] < 96){
-            alert("Your current DPI is too low.\nScale down your image or upload a larger/higher quality image please.\nDPI: " + dpi[i]);
-            anyFailed = true;
-        }
-    }
-    if(anyFailed == true){
-        e.stopPropagation();
-        e.preventDefault();
-        // return -1;
-    }else{
-        console.log("STORAGE: ");
-        console.log(localStorage);
-        if (localStorage.length == 0) { alert('it broke!'); }
-        console.log(dpi);
-        let item = canvas.getObjects();
-        
-        for (let i in prevCanvas) {
-            prevCanvas[i].clear();
-        }
-        
-        for (let i in item) {
-            for (let c in prevCanvas) {
-                if(item[i].type==='group')
-                {
-                    // prevCanvas[c].add(allG[c]);
-                    continue;
-                }
-                let obj = $.extend(true, {}, item[i]);
-                console.log(item[i].dpi);
-                obj.lockMovementX = true;
-                obj.lockMovementY = true;
-                // console.log("YO HERE IT IS (canvas width):");
-                // console.log(prevCanvas[c].getObjects[0].width)
-                // console.log(obj);
-                // let newW = obj.aCoords.br.x - obj.aCoords.bl.x;
-                // let newH = obj.aCoords.bl.y - obj.aCoords.tl.y;
-                // console.log(newW);
-                // console.log(newH);
-                //
-                let scalewidth = percentW * groupWidth[groupN.findIndex((element)=>{return element==c})];
-                let scaleheight = percentH * groupHeight[groupN.findIndex((element)=>{return element==c})];
-                if(scalewidth < scaleheight)
-                {
-                    scaleheight = scalewidth;
-                }else{
-                    scalewidth = scaleheight;
-                }
-                obj.scaleToWidth(scalewidth);
-                obj.scaleToHeight(scaleheight);
-                obj.objectWidth = obj.aCoords.tr.x - obj.aCoords.tl.x;
-                obj.objectHeight = obj.aCoords.bl.y - obj.aCoords.tl.y;
-                // console.log('dogslunch');
-                obj.left = (groupX[groupN.findIndex((element)=>{return element==c})] + (groupWidth[groupN.findIndex((element)=>{return element==c})] * percentX) - (obj.objectWidth / 2));
-                obj.top = (groupY[groupN.findIndex((element)=>{return element==c})] + (groupHeight[groupN.findIndex((element)=>{return element==c})] * percentY) - (obj.objectHeight / 2));
-                let dat = {
-                    sW: scalewidth,
-                    sH: scaleheight,
-                    oL: obj.left,
-                    oT: obj.top,
-                    pX: percentX,
-                    pY: percentY,
-                    pW: percentW,
-                    pH: percentH,
-                    gX: groupX,
-                    gY: groupY,
-                    gW: groupWidth,
-                    gH: groupHeight,
-                    oW: obj.objectWidth,
-                    oH: obj.objectHeight,
-                    cID: c,
-                    gN: groupN,
-                    gNc: groupN.findIndex((element) => { return element == c })
-                }
-                console.log(dat);
-                // obj.left = (prevCanvas[c].width - newW) * 0.5; 
-                // obj.top = (prevCanvas[c].height - newH) * 0.5;
-                prevCanvas[c].add(obj);
+        for (i in dpi) {
+            if (dpi[i] < 96) {
+                alert("Your current DPI is too low.\nScale down your image or upload a larger/higher quality image please.\nDPI: " + dpi[i]);
+                anyFailed = true;
             }
         }
-    }
+        if (anyFailed == true) {
+            e.stopPropagation();
+            e.preventDefault();
+            // return -1;
+        } else {
+            console.log("STORAGE: ");
+            console.log(localStorage);
+            if (localStorage.length == 0) { alert('it broke!'); }
+            console.log(dpi);
+            let item = canvas.getObjects();
+
+            for (let i in prevCanvas) {
+                prevCanvas[i].clear();
+            }
+
+            for (let i in item) {
+                for (let c in prevCanvas) {
+                    if (item[i].type === 'group') {
+                        // prevCanvas[c].add(allG[c]);
+                        continue;
+                    }
+                    let obj = $.extend(true, {}, item[i]);
+                    console.log(item[i].dpi);
+                    obj.lockMovementX = true;
+                    obj.lockMovementY = true;
+                    // console.log("YO HERE IT IS (canvas width):");
+                    // console.log(prevCanvas[c].getObjects[0].width)
+                    // console.log(obj);
+                    // let newW = obj.aCoords.br.x - obj.aCoords.bl.x;
+                    // let newH = obj.aCoords.bl.y - obj.aCoords.tl.y;
+                    // console.log(newW);
+                    // console.log(newH);
+                    //
+                    let scalewidth = percentW * groupWidth[groupN.findIndex((element) => { return element == c })];
+                    let scaleheight = percentH * groupHeight[groupN.findIndex((element) => { return element == c })];
+                    if (scalewidth < scaleheight) {
+                        scaleheight = scalewidth;
+                    } else {
+                        scalewidth = scaleheight;
+                    }
+                    obj.scaleToWidth(scalewidth);
+                    obj.scaleToHeight(scaleheight);
+                    obj.objectWidth = obj.aCoords.tr.x - obj.aCoords.tl.x;
+                    obj.objectHeight = obj.aCoords.bl.y - obj.aCoords.tl.y;
+                    // console.log('dogslunch');
+                    obj.left = (groupX[groupN.findIndex((element) => { return element == c })] + (groupWidth[groupN.findIndex((element) => { return element == c })] * percentX) - (obj.objectWidth / 2));
+                    obj.top = (groupY[groupN.findIndex((element) => { return element == c })] + (groupHeight[groupN.findIndex((element) => { return element == c })] * percentY) - (obj.objectHeight / 2));
+                    let dat = {
+                        sW: scalewidth,
+                        sH: scaleheight,
+                        oL: obj.left,
+                        oT: obj.top,
+                        pX: percentX,
+                        pY: percentY,
+                        pW: percentW,
+                        pH: percentH,
+                        gX: groupX,
+                        gY: groupY,
+                        gW: groupWidth,
+                        gH: groupHeight,
+                        oW: obj.objectWidth,
+                        oH: obj.objectHeight,
+                        cID: c,
+                        gN: groupN,
+                        gNc: groupN.findIndex((element) => { return element == c })
+                    }
+                    console.log(dat);
+                    // obj.left = (prevCanvas[c].width - newW) * 0.5; 
+                    // obj.top = (prevCanvas[c].height - newH) * 0.5;
+                    prevCanvas[c].add(obj);
+                }
+            }
+        }
     });
 
     $(document).on('input', "#imageOpacity", function () {
@@ -243,13 +237,13 @@ function init(){
             obj.setOpacity(($(this).val() / 100));
             canvas.renderAll();
             // if (obj.type === 'awkward-image' && obj.toObject().src.length > 200) {
-                // var startTimer = function () {
-                    // clearTimeout(timer);
-                    // sessionInfo(obj);
-                // };
-                // startTimer();
+            // var startTimer = function () {
+            // clearTimeout(timer);
+            // sessionInfo(obj);
+            // };
+            // startTimer();
             // } else {
-                sessionInfo(obj);
+            sessionInfo(obj);
             // }
         }
     });
@@ -291,7 +285,7 @@ function init(){
         $(this).prop('disabled', (!sibling.prev().length));
     });
 
-    $("#clearAll").on('click', ()=>{clearAll();});
+    $("#clearAll").on('click', () => { clearAll(); });
 
     /**
      * END PAGE FUNCTIONS
@@ -323,13 +317,13 @@ function init(){
             // canvas.clipPath.opacity = 0.5;
             setCoordinates(e.target);
             // if (e.target.type === 'awkward-image' && e.target.toObject().src.length > 200) {
-                // var startTimer = function () {
-                    // clearTimeout(timer);
-                    // sessionInfo(e.target);
-                // };
-                // startTimer();
+            // var startTimer = function () {
+            // clearTimeout(timer);
+            // sessionInfo(e.target);
+            // };
+            // startTimer();
             // } else {
-                sessionInfo(e.target);
+            sessionInfo(e.target);
             // }
         },
         'selection:updated': onObjectSelected,
@@ -593,7 +587,7 @@ function clearAll() {
     setTemplate("main");
 }
 
-var sessionInfo = function(item, file = null){
+var sessionInfo = function (item, file = null) {
     item.objectWidth = item.aCoords.tr.x - item.aCoords.tl.x;
     item.objectHeight = item.aCoords.bl.y - item.aCoords.tl.y;
 
@@ -601,9 +595,8 @@ var sessionInfo = function(item, file = null){
     item.percentY = ((item.top + (item.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc];
     item.percentW = item.objectWidth / groupWidth[mainc];
     item.percentH = item.objectHeight / groupHeight[mainc];
-    if (item.type === 'awkward-image')
-    {
-        item.dpi = item.width / (item.objectWidth / tempRatio[tempRatio.length-1]);
+    if (item.type === 'awkward-image') {
+        item.dpi = item.width / (item.objectWidth / tempRatio[tempRatio.length - 1]);
         dpi[item.objectName] = item.dpi;
         console.log(item.dpi);
         if (dpi[item.objectName] < 96) {
@@ -626,16 +619,16 @@ var sessionInfo = function(item, file = null){
     console.log(item.percentX);
     console.log(item.percentW);
 
-    if(item.type === 'awkward-image' && item.toObject().src.length > 200){
+    if (item.type === 'awkward-image' && item.toObject().src.length > 200) {
 
         var data = new FormData();
         var obj = item.toObject();
 
         obj.objectIndex = canvas.getObjects().indexOf(item);
 
-        data.append("name",obj.objectName);
+        data.append("name", obj.objectName);
 
-        if(file){
+        if (file) {
             data.append("file", file);
         }
 
@@ -662,76 +655,46 @@ var sessionInfo = function(item, file = null){
                     success: (result) => {
                         // canvas.remove(item);
                         // result.pop())
+                        findItemByName(obj.objectName).setSrc(result[obj.objectName].src);
 
-                        if(result[obj.objectName])
-                        {
-                            canvas.add(item);
-                            findItemByName(obj.objectName).setSrc(result[obj.objectName].src);
-                            canvas.renderAll();
-
-                            sessioner(item);
-                        }
-
-                        $(this).prop('disabled', false);
-                        $("#imageUpload").css("display", "block");
-                        $("#uploadBlocker").css('display','none');
-
-                        return true;
-                        
                         // let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
 
-                        // Merge
+                        // // Merge
                         // if (result != null && Object.keys(result).length) {
-                        //
+
                         //     // If downloaded, remove from site session
                         //     if (!cv.objects) { cv.objects = []; }
-                        //     cv.objects[obj.objectName] = result[obj.objectName];
-                        //     removeSessionItem(result[obj.objectName].objectName, true);
-                        //
-                        //     // for (var i in result) {
-                        //     //     let l = Object.keys(cv.objects).length;
-                        //     //     if (result[i]) {
-                        //     //         cv.objects[l] = result[i];
-                        //     //         console.log(result[i]);
-                        //     //         removeListItem(result[i].objectName);
-                        //     //         srcA.push(result[i].src);
-                        //     //         removeSessionItem(result[obj.objectName].objectName, true);
-                        //     //         removeItemByName(result[i].objectName);
-                        //     //         $(document).ready();
-                        //     //     }
-                        //     // }
-                        //
+                        //     for (var i in result) {
+                        //         let l = Object.keys(cv.objects).length;
+                        //         if (result[i]) {
+                        //             cv.objects[l] = result[i];
+                        //             console.log(result[i]);
+                        // removeListItem(result[i].objectName);
+                        // srcA.push(result[i].src);
+                        removeSessionItem(result[obj.objectName].objectName, true);
+                        // removeItemByName(result[i].objectName);
+                        // $(document).ready();
+                        //         }
+                        //     }
+
                         //     localStorage.setItem('canvas', JSON.stringify(cv));
                         //     console.log("SCREAMINGMEEMEE!!!~");
                         //     console.log(localStorage);
                         // }
-
                     },
                     error: (error, data) => {
                         console.log(error);
-
-                        $(this).prop('disabled', false);
-                        $("#imageUpload").css("display", "block");
-                        $("#uploadBlocker").css('display','none');
                     }
                 });
             },
             error: (error, data) => {
                 console.log(error);
-
-                $(this).prop('disabled', false);
-                $("#imageUpload").css("display", "block");
-                $("#uploadBlocker").css('display','none');
             }
         });
-    } else {
 
-        sessioner(item);
-
+        return true;
     }
-};
 
-function sessioner(item){
     let storage = (localStorage.getItem('canvas')) ? JSON.parse(localStorage.getItem('canvas')) : {};
 
     storage.objects = (storage.objects) ? storage.objects : [];
@@ -741,13 +704,13 @@ function sessioner(item){
 
     // Check for name
     let itemExists = false;
-    for(var a in storage.objects){
-        if(storage.objects[a] != null && storage.objects[a].objectName === itemObject.objectName){
+    for (var a in storage.objects) {
+        if (storage.objects[a] != null && storage.objects[a].objectName === itemObject.objectName) {
             itemExists = a;
         }
     }
 
-    if(itemExists){
+    if (itemExists) {
         storage.objects[itemExists] = itemObject;
     } else {
         let l = (storage.objects.length) ? storage.objects.length : 0;
@@ -755,27 +718,27 @@ function sessioner(item){
     }
     console.log("DSAGRDGHERACSDF");
     console.log(storage);
-    localStorage.setItem('canvas',JSON.stringify(storage));
+    localStorage.setItem('canvas', JSON.stringify(storage));
     console.log(localStorage);
-}
+};
 
-function setShirtImage(imgurl, canvasType = "canvas"){
+function setShirtImage(imgurl, canvasType = "canvas") {
 
     var canvasToUse = null;
 
     var tag = false;
 
-    
-    switch(canvasType) {
+
+    switch (canvasType) {
         default: tag = "main"; break;
         case 0: tag = 1456; break;
         case 1: tag = 112; break;
         case 2: tag = 1402; break;
         case 3: tag = 1455; break;
     }
-    
+
     //setup front side canvas
-    if(isNaN(canvasType)) {
+    if (isNaN(canvasType)) {
         canvas = canvasToUse = new fabric.Canvas('tcanvas', {
             hoverCursor: 'pointer',
             selection: true,
@@ -795,43 +758,43 @@ function setShirtImage(imgurl, canvasType = "canvas"){
             preserveObjectStacking: true
         })
     }
-    
+
     let img = new Image();
-    
-    img.onload = function(){
-        
+
+    img.onload = function () {
+
         imageWidth = img.width;
         imageHeight = img.height;
 
         console.log("Width: " + imageWidth);
         console.log("Height: " + imageHeight);
-        
+
         newWidth = 400;
         newHeight = 400;
-        
-        if((imageWidth/newWidth) > (imageHeight/newHeight)) {
+
+        if ((imageWidth / newWidth) > (imageHeight / newHeight)) {
             newHeight = imageHeight / (imageWidth / newWidth);
         } else {
             newWidth = imageWidth / (imageHeight / newHeight);
         }
-        
-        $("#" + ((!isNaN(tag)) ? tag + "_image" : "shirtFacing")).css({'width': newWidth, 'height': newHeight}).attr('src', imgurl);
-        
-        $("#" + ((!isNaN(tag)) ? tag + "_div"  : "shirtDiv")).css({'width': newWidth, 'height': newHeight});
-        
+
+        $("#" + ((!isNaN(tag)) ? tag + "_image" : "shirtFacing")).css({ 'width': newWidth, 'height': newHeight }).attr('src', imgurl);
+
+        $("#" + ((!isNaN(tag)) ? tag + "_div" : "shirtDiv")).css({ 'width': newWidth, 'height': newHeight });
+
         var drawingArea = "#" + ((!isNaN(tag)) ? tag + "_area" : "shirtDrawingArea");
-        
-        $(drawingArea).css({'width': newWidth, 'height': newHeight});
-        $(drawingArea).find(".canvas-container").css({'width': newWidth, 'height': newHeight});
+
+        $(drawingArea).css({ 'width': newWidth, 'height': newHeight });
+        $(drawingArea).find(".canvas-container").css({ 'width': newWidth, 'height': newHeight });
         canvasToUse.setHeight(newHeight);
         canvasToUse.setWidth(newWidth);
-        
+
         setTemplate(tag);
         groupN.push(canvasType);
         mainc = groupN.findIndex((element) => { return element == "canvas" });
-        
+
         img = null;
-        
+
     };
     console.log('dogDOG');
 
@@ -896,14 +859,14 @@ function setTemplate(main = "main") {
                     }
                     upperTop = (result.values[i].y < upperTop) ? result.values[i].y : upperTop;
                     upperLeft = (result.values[i].x < upperLeft) ? result.values[i].x : upperLeft;
-                    
+
                     uptop = (result.values[i].y < uptop) ? result.values[i].y : uptop;
                     upleft = (result.values[i].x < upleft) ? result.values[i].x : upleft;
-                    
+
                     //set templates ratio onto last tempRatio position
                     console.log(result);
                     // groupP.push(result.pid);
-                    if(main=='main')
+                    if (main == 'main')
                         tempRatio.push(result.dpi);
                 }
             }
@@ -919,10 +882,10 @@ function setTemplate(main = "main") {
                 });
 
                 // if (main == "main") {
-                    groupX.push(g.left);
-                    groupY.push(g.top);
-                    groupWidth.push(g.width);
-                    groupHeight.push(g.height);
+                groupX.push(g.left);
+                groupY.push(g.top);
+                groupWidth.push(g.width);
+                groupHeight.push(g.height);
                 // }
 
 
@@ -963,10 +926,10 @@ function setTemplate(main = "main") {
                     processData: false,
                     success: (result) => {
                         fromStorage(result);
-                        
+
                         // let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
-                        
-                        
+
+
                     },
                     error: (error, data) => {
                         console.log(error);
@@ -991,7 +954,7 @@ function setTemplate(main = "main") {
 }
 
 
-function fromStorage(result = null){
+function fromStorage(result = null) {
     let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
     // console.log(cv);
     console.log(cv.objects);
@@ -1000,13 +963,13 @@ function fromStorage(result = null){
     console.log(cv.objects);
 
     // Merge
-    if(result != null && Object.keys(result).length){
+    if (result != null && Object.keys(result).length) {
 
         // If downloaded, remove from site session
-        if(!cv.objects) { cv.objects = []; }
-        for(var i in result){
+        if (!cv.objects) { cv.objects = []; }
+        for (var i in result) {
             let l = Object.keys(cv.objects).length;
-            if(result[i]) {
+            if (result[i]) {
                 cv.objects[l] = result[i];
                 console.log(result[i]);
                 // removeListItem(result[i].objectName);
@@ -1017,56 +980,56 @@ function fromStorage(result = null){
         }
     }
 
-    if(cv.objects && Object.keys(cv.objects).length > 0){
+    if (cv.objects && Object.keys(cv.objects).length > 0) {
 
         let totalObjs = Object.keys(cv.objects).length;
         let count = 0;
 
         let listItems = [];
 
-        if(totalObjs > 0) {
+        if (totalObjs > 0) {
 
-            try{
-            canvas.loadFromJSON(cv,canvas.renderAll.bind(canvas), function (o, object) {
+            try {
+                canvas.loadFromJSON(cv, canvas.renderAll.bind(canvas), function (o, object) {
 
-                count++;
+                    count++;
 
-                console.log("-=-=-=-=-");
-                console.log(object.objectIndex);
+                    console.log("-=-=-=-=-");
+                    console.log(object.objectIndex);
 
-                if(listItems[object.objectIndex]){
-                    listItems[object.objectIndex].push(object)
-                } else {
-                    listItems[object.objectIndex] = [object];
-                }
-                console.log(listItems);
+                    if (listItems[object.objectIndex]) {
+                        listItems[object.objectIndex].push(object)
+                    } else {
+                        listItems[object.objectIndex] = [object];
+                    }
+                    console.log(listItems);
 
-                if(count === totalObjs){
-                    for(var i in listItems){
-                        for(var j in listItems[i]){
-                            console.log(i);
-                            console.log(j);
-                            console.log(listItems[i][j]);
-                            // if(listItems[i][j].type !== "group"){
-                            createListItem(listItems[i][j].objectName,
-                                ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
-                                ((listItems[i][j].type === "awkward-image") ?
-                                    {
-                                        width: listItems[i][j].objectWidth*listItems[i][j].scaleX,
-                                        height: listItems[i][j].objectHeight*listItems[i][j].scaleY,
-                                        x: listItems[i][j].left,
-                                        y: listItems[i][j].top
-                                    } :
-                                    {
-                                        x: listItems[i][j].left,
-                                        y: listItems[i][j].top
-                                    } )
-                            );
+                    if (count === totalObjs) {
+                        for (var i in listItems) {
+                            for (var j in listItems[i]) {
+                                console.log(i);
+                                console.log(j);
+                                console.log(listItems[i][j]);
+                                // if(listItems[i][j].type !== "group"){
+                                createListItem(listItems[i][j].objectName,
+                                    ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
+                                    ((listItems[i][j].type === "awkward-image") ?
+                                        {
+                                            width: listItems[i][j].objectWidth * listItems[i][j].scaleX,
+                                            height: listItems[i][j].objectHeight * listItems[i][j].scaleY,
+                                            x: listItems[i][j].left,
+                                            y: listItems[i][j].top
+                                        } :
+                                        {
+                                            x: listItems[i][j].left,
+                                            y: listItems[i][j].top
+                                        })
+                                );
+                            }
                         }
                     }
-                }
-                fabric.log(object, o);
-            });
+                    fabric.log(object, o);
+                });
             } catch (e) {
                 console.log("...inner break :(");
                 console.log(e);
@@ -1083,14 +1046,14 @@ var radius = function (a, b) {
     return Math.sqrt(aSquared + bSquared) / Math.sqrt(2);
 };
 
-var centerX = function(){
-    var x = Math.round(upperLeft + (groupWidth[mainc]/3));
+var centerX = function () {
+    var x = Math.round(upperLeft + (groupWidth[mainc] / 3));
     console.log("CENTERX: " + x);
     return x;
 };
 
-var centerY = function(){
-    var y = Math.round(upperTop + (groupHeight[mainc]/2));
+var centerY = function () {
+    var y = Math.round(upperTop + (groupHeight[mainc] / 2));
     console.log("CENTERY: " + y);
     return y;
 };
@@ -1099,140 +1062,138 @@ $(document).ready(function () {
     init();
 });//doc ready
 
-function addAwkwardImage(src, info = false){
+function addAwkwardImage(src, info = false) {
 
     let name = randomString();
     let objInd = objectIndex++;
 
     console.log('used by image:');
     console.log(groupX[mainc], groupY[mainc]);
-    try{
-    fabric.AwkwardImage.fromURL(src, function (image) {
-        image.set({
-            left: (groupWidth[mainc]/2 + groupX[mainc]),     //(newWidth / 3),
-            top: (groupHeight[mainc]/2 + groupY[mainc]),    //(newHeight / 3),
-            angle: 0,
-            // padding: 10,
-            cornersize: 10,
-            hasRotatingPoint: true,
-            crossOrigin: "anonymous",
-            objectName: name,
-            objectIndex: objInd
-        });
-        
-        let w = image.width;
-        let h = image.height;
-        let options = null;
-        
-        console.log(image);
-        let downRatio;
+    try {
+        fabric.AwkwardImage.fromURL(src, function (image) {
+            image.set({
+                left: (groupWidth[mainc] / 2 + groupX[mainc]),     //(newWidth / 3),
+                top: (groupHeight[mainc] / 2 + groupY[mainc]),    //(newHeight / 3),
+                angle: 0,
+                // padding: 10,
+                cornersize: 10,
+                hasRotatingPoint: true,
+                crossOrigin: "anonymous",
+                objectName: name,
+                objectIndex: objInd
+            });
 
-        realW = w * image.scaleX;//image.aCoords.tr.x - image.aCoords.tl.x;
-        realH = h * image.scaleY;//image.aCoords.bl.y - image.aCoords.tl.y;
+            let w = image.width;
+            let h = image.height;
+            let options = null;
 
-        // if image is oversized...
-        if (realW > groupWidth[mainc] || realH > groupHeight[mainc]) {
-            console.log("toobig...");
-            // if mainly over width ELSE mainly over by height
-            if (realW - groupWidth[mainc] > realH - groupHeight[mainc]) {
-                downRatio = realW / groupWidth[mainc];
-                console.log(downRatio);
-            } else {
-                downRatio = realH / groupHeight[mainc];
-                console.log(downRatio);
-            }
-            realW = realW / downRatio;
-            realH = realH / downRatio;
-            image.scaleToWidth(realW);
-            image.scaleToHeight(realH);
-            console.log(w * image.scaleX);
-            console.log(h* image.scaleY);
-            // image.scaleWidth
+            console.log(image);
+            let downRatio;
 
-            console.log("W/H:");
-            console.log(realW, realH);
-        }
+            realW = w * image.scaleX;//image.aCoords.tr.x - image.aCoords.tl.x;
+            realH = h * image.scaleY;//image.aCoords.bl.y - image.aCoords.tl.y;
 
-        //CENTER IMAGE on TEMPLATE +10 for controls size
-        image.left = (groupWidth[mainc] / 2 + groupX[mainc]) - (realW / 2);
-        image.top = (groupHeight[mainc] / 2 + groupY[mainc]) - (realH / 2);
-
-
-        image.objectWidth = w*image.scaleX;
-        image.objectHeight = h*image.scaleY;
-        
-        image.crossOrigin = "anonymous";
-        
-        image.toObject = (function (toObject) {
-            return function () {
-                return fabric.util.object.extend(toObject.call(this), {
-                    objectName: name,
-                    objectIndex: objInd,
-                });
-            }
-        })(image.toObject);
-
-        if(info){
-            options = {
-                Width: image.objectWidth/tempRatio[tempRatio.length-1],
-                Height: image.objectHeight/tempRatio[tempRatio.length-1],
-                x: image.left,
-                y: image.top,
-                DPI: image.width/(image.objectWidth/tempRatio[tempRatio.length-1]),
-                percentX: ((image.left + (image.objectWidth / 2)) - groupX[mainc]) / groupWidth[mainc],
-                percentY: ((image.top + (image.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc],
-                percentW: image.objectWidth / groupWidth[mainc],
-                percentH: image.objectHeight / groupHeight[mainc]
-            };
-            percentX = options.percentX;
-            percentY = options.percentY;
-            percentW = options.percentW;
-            percentH = options.percentH;
-        } else {
-            options = {
-                x: image.left,
-                y: image.top,
-                DPI: image.width / (image.objectWidth / tempRatio[tempRatio.length - 1]),
-            };
-            // } else {
-                // options = {
-                    //     x: image.left,
-                    //     y: image.top
-                    // }
+            // if image is oversized...
+            if (realW > groupWidth[mainc] || realH > groupHeight[mainc]) {
+                console.log("toobig...");
+                // if mainly over width ELSE mainly over by height
+                if (realW - groupWidth[mainc] > realH - groupHeight[mainc]) {
+                    downRatio = realW / groupWidth[mainc];
+                    console.log(downRatio);
+                } else {
+                    downRatio = realH / groupHeight[mainc];
+                    console.log(downRatio);
                 }
-                image.dpi = options.DPI;
-                dpi[image.objectName] = image.dpi;
-                
-                createListItem(name, 'Image', options);
-                
-        if (dpi[image.objectName] < 96) {
-            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + " - BAD</div >");
-            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - BAD</div ></div>");
-        } else if (dpi[image.objectName] < 145) {
-            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + "-OKAY</div >");
-            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - GOOD</div ></div>");
-        } else {
-            // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + "-GREAT</div >");
-            $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - GREAT</div ></div>");
-        }
+                realW = realW / downRatio;
+                realH = realH / downRatio;
+                image.scaleToWidth(realW);
+                image.scaleToHeight(realH);
+                console.log(w * image.scaleX);
+                console.log(h * image.scaleY);
+                // image.scaleWidth
 
-        // image.scaleToWidth(newWidth);
-        //image.scale(getRandomNum(0.1, 0.25)).setCoords();
-        //canvas.add(image);
+                console.log("W/H:");
+                console.log(realW, realH);
+            }
 
-        for(var a in prevCanvas){
-            prevCanvas[a].add(image);
-        }
+            //CENTER IMAGE on TEMPLATE +10 for controls size
+            image.left = (groupWidth[mainc] / 2 + groupX[mainc]) - (realW / 2);
+            image.top = (groupHeight[mainc] / 2 + groupY[mainc]) - (realH / 2);
 
-        if(image.src > 100) {
+
+            image.objectWidth = w * image.scaleX;
+            image.objectHeight = h * image.scaleY;
+
+            image.crossOrigin = "anonymous";
+
+            image.toObject = (function (toObject) {
+                return function () {
+                    return fabric.util.object.extend(toObject.call(this), {
+                        objectName: name,
+                        objectIndex: objInd,
+                    });
+                }
+            })(image.toObject);
+
+            if (info) {
+                options = {
+                    Width: image.objectWidth / tempRatio[tempRatio.length - 1],
+                    Height: image.objectHeight / tempRatio[tempRatio.length - 1],
+                    x: image.left,
+                    y: image.top,
+                    DPI: image.width / (image.objectWidth / tempRatio[tempRatio.length - 1]),
+                    percentX: ((image.left + (image.objectWidth / 2)) - groupX[mainc]) / groupWidth[mainc],
+                    percentY: ((image.top + (image.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc],
+                    percentW: image.objectWidth / groupWidth[mainc],
+                    percentH: image.objectHeight / groupHeight[mainc]
+                };
+                percentX = options.percentX;
+                percentY = options.percentY;
+                percentW = options.percentW;
+                percentH = options.percentH;
+            } else {
+                options = {
+                    x: image.left,
+                    y: image.top,
+                    DPI: image.width / (image.objectWidth / tempRatio[tempRatio.length - 1]),
+                };
+                // } else {
+                // options = {
+                //     x: image.left,
+                //     y: image.top
+                // }
+            }
+            image.dpi = options.DPI;
+            dpi[image.objectName] = image.dpi;
+
+            createListItem(name, 'Image', options);
+
+            if (dpi[image.objectName] < 96) {
+                // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + " - BAD</div >");
+                $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - BAD</div ></div>");
+            } else if (dpi[image.objectName] < 145) {
+                // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + "-OKAY</div >");
+                $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - GOOD</div ></div>");
+            } else {
+                // $("#" + image.objectName).find(".object_d").html('<div style="color:#000000; width:150px">DPI: ' + Math.round(dpi[image.objectName]) + "-GREAT</div >");
+                $("#" + image.objectName).find(".object_bg").html('<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00"><div style = "color:#000000; width:150px" > DPI: ' + Math.round(dpi[image.objectName]) + " - GREAT</div ></div>");
+            }
+
+            // image.scaleToWidth(newWidth);
+            //image.scale(getRandomNum(0.1, 0.25)).setCoords();
             canvas.add(image);
-        }
 
-        console.log(prevCanvas[0].toObject());
+            for (var a in prevCanvas) {
+                prevCanvas[a].add(image);
+            }
 
-        sessionInfo(image, info);
-    });
-    }catch(e){
+            canvas.add(image);
+
+            console.log(prevCanvas[0].toObject());
+
+            sessionInfo(image, info);
+        });
+    } catch (e) {
         console.log("BREEEAKER!");
         console.log(e);
         // $("#clearAll").click();
@@ -1271,7 +1232,7 @@ function onObjectSelected(e) {
     } else if (selectedObject && selectedObject.type === 'awkward-image') {
         //display image editor
         $("#text-editor").css('display', 'none');
-        $("#design-editor").css('display','block');
+        $("#design-editor").css('display', 'block');
     }
 }
 
@@ -1284,17 +1245,17 @@ function onSelectedCleared(e) {
  * Set the X and Y for object within UL
  * @param id
  */
-function setCoordinates(id){
+function setCoordinates(id) {
     $("#" + id.objectName).find(".object_x").html('X: ' + id.left.toFixed(2));
     $("#" + id.objectName).find(".object_y").html('Y: ' + id.top.toFixed(2));
 }
 
-function setBorder(id){
+function setBorder(id) {
 
-    $("#objectHolder").children().each(function(index, item){
+    $("#objectHolder").children().each(function (index, item) {
         console.log(item);
-        if($(item).attr('id') === id.objectName){
-            $(item).addClass('border-danger').css("border-radius","10px");
+        if ($(item).attr('id') === id.objectName) {
+            $(item).addClass('border-danger').css("border-radius", "10px");
         } else {
             $(item).removeClass('border-danger').css("border-radius", "0px");
         }
@@ -1305,7 +1266,7 @@ function setBorder(id){
 /**
  * START TEXT FUNCTIONALITY
  */
-function setBold(style = false){
+function setBold(style = false) {
     let activeObject = canvas.getActiveObject();
     if (activeObject && activeObject.type === 'awkward-text' && !style) {
         activeObject.fontWeight = (activeObject.fontWeight === 'bold' ? '' : 'bold');
@@ -1313,7 +1274,7 @@ function setBold(style = false){
     }
 
     let fw = parseInt($("#text-string").css('font-weight'));
-    $("#text-string").css('font-weight',((style) ? style : (fw > 400) ? "" : "bold"));
+    $("#text-string").css('font-weight', ((style) ? style : (fw > 400) ? "" : "bold"));
 
 }
 
@@ -1338,7 +1299,7 @@ function setFont(font, style = false) {
     textString.css('font-family', font);
 }
 
-function setUnderline(style = null){
+function setUnderline(style = null) {
     var activeObject = canvas.getActiveObject();
     if (activeObject && activeObject.type === 'awkward-text' && style === null) {
         console.log(activeObject.getUnderline());
@@ -1368,7 +1329,7 @@ function setColor(color, style = false) {
 function removeWhite() {
     var activeObject = canvas.getActiveObject();
     if (activeObject && activeObject.type === 'image') {
-        activeObject.filters[2] = new fabric.Image.filters.RemoveWhite({hreshold: 100, distance: 10});//0-255, 0-255
+        activeObject.filters[2] = new fabric.Image.filters.RemoveWhite({ hreshold: 100, distance: 10 });//0-255, 0-255
         activeObject.applyFilters(canvas.renderAll.bind(canvas));
     }
 }
@@ -1378,40 +1339,40 @@ function percentageCalculator(x, w, y, h) {
     $("#yCoord").html(((y / h) * 100).toFixed(2) + "%");
 }
 
-function randomString(){
+function randomString() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
         + Math.random().toString(36).substring(2, 15);
 }
 
-function createListItem(id, type, options = null){
+function createListItem(id, type, options = null) {
 
-    var list = '<li class="list-group-item mb-3" id="'+id+'" draggable="true">' +
-    '<div class="row"><div class="col-sm-6">' + type + '</div>' +
+    var list = '<li class="list-group-item mb-3" id="' + id + '" draggable="true">' +
+        '<div class="row"><div class="col-sm-6">' + type + '</div>' +
         '<div class="col-sm-6 text-right">' +
-    '<span type="button" class="fa fa-arrow-up art-up"></span> ' +
-    '<span type="button" class="fa fa-arrow-down art-down"></span> ' +
-    '<span type="button" class="fa fa-trash-alt remove-art"></span>' +
-    '</div></div>' +
+        '<span type="button" class="fa fa-arrow-up art-up"></span> ' +
+        '<span type="button" class="fa fa-arrow-down art-down"></span> ' +
+        '<span type="button" class="fa fa-trash-alt remove-art"></span>' +
+        '</div></div>' +
         '<div class="row">' +
         '<div class="col-sm-6 object_x">X: ' + options.x + '</div>' +
         '<div class="col-sm-6 object_y">Y: ' + options.y + '</div>' +
         '</div><div class="object_bg">';
-        
-        delete options.x;
-        delete options.y;
-        
-        if(Object.keys(options).length > 0){
-            if (dpi < 96) {
-                list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000">';
-                list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - BAD</div>';
-            } else if (dpi < 145) {
-                list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff">';
-                list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - GOOD</div>';
-            } else {
-                list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00">';
-                list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - GREAT</div>';
-            }
-            list += '</div></div>';
+
+    delete options.x;
+    delete options.y;
+
+    if (Object.keys(options).length > 0) {
+        if (dpi < 96) {
+            list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000">';
+            list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - BAD</div>';
+        } else if (dpi < 145) {
+            list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff">';
+            list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - GOOD</div>';
+        } else {
+            list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00">';
+            list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - GREAT</div>';
+        }
+        list += '</div></div>';
         // for(var a in options){
         //     if(a!='DPI')
         //     list += "| "+a + ": " + options[a] + "in |";
@@ -1428,8 +1389,8 @@ function createListItem(id, type, options = null){
  * Remove an item from the list by object name
  * @param id
  */
-function removeListItem(id){
-    $("#"+id).remove();
+function removeListItem(id) {
+    $("#" + id).remove();
 }
 
 /**
@@ -1437,13 +1398,13 @@ function removeListItem(id){
  * @param id
  * @param siteSession
  */
-function removeSessionItem(id, siteSession = false){
+function removeSessionItem(id, siteSession = false) {
 
     let item = findItemByName(id);
 
     console.log(item);
 
-    if((item.type === 'awkward-image' && item.toObject().src.length > 200) || siteSession){
+    if ((item.type === 'awkward-image' && item.toObject().src.length > 200) || siteSession) {
 
         console.log("ID: " + id);
 
@@ -1469,29 +1430,29 @@ function removeSessionItem(id, siteSession = false){
     let tmpObjects = {};
 
     // Check for name
-    for(var a in storage.objects){
-        if(storage.objects[a] !== null && storage.objects[a].objectName && storage.objects[a].objectName !== id){
+    for (var a in storage.objects) {
+        if (storage.objects[a] !== null && storage.objects[a].objectName && storage.objects[a].objectName !== id) {
             tmpObjects[a] = storage.objects[a];
         }
     }
 
     storage.objects = tmpObjects;
     console.log(id);
-    localStorage.setItem('canvas',JSON.stringify(storage));
+    localStorage.setItem('canvas', JSON.stringify(storage));
 }
 
 /**
  * Removes an item by object name
  * @param name
  */
-function removeItemByName(name){
+function removeItemByName(name) {
     let obj = findItemByName(name);
-    if(obj){
+    if (obj) {
         canvas.remove(obj);
     }
-    for(var a in prevCanvas){
+    for (var a in prevCanvas) {
         obj = findItemByName(name, prevCanvas[a]);
-        if(obj) {
+        if (obj) {
             prevCanvas[a].remove(obj);
         }
     }
@@ -1503,11 +1464,11 @@ function removeItemByName(name){
  * @param theCanvas
  * @returns {boolean|*}
  */
-function findItemByName(name, theCanvas = null){
+function findItemByName(name, theCanvas = null) {
 
     let objs = (!theCanvas) ? canvas.getObjects() : theCanvas.getObjects();
-    for(var i in objs){
-        if(objs[i]['objectName'] === name){
+    for (var i in objs) {
+        if (objs[i]['objectName'] === name) {
             return objs[i];
         }
     }
@@ -1519,13 +1480,13 @@ function findItemByName(name, theCanvas = null){
  * @param name
  * @param full  If you wish to bring to the very front, this should be set to true
  */
-function moveItemUpByName(name, sibling, full = false){
+function moveItemUpByName(name, sibling, full = false) {
     let obj = findItemByName(name);
-    if(obj) {
-        if(full){
+    if (obj) {
+        if (full) {
             canvas.bringToFront(obj);
         } else {
-            if(sibling.length) {
+            if (sibling.length) {
                 let nextObj = findItemByName(sibling.attr('id'));
                 let n = canvas.getObjects().indexOf(nextObj);
                 let c = canvas.getObjects().indexOf(obj);
@@ -1549,13 +1510,13 @@ function moveItemUpByName(name, sibling, full = false){
  * @param name
  * @param full  Set to true to send to the very back
  */
-function moveItemDownByName(name, sibling, full = false){
+function moveItemDownByName(name, sibling, full = false) {
     let obj = findItemByName(name);
-    if(obj && canvas.getObjects().indexOf(obj) >= 1) {
-        if(full){
+    if (obj && canvas.getObjects().indexOf(obj) >= 1) {
+        if (full) {
             canvas.sendToBack(obj);
         } else {
-            if(sibling.length) {
+            if (sibling.length) {
                 let prevObj = findItemByName(sibling.attr('id'));
                 let p = canvas.getObjects().indexOf(prevObj);
                 let c = canvas.getObjects().indexOf(obj);
@@ -1592,7 +1553,7 @@ fabric.AwkwardImage = fabric.util.createClass(fabric.Image, {
         options && this.set('percentW', options.percentW);
         options && this.set('percentH', options.percentH);
     },
-    toObject: function (){
+    toObject: function () {
         return fabric.util.object.extend(this.callSuper('toObject'), {
             objectName: this.objectName,
             objectIndex: this.objectIndex,
@@ -1612,27 +1573,27 @@ fabric.AwkwardImage.fromObject = function (object, callback) {
     //     url: object.src,
     //     success: function (data, textStatus) {
     //         // URL is good
-            fabric.util.loadImage(object.src, function(img) {
-            callback && callback(new fabric.AwkwardImage(img,object));
-            });
-        // }, error: function (jqXHR, textStatus, errorThrown) {
-        //     // URL is bad
-        //     console.log("...inner break :(");
-        //     console.log(errorThrown);
-        //     // clearAll();
-        //     fromStorage();
-        //     // $("#clearAll").click();
-        //     // setTimeout(function () {$("#drawingArea").click();}, 50);
-        //     // location.reload(true);
-        //     // init();
-        //     setTimeout(function () { canvas.renderAll(); }, 50);
-        //     // canvas.
-        // }});
+    fabric.util.loadImage(object.src, function (img) {
+        callback && callback(new fabric.AwkwardImage(img, object));
+    });
+    // }, error: function (jqXHR, textStatus, errorThrown) {
+    //     // URL is bad
+    //     console.log("...inner break :(");
+    //     console.log(errorThrown);
+    //     // clearAll();
+    //     fromStorage();
+    //     // $("#clearAll").click();
+    //     // setTimeout(function () {$("#drawingArea").click();}, 50);
+    //     // location.reload(true);
+    //     // init();
+    //     setTimeout(function () { canvas.renderAll(); }, 50);
+    //     // canvas.
+    // }});
 };
 
-fabric.AwkwardImage.fromURL = function (url, callback, imageOptions){
-    fabric.util.loadImage(url, function(img) {
-        callback && callback(new fabric.AwkwardImage(img,imageOptions));
+fabric.AwkwardImage.fromURL = function (url, callback, imageOptions) {
+    fabric.util.loadImage(url, function (img) {
+        callback && callback(new fabric.AwkwardImage(img, imageOptions));
     });
 };
 
@@ -1650,7 +1611,7 @@ fabric.AwkwardText = fabric.util.createClass(fabric.IText, {
         options && this.set('percentW', options.percentW);
         options && this.set('percentH', options.percentH);
     },
-    toObject: function (){
+    toObject: function () {
         return fabric.util.object.extend(this.callSuper('toObject'), {
             objectName: this.objectName,
             objectIndex: this.objectIndex,
@@ -1668,7 +1629,7 @@ fabric.AwkwardText.fromObject = function (object, callback) {
 
 fabric.AwkwardText.async = true;
 
-function saveDesign (csrfToken){
+function saveDesign(csrfToken) {
 
     var stores = document.getElementsByName("storefront");
 
@@ -1677,19 +1638,19 @@ function saveDesign (csrfToken){
 
     var csrf = document.createElement('input');
     var design_object = document.createElement('input');
-    
+
     form.method = "POST";
     form.action = "";
-    
+
     csrf.id = "_token";
     csrf.name = "_token";
     csrf.value = csrfToken;
     csrf.hidden = true;
-    
+
     design_object.id = "design_object";
     design_object.name = "design_object";
     design_object.value = localStorage.getItem("canvas");
-    
+
     form.appendChild(csrf);
     form.appendChild(design_object);
 
@@ -1700,7 +1661,7 @@ function saveDesign (csrfToken){
             console.log(storefront);
         }
     }
-    if(storefront.length != 0){
+    if (storefront.length != 0) {
         console.log(stores);
         var sf = document.createElement('input');
         sf.id = "storeFront";
@@ -1709,7 +1670,7 @@ function saveDesign (csrfToken){
         form.appendChild(sf);
         console.log(sf.value);
     }
-    
+
     console.log(design_object.value);
     document.body.appendChild(form);
     form.submit();
