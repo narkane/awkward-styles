@@ -199,6 +199,11 @@ Route::group(['prefix' => 'api/'], function($app){
      */
     $app->get('removeArt', 'MyStoresController@removeArt')->name('removeArtwork');
 
+    /**
+     * REMOVE DESIGN
+     */
+    $app->get('removeDesign', 'API\DesignController@removeDesign')->name('removeDesign');
+
 
     //$app->get('insertproducts', 'API\InsertProductsController@index');
 

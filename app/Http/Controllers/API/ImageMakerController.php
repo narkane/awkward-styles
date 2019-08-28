@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\ProductInformation;
-use Illuminate\Contracts\Logging\Log;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 
 class ImageMakerController extends Controller
 {
@@ -24,11 +24,13 @@ class ImageMakerController extends Controller
      * @param $pid
      * @param $size
      * @param $art_design
-     * @param @mediaId
+     * @param $mediaId
      * @throws \ImagickException
      */
     public function index(Request $request, $pid, $size, $art_design = 0, $mediaId = null)
     {
+
+        ini_set("max_execution_time", 10);
 
         $newWidth = 400;
         $newHeight = 400;
@@ -253,34 +255,48 @@ class ImageMakerController extends Controller
 
                 $image->addImage($productImage);
 
-
             } catch (\Exception $e) {
 
                 // DROP SOME ERROR IMAGE
-                //$this->info = "b";
+                $this->info = "b";
 
-                $info = "MESSAGE: " . $e->getMessage() . "<br/>\r\n" .
-                "CODE: " . $e->getCode() . "<br/>\r\n" .
-                "FILE: " . $e->getFile() . "<br/>\r\n" .
-                "LINE: " . $e->getLine() . "<br/><br/>";
+                $info = [
+                    "DESIGN_ID" => $art_design ,
+                    "PRODUCT ID" => $pid,
+                    "MESSAGE" => $e->getMessage(),
+                    "CODE" => $e->getCode(),
+                    "FILE" => $e->getFile(),
+                    "LINE" => $e->getLine(),
+                    "TRACESTRING" => $e->getTraceAsString()
+                    ];
 
-                Log::info("Image Render Failure", $info);
-/*
+                Log::info(["Image Render Failure", $info]);
 
                 $image = new \Imagick();
                 $errorImg = file_get_contents(public_path() . "/images/error_image.png");
                 $image->readImageBlob($errorImg);
                 $image->adaptiveResizeImage(400,400,true);
-*/
             }
 
         if(is_null($this->info)) {
 
             $image->setImageFormat('png');
+
+            $image->stripImage();
+            $image->setImageDepth(8);
+
+            if($request->has('thumbnail')) {
+                //$image->setOption('png:compression-level',5);
+                $image->thumbnailImage(200, 200, true);
+            }
+
             header('Content-type: image/png');
             echo $image->getImageBlob();
             $image->destroy();
             die();
+
+        } else {
+            $this->errorImage($request->has('thumbnail'));
         }
 
     }
@@ -363,5 +379,24 @@ class ImageMakerController extends Controller
             file_put_contents($tffFile, file_get_contents($tffUrl));
         }
         return $tffFile;
+    }
+
+    private function errorImage($thumbnail = false){
+        $image = new \Imagick();
+        $errorImg = file_get_contents(public_path() . "/images/error_image.png");
+        $image->readImageBlob($errorImg);
+
+        if($thumbnail){
+            //$image->setOption('png:compression-level',5);
+            $image->thumbnailImage(200, 200, true);
+
+        } else {
+            $image->adaptiveResizeImage(400,400,true);
+        }
+
+        header('Content-Type: image/png');
+        echo $image->getImageBlob();
+        $image->destory();
+        die();
     }
 }

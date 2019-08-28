@@ -51,9 +51,9 @@
                                                 <div class="col item" id="{{ $design->product_id }}_{{ $design->id }}">
                                                     <div class="product-grid">
                                                         <div class="product-image border rounded">
-                                                            <a href="{{url('/')}}/product-details/">
-                                                                <img src="/blah/{{ URL("api/designs/images") }}/{{ $design->product_id }}/XS/{{ $design->id }}"
-                                                                style="max-width: 300px; max-height: 300px;" />
+                                                            <a href="{{url('/')}}/product-details/{{ $design->product_id }}/{{ $design->id }}">
+                                                                <img src="{{ URL("api/designs/images") }}/{{ $design->product_id }}/XS/{{ $design->id }}?thumbnail"
+                                                                style="max-width: 200px; max-height: 200px;" />
                                                             </a>
                                                         </div>
                                                         <div class="product-content">
@@ -80,7 +80,7 @@
                                             <div class="modal-dialog" role="document">
                                                 <div class="modal-content">
                                                     <div class="modal-header">
-                                                        <h5 class="modal-title" id="deleteModalLabel">Delete Design?</h5>
+                                                        <h5 class="modal-title" id="deleteModalLabel">Delete Design</h5>
                                                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                             <span aria-hidden="true">&times;</span>
                                                         </button>
@@ -150,7 +150,8 @@
 
                 $("#held_id").val(vars);
 
-                deleteModal.html("<p>Are you sure you would like to delete this design?</p>"
+                deleteModal.html("<div class=\"bg-danger text-light\"><p class=\"lead\">Are you sure?</p>"
+                    + "<small>Once deleted, all designs on all products will be removed.</small></div>"
                     + "<img src='{{ URL("api/designs/images") }}/" + vars[0] + "/XS/" + vars[1] + "' style='max-width: 300px; max-height: 300px;'/>");
 
             });
