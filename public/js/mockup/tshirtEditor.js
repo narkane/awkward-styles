@@ -1145,7 +1145,8 @@ function addAwkwardImage(src, info = false) {
                     percentX: ((image.left + (image.objectWidth / 2)) - groupX[mainc]) / groupWidth[mainc],
                     percentY: ((image.top + (image.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc],
                     percentW: image.objectWidth / groupWidth[mainc],
-                    percentH: image.objectHeight / groupHeight[mainc]
+                    percentH: image.objectHeight / groupHeight[mainc],
+                    // aspect: image.width
                 };
                 percentX = options.percentX;
                 percentY = options.percentY;
