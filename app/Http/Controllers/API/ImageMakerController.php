@@ -202,7 +202,7 @@ class ImageMakerController extends Controller
 
                         $scaleW = (($obj->percentW * $groupWidth) === $designImage->getImageWidth()) ? $design->getImageWidth() : $obj->percentW * $groupWidth;
                         $scaleH = (($obj->percentH * $groupHeight) === $designImage->getImageHeight()) ? $design->getImageHeight() : $obj->percentH * $groupHeight;
-                        $designImage->scaleImage($scaleW, $scaleH);
+                        $designImage->scaleImage($scaleW, $scaleH, true);
                        //$designImage->adaptiveResizeImage($scaleW, $scaleH, true);
 
 
@@ -229,7 +229,7 @@ class ImageMakerController extends Controller
 
                     $myImages->compositeImage(
                         $designImage,
-                        \Imagick::COMPOSITE_XOR,
+                        \Imagick::COMPOSITE_DEFAULT,
                         //\Imagick::COMPOSITE_DEFAULT,
                         $compositeW,
                         $compositeH);

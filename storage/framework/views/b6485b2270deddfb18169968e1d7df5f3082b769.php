@@ -111,6 +111,17 @@
                 <h1>Create Your Product</h1>
             </div>
 
+                <?php if(count($art) > 0): ?>
+
+                    <div class="container-fluid text-center" style="height: 200px; overflow-x: auto;">
+                        <?php $__currentLoopData = $art; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $a): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <img src="<?php echo e($a->full_url); ?>" class="design-images d-inline p-2"
+                            style="max-width:150px; max-height: 150px;"/>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </div>
+
+                 <?php endif; ?>
+
             <div class="row">
 
                 <div class="col-md-2">

@@ -1,9 +1,11 @@
 <template>
     <div id="affiliatedb">
-        <b-navbar toggleable="lg" type="light" variant="light" class="row navbar-bg mx-0">
+        <b-navbar toggleable="sm" type="light" variant="light" class="navbar-bg mx-0">
+
             <b-navbar-brand>
                 Awkward Styles
             </b-navbar-brand>
+
             <b-navbar-toggle target="navbarSupportedContent">
                 <span class="navbar-toggler-icon"></span>
             </b-navbar-toggle>
@@ -13,11 +15,14 @@
                     <b-nav-item href="#" @click="current = 'Dashboard'">
                         Dashboard
                     </b-nav-item>
-                    <b-nav-item href="#" @click="current = 'wallet'">
+                    <b-nav-item href="#" @click="current = 'Wallet'">
                         My Wallet
                     </b-nav-item>
-                    <b-nav-item href="#" @click="current = 'report'">
+                    <b-nav-item href="#" @click="current = 'Report'">
                         Purchase Report
+                    </b-nav-item>
+                    <b-nav-item href="#" @click="current = 'Settings'">
+                        Settings
                     </b-nav-item>
                 </b-navbar-nav>
                 <form class="form-inline my-2 my-lg-0">
@@ -38,13 +43,17 @@
                             <i class="fa fa-tachometer-alt pr-2"></i>
                             <small class="sideText">Dashboard</small>
                         </div>
-                        <div class="container-fluid sideBarDiv" @click="current = 'wallet'">
+                        <div class="container-fluid sideBarDiv" @click="current = 'Wallet'">
                             <i class="fa fa-wallet pr-2"></i>
                             <small class="sideText">My Wallet</small>
                         </div>
-                        <div class="container-fluid sideBarDiv" @click="current = 'report'">
+                        <div class="container-fluid sideBarDiv" @click="current = 'Report'">
                             <i class="fa fa-file-invoice pr-2"></i>
                             <small class="sideText">Purchase Report</small>
+                        </div>
+                        <div class="container-fluid sideBarDiv" @click="current = 'Settings'">
+                            <i class="fa fa-cog pr-2"></i>
+                            <small class="sideText">Settings</small>
                         </div>
                     </div>
                 </div>
@@ -63,8 +72,13 @@
                              @click="current = 'Wallet'">
                             <h4 class="fa fa-wallet"></h4>
                         </div>
-                        <div class="container-fluid sideBarDiv text-center" title="Purchase Reports">
+                        <div class="container-fluid sideBarDiv text-center" title="Purchase Reports"
+                            @click="current = 'Report'">
                             <h4 class="fa fa-file-invoice"></h4>
+                        </div>
+                        <div class="container-fluid sideBarDiv text-center" title="Settings"
+                             @click="current = 'Settings'">
+                            <h4 class="fa fa-cog pr-2"></h4>
                         </div>
                     </div>
                 </div>
@@ -80,7 +94,7 @@
 <script>
 
     import Vue from 'vue';
-    import App from './Affiliates.vue';
+    //import App from './Affiliates.vue';
 
     // Clipboard
     import Clipboard from 'vue-clipboard2';
@@ -92,14 +106,10 @@
     import 'bootstrap/dist/css/bootstrap.css';
     import 'bootstrap-vue/dist/bootstrap-vue.css';
 
-    // Vue Graph
-    import VueGraph from 'vue-graph';
-
     Vue.config.productionTip = true;
 
     Vue.use(Clipboard);
     Vue.use(BootstrapVue);
-    Vue.use(VueGraph);
 
     export const nv = new Vue();
 
@@ -108,6 +118,12 @@
 
     // Wallet
     import WalletComponent from './components/WalletComponent.vue';
+
+    // Reports
+    import ReportComponent from './components/ReportComponent.vue';
+
+    // Settings
+    import SettingsComponent from './components/SettingsComponent.vue';
 
     export default {
         name: 'affiliatedb',
@@ -122,7 +138,9 @@
 
         components: {
             'Dashboard': DashboardComponent,
-            'Wallet': WalletComponent
+            'Wallet': WalletComponent,
+            'Report': ReportComponent,
+            'Settings': SettingsComponent
         },
 
         mounted() {
@@ -177,7 +195,7 @@
 
     #sideSlideLeft, #sideSlideRight {
         position: absolute;
-        right: -8px;
+        right: -5px;
         top: 50vh;
         cursor: pointer;
         z-index: 2;

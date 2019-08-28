@@ -40,7 +40,7 @@ class MockupgenController extends Controller
     public function index(Request $request, $pid, $did = null)
     {
 
-        $art_id = ($request->has('art_id')) ? $request->input('art_id') : 0;
+        $art_id = ($request->has('art_id')) ? $request->input('art_id') : array(0);
 
         $product = DB::table('tbl_products')
             ->select('image')
@@ -57,8 +57,8 @@ class MockupgenController extends Controller
             ->leftJoin(DB::raw("tbl_media_library as media"), function($join){
                 $join->on(DB::raw("media.id"), "=", DB::raw("artwork.mediaid"));
             })
-            ->whereRaw(DB::raw("artwork.id = " . $art_id))
-            ->where('is_private', '=', '0')
+            ->whereRaw(DB::raw("artwork.id IN (" . implode(",",$art_id) . ")"))
+            ->where('artwork.is_pending', '=', '0')
             ->get();
 
         $artwork = DB::table(DB::raw("tbl_art_work as art"))
@@ -119,6 +119,12 @@ class MockupgenController extends Controller
         $googleList = googleFontList();
         $googleLink = str_replace(" ", "+", implode("|",array_keys($googleList)));
 
+        // Check Art
+        foreach($art as $k => $a){
+            if($a->parentid !== $user_id && ($a->is_private || !$a->is_awkwardstyle)){
+                unset($art[$k]);
+            }
+        }
 
         return view('Mockup.mockupgen-new', [
             'art' => $art,
@@ -217,14 +223,15 @@ class MockupgenController extends Controller
 
         // For Artist
         $is_public = ($request->has('is_public')) ? $request->input('is_public') : true;
+
         $storefronts = ($request->has('storeFront')) ?
             str_replace('"', "",
             substr(substr($request->input('storeFront'), 0, -1), 1)
             ) :
             null;
+
         $design_id = ($request->has('design_id')) ? $request->input('design_id') : null;
 
-        // Create Object
         $design = ArtistDesigns::createDesign(
             $design_data, $pid, $user_id, $storefronts, $is_public, $design_id
         );

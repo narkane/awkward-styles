@@ -28,11 +28,8 @@ $optConfig = $this->config( 'client/jsonapi/url/config', [] );
 <div class="container">
   
     <div class="row">
-       <div class="col-md-3">
-       <?php include(base_path().'/resources/views/menu.blade.php'); ?>      
-       </div>
      
-     <div class="col-md-9">
+     <div class="col">
 <section class="aimeos basket-standard" data-jsonurl="<?= $enc->attr( $this->url( $optTarget, $optCntl, $optAction, [], [], $optConfig ) ); ?>">
 
 	<?php if( isset( $this->standardErrorList ) ) : ?>

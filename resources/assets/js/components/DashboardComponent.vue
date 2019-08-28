@@ -8,6 +8,64 @@
 
                     <b-card-header header-tag="header">
                             <span class="card-title">
+                                Dynamic Embedding
+                            </span>
+                        <span class="float-right">
+                                <b-button block href="#" v-b-toggle.collapse-dynamic varient="none">
+                                    <i class="fa fa-sort-up" id="dynamic-up"></i>
+                                    <i class="fa fa-sort-down" id="dynamic-down"></i>
+                                </b-button>
+                           </span>
+                    </b-card-header>
+
+                    <b-collapse id="collapse-dyanmic" visible role="tabpanel">
+                        <b-card-body class="m-0 p-0">
+
+                            <div class="jumbotron p-2 mb-0">
+                                Take the pain out of hand-picking each link or banner you
+                                wish to display! Let us do the hard work for you! Simply choose a style
+                                below, place it where you would like to see the link, banner, or image, and
+                                we will place it for you!
+                            </div>
+
+                            <b-tabs>
+
+                                <b-tab title="Embed Links" class="p-4" active>
+
+                                    <textarea readonly class="border rounded bg-light w-100 mw-100"><script src="script.js"></script></textarea>
+
+                                </b-tab>
+
+                                <b-tab title="Embed Banners" class="p-4">
+
+                                    <textarea readonly class="border rounded bg-light w-100 mw-100"><script src="script.js"></script></textarea>
+
+                                </b-tab>
+
+                                <b-tab title="Embed Images" class="p-4">
+
+                                    <textarea readonly class="border rounded bg-light w-100 mw-100"><script src="script.js"></script></textarea>
+
+                                </b-tab>
+
+                            </b-tabs>
+
+                        </b-card-body>
+
+                    </b-collapse>
+
+                </b-card>
+            </div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col p-0 m-4 box-shadow h-100">
+                <b-card no-body class="p-0 m-0">
+
+                    <b-card-header header-tag="header">
+                            <span class="card-title">
                                 Latest
                             </span>
                         <span class="float-right">
