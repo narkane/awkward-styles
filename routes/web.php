@@ -19,6 +19,10 @@ Route::get('/', function () {
 
 Auth::routes();
 
+/*
+ * LOG READER
+ */
+Route::get('/admin/log/reader/', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
 
 ###jthummel
 Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');

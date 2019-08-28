@@ -29,7 +29,7 @@
         </b-navbar>
 
         <div class="row main p-0 m-0">
-            <div v-if="showSidebar === true" style="position:relative;">
+            <div v-if="showSidebar === true" class="sideCol">
                 <i class="fa fa-chevron-circle-left" id="sideSlideLeft"
                    @click="showSidebar = false"></i>
                 <div class="col sidebar p-0">
@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-            <div v-else-if="showSidebar === false" style="position:relative;">
+            <div v-else-if="showSidebar === false" class="sideCol">
                 <i class="fa fa-chevron-circle-right" id="sideSlideRight"
                    @click="showSidebar = true"></i>
                 <div class="col sidebar-thin p-0">
@@ -150,8 +150,18 @@
         box-shadow: 2px 2px 10px rgba(0,0,0,0.6);
     }
 
+    .sideCol {
+        position: relative;
+        background-image: linear-gradient(to left, rgba(150,255,150,0.5), white);
+        box-shadow: inset -10px -10px 5px -10px #000;
+    }
+
     #affiliatedb {
         height: 100%;
+    }
+
+    .navbar-bg {
+        box-shadow: inset 0px -10px 5px -10px #000;
     }
 
     .sideBarDiv {
@@ -161,7 +171,7 @@
     }
 
     .sideBarDiv:hover {
-        background-color: lightblue;
+        background-image: linear-gradient(to right, green, transparent);
         color: #000;
     }
 
@@ -188,6 +198,12 @@
 
     .fa-copy {
         cursor: pointer;
+    }
+
+    .contentArea {
+        background-image: linear-gradient(to bottom, rgba(100,255,100,0.2), #ffffff, rgba(100,255,100,0.2));
+        background-image: -moz-linear-gradient(to bottom, rgba(100,255,100,0.2), #ffffff, rgba(100,255,100,0.2));
+        background-image: -webkit-linear-gradient(to bottom, rgba(100,255,100,0.2), #ffffff, rgba(100,255,100,0.2));
     }
 
 </style>
