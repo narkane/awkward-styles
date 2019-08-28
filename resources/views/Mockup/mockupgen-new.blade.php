@@ -104,7 +104,24 @@
             border: solid 3px #ea972ef7 !important;
         }
 
+        #loading{
+            width: 100%;
+            height: 100%;
+            background: white;
+            position: fixed;
+            top: 0px;
+            z-index: 7;
+            opacity: 0.85;
+        }
+        #loadText{
+            position: absolute;
+            bottom: 0px;
+            /* padding: 500px; */
+            font-size: 100pt;
+        }
+
     </style>
+    <div id='loading'><div id='loadText'>Loading . . . </div></div>
     <div class="container w-75"> <!-- mt-0 pt-0 w-75"> -->
 
         <section id="typography">
