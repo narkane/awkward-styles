@@ -13,6 +13,7 @@ var line3;
 var line4;
 var objectIndex = 1;
 var timer;
+var clearing = false;
 
 var hoodieCanvas, shirtCanvas, hatCanvas, bagCanvas;
 
@@ -52,6 +53,7 @@ var dpi = {};
 var upperLeft = 999;
 var upperTop = 999;
 var mainc;
+var loadElement;
 
 var templateVars = {
     pid: 0,
@@ -68,6 +70,7 @@ function init() {
     //var imageHeight =  $height }};
     console.log("INITIALIZING MOCKGEN!");
 
+    loadEle = document.getElementById("loading");
 
     $(".mock-block").on("click", function () {
         var block = this;
@@ -136,6 +139,7 @@ function init() {
             var reader = new FileReader();
 
             reader.onload = function () {
+                loadEle.hidden = false;
                 addAwkwardImage(reader.result, e.target.files[0]);
             };
 
@@ -562,29 +566,30 @@ function init() {
 }
 
 function clearAll() {
-    console.log("CLEEEEEEAR!");
-    // Clear storage and flush sessions
-    localStorage.clear();
-    $("#objectHolder").html(' ');
-
-    $.ajax({
-        url: "/api/mockgen/flush",
-        type: 'GET',
-        method: 'GET',
-        cache: false,
-        contentType: false,
-        processData: false,
-        success: (result) => {
-            console.log(result);
-        },
-        error: (error, data) => {
-            console.log(error);
+    if(clearing==false){
+        console.log("CLEEEEEEAR!");
+        // Clear storage and flush sessions
+        localStorage.clear();
+        $("#objectHolder").html(' ');
+        
+        $.ajax({
+            url: "/api/mockgen/flush",
+            type: 'GET',
+            method: 'GET',
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: (result) => {
+                console.log(result);
+            },
+            error: (error, data) => {
+                console.log(error);
+            }
+        });
+        if (myCanvas.getObjects().length > 0) {
+            setTemplate("main");
         }
-    });
-
-    // Clear All Objects
-    canvas.clear();
-    setTemplate("main");
+    }
 }
 
 var sessionInfo = function (item, file = null) {
@@ -803,7 +808,7 @@ function setShirtImage(imgurl, canvasType = "canvas") {
 
 
 function setTemplate(main = "main") {
-
+    clearing = true;
     $.ajax({
         url: "/api/template/" + ((isNaN(main)) ? templateVars.pid : main) + "/" + templateVars.size,
         contentType: 'application/json',
@@ -898,7 +903,7 @@ function setTemplate(main = "main") {
                     case 1402: tag = 2; break;
                     case 1455: tag = 3; break;
                 }
-
+                
                 if (isNaN(main)) {
                     mainG = g;
                     myCanvas = canvas;
@@ -907,15 +912,19 @@ function setTemplate(main = "main") {
                     myCanvas = prevCanvas[tag];
                 }
                 // allG.push(g);
-
+                // Clear All Objects
+                if (myCanvas.getObjects().length > 0) {
+                    myCanvas.clear();
+                }
                 myCanvas.clipPath = g;
-
+                
                 myCanvas.add(g);
-
+                
                 myCanvas.moveTo(g, 0);
-
+                
+                loadEle.hidden = true;
             }
-
+            
             if (isNaN(main)) {
                 $.ajax({
                     url: "/api/mockgen",
@@ -928,8 +937,8 @@ function setTemplate(main = "main") {
                         fromStorage(result);
 
                         // let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
-
-
+                        clearing = false;
+                        
                     },
                     error: (error, data) => {
                         console.log(error);
@@ -938,16 +947,16 @@ function setTemplate(main = "main") {
                 });
                 // myCanvas.add(mainG);
             }
-
+            
         },
         error: (err, data) => {
             console.log("Error fetching template.");
-
+            
             // IF EMPTY, USE GENERIC
             // SET TEMPLATE TO SHIRT
             var w = newWidth / 3;
             var h = newHeight / 3;
-
+            
             $("#shirtDrawingArea").css({ "top": '35%', "left": '35%', "width": w, "height": h });
         }
     });
@@ -1418,6 +1427,7 @@ function removeSessionItem(id, siteSession = false) {
             processData: false,
             success: (result) => {
                 console.log(result);
+                loadEle.hidden = true;
             },
             error: (error, data) => {
                 console.log(error);
