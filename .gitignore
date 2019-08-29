@@ -21,6 +21,7 @@ app/storage/
 
 # Laravel 5 & Lumen specific
 public/storage
+storage/4
 public/hot
 storage/*.key
 .env

@@ -163,7 +163,7 @@
     function appendToUrl(){
         let artworkUrl = "?";
         for(let i in artSelected){
-            artworkUrl += "art=" + artSelected[i] + "&";
+            artworkUrl += "art_id[]=" + artSelected[i] + "&";
         }
 
         $(".img_url").each(function(){

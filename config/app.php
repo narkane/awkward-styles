@@ -166,6 +166,11 @@ return [
         Illuminate\View\ViewServiceProvider::class,
 
         /*
+         * LOG READER
+         */
+        Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
+
+        /*
          * Package Service Providers...
          */
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\ProductInformation;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 
 class ImageMakerController extends Controller
 {
@@ -23,11 +24,13 @@ class ImageMakerController extends Controller
      * @param $pid
      * @param $size
      * @param $art_design
-     * @param @mediaId
+     * @param $mediaId
      * @throws \ImagickException
      */
     public function index(Request $request, $pid, $size, $art_design = 0, $mediaId = null)
     {
+
+        ini_set("max_execution_time", 10);
 
         $newWidth = 400;
         $newHeight = 400;
@@ -165,12 +168,14 @@ class ImageMakerController extends Controller
                         $designImage->setImageCompressionQuality(100);
                     } else {
 
-                        $designImage->newImage($obj->width * $obj->scaleX, $obj->height * $obj->scaleY, new \ImagickPixel('transparent'));
+                        $designImage->newImage(($obj->width), ($obj->height), new \ImagickPixel('transparent'));
+                        //$designImage->newImage($imageWidth,$imageHeight, new \ImagickPixel('transparent'));
+
                         //$designImage->setResolution(10000,10000);
                         $designImage->setImageFormat('png');
 
                         $draw = new \ImagickDraw();
-                        $draw->setGravity(\Imagick::GRAVITY_NORTHEAST);
+                        $draw->setGravity(\Imagick::GRAVITY_NORTHWEST);
                         $draw->setFillColor(new \ImagickPixel($obj->fill));
 
                         $draw->setFont($this->findFont($obj->fontFamily));
@@ -179,34 +184,54 @@ class ImageMakerController extends Controller
                             $draw->setFontWeight(800);
                         }
 
-                        if($obj->fontStyle !== "normal"){
+                        if($obj->fontStyle !== "normal") {
                             $draw->setFontStyle(\Imagick::STYLE_ITALIC);
                         }
 
                         $draw->setTextDecoration(($obj->underline) ? \Imagick::DECORATION_UNDERLINE : \Imagick::DECORATION_NO);
 
+                        //$obj->width = $obj->width - ($obj->width * 2);
+
                         $designImage->annotateImage($draw,
-                            0, 0, $obj->angle, $obj->text);
+                            //($topX + ($groupWidth * $obj->percentX) - (($obj->width * $obj->scaleX) / 2)),
+                            //($topY + ($groupHeight * $obj->percentY) - (($obj->height * $obj->scaleY) / 2)),
+                            0,-9,$obj->angle,
+                            $obj->text);
 
                     }
 
-                    $scaleW = $obj->percentW * $groupWidth;
-                    $scaleH = $obj->percentH * $groupHeight;
+//                    if($obj->type === 'awkward-image') {
 
-                    $designImage->scaleImage($scaleW, $scaleH, true);
-                    //$designImage->adaptiveResizeImage($scaleW, $scaleH, true);
+                        $scaleW = (($obj->percentW * $groupWidth) === $designImage->getImageWidth()) ? $design->getImageWidth() : $obj->percentW * $groupWidth;
+                        $scaleH = (($obj->percentH * $groupHeight) === $designImage->getImageHeight()) ? $design->getImageHeight() : $obj->percentH * $groupHeight;
+                        $designImage->scaleImage($scaleW, $scaleH, true);
+                       //$designImage->adaptiveResizeImage($scaleW, $scaleH, true);
+
+
+//                   }// else {
+//
+//                        $compositeW = 0;
+//                        $compositeH = 0;
+//
+//                    }
+                    $compositeW = ($topX + ($groupWidth * $obj->percentX) - ($designImage->getImageWidth() / 2));
+                    $compositeH = ($topY + ($groupHeight * $obj->percentY) -
+                        ((
+                            ($obj->type === 'awkward-image') ?
+                                $designImage->getImageHeight() :
+                                ($obj->height * $obj->scaleY)
+                            ) / 2
+                        ));
+
 
                     // HANDLE ANGLES
                     if ($obj->angle > 0) {
                         $designImage->rotateImage(new \ImagickPixel('transparent'), $obj->angle);
                     }
 
-                    $compositeW = ($topX + ($groupWidth * $obj->percentX) - ($designImage->getImageWidth() / 2));
-                    $compositeH = ($topY + ($groupHeight * $obj->percentY) - ($designImage->getImageHeight() / 2));
-
                     $myImages->compositeImage(
                         $designImage,
-                        \Imagick::COMPOSITE_XOR,
+                        \Imagick::COMPOSITE_DEFAULT,
                         //\Imagick::COMPOSITE_DEFAULT,
                         $compositeW,
                         $compositeH);
@@ -230,35 +255,48 @@ class ImageMakerController extends Controller
 
                 $image->addImage($productImage);
 
-
             } catch (\Exception $e) {
 
                 // DROP SOME ERROR IMAGE
-
-/*
                 $this->info = "b";
 
-                echo "MESSAGE: " . $e->getMessage() . "<br/>";
-                echo "CODE: " . $e->getCode() . "<br/>";
-                echo "FILE: " . $e->getFile() . "<br/>";
-                echo "LINE: " . $e->getLine() . "<br/>";
-                die();
-/*/
+                $info = [
+                    "DESIGN_ID" => $art_design ,
+                    "PRODUCT ID" => $pid,
+                    "MESSAGE" => $e->getMessage(),
+                    "CODE" => $e->getCode(),
+                    "FILE" => $e->getFile(),
+                    "LINE" => $e->getLine(),
+                    "TRACESTRING" => $e->getTraceAsString()
+                    ];
+
+                Log::info(["Image Render Failure", $info]);
 
                 $image = new \Imagick();
                 $errorImg = file_get_contents(public_path() . "/images/error_image.png");
                 $image->readImageBlob($errorImg);
                 $image->adaptiveResizeImage(400,400,true);
-//*/
             }
 
         if(is_null($this->info)) {
 
             $image->setImageFormat('png');
+
+            $image->stripImage();
+            $image->setImageDepth(8);
+
+            if($request->has('thumbnail')) {
+                //$image->setOption('png:compression-level',5);
+                $image->thumbnailImage(200, 200, true);
+            }
+
             header('Content-type: image/png');
             echo $image->getImageBlob();
             $image->destroy();
             die();
+
+        } else {
+            $this->errorImage($request->has('thumbnail'));
         }
 
     }
@@ -341,5 +379,24 @@ class ImageMakerController extends Controller
             file_put_contents($tffFile, file_get_contents($tffUrl));
         }
         return $tffFile;
+    }
+
+    private function errorImage($thumbnail = false){
+        $image = new \Imagick();
+        $errorImg = file_get_contents(public_path() . "/images/error_image.png");
+        $image->readImageBlob($errorImg);
+
+        if($thumbnail){
+            //$image->setOption('png:compression-level',5);
+            $image->thumbnailImage(200, 200, true);
+
+        } else {
+            $image->adaptiveResizeImage(400,400,true);
+        }
+
+        header('Content-Type: image/png');
+        echo $image->getImageBlob();
+        $image->destory();
+        die();
     }
 }

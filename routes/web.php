@@ -19,6 +19,10 @@ Route::get('/', function () {
 
 Auth::routes();
 
+/*
+ * LOG READER
+ */
+Route::get('/admin/log/reader/', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
 
 ###jthummel
 Route::get('/affiliates', 'AffiliatesController@index')->name('affiliates');
@@ -194,6 +198,11 @@ Route::group(['prefix' => 'api/'], function($app){
      * REMOVE ARTWORK
      */
     $app->get('removeArt', 'MyStoresController@removeArt')->name('removeArtwork');
+
+    /**
+     * REMOVE DESIGN
+     */
+    $app->get('removeDesign', 'API\DesignController@removeDesign')->name('removeDesign');
 
 
     //$app->get('insertproducts', 'API\InsertProductsController@index');

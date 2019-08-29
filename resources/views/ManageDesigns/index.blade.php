@@ -4,6 +4,9 @@
 
     <div class="container">
 
+        <div id="flash_message">
+        </div>
+
         <div class="row">
             <div class="col-md-3">
                 @include('menu');
@@ -45,34 +48,56 @@
 
                                     @isset($designs)
                                         @foreach($designs as $design)
-                                                <div class="col item">
+                                                <div class="col item" id="{{ $design->product_id }}_{{ $design->id }}">
                                                     <div class="product-grid">
                                                         <div class="product-image border rounded">
-                                                            <a href="{{url('/')}}/product-details/">
-                                                                <img src="{{ URL("api/designs/images") }}/{{ $design->product_id }}/XS/{{ $design->id }}"
-                                                                style="max-width: 300px; max-height: 300px;" />
+                                                            <a href="{{url('/')}}/product-details/{{ $design->product_id }}/{{ $design->id }}">
+                                                                <img src="{{ URL("api/designs/images") }}/{{ $design->product_id }}/XS/{{ $design->id }}?thumbnail"
+                                                                style="max-width: 200px; max-height: 200px;" />
                                                             </a>
                                                         </div>
                                                         <div class="product-content">
-                                                            <div class="row">
-                                                                <div class="col-4">
-                                                                    <i class="fa fa-plus" style="color: blue;"></i>
-                                                                    <small>Add To Product(s)</small>
-                                                                </div>
-                                                                <div class="col-4">
-                                                                    <i class="fa fa-edit" style="color: green;"></i>
-                                                                    Edit
-                                                                </div>
-                                                                <div class="col-4">
-                                                                    <i class="fa fa-minus" style="color: red;"></i>
-                                                                    Delete
-                                                                </div>
-                                                            </div>
+
+                                                                    <button class="btn btn-success">
+                                                                        <i class="fa fa-edit"></i>
+                                                                        Edit
+                                                                    </button>
+
+                                                                    <button class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
+                                                                        <i class="fa fa-trash-alt text-lightS"></i>
+                                                                        Delete
+                                                                    </button>
+
                                                         </div>
                                                     </div>
                                                 </div>
                                         @endforeach
                                     @endisset
+
+                                    <!-- MODAL FOR DELETION -->
+                                        <div class="modal" id="deleteModal" tabindex="-1" role="dialog"
+                                             aria-labelledby="deleteModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="deleteModalLabel">Delete Design</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body text-center" id="deleteDesignModal">
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <input type="hidden" name="held_id" id="held_id" value="0"/>
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close
+                                                        </button>
+                                                        <button type="button" class="btn btn-primary" id="delete_my_design"
+                                                                data-dismiss="modal">Delete Design
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                 </div>
 
@@ -105,6 +130,74 @@
                     window.location.href = url;
                 }
             });
+
+            // Edit Product - Send to Mockup Generator
+            $(".btn-success").on('click', function(){
+                let vars = $(this).parent().parent().parent().attr('id').split("_");
+
+                // Mockup
+                window.location.href = '/mockupgenerator/' + vars[0] + '/' + vars[1];
+
+            });
+
+            // Delete Product
+
+            $(".btn-danger").on('click', function () {
+                let vars = $(this).parent().parent().parent().attr('id').split("_");
+
+                // Fill Delete Modal
+                let deleteModal = $("#deleteDesignModal");
+
+                $("#held_id").val(vars);
+
+                deleteModal.html("<div class=\"bg-danger text-light\"><p class=\"lead\">Are you sure?</p>"
+                    + "<small>Once deleted, all designs on all products will be removed.</small></div>"
+                    + "<img src='{{ URL("api/designs/images") }}/" + vars[0] + "/XS/" + vars[1] + "' style='max-width: 300px; max-height: 300px;'/>");
+
+            });
+
+            $("#delete_my_design").on('click', function () {
+
+                let design_id = $("#held_id").val().split(",")[1];
+
+                $.ajax({
+
+                    url: "{{ url("api/removeDesign") }}",
+                    type: 'GET',
+                    data: {
+                        design_id: design_id
+                    },
+
+                    success: (result) => {
+                        console.log(result);
+
+                        let flash = $("#flash_message");
+
+                        if(result.status !== "error") {
+                            let col_id = function(){
+                                let v = $("#held_id").val().split(",");
+                                return v[0] + "_" + v[1];
+                            };
+
+                            $("#" + col_id).remove();
+                            flash.html('<div class="alert-success">' + result.msg + '</div>');
+                        } else {
+                            flash.html('<div class="alert-danger">' + result.msg + '</div>');
+                        }
+                        $('html,body').animate({ scrollTop: 0 }, 'fast');
+                    },
+                    error: (err, data) => {
+                        console.log("ERROR: " + JSON.stringify(err));
+                    }
+                });
+
+            });
+
         });
     </script>
+    <style>
+        .btn-danger {
+            background-color: red;
+        }
+    </style>
 @endsection
