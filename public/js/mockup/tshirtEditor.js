@@ -66,6 +66,7 @@ function init() {
      * 
  * START PAGE FUNCTIONS
  */
+    // clearAll();
     //var imageWidth = $width }};
     //var imageHeight =  $height }};
     console.log("INITIALIZING MOCKGEN!");
@@ -193,7 +194,7 @@ function init() {
                     // console.log(newW);
                     // console.log(newH);
                     //
-                    let scalewidth = percentW * groupWidth[groupN.findIndex((element) => { return element == c })];
+                    let scalewidth = percentW * groupWidth[c];
                     let scaleheight = percentH * groupHeight[groupN.findIndex((element) => { return element == c })];
                     if (scalewidth < scaleheight) {
                         scaleheight = scalewidth;
@@ -697,7 +698,7 @@ var sessionInfo = function (item, file = null) {
             }
         });
 
-        return true;
+        // return true;
     }
 
     let storage = (localStorage.getItem('canvas')) ? JSON.parse(localStorage.getItem('canvas')) : {};
@@ -913,8 +914,10 @@ function setTemplate(main = "main") {
                 }
                 // allG.push(g);
                 // Clear All Objects
-                if (myCanvas.getObjects().length > 0) {
-                    myCanvas.clear();
+                // console.log(canvas.getObjects());
+                if (myCanvas == canvas && canvas.getObjects().length > 0) {
+                    canvas.clear();
+                    console.log("CLEAR!");
                 }
                 myCanvas.clipPath = g;
                 
@@ -941,6 +944,7 @@ function setTemplate(main = "main") {
                         
                     },
                     error: (error, data) => {
+                        console.log('didnt store');
                         console.log(error);
                         fromStorage();
                     }
@@ -966,9 +970,9 @@ function setTemplate(main = "main") {
 function fromStorage(result = null) {
     let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
     // console.log(cv);
-    console.log(cv.objects);
+    console.log("fromStorage GO!");
     // cv.objects = Array.from(cv.objects);
-    // cv.objects.unshift(mainG.toObject());
+    cv.objects.unshift(mainG.toObject());
     console.log(cv.objects);
 
     // Merge
@@ -1019,21 +1023,27 @@ function fromStorage(result = null) {
                                 console.log(i);
                                 console.log(j);
                                 console.log(listItems[i][j]);
-                                // if(listItems[i][j].type !== "group"){
-                                createListItem(listItems[i][j].objectName,
-                                    ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
-                                    ((listItems[i][j].type === "awkward-image") ?
-                                        {
-                                            width: listItems[i][j].objectWidth * listItems[i][j].scaleX,
-                                            height: listItems[i][j].objectHeight * listItems[i][j].scaleY,
-                                            x: listItems[i][j].left,
-                                            y: listItems[i][j].top
-                                        } :
-                                        {
-                                            x: listItems[i][j].left,
-                                            y: listItems[i][j].top
-                                        })
-                                );
+                                if(listItems[i][j].type !== "group"){
+                                    createListItem(listItems[i][j].objectName,
+                                        ((listItems[i][j].type === "awkward-image") ? "image" : "text"),
+                                            {
+                                                Width: listItems[i][j].objectWidth / tempRatio[tempRatio.length - 1],
+                                                Height: listItems[i][j].objectHeight / tempRatio[tempRatio.length - 1],
+                                                x: listItems[i][j].left,
+                                                y: listItems[i][j].top,
+                                                DPI: listItems[i][j].width / (listItems[i][j].objectWidth / tempRatio[tempRatio.length - 1]),
+                                                percentX: ((listItems[i][j].left + (listItems[i][j].objectWidth / 2)) - groupX[mainc]) / groupWidth[mainc],
+                                                percentY: ((listItems[i][j].top + (listItems[i][j].objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc],
+                                                percentW: listItems[i][j].objectWidth / groupWidth[mainc],
+                                                percentH: listItems[i][j].objectHeight / groupHeight[mainc],
+                                                // aspect: image.width
+                                            }
+                                            );
+                                    percentX = ((listItems[i][j].left + (listItems[i][j].objectWidth / 2)) - groupX[mainc]) / groupWidth[mainc];
+                                    percentY = ((listItems[i][j].top + (listItems[i][j].objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc];
+                                    percentW = listItems[i][j].objectWidth / groupWidth[mainc];
+                                    percentH = listItems[i][j].objectHeight / groupHeight[mainc];
+                                        }
                             }
                         }
                     }
@@ -1165,7 +1175,7 @@ function addAwkwardImage(src, info = false) {
                 options = {
                     x: image.left,
                     y: image.top,
-                    DPI: image.width / (image.objectWidth / tempRatio[tempRatio.length - 1]),
+                    DPI: image.width / (image.objectWidth / tempRatio[tempRatio.length - 1])
                 };
                 // } else {
                 // options = {
@@ -1370,17 +1380,19 @@ function createListItem(id, type, options = null) {
 
     delete options.x;
     delete options.y;
+    console.log("FDSAGFDSAFADSGFSDAGAESR OPTIONS!!!: ");
+    console.log(options);
 
     if (Object.keys(options).length > 0) {
-        if (dpi < 96) {
+        if (options.DPI < 96) {
             list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#ff0000">';
-            list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - BAD</div>';
-        } else if (dpi < 145) {
+            list += '<div style = "color:#000000; width:150px" >DPI: ' + Math.round(options.DPI) + ' - BAD</div>';
+        } else if (options.DPI < 145) {
             list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#0000ff">';
-            list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - GOOD</div>';
+            list += '<div style = "color:#000000; width:150px" >DPI: ' + Math.round(options.DPI) + ' - GOOD</div>';
         } else {
             list += '<div class="p-3 text-light font-weight-bold" style="height:35px; background:#00ff00">';
-            list += '<div class="col-sm-6 object_d">DPI: ' + Math.round(options.DPI) + ' - GREAT</div>';
+            list += '<div style = "color:#000000; width:150px" >DPI: ' + Math.round(options.DPI) + ' - GREAT</div>';
         }
         list += '</div></div>';
         // for(var a in options){
