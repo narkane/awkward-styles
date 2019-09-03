@@ -41,7 +41,10 @@ var prevCanvas = [
  *        4: rectangle
  */
 
-var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG, percentX, percentY, percentW, percentH;
+var imageWidth, imageHeight, newWidth, newHeight, realW, realH, url, pid, size, mainG;
+// var percentX, percentY, percentW, percentH = [];
+var allItems = [];
+var canByItem = [];
 var groupWidth = [];
 var groupHeight = [];
 var groupX = [];
@@ -153,6 +156,7 @@ function init() {
     });
 
     $("#saveMyDesign").on('click', function (e) {
+        canByItem = [];
         let anyFailed = false;
         console.log(dpi);
         for (i in dpi) {
@@ -171,21 +175,25 @@ function init() {
             if (localStorage.length == 0) { alert('it broke!'); }
             console.log(dpi);
             let item = canvas.getObjects();
-
+            
             for (let i in prevCanvas) {
                 prevCanvas[i].clear();
             }
-
-            for (let i in item) {
-                for (let c in prevCanvas) {
-                    if (item[i].type === 'group') {
-                        // prevCanvas[c].add(allG[c]);
-                        continue;
-                    }
-                    let obj = $.extend(true, {}, item[i]);
-                    console.log(item[i].dpi);
-                    obj.lockMovementX = true;
-                    obj.lockMovementY = true;
+            
+            for (let c in prevCanvas) {
+                let canID = groupN.findIndex((element) => { return element == c });
+                    for (let i in item) {
+                        if (item[i].type === 'group') {
+                            // prevCanvas[c].add(allG[c]);
+                            console.log("TEMPLATE: ");
+                            console.log(item[i]);
+                            continue;
+                        }
+                        let obj = $.extend(true, {}, item[i]);
+                        // console.log(item[i].dpi);
+                        console.log(c + ", " + i);
+                    // obj.lockMovementX = true;
+                    // obj.lockMovementY = true;
                     // console.log("YO HERE IT IS (canvas width):");
                     // console.log(prevCanvas[c].getObjects[0].width)
                     // console.log(obj);
@@ -194,29 +202,31 @@ function init() {
                     // console.log(newW);
                     // console.log(newH);
                     //
-                    let scalewidth = percentW * groupWidth[c];
-                    let scaleheight = percentH * groupHeight[groupN.findIndex((element) => { return element == c })];
+                    let scalewidth = obj.percentW * groupWidth[canID];
+                    let scaleheight = obj.percentH * groupHeight[canID];
                     if (scalewidth < scaleheight) {
                         scaleheight = scalewidth;
                     } else {
                         scalewidth = scaleheight;
                     }
+                    ///////////////////////
+
                     obj.scaleToWidth(scalewidth);
                     obj.scaleToHeight(scaleheight);
                     obj.objectWidth = obj.aCoords.tr.x - obj.aCoords.tl.x;
                     obj.objectHeight = obj.aCoords.bl.y - obj.aCoords.tl.y;
                     // console.log('dogslunch');
-                    obj.left = (groupX[groupN.findIndex((element) => { return element == c })] + (groupWidth[groupN.findIndex((element) => { return element == c })] * percentX) - (obj.objectWidth / 2));
-                    obj.top = (groupY[groupN.findIndex((element) => { return element == c })] + (groupHeight[groupN.findIndex((element) => { return element == c })] * percentY) - (obj.objectHeight / 2));
+                    obj.left = (groupX[canID] + (groupWidth[canID] * obj.percentX) - (obj.objectWidth / 2));
+                    obj.top = (groupY[canID] + (groupHeight[canID] * obj.percentY) - (obj.objectHeight / 2));
                     let dat = {
                         sW: scalewidth,
                         sH: scaleheight,
                         oL: obj.left,
                         oT: obj.top,
-                        pX: percentX,
-                        pY: percentY,
-                        pW: percentW,
-                        pH: percentH,
+                        pX: obj.percentX,
+                        pY: obj.percentY,
+                        pW: obj.percentW,
+                        pH: obj.percentH,
                         gX: groupX,
                         gY: groupY,
                         gW: groupWidth,
@@ -225,14 +235,24 @@ function init() {
                         oH: obj.objectHeight,
                         cID: c,
                         gN: groupN,
-                        gNc: groupN.findIndex((element) => { return element == c })
+                        gNc: canID
                     }
                     console.log(dat);
+
+                    let canPerItem = {
+                        percentX: obj.percentX,
+                        percentY: obj.percentY,
+                        percentW: obj.percentW,
+                        percentH: obj.percentH,
+                    }
+                    allItems[i]=(canPerItem);
                     // obj.left = (prevCanvas[c].width - newW) * 0.5; 
                     // obj.top = (prevCanvas[c].height - newH) * 0.5;
                     prevCanvas[c].add(obj);
                 }
+                canByItem.push(allItems);
             }
+            console.log(canByItem);
         }
     });
 
@@ -297,7 +317,36 @@ function init() {
      */
 
     // let tmpOpacity = 0;
+for(let c in prevCanvas){
+    prevCanvas[c].on({
+        'object:moving': function(e){
+            let objID = e.target.objectIndex;
+            let currCan = groupN.findIndex((element) => { return element == c });
+            console.log("CANVAS: "+c+", objID: "+objID);
+            console.log(e.target.left);
+            e.target.objectWidth = e.target.aCoords.tr.x - e.target.aCoords.tl.x;
+            e.target.objectHeight = e.target.aCoords.bl.y - e.target.aCoords.tl.y;
 
+            canByItem[c][objID].percentX = ((e.target.left + (e.target.objectWidth / 2)) - groupX[currCan]) / groupWidth[currCan];
+            canByItem[c][objID].percentY = ((e.target.top + (e.target.objectHeight / 2)) - groupY[currCan]) / groupHeight[currCan];
+            console.log(canByItem[c]);
+        },
+        'object:modified': function(e){
+            let objID = e.target.objectIndex;
+            let currCan = groupN.findIndex((element) => { return element == c });
+            console.log("CANVAS: " + c + ", objID: " + objID);
+            console.log(e.target.objectWidth);
+            e.target.objectWidth = e.target.aCoords.tr.x - e.target.aCoords.tl.x;
+            e.target.objectHeight = e.target.aCoords.bl.y - e.target.aCoords.tl.y;
+
+            canByItem[c][objID].percentX = ((e.target.left + (e.target.objectWidth / 2)) - groupX[currCan]) / groupWidth[currCan];
+            canByItem[c][objID].percentY = ((e.target.top + (e.target.objectHeight / 2)) - groupY[currCan]) / groupHeight[currCan];
+            canByItem[c][objID].percentW = e.target.objectWidth / groupWidth[currCan];
+            canByItem[c][objID].percentH = e.target.objectHeight / groupHeight[currCan];
+            console.log(canByItem[c]);
+        }
+    });
+}
     canvas.on({
         'object:moving': function (e) {
             // canvas.clipPath.opacity = 0.5;
@@ -925,7 +974,6 @@ function setTemplate(main = "main") {
                 
                 myCanvas.moveTo(g, 0);
                 
-                loadEle.hidden = true;
             }
             
             if (isNaN(main)) {
@@ -938,15 +986,17 @@ function setTemplate(main = "main") {
                     processData: false,
                     success: (result) => {
                         fromStorage(result);
-
+                        
                         // let cv = localStorage.getItem('canvas') ? JSON.parse(localStorage.getItem('canvas')) : {};
                         clearing = false;
                         
+                        loadEle.hidden = true;
                     },
                     error: (error, data) => {
                         console.log('didnt store');
                         console.log(error);
                         fromStorage();
+                        loadEle.hidden = true;
                     }
                 });
                 // myCanvas.add(mainG);
