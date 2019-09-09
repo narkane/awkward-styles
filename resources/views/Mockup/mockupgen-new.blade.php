@@ -170,7 +170,7 @@
                 </div>
 
                 <div style="display:none;">
-                    <input type="file" accept="image/*" id="fileUpload"/>
+                    <input type="file" accept="image\/*" id="fileUpload"/>
                 </div>
 
                 <div class="col-md-7">

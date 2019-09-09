@@ -156,7 +156,6 @@ function init() {
     });
 
     $("#saveMyDesign").on('click', function (e) {
-        canByItem = [];
         let anyFailed = false;
         console.log(dpi);
         for (i in dpi) {
@@ -170,89 +169,94 @@ function init() {
             e.preventDefault();
             // return -1;
         } else {
-            console.log("STORAGE: ");
-            console.log(localStorage);
-            if (localStorage.length == 0) { alert('it broke!'); }
-            console.log(dpi);
-            let item = canvas.getObjects();
-            
-            for (let i in prevCanvas) {
-                prevCanvas[i].clear();
-            }
-            
-            for (let c in prevCanvas) {
-                let canID = groupN.findIndex((element) => { return element == c });
-                    for (let i in item) {
-                        if (item[i].type === 'group') {
-                            // prevCanvas[c].add(allG[c]);
-                            console.log("TEMPLATE: ");
-                            console.log(item[i]);
-                            continue;
-                        }
-                        let obj = $.extend(true, {}, item[i]);
-                        // console.log(item[i].dpi);
-                        console.log(c + ", " + i);
-                    // obj.lockMovementX = true;
-                    // obj.lockMovementY = true;
-                    // console.log("YO HERE IT IS (canvas width):");
-                    // console.log(prevCanvas[c].getObjects[0].width)
-                    // console.log(obj);
-                    // let newW = obj.aCoords.br.x - obj.aCoords.bl.x;
-                    // let newH = obj.aCoords.bl.y - obj.aCoords.tl.y;
-                    // console.log(newW);
-                    // console.log(newH);
-                    //
-                    let scalewidth = obj.percentW * groupWidth[canID];
-                    let scaleheight = obj.percentH * groupHeight[canID];
-                    if (scalewidth < scaleheight) {
-                        scaleheight = scalewidth;
-                    } else {
-                        scalewidth = scaleheight;
-                    }
-                    ///////////////////////
-
-                    obj.scaleToWidth(scalewidth);
-                    obj.scaleToHeight(scaleheight);
-                    obj.objectWidth = obj.aCoords.tr.x - obj.aCoords.tl.x;
-                    obj.objectHeight = obj.aCoords.bl.y - obj.aCoords.tl.y;
-                    // console.log('dogslunch');
-                    obj.left = (groupX[canID] + (groupWidth[canID] * obj.percentX) - (obj.objectWidth / 2));
-                    obj.top = (groupY[canID] + (groupHeight[canID] * obj.percentY) - (obj.objectHeight / 2));
-                    let dat = {
-                        sW: scalewidth,
-                        sH: scaleheight,
-                        oL: obj.left,
-                        oT: obj.top,
-                        pX: obj.percentX,
-                        pY: obj.percentY,
-                        pW: obj.percentW,
-                        pH: obj.percentH,
-                        gX: groupX,
-                        gY: groupY,
-                        gW: groupWidth,
-                        gH: groupHeight,
-                        oW: obj.objectWidth,
-                        oH: obj.objectHeight,
-                        cID: c,
-                        gN: groupN,
-                        gNc: canID
-                    }
-                    console.log(dat);
-
-                    let canPerItem = {
-                        percentX: obj.percentX,
-                        percentY: obj.percentY,
-                        percentW: obj.percentW,
-                        percentH: obj.percentH,
-                    }
-                    allItems[i]=(canPerItem);
-                    // obj.left = (prevCanvas[c].width - newW) * 0.5; 
-                    // obj.top = (prevCanvas[c].height - newH) * 0.5;
-                    prevCanvas[c].add(obj);
+            // canByItem = [];
+            if(canByItem.length == 0){
+                console.log("STORAGE: ");
+                console.log(localStorage);
+                if (localStorage.length == 0) { alert('it broke!'); }
+                console.log(dpi);
+                let item = canvas.getObjects();
+                
+                for (let i in prevCanvas) {
+                    prevCanvas[i].clear();
                 }
-                canByItem.push(allItems);
+                
+                for (let c in prevCanvas) {
+                    let canID = groupN.findIndex((element) => { return element == c });
+                        for (let i in item) {
+                            if (item[i].type === 'group') {
+                                // prevCanvas[c].add(allG[c]);
+                                console.log("TEMPLATE: ");
+                                console.log(item[i]);
+                                continue;
+                            }
+                            let obj = $.extend(true, {}, item[i]);
+                            // console.log(item[i].dpi);
+                            console.log(c + ", " + i);
+                        // obj.lockMovementX = true;
+                        // obj.lockMovementY = true;
+                        // console.log("YO HERE IT IS (canvas width):");
+                        // console.log(prevCanvas[c].getObjects[0].width)
+                        // console.log(obj);
+                        // let newW = obj.aCoords.br.x - obj.aCoords.bl.x;
+                        // let newH = obj.aCoords.bl.y - obj.aCoords.tl.y;
+                        // console.log(newW);
+                        // console.log(newH);
+                        //
+                        let scalewidth = obj.percentW * groupWidth[canID];
+                        let scaleheight = obj.percentH * groupHeight[canID];
+                        if (scalewidth < scaleheight) {
+                            scaleheight = scalewidth;
+                        } else {
+                            scalewidth = scaleheight;
+                        }
+                        ///////////////////////
+
+                        obj.scaleToWidth(scalewidth);
+                        obj.scaleToHeight(scaleheight);
+                            obj.objectWidth = Math.sqrt(Math.pow((obj.aCoords.tr.x - obj.aCoords.tl.x), 2) + Math.pow((obj.aCoords.tr.y - obj.aCoords.tl.y), 2));
+                            obj.objectHeight = Math.sqrt(Math.pow((obj.aCoords.tr.x - obj.aCoords.tl.x), 2) + Math.pow((obj.aCoords.tr.y - obj.aCoords.tl.y), 2));
+                        // console.log('dogslunch');
+                        obj.left = (groupX[canID] + (groupWidth[canID] * obj.percentX) - (obj.objectWidth / 2));
+                        obj.top = (groupY[canID] + (groupHeight[canID] * obj.percentY) - (obj.objectHeight / 2));
+                        let dat = {
+                            sW: scalewidth,
+                            sH: scaleheight,
+                            oL: obj.left,
+                            oT: obj.top,
+                            pX: obj.percentX,
+                            pY: obj.percentY,
+                            pW: obj.percentW,
+                            pH: obj.percentH,
+                            gX: groupX,
+                            gY: groupY,
+                            gW: groupWidth,
+                            gH: groupHeight,
+                            oW: obj.objectWidth,
+                            oH: obj.objectHeight,
+                            cID: c,
+                            gN: groupN,
+                            gNc: canID
+                        }
+                        console.log(dat);
+
+                        let canPerItem = {
+                            percentX: obj.percentX,
+                            percentY: obj.percentY,
+                            percentW: obj.percentW,
+                            percentH: obj.percentH,
+                        }
+                        allItems[i]=(canPerItem);
+                        // obj.left = (prevCanvas[c].width - newW) * 0.5; 
+                        // obj.top = (prevCanvas[c].height - newH) * 0.5;
+                        console.log(item);
+                        console.log(obj);
+                        prevCanvas[c].add(obj);
+                    }
+                    canByItem.push(allItems);
+                }
+                console.log(canByItem);
             }
-            console.log(canByItem);
         }
     });
 
@@ -324,8 +328,8 @@ for(let c in prevCanvas){
             let currCan = groupN.findIndex((element) => { return element == c });
             console.log("CANVAS: "+c+", objID: "+objID);
             console.log(e.target.left);
-            e.target.objectWidth = e.target.aCoords.tr.x - e.target.aCoords.tl.x;
-            e.target.objectHeight = e.target.aCoords.bl.y - e.target.aCoords.tl.y;
+            e.target.objectWidth = Math.sqrt(Math.pow((e.target.aCoords.tr.x - e.target.aCoords.tl.x), 2) + Math.pow((e.target.aCoords.tr.y - e.target.aCoords.tl.y), 2));
+            e.target.objectHeight = Math.sqrt(Math.pow((e.target.aCoords.tr.x - e.target.aCoords.tl.x), 2) + Math.pow((e.target.aCoords.tr.y - e.target.aCoords.tl.y), 2));
 
             canByItem[c][objID].percentX = ((e.target.left + (e.target.objectWidth / 2)) - groupX[currCan]) / groupWidth[currCan];
             canByItem[c][objID].percentY = ((e.target.top + (e.target.objectHeight / 2)) - groupY[currCan]) / groupHeight[currCan];
@@ -336,8 +340,8 @@ for(let c in prevCanvas){
             let currCan = groupN.findIndex((element) => { return element == c });
             console.log("CANVAS: " + c + ", objID: " + objID);
             console.log(e.target.objectWidth);
-            e.target.objectWidth = e.target.aCoords.tr.x - e.target.aCoords.tl.x;
-            e.target.objectHeight = e.target.aCoords.bl.y - e.target.aCoords.tl.y;
+            e.target.objectWidth = Math.sqrt(Math.pow((e.target.aCoords.tr.x - e.target.aCoords.tl.x), 2) + Math.pow((e.target.aCoords.tr.y - e.target.aCoords.tl.y), 2));
+            e.target.objectHeight = Math.sqrt(Math.pow((e.target.aCoords.tr.x - e.target.aCoords.tl.x), 2) + Math.pow((e.target.aCoords.tr.y - e.target.aCoords.tl.y), 2));
 
             canByItem[c][objID].percentX = ((e.target.left + (e.target.objectWidth / 2)) - groupX[currCan]) / groupWidth[currCan];
             canByItem[c][objID].percentY = ((e.target.top + (e.target.objectHeight / 2)) - groupY[currCan]) / groupHeight[currCan];
@@ -618,6 +622,15 @@ for(let c in prevCanvas){
 function clearAll() {
     if(clearing==false){
         console.log("CLEEEEEEAR!");
+        allItems = [];
+        canByItem = [];
+        groupWidth = [];
+        groupHeight = [];
+        groupX = [];
+        groupY = [];
+        groupN = [];
+        tempRatio = [];
+        dpi = {};
         // Clear storage and flush sessions
         localStorage.clear();
         $("#objectHolder").html(' ');
@@ -643,8 +656,8 @@ function clearAll() {
 }
 
 var sessionInfo = function (item, file = null) {
-    item.objectWidth = item.aCoords.tr.x - item.aCoords.tl.x;
-    item.objectHeight = item.aCoords.bl.y - item.aCoords.tl.y;
+    item.objectWidth = Math.sqrt(Math.pow((item.aCoords.tr.x - item.aCoords.tl.x), 2) + Math.pow((item.aCoords.tr.y - item.aCoords.tl.y), 2));
+    item.objectHeight = Math.sqrt(Math.pow((item.aCoords.tr.x - item.aCoords.tl.x), 2) + Math.pow((item.aCoords.tr.y - item.aCoords.tl.y), 2));
 
     item.percentX = ((item.left + (item.objectWidth / 2)) - groupX[mainc]) / groupWidth[mainc];
     item.percentY = ((item.top + (item.objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc];
@@ -999,6 +1012,7 @@ function setTemplate(main = "main") {
                         loadEle.hidden = true;
                     }
                 });
+                loadEle.hidden = true;
                 // myCanvas.add(mainG);
             }
             
@@ -1022,6 +1036,7 @@ function fromStorage(result = null) {
     // console.log(cv);
     console.log("fromStorage GO!");
     // cv.objects = Array.from(cv.objects);
+    mainG.selectable = false;
     cv.objects.unshift(mainG.toObject());
     console.log(cv.objects);
 
@@ -1093,6 +1108,8 @@ function fromStorage(result = null) {
                                     percentY = ((listItems[i][j].top + (listItems[i][j].objectHeight / 2)) - groupY[mainc]) / groupHeight[mainc];
                                     percentW = listItems[i][j].objectWidth / groupWidth[mainc];
                                     percentH = listItems[i][j].objectHeight / groupHeight[mainc];
+                                        }else{
+                                            listItems[i][j].selectable = false;
                                         }
                             }
                         }
@@ -1251,11 +1268,11 @@ function addAwkwardImage(src, info = false) {
 
             // image.scaleToWidth(newWidth);
             //image.scale(getRandomNum(0.1, 0.25)).setCoords();
-            canvas.add(image);
+            // canvas.add(image);
 
-            for (var a in prevCanvas) {
-                prevCanvas[a].add(image);
-            }
+            // for (var a in prevCanvas) {
+            //     prevCanvas[a].add(image);
+            // }
 
             canvas.add(image);
 
